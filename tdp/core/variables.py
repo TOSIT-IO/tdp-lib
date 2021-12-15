@@ -1,4 +1,3 @@
-import os
 import yaml
 
 try:
@@ -6,8 +5,8 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+from contextlib import contextmanager
 from pathlib import Path
-from functools import wraps
 
 import ansible.constants as C
 
@@ -16,25 +15,28 @@ class Variables:
     """Manages group vars"""
 
     def __init__(self, group_vars_path):
-        self._group_vars_path = group_vars_path
+        self._group_vars_path = Path(group_vars_path)
 
     @property
     def group_vars_path(self):
         return self._group_vars_path
 
-    def group_vars(f):
-        """Decorator that insures the group var file exists"""
+    @contextmanager
+    def _open_group(self, group):
+        group_var_file_path = self.group_vars_path / group
+        if not group_var_file_path.exists():
+            group_var_file_path.touch()
 
-        @wraps(f)
-        def wrapper(self, *args):
-            group_var_file_path = Path(os.path.join(self.group_vars_path, args[0]))
-            if not group_var_file_path.exists():
-                group_var_file_path.touch()
-            return f(self, *args)
+        with open(group_var_file_path, "r+") as group_var_file:
+            content = yaml.load(group_var_file, Loader=Loader) or {}
 
-        return wrapper
+            yield content
 
-    @group_vars
+            group_var_file.seek(0)
+            group_var_file.write(yaml.dump(content, Dumper=Dumper))
+            group_var_file.truncate()
+            group_var_file.flush()
+
     def update(self, group, var):
         """
 
@@ -42,17 +44,9 @@ class Variables:
             group (str): Ansible group that receive new variables
             var (dict): variables that will be written to the group vars
         """
-        with open(os.path.join(self.group_vars_path, group), "r+") as group_var_file:
-            content = yaml.load(group_var_file, Loader=Loader) or {}
-
+        with self._open_group(group) as content:
             content.update(var)
 
-            group_var_file.seek(0)
-            group_var_file.write(yaml.dump(content, Dumper=Dumper))
-            group_var_file.truncate()
-            group_var_file.flush()
-
-    @group_vars
     def unset(self, group, key):
         """[summary]
 
@@ -60,10 +54,7 @@ class Variables:
             group ([type]): [description]
             key ([type]): key to delete (using dot notation for complexe keys)
         """
-        with open(os.path.join(self.group_vars_path, group), "r+") as group_var_file:
-            group_var_file.seek(0)
-            content = yaml.load(group_var_file, Loader=Loader) or {}
-
+        with self._open_group(group) as content:
             subkeys = key.split(".")
             cursor = content
             for index, subkey in enumerate(subkeys):
@@ -72,8 +63,3 @@ class Variables:
                 else:
                     cursor.pop(".".join(subkeys[index:]))
                     break
-
-            group_var_file.seek(0)
-            group_var_file.write(yaml.dump(content, Dumper=Dumper))
-            group_var_file.truncate()
-            group_var_file.flush()

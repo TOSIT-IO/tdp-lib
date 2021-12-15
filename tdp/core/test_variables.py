@@ -1,5 +1,4 @@
 from json import load
-import os
 
 import ansible.constants as C
 from ansible.inventory.manager import InventoryManager
@@ -13,7 +12,7 @@ from tdp.core.variables import Variables
 
 @pytest.fixture(scope="function")
 def dummy_inventory(tmp_path):
-    os.mkdir(os.path.join(tmp_path, "group_vars"))
+    (tmp_path / "group_vars").mkdir()
 
     loader = DataLoader()
     # inventory = InventoryManager(loader=loader, sources=C.DEFAULT_HOST_LIST)
@@ -35,7 +34,7 @@ def dummy_inventory(tmp_path):
 
 def test_variables_update(dummy_inventory):
     (loader, inventory, variable_manager, tmp_path) = dummy_inventory
-    variables = Variables(os.path.join(tmp_path, "group_vars"))
+    variables = Variables(tmp_path / "group_vars")
 
     variables.update("hdfs", {"hdfs_property": "hdfs_value"})
 
@@ -47,7 +46,7 @@ def test_variables_update(dummy_inventory):
 def test_variables_unset(dummy_inventory):
     (loader, inventory, variable_manager, tmp_path) = dummy_inventory
 
-    variables = Variables(os.path.join(tmp_path, "group_vars"))
+    variables = Variables(tmp_path / "group_vars")
 
     variables.update(
         "hdfs",
@@ -66,11 +65,10 @@ def test_variables_unset(dummy_inventory):
         host=inventory.get_host("master01")
     )
 
-
 def test_variables_unset_nested(dummy_inventory):
     (loader, inventory, variable_manager, tmp_path) = dummy_inventory
 
-    variables = Variables(os.path.join(tmp_path, "group_vars"))
+    variables = Variables(tmp_path / "group_vars")
 
     variables.update(
         "hdfs",
