@@ -1,3 +1,4 @@
+from copy import Error
 from networkx.classes.function import subgraph
 import yaml
 
@@ -16,7 +17,7 @@ def load_components():
     component_file_path = Path(__file__).with_name("components.yml")
     with component_file_path.open("r") as component_file:
         content = yaml.load(component_file, Loader=Loader) or {}
-
+         
         # TODO sort content
         return content
 
@@ -28,7 +29,13 @@ def load_dag(content):
 
     for component in components:
         for dependency in component['depends_on']:
-            DG.add_edge(dependency, component['name'])
+            for checkcomp in components:
+                if dependency == checkcomp['name']:
+                    DG.add_edge(dependency, component['name'])
+                    break
+            else:
+                raise ValueError('Depedency ' + dependency + ' does not exist')
+            
 
     return DG
 
@@ -40,10 +47,10 @@ def get_all_parents(dag, node):
     if not parents:
         return None
     else:
-        parent_nodes.extend(parents)
         for parent in parents:
+            parent_nodes.append(parent)
             try:
-                parent_nodes.extend(list(get_all_parents(dag, parent)))
+                parent_nodes.extend(get_all_parents(dag, parent))
             except:
                 pass
 
@@ -63,4 +70,3 @@ if __name__ == "__main__":
 
     print(get_actions_to_node(dag, 'hdfs_init'))
     
-
