@@ -24,12 +24,12 @@ def load_components():
 
 def load_dag(content):
     DG = nx.DiGraph()
-    for component in components:
+    for component in content:
         DG.add_node(component['name'])
 
-    for component in components:
+    for component in content:
         for dependency in component['depends_on']:
-            for checkcomp in components:
+            for checkcomp in content:
                 if dependency == checkcomp['name']:
                     DG.add_edge(dependency, component['name'])
                     break
@@ -54,4 +54,3 @@ if __name__ == "__main__":
     dag = load_dag(components)
 
     print(get_actions_to_node(dag, 'hdfs_init'))
-
