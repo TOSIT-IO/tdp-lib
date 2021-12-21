@@ -25,30 +25,36 @@ class Dag:
             return self._components
 
         # TODO load from multiple files
+        components_list = []
         component_file_path = Path(__file__).with_name("components.yml")
         with component_file_path.open("r") as component_file:
-            self._components = yaml.load(component_file, Loader=Loader) or {}
+            components_list.extend(yaml.load(component_file, Loader=Loader) or [])
 
-            # TODO sort content
-            return self._components
+        components = {}
+        for component in components_list:
+            name = component['name']
+            depends_on = component['depends_on']
+            if name in components:
+                raise ValueError(f'"{name}" is declared several times')
+            components[name] = depends_on
+
+        self._components = components
+        return self._components
 
     @property
     def graph(self):
         if self._graph is not None:
             return self._graph
 
+        component_names = sorted(self.components.keys())
         DG = nx.DiGraph()
-        for component in self.components:
-            DG.add_node(component['name'])
+        DG.add_nodes_from(component_names)
 
-        for component in self.components:
-            for dependency in component['depends_on']:
-                for checkcomp in self.components:
-                    if dependency == checkcomp['name']:
-                        DG.add_edge(dependency, component['name'])
-                        break
-                else:
-                    raise ValueError('Depedency ' + dependency + ' does not exist')
+        for component_name in component_names:
+            for dependency in sorted(self.components[component_name]):
+                if dependency not in self.components:
+                    raise ValueError(f'Dependency "{dependency}" does not exist for component "{component_name}"')
+                DG.add_edge(dependency, component_name)
 
         if nx.is_directed_acyclic_graph(DG):
             self._graph = DG
