@@ -35,30 +35,15 @@ def load_dag(content):
                     break
             else:
                 raise ValueError('Depedency ' + dependency + ' does not exist')
-            
 
-    return DG
-
-
-def get_all_parents(dag, node):
-    parent_nodes = []
-    parents = list(dag.predecessors(node))
-
-    if not parents:
-        return None
+    if nx.is_directed_acyclic_graph(DG):
+        return DG
     else:
-        for parent in parents:
-            parent_nodes.append(parent)
-            try:
-                parent_nodes.extend(get_all_parents(dag, parent))
-            except:
-                pass
-
-    return parent_nodes
+        raise ValueError('Not a DAG')
 
 
 def get_actions_to_node(dag, node):
-    actions = list(nx.topological_sort(dag.subgraph(get_all_parents(dag, node))))
+    actions = list(nx.lexicographical_topological_sort(dag.subgraph(nx.ancestors(dag, node))))
     actions.append(node)
     return actions
 
@@ -69,4 +54,4 @@ if __name__ == "__main__":
     dag = load_dag(components)
 
     print(get_actions_to_node(dag, 'hdfs_init'))
-    
+
