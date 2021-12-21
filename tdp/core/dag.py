@@ -15,20 +15,23 @@ import networkx as nx
 class Dag:
     """Generate DAG with components dependencies"""
 
-    def __init__(self):
+    def __init__(self, yaml_files=None):
         self._components = None
         self._graph = None
+
+        if yaml_files is None:
+            yaml_files = [Path(__file__).with_name("components.yml")]
+        self.yaml_files = yaml_files
 
     @property
     def components(self):
         if self._components is not None:
             return self._components
 
-        # TODO load from multiple files
         components_list = []
-        component_file_path = Path(__file__).with_name("components.yml")
-        with component_file_path.open("r") as component_file:
-            components_list.extend(yaml.load(component_file, Loader=Loader) or [])
+        for yaml_file in self.yaml_files:
+            with yaml_file.open("r") as component_file:
+                components_list.extend(yaml.load(component_file, Loader=Loader) or [])
 
         components = {}
         for component in components_list:
