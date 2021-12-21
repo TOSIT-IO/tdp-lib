@@ -18,10 +18,26 @@ class Dag:
     def __init__(self, yaml_files=None):
         self._components = None
         self._graph = None
+        self._yaml_files = None
 
         if yaml_files is None:
             yaml_files = [Path(__file__).with_name("components.yml")]
         self.yaml_files = yaml_files
+
+    @property
+    def yaml_files(self):
+        if self._yaml_files is not None:
+            return self._yaml_files
+        return []
+
+    @yaml_files.setter
+    def yaml_files(self, value):
+        self._yaml_files = value
+        del self.components
+
+    @yaml_files.deleter
+    def yaml_files(self):
+        self.yaml_files = None
 
     @property
     def components(self):
@@ -44,6 +60,15 @@ class Dag:
         self._components = components
         return self._components
 
+    @components.setter
+    def components(self, value):
+        self._components = value
+        del self.graph
+
+    @components.deleter
+    def components(self):
+        self.components = None
+
     @property
     def graph(self):
         if self._graph is not None:
@@ -64,6 +89,14 @@ class Dag:
             return self._graph
         else:
             raise ValueError('Not a DAG')
+
+    @graph.setter
+    def graph(self, value):
+        self._graph = value
+
+    @graph.deleter
+    def graph(self):
+        self.graph = None
 
     def get_action_to_node(self, node):
         actions = list(nx.lexicographical_topological_sort(self.graph.subgraph(nx.ancestors(self.graph, node))))
