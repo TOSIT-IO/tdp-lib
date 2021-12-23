@@ -10,6 +10,8 @@ except ImportError:
 from tdp.core.runner import Runner
 
 from pathlib import Path
+import fnmatch
+import re
 import networkx as nx
 
 
@@ -108,8 +110,18 @@ class Dag:
         actions.append(node)
         return actions
 
-    def run_to_node(self, node, runner):
+    def filter_actions_glob(self, actions, glob):
+        return fnmatch.filter(actions, glob)
+
+    def filter_actions_regex(self, actions, regex):
+        return [x for x in map(lambda action: action if re.match(regex, action) else None, actions) if x is not None]
+
+    def run_to_node(self, node, runner, filter_glob=None, filter_regex=None):
         actions = self.get_actions_to_node(node)
+        if filter_glob:
+            actions = self.filter_actions_glob(actions, filter_glob)
+        if filter_regex:
+            actions = self.filter_actions_regex(actions, filter_regex)
 
         for action in actions:
             if action not in self._failed_nodes + self._skipped_nodes:
