@@ -7,6 +7,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+from tdp.core.runner import Runner
 
 from pathlib import Path
 import networkx as nx
@@ -19,6 +20,10 @@ class Dag:
         self._components = None
         self._graph = None
         self._yaml_files = None
+
+        self._failed_nodes = []
+        self._success_nodes = []
+        self._skipped_nodes = []
 
         if yaml_files is None:
             yaml_files = [Path(__file__).with_name("components.yml")]
@@ -98,12 +103,32 @@ class Dag:
     def graph(self):
         self.graph = None
 
-    def get_action_to_node(self, node):
+    def get_actions_to_node(self, node):
         actions = list(nx.lexicographical_topological_sort(self.graph.subgraph(nx.ancestors(self.graph, node))))
         actions.append(node)
         return actions
 
+    def run_to_node(self, node, runner):
+        actions = self.get_actions_to_node(node)
+
+        for action in actions:
+            if action not in self._failed_nodes + self._skipped_nodes:
+                res = runner.run(action)
+                if res['is_failed']:
+                    print(f'Action {action} failed !')  
+                    self._failed_nodes.append(action)
+                    for desc in nx.descendants(self.graph, action):
+                        print(f'Action {desc} will be skipped')
+                        self._skipped_nodes.append(desc)
+
+                    print('Resuming')
+                else:
+                    print(f'Action {action} success')
+                    self._success_nodes.append(action)
+
+
 
 if __name__ == "__main__":
     dag = Dag()
-    print(dag.get_action_to_node('hdfs_init'))
+    print(dag.get_actions_to_node('hdfs_init'))
+
