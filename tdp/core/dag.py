@@ -1,6 +1,7 @@
 from copy import Error
 from networkx.classes.function import subgraph
 import yaml
+import logging
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -14,6 +15,7 @@ import fnmatch
 import re
 import networkx as nx
 
+logger = logging.getLogger("tdp").getChild("dag")
 
 class Dag:
     """Generate DAG with components dependencies"""
@@ -127,15 +129,14 @@ class Dag:
             if action not in self._failed_nodes + self._skipped_nodes:
                 res = runner.run(action)
                 if res['is_failed']:
-                    print(f'Action {action} failed !')  
+                    logger.error(f'Action {action} failed !')  
                     self._failed_nodes.append(action)
                     for desc in nx.descendants(self.graph, action):
-                        print(f'Action {desc} will be skipped')
+                        logger.warning(f'Action {desc} will be skipped')
                         self._skipped_nodes.append(desc)
 
-                    print('Resuming')
                 else:
-                    print(f'Action {action} success')
+                    logger.info(f'Action {action} success')
                     self._success_nodes.append(action)
 
 

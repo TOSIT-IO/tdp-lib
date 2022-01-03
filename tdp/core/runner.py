@@ -1,6 +1,6 @@
 import os
 import subprocess
-import yaml
+import logging
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -10,6 +10,7 @@ except ImportError:
 from pathlib import Path
 from functools import wraps
 
+logger = logging.getLogger("tdp").getChild("runner")
 
 class Runner:
     """Run actions"""
@@ -21,6 +22,7 @@ class Runner:
 
 
     def run(self, action):
+        logger.debug(f"Running action {action}")
         command = []
         command.append('ansible-playbook')
         command.append(os.path.join(self._playdir, action+'.yml'))
