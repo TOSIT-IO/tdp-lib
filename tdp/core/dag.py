@@ -116,7 +116,8 @@ class Dag:
         return fnmatch.filter(actions, glob)
 
     def filter_actions_regex(self, actions, regex):
-        return [x for x in map(lambda action: action if re.match(regex, action) else None, actions) if x is not None]
+        compiled_regex = re.compile(regex)
+        return list(filter(compiled_regex.match, actions))
 
     def run_to_node(self, node, runner, filter_glob=None, filter_regex=None):
         actions = self.get_actions_to_node(node)
