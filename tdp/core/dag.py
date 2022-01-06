@@ -26,10 +26,6 @@ class Dag:
         self._graph = None
         self._yaml_files = None
 
-        self._failed_nodes = []
-        self._success_nodes = []
-        self._skipped_nodes = []
-
         if yaml_files is None:
             yaml_files = [Path(__file__).with_name("components.yml")]
         self.yaml_files = yaml_files
@@ -119,28 +115,6 @@ class Dag:
     def filter_actions_regex(self, actions, regex):
         compiled_regex = re.compile(regex)
         return list(filter(compiled_regex.match, actions))
-
-    def run_to_node(self, node, runner, filter_glob=None, filter_regex=None):
-        actions = self.get_actions_to_node(node)
-        if filter_glob:
-            actions = self.filter_actions_glob(actions, filter_glob)
-        if filter_regex:
-            actions = self.filter_actions_regex(actions, filter_regex)
-
-        for action in actions:
-            if not self.components[action].noop and action not in self._failed_nodes + self._skipped_nodes:
-                res = runner.run(action)
-                if res['is_failed']:
-                    logger.error(f'Action {action} failed !')  
-                    self._failed_nodes.append(action)
-                    for desc in nx.descendants(self.graph, action):
-                        logger.warning(f'Action {desc} will be skipped')
-                        self._skipped_nodes.append(desc)
-
-                else:
-                    logger.info(f'Action {action} success')
-                    self._success_nodes.append(action)
-
 
 
 if __name__ == "__main__":
