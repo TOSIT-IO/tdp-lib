@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "tdp-lib"
+version = "0.0.1"
+description = "TDP library for TDP Manager"
+authors = ["TDP"]
+license = "APACHE 2"
+readme = "README.md"
+homepage = "https://github.com/TOSIT-FR/tdp-lib"
+repository = "https://github.com/TOSIT-FR/tdp-lib"
+documentation = "https://github.com/TOSIT-FR/tdp-lib"
+packages = [{ include = "tdp" }]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+ansible = "2.9.27"
+networkx = "2.5.1"
+PyYAML = "6.0"
+matplotlib = { version = "3.3.4", optional = true }
+pydot = { version = "1.4.2", optional = true }
+
+[tool.poetry.dev-dependencies]
+pytest = "6.2.5"
+
+[tool.poetry.extras]
+visualization = ["matplotlib", "pydot"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
