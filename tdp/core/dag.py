@@ -8,6 +8,7 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+from tdp.core.component import Component
 from tdp.core.runner import Runner
 
 from pathlib import Path
@@ -61,10 +62,9 @@ class Dag:
         components = {}
         for component in components_list:
             name = component['name']
-            depends_on = component['depends_on']
             if name in components:
                 raise ValueError(f'"{name}" is declared several times')
-            components[name] = depends_on
+            components[name] = Component(**component)
 
         self._components = components
         return self._components
@@ -88,7 +88,8 @@ class Dag:
         DG.add_nodes_from(component_names)
 
         for component_name in component_names:
-            for dependency in sorted(self.components[component_name]):
+            component = self.components[component_name]
+            for dependency in sorted(component.depends_on):
                 if dependency not in self.components:
                     raise ValueError(f'Dependency "{dependency}" does not exist for component "{component_name}"')
                 DG.add_edge(dependency, component_name)
@@ -127,7 +128,7 @@ class Dag:
             actions = self.filter_actions_regex(actions, filter_regex)
 
         for action in actions:
-            if action not in self._failed_nodes + self._skipped_nodes:
+            if not self.components[action].noop and action not in self._failed_nodes + self._skipped_nodes:
                 res = runner.run(action)
                 if res['is_failed']:
                     logger.error(f'Action {action} failed !')  
