@@ -1,16 +1,16 @@
 # TDP Lib
 
-Install tdp sdk for dev:
+Install tdp lib for dev:
 ```
-python3 -m venv venv
-source venv/bin/activate
-pip install -U pip
-pip install -e .
+poetry install # Installs dependencies and the package in venv
 ```
 
+Install optional dependencies for graph visualization:
+```
+poetry install -E visualization
+```
 
 Run the tests:
 ```
-cd tdp && pytest -v
+poetry run pytest tdp
 ```
-
