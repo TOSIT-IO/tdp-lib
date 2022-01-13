@@ -22,6 +22,7 @@ def to_pydot(graph):
 
     return pydot_graph
 
+
 # Needed :
 #   pip install matplotlib
 #   apt install graphviz
