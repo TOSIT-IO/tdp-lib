@@ -65,6 +65,7 @@ def test_variables_unset(dummy_inventory):
         host=inventory.get_host("master01")
     )
 
+
 def test_variables_unset_nested(dummy_inventory):
     (loader, inventory, variable_manager, tmp_path) = dummy_inventory
 

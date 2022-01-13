@@ -18,6 +18,7 @@ import networkx as nx
 
 logger = logging.getLogger("tdp").getChild("dag")
 
+
 class Dag:
     """Generate DAG with components dependencies"""
 
@@ -57,7 +58,7 @@ class Dag:
 
         components = {}
         for component in components_list:
-            name = component['name']
+            name = component["name"]
             if name in components:
                 raise ValueError(f'"{name}" is declared several times')
             components[name] = Component(**component)
@@ -87,14 +88,16 @@ class Dag:
             component = self.components[component_name]
             for dependency in sorted(component.depends_on):
                 if dependency not in self.components:
-                    raise ValueError(f'Dependency "{dependency}" does not exist for component "{component_name}"')
+                    raise ValueError(
+                        f'Dependency "{dependency}" does not exist for component "{component_name}"'
+                    )
                 DG.add_edge(dependency, component_name)
 
         if nx.is_directed_acyclic_graph(DG):
             self._graph = DG
             return self._graph
         else:
-            raise ValueError('Not a DAG')
+            raise ValueError("Not a DAG")
 
     @graph.setter
     def graph(self, value):
@@ -105,7 +108,11 @@ class Dag:
         self.graph = None
 
     def get_actions_to_node(self, node):
-        actions = list(nx.lexicographical_topological_sort(self.graph.subgraph(nx.ancestors(self.graph, node))))
+        actions = list(
+            nx.lexicographical_topological_sort(
+                self.graph.subgraph(nx.ancestors(self.graph, node))
+            )
+        )
         actions.append(node)
         return actions
 
@@ -119,5 +126,4 @@ class Dag:
 
 if __name__ == "__main__":
     dag = Dag()
-    print(dag.get_actions_to_node('hdfs_init'))
-
+    print(dag.get_actions_to_node("hdfs_init"))
