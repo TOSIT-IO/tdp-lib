@@ -11,7 +11,7 @@ documentation = "https://github.com/TOSIT-FR/tdp-lib"
 packages = [{ include = "tdp" }]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.2,<4.0"
 ansible = "2.9.27"
 networkx = "2.5.1"
 PyYAML = "6.0"
@@ -20,6 +20,8 @@ pydot = { version = "1.4.2", optional = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
+black = "21.12b0"
+poetry-githooks = "1.1.4"
 
 [tool.poetry.extras]
 visualization = ["matplotlib", "pydot"]
@@ -27,3 +29,22 @@ visualization = ["matplotlib", "pydot"]
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ['py36']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.venv
+    | _build
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.githooks]
+pre-commit = "black tdp"
