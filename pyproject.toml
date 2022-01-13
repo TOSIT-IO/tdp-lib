@@ -39,6 +39,7 @@ exclude = '''
       \.eggs         # exclude a few common directories in the
     | \.git          # root of the project
     | \.venv
+    | venv
     | _build
     | build
     | dist
