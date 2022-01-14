@@ -48,4 +48,4 @@ exclude = '''
 '''
 
 [tool.githooks]
-pre-commit = "black tdp"
+pre-commit = "black --check tdp"
