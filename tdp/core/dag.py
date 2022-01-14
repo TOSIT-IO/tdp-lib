@@ -8,8 +8,10 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+import tdp.components
 from tdp.core.component import Component
 from tdp.core.runner import Runner
+
 
 from pathlib import Path
 import fnmatch
@@ -28,7 +30,7 @@ class Dag:
         self._yaml_files = None
 
         if yaml_files is None:
-            yaml_files = [Path(__file__).with_name("components.yml")]
+            yaml_files = list((Path(tdp.components.__file__).parent).glob("*.yml"))
         self.yaml_files = yaml_files
 
     @property
