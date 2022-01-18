@@ -1,6 +1,5 @@
 import logging
 import ansible.constants as C
-from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.parsing.dataloader import DataLoader
 from ansible.inventory.manager import InventoryManager
 from ansible.vars.manager import VariableManager
@@ -8,7 +7,7 @@ from ansible.vars.manager import VariableManager
 logger = logging.getLogger("tdp").getChild("topology")
 
 
-class Topology:
+class AnsibleTopologyReader:
     def __init__(self, hosts_files=None):
         self._hosts_files = hosts_files
         self._loader = DataLoader()
