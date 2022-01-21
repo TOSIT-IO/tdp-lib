@@ -31,12 +31,12 @@ To run `dag` you can either use `poetry run dag` or `dag` if you are inside the 
 
 Dag usage:
 ```
-usage: dag [-h] [node]
+usage: dag [-h] [nodes [nodes ...]]
 
-Compute and display a graph. Add a node name to get a subgraph to the node.
+Compute and display a graph. Add node names to get a subgraph to the nodes.
 
 positional arguments:
-  node        Node on which to produce ancestors graph
+  nodes       Nodes on which to produce ancestors graph
 
 optional arguments:
   -h, --help  show this help message and exit
