@@ -131,7 +131,6 @@ class Dag:
     def validate(self):
         """
         Validation rules :
-        - Action name should end with *_start, *_init or *_install
         - *_start actions can only be required from within its own service
         - *_install actions should only depend on other *_install actions
         - Each service (HDFS, HBase, Hive, etc) should have *_install, *_init and *_start actions even if they are
@@ -146,13 +145,6 @@ class Dag:
             logger.warning(f"playbooks_dir is not defined, skip playbooks validations")
 
         for component_name, component in self.components.items():
-            # Action name should end with *_start, *_init or *_install
-            actions_at_end = ("_install", "_start", "_init")
-            if not component_name.endswith(actions_at_end):
-                logger.warning(
-                    f"Component '{component_name}' should end with one of {actions_at_end}"
-                )
-
             for dependency in component.depends_on:
                 # *_start actions can only be required from within its own service
                 dependency_service = self.components[dependency].service
