@@ -25,3 +25,4 @@ MANIFEST
 
 # Environments
 venv/
+.python-version
