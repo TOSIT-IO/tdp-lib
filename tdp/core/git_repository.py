@@ -1,6 +1,6 @@
 import logging
 
-from git import Repo
+from git import Repo, InvalidGitRepositoryError
 
 from tdp.core.repository import Repository
 
@@ -9,6 +9,9 @@ logger = logging.getLogger("tdp").getChild("git_repository")
 
 
 class GitRepository(Repository):
+    def __init__(self, path):
+        super().__init__(path)
+
     def __enter__(self):
         ref = super().__enter__()
         self._repo = Repo(self.path)
@@ -17,6 +20,12 @@ class GitRepository(Repository):
     def __exit__(self, exc_type, exc_val, exc_tb):
         super().__exit__(exc_type, exc_val, exc_tb)
         self._repo.close()
+
+    def init(self):
+        try:
+            Repo(self.path).close()
+        except InvalidGitRepositoryError:
+            Repo.init(self.path, mkdir=True).close()
 
     def validate(self, msg):
         commit = self._repo.index.commit(msg)

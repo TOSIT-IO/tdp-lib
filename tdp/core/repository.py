@@ -65,5 +65,9 @@ class Repository(ABC):
         pass
 
     @abstractmethod
+    def init(self):
+        pass
+
+    @abstractmethod
     def validate(self, message):
         pass

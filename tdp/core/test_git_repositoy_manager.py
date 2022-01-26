@@ -1,18 +1,16 @@
 import pytest
 
-from git.exc import InvalidGitRepositoryError
-from git import Repo
+from git import Repo, InvalidGitRepositoryError
 
 from tdp.core.git_repository import GitRepository
 
 from tdp.core.repository_manager import RepositoryManager
-from tdp.core.variables import Variables
 
 
 @pytest.fixture(scope="function")
 def repository_manager(tmp_path):
-    Repo.init(tmp_path).close()
     repository_manager = RepositoryManager(tmp_path, repository_class=GitRepository)
+    repository_manager.init()
 
     return repository_manager
 
