@@ -31,7 +31,7 @@ To run `dag` you can either use `poetry run dag` or `dag` if you are inside the 
 
 Dag usage:
 ```
-usage: dag [-h] [nodes [nodes ...]]
+usage: dag [-h] [-g | -r] [nodes [nodes ...]]
 
 Compute and display a graph. Add node names to get a subgraph to the nodes.
 
@@ -40,4 +40,6 @@ positional arguments:
 
 optional arguments:
   -h, --help  show this help message and exit
+  -g          Each node argument will be process as glob pattern
+  -r          Each node argument will be process as regex pattern
 ```
