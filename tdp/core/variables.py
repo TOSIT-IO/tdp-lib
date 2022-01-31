@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+from weakref import proxy
 import yaml
 
 try:
@@ -31,30 +32,14 @@ class Variables:
 
     def __init__(self, file_path):
         self._file_path = file_path
-        self._content = None
         self._file_descriptor = None
+        self._variables_dict = None
 
     def __enter__(self):
-        self._file_descriptor = open(self._file_path, "r+")
-        self._content = yaml.load(self._file_descriptor, Loader=Loader) or {}
-        return self
+        return proxy(self.open())
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._file_descriptor and not self._file_descriptor.closed:
-            self._file_descriptor.close()
-        else:
-            raise RuntimeError(
-                f"{self._file_path} is already closed, which shouldn't happen"
-            )
-
-    def __getitem__(self, key):
-        return self.get(key)
-
-    def __setitem__(self, key, value):
-        self.set(key, value)
-
-    def __delitem__(self, key):
-        self.unset(key)
+        self.close()
 
     @contextmanager
     def _flush_on_write(self):
@@ -65,10 +50,55 @@ class Variables:
         yield
 
         self._file_descriptor.seek(0)
-        self._file_descriptor.write(yaml.dump(self._content, Dumper=Dumper))
+        self._file_descriptor.write(
+            yaml.dump(self._variables_dict._content, Dumper=Dumper)
+        )
         self._file_descriptor.truncate()
         self._file_descriptor.flush()
+        # https://docs.python.org/3/library/os.html#os.fsync
         os.fsync(self._file_descriptor.fileno())
+
+    def open(self):
+        self._file_descriptor = open(self._file_path, "r+")
+        content = yaml.load(self._file_descriptor, Loader=Loader) or {}
+        self._variables_dict = VariablesDict(content, self._flush_on_write, self.close)
+        return self._variables_dict
+
+    def close(self):
+        if self._file_descriptor and not self._file_descriptor.closed:
+            self._file_descriptor.close()
+            self._variables_dict = None
+        else:
+            raise RuntimeError(
+                f"{self._file_path} is already closed, which shouldn't happen"
+            )
+
+
+class VariablesDict:
+    """Manages internal content logic. Internal instanciation only."""
+
+    def __init__(self, content, flush_on_write, close):
+        """
+        Args:
+            content ([Dict]): Content of a var file
+            flush_on_write ([Callable]): ContextManager callback called to flush data to disk on any kind of update to the dictionnary
+            close ([Callable]): Callback called to close Variables object, to provide a more pythonic interface
+        """
+        self._content = content
+        self._flush_on_write = flush_on_write
+        self._close = close
+
+    def close(self):
+        self._close()
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self.unset(key)
 
     def get(self, key, default=None):
         """Returns a copy of the value matching the key in inner content.
