@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractstaticmethod
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
-from weakref import proxy
+from threading import RLock
 
 from tdp.core.variables import Variables
 
@@ -16,12 +16,15 @@ class Repository(ABC):
 
     def __init__(self, path):
         self.path = path
+        self._lock = RLock()
 
     def __enter__(self):
-        return proxy(self)
+        self._lock.acquire()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self._lock.release()
+        self.close()
 
     @contextmanager
     def open_var_file(self, path):
@@ -36,13 +39,14 @@ class Repository(ABC):
             [Proxy[Variables]]: A weakref of the Variables object, to prevent the creation of strong references
                 outside the caller's context
         """
-        path = self.path / path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if not path.exists():
-            path.touch()
-        with Variables(path) as variables:
-            yield proxy(variables)
-        self.add_for_validation(path)
+        with self._lock:
+            path = self.path / path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if not path.exists():
+                path.touch()
+            with Variables(path) as variables:
+                yield variables
+            self.add_for_validation(path)
 
     @contextmanager
     def open_var_files(self, paths):
@@ -55,19 +59,25 @@ class Repository(ABC):
             [OrderedDict[PathLike, Variables]]: Returns an OrderedDict where keys
                 are sorted by the order of the input paths
         """
-        with ExitStack() as stack:
+        with self._lock, ExitStack() as stack:
             yield OrderedDict(
                 (path, stack.enter_context(self.open_var_file(path))) for path in paths
             )
+
+    @abstractstaticmethod
+    def init(path):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
 
     @abstractmethod
     def add_for_validation(self, path):
         pass
 
     @abstractmethod
-    def init(self):
-        pass
-
-    @abstractmethod
+    @contextmanager
     def validate(self, message):
+        yield
         pass
