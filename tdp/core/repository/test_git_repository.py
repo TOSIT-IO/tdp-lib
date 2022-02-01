@@ -7,8 +7,7 @@ from tdp.core.repository.git_repository import GitRepository
 
 @pytest.fixture(scope="function")
 def git_repository(tmp_path):
-    GitRepository.init(tmp_path)
-    git_repository = GitRepository(tmp_path)
+    git_repository = GitRepository.init(tmp_path)
 
     return git_repository
 

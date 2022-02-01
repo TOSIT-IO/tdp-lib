@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod, abstractstaticmethod
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from threading import RLock
+from weakref import proxy
 
 from tdp.core.variables import Variables
 
@@ -20,11 +21,10 @@ class Repository(ABC):
 
     def __enter__(self):
         self._lock.acquire()
-        return self
+        return proxy(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._lock.release()
-        self.close()
 
     @contextmanager
     def open_var_file(self, path):
@@ -44,7 +44,7 @@ class Repository(ABC):
             path.parent.mkdir(parents=True, exist_ok=True)
             if not path.exists():
                 path.touch()
-            with Variables(path) as variables:
+            with Variables(path).open() as variables:
                 yield variables
             self.add_for_validation(path)
 
@@ -69,15 +69,10 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def close(self):
-        pass
-
-    @abstractmethod
     def add_for_validation(self, path):
         pass
 
     @abstractmethod
-    @contextmanager
+    @contextmanager  # type: ignore
     def validate(self, message):
-        yield
         pass

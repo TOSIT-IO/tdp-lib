@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import logging
 
-from git import Repo, InvalidGitRepositoryError
+from git import Repo, InvalidGitRepositoryError, NoSuchPathError
 
 from tdp.core.repository.repository import Repository
 
@@ -14,13 +14,6 @@ class GitRepository(Repository):
         super().__init__(path)
         self._repo = Repo(self.path)
 
-    def __enter__(self):
-        return super().__enter__()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        super().__exit__(exc_type, exc_val, exc_tb)
-        self.close()
-
     def close(self):
         with self._lock:
             self._repo.close()
@@ -29,10 +22,10 @@ class GitRepository(Repository):
     def init(path):
         try:
             with Repo(path):
-                pass
-        except InvalidGitRepositoryError:
+                return GitRepository(path)
+        except (InvalidGitRepositoryError, NoSuchPathError):
             with Repo.init(path, mkdir=True):
-                pass
+                return GitRepository(path)
 
     @contextmanager
     def validate(self, msg):

@@ -36,7 +36,7 @@ def dummy_inventory(tmp_path):
 
 def test_variables_update(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables.update({"hdfs_property": "hdfs_value"})
 
     assert "hdfs_value" == variable_manager.get_vars(
@@ -47,7 +47,7 @@ def test_variables_update(dummy_inventory):
 def test_variables_unset(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables.update(
             {
                 "hdfs_property": "hdfs_value",
@@ -67,7 +67,7 @@ def test_variables_unset(dummy_inventory):
 def test_variables_unset_nested(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables.update(
             {
                 "hdfs_property": "hdfs_value",
@@ -91,7 +91,7 @@ def test_variables_unset_nested(dummy_inventory):
 
 def test_variables_item_is_settable(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables["hdfs_property"] = "hdfs_value"
 
     assert "hdfs_value" == variable_manager.get_vars(
@@ -101,7 +101,7 @@ def test_variables_item_is_settable(dummy_inventory):
 
 def test_variables_item_is_gettable(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables["hdfs_property"] = "hdfs_value"
         assert "hdfs_value" == variables["hdfs_property"]
 
@@ -109,7 +109,7 @@ def test_variables_item_is_gettable(dummy_inventory):
 def test_variables_item_is_deletable(dummy_inventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
-    with Variables(hdfs_vars) as variables:
+    with Variables(hdfs_vars).open() as variables:
         variables.update(
             {
                 "hdfs_property": "hdfs_value",
