@@ -9,19 +9,19 @@ logger = logging.getLogger("tdp").getChild("ansible_executor")
 
 
 class AnsibleExecutor(Executor):
-    def __init__(self, playbooks_directory, run_directory):
+    def __init__(self, playbooks_directory, run_directory=None):
         # TODO configurable via config file
         self._playdir = playbooks_directory
         self._rundir = run_directory
 
-    def execute(self, action, running_directory=None):
+    def execute(self, action):
         playbook_action = os.path.join(self._playdir, action + ".yml")
         command = ["ansible-playbook", playbook_action]
         res = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            cwd=running_directory,
+            cwd=self._rundir,
             universal_newlines=True,
         )
         state = StateEnum.SUCCESS if res.poll() == 0 else StateEnum.FAILURE
