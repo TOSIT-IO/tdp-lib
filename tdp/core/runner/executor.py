@@ -8,7 +8,9 @@ class StateEnum(Enum):
 
     @classmethod
     def has_value(cls, value):
-        return value in (v.value for v in cls.__members__.values())
+        return isinstance(value, StateEnum) or value in (
+            v.value for v in cls.__members__.values()
+        )
 
 
 class Executor(ABC):
