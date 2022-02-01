@@ -10,8 +10,6 @@ except ImportError:
 
 import tdp.components
 from tdp.core.component import Component
-from tdp.core.runner import Runner
-
 
 from pathlib import Path
 import fnmatch
