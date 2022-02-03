@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pytest
 
-from .deployment_log import DeploymentLog
-from .action_log import ActionLog
-from . import Base
+from tdp.core.models import Base
+from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.action_log import ActionLog
 
 
 import logging
@@ -37,7 +37,6 @@ def test_add_object(session_class):
     logger.info(action)
     with session_class() as session:
         session.add(deployment)
-        session.add(action)
         session.commit()
         deployment = session.get(DeploymentLog, deployment.id)
         logger.info(deployment)

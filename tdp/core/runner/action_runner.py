@@ -35,7 +35,9 @@ class ActionRunner:
         elif not isinstance(state, StateEnum):
             state = StateEnum(state)
 
-        return ActionLog(action=action, start=start, end=end, state=state, logs=logs)
+        return ActionLog(
+            action=action, start=start, end=end, state=state.value, logs=logs
+        )
 
     def _run_actions(self, actions):
         for action in actions:
@@ -81,6 +83,6 @@ class ActionRunner:
             filter=str(node_filter),
             start=start,
             end=end,
-            state=state,
+            state=state.value,
             actions=action_logs,
         )
