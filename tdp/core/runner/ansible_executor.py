@@ -24,10 +24,10 @@ class AnsibleExecutor(Executor):
             cwd=self._rundir,
             universal_newlines=True,
         )
-        state = StateEnum.SUCCESS if res.poll() == 0 else StateEnum.FAILURE
         with io.BytesIO() as byte_stream:
             for stdout_line in iter(res.stdout.readline, ""):
                 logger.debug(stdout_line)
                 byte_stream.write(bytes(stdout_line, "utf-8"))
             logs = byte_stream.getvalue()
+        state = StateEnum.SUCCESS if res.poll() == 0 else StateEnum.FAILURE
         return state, logs
