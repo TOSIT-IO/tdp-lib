@@ -49,19 +49,21 @@ optional arguments:
 TDP is a development tool implemented to run actions easily
 
 #### TDP usage
-`tdp` is the main tool with 2 commands, `nodes` and `deploy`
+`tdp` is the main tool with 3 commands, `nodes`, `deploy` and `browse`
+
 ```
-usage: tdp [-h] {nodes,deploy} ...
+usage: tdp [-h] {nodes,deploy,browse} ...
 
 TDP Runner
 
 positional arguments:
-  {nodes,deploy}
-    nodes         List nodes from components DAG
-    deploy        Deploy's help
+  {nodes,deploy,browse}
+    nodes               List nodes from components DAG
+    deploy              Deploy's help
+    browse              Browse's help
 
 optional arguments:
-  -h, --help      show this help message and exit
+  -h, --help            show this help message and exit
 ```
 
 #### Node usage
@@ -97,4 +99,20 @@ optional arguments:
                         `TDP_SQLITE_PATH` environment variable
   --filter FILTER       Glob on list name
   --dry                 Execute dag without running any action
+```
+
+#### Browse usage
+
+```
+usage: tdp browse [-h] [--sqlite-path SQLITE_PATH] [deployment_id] [action]
+
+positional arguments:
+  deployment_id         Deployment to display
+  action                Action to display
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --sqlite-path SQLITE_PATH
+                        Path to SQLITE database file, settable through
+                        `TDP_SQLITE_PATH` environment variable
 ```

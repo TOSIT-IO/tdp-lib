@@ -3,11 +3,14 @@ import logging
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
+from tabulate import tabulate
 
 from tdp.core.dag import Dag
-from tdp.core.models import Base
+from tdp.core.models import Base, keyvalgen
+from tdp.core.models.action_log import ActionLog
+from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 
@@ -26,6 +29,9 @@ def arguments_definition():
     deploy_parser = subparsers.add_parser("deploy", help="Deploy's help")
     deploy_parser.set_defaults(command="deploy")
     fill_deploy_parser(deploy_parser)
+    browse_parser = subparsers.add_parser("browse", help="Browse's help")
+    browse_parser.set_defaults(command="browse")
+    fill_browse_parser(browse_parser)
     return parser
 
 
@@ -75,6 +81,23 @@ def fill_deploy_parser(parser):
     )
 
 
+def fill_browse_parser(parser):
+    parser.add_argument(
+        "deployment_id", nargs="?", type=int, default=None, help="Deployment to display"
+    )
+    parser.add_argument(
+        "action", nargs="?", type=str, default=None, help="Action to display"
+    )
+    parser.add_argument(
+        "--sqlite-path",
+        action=EnvDefault,
+        envvar="TDP_SQLITE_PATH",
+        type=Path,
+        default=None,
+        help="Path to SQLITE database file",
+    )
+
+
 class EnvDefault(argparse.Action):
     # Inspired greatly from https://stackoverflow.com/a/10551190
     def __init__(self, envvar, required=True, default=None, help=None, **kwargs):
@@ -109,6 +132,111 @@ def get_session_class(sqlite_path=None):
     return sessionmaker(bind=engine)
 
 
+def format_deployment_log(deployment_log, headers):
+    def custom_format(key, value):
+        if key == "actions":
+            if len(value) > 2:
+                return [value[0].action, "...", value[-1].action]
+            else:
+                return [action.action for action in value]
+        else:
+            return str(value)
+
+    return {key: custom_format(key, getattr(deployment_log, key)) for key in headers}
+
+
+def format_action_log(action_log, headers):
+    def custom_format(key, value):
+        if key == "logs":
+            return str(value[:40])
+        else:
+            return str(value)
+
+    return {key: custom_format(key, getattr(action_log, key)) for key in headers}
+
+
+def format_single_action_log(action_log, headers):
+    return {key: getattr(action_log, key) for key in headers}
+
+
+# ----------- Process query functions
+
+
+def process_deployments_query(session_class):
+    headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    query = select(DeploymentLog).order_by(DeploymentLog.id)
+
+    with session_class() as session:
+        result = session.execute(query).scalars().fetchall()
+        logger.info(
+            "Deployments:\n"
+            + tabulate(
+                [
+                    format_deployment_log(deployment_log, headers)
+                    for deployment_log in result
+                ],
+                headers="keys",
+            )
+        )
+
+
+def process_single_deployment_query(session_class, deployment_id):
+    deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    action_headers = [key for key, _ in keyvalgen(ActionLog)]
+    action_headers.remove("deployment")
+    query = (
+        select(DeploymentLog)
+        .where(DeploymentLog.id == deployment_id)
+        .order_by(DeploymentLog.id)
+    )
+
+    with session_class() as session:
+        result = session.execute(query).scalars().fetchall()
+        logger.info(
+            "Deployment:\n"
+            + tabulate(
+                [
+                    format_deployment_log(deployment_log, deployment_headers)
+                    for deployment_log in result
+                ],
+                headers="keys",
+            )
+        )
+        logger.info(
+            "Actions:\n"
+            + tabulate(
+                [
+                    format_action_log(action_log, action_headers)
+                    for action_log in result[0].actions
+                ],
+                headers="keys",
+            )
+        )
+
+
+def process_action_query(session_class, deployment_id, action):
+    headers = [key for key, _ in keyvalgen(ActionLog)]
+    headers.remove("deployment")
+    query = (
+        select(ActionLog)
+        .where(ActionLog.deployment_id == deployment_id)
+        .where(ActionLog.action == action)
+        .order_by(ActionLog.start)
+    )
+    with session_class() as session:
+        result = session.execute(query).scalars().fetchall()
+        logger.info(
+            "Action:\n"
+            + tabulate(
+                [
+                    format_single_action_log(action_log, headers)
+                    for action_log in result
+                ],
+                headers="keys",
+            )
+        )
+
+
 # ----------- Commands
 
 
@@ -138,6 +266,20 @@ def deploy_action(
         session.commit()
 
 
+def browse_action(deployment_id=None, action=None, sqlite_path=None):
+    if sqlite_path is None:
+        raise ValueError("SQLITE_PATH cannot be None")
+    session_class = get_session_class(sqlite_path)
+
+    if not deployment_id:
+        process_deployments_query(session_class)
+    else:
+        if not action:
+            process_single_deployment_query(session_class, deployment_id)
+        else:
+            process_action_query(session_class, deployment_id, action)
+
+
 # ----------- Main
 
 
@@ -154,4 +296,10 @@ def main():
             filter=args.filter,
             sqlite_path=args.sqlite_path,
             dry=args.dry,
+        )
+    elif args.command == "browse":
+        browse_action(
+            deployment_id=args.deployment_id,
+            action=args.action,
+            sqlite_path=args.sqlite_path,
         )

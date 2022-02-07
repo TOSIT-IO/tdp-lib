@@ -12,4 +12,6 @@ class DeploymentLog(Base):
     start = Column(DateTime)
     end = Column(DateTime)
     state = Column(String)
-    actions = relationship("ActionLog", back_populates="deployment")
+    actions = relationship(
+        "ActionLog", back_populates="deployment", order_by="ActionLog.start"
+    )
