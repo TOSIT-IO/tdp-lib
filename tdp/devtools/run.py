@@ -19,27 +19,18 @@ DAG = Dag()
 
 
 def arguments_definition():
-    """
-    Inputs:
-
-    * playbooks_directory
-    * target (node in the dag)
-    * run_directory (optional, run in current dir)
-    * path/to/sqlite.db (optional, save only if path is provided)
-    * filter (optional, regex ? glob ?)
-    * dry run (display playbooks that would have been run)
-
-    Outputs:
-
-    * playbooks stdout and stderr or commands in dry run mode
-
-    """
     parser = argparse.ArgumentParser(description="TDP Runner")
     subparsers = parser.add_subparsers()
-    node_parser = subparsers.add_parser("nodes", help="List nodes from components DAG")
-    node_parser.add_argument("--list-nodes", default=True, help="List all nodes in dag")
-    run_parser = subparsers.add_parser("deploy", help="Deploy's help")
-    run_parser.add_argument(
+    nodes_parser = subparsers.add_parser("nodes", help="List nodes from components DAG")
+    nodes_parser.set_defaults(command="nodes")
+    deploy_parser = subparsers.add_parser("deploy", help="Deploy's help")
+    deploy_parser.set_defaults(command="deploy")
+    fill_deploy_parser(deploy_parser)
+    return parser
+
+
+def fill_deploy_parser(parser):
+    parser.add_argument(
         "target",
         nargs="?",
         type=node,
@@ -49,7 +40,7 @@ def arguments_definition():
             " all the nodes (minus the filter) are selected"
         ),
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--playbooks_directory",
         action=EnvDefault,
         envvar="TDP_PLAYBOOKS_DIRECTORY",
@@ -57,7 +48,7 @@ def arguments_definition():
         default=None,
         help="Path to tdp-collection playbooks",
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--run-directory",
         action=EnvDefault,
         envvar="TDP_RUN_DIRECTORY",
@@ -65,7 +56,7 @@ def arguments_definition():
         default=None,
         help="Working binary where the executor is launched (`ansible-playbook` for Ansible)",
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--sqlite-path",
         action=EnvDefault,
         envvar="TDP_SQLITE_PATH",
@@ -73,16 +64,15 @@ def arguments_definition():
         default=None,
         help="Path to SQLITE database file",
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--filter",
         type=str,
         default=None,
         help="Glob on list name",
     )
-    run_parser.add_argument(
+    parser.add_argument(
         "--dry", action="store_true", help="Execute dag without running any action"
     )
-    return parser
 
 
 class EnvDefault(argparse.Action):
@@ -154,9 +144,9 @@ def deploy_action(
 def main():
     args = arguments_definition().parse_args()
     logger.debug("Arguments: " + str(vars(args)))
-    if "list_nodes" in args:
+    if args.command == "nodes":
         list_nodes()
-    else:
+    elif args.command == "deploy":
         deploy_action(
             playbooks_directory=args.playbooks_directory,
             target=args.target,
