@@ -66,7 +66,10 @@ optional arguments:
 
 #### Node usage
 ```
-usage: tdp nodes
+usage: tdp nodes [-h]
+
+optional arguments:
+  -h, --help  show this help message and exit
 ```
 
 #### Deploy usage
