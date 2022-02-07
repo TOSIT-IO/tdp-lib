@@ -31,6 +31,7 @@ visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
 dag = "tdp.devtools.dag_debug:debug_dag"
+tdp = "tdp.devtools.run:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
