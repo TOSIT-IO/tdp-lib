@@ -110,6 +110,11 @@ class Dag:
     def graph(self):
         self.graph = None
 
+    def get_actions(self, node=None):
+        if node:
+            return self.get_actions_to_node(node)
+        return self.get_all_actions()
+
     def get_actions_to_node(self, node):
         actions = list(
             nx.lexicographical_topological_sort(
@@ -118,6 +123,9 @@ class Dag:
         )
         actions.append(node)
         return actions
+
+    def get_all_actions(self):
+        return list(nx.lexicographical_topological_sort(self.graph))
 
     def filter_actions_glob(self, actions, glob):
         return fnmatch.filter(actions, glob)

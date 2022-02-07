@@ -43,3 +43,55 @@ optional arguments:
   -g          Each node argument will be process as glob pattern
   -r          Each node argument will be process as regex pattern
 ```
+
+### TDP
+
+TDP is a development tool implemented to run actions easily
+
+#### TDP usage
+`tdp` is the main tool with 2 commands, `nodes` and `deploy`
+```
+usage: tdp [-h] {nodes,deploy} ...
+
+TDP Runner
+
+positional arguments:
+  {nodes,deploy}
+    nodes         List nodes from components DAG
+    deploy        Deploy's help
+
+optional arguments:
+  -h, --help      show this help message and exit
+```
+
+#### Node usage
+```
+usage: tdp nodes
+```
+
+#### Deploy usage
+```
+usage: tdp deploy [-h] [--playbooks_directory PLAYBOOKS_DIRECTORY]
+                  [--run-directory RUN_DIRECTORY] [--sqlite-path SQLITE_PATH]
+                  [--filter FILTER] [--dry]
+                  [target]
+
+positional arguments:
+  target                Node in the dag, if no target is specified, all the
+                        nodes (minus the filter) are selected
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --playbooks_directory PLAYBOOKS_DIRECTORY
+                        Path to tdp-collection playbooks, settable through
+                        `TDP_PLAYBOOKS_DIRECTORY` environment variable
+  --run-directory RUN_DIRECTORY
+                        Working binary where the executor is launched
+                        (`ansible-playbook` for Ansible), settable through
+                        `TDP_RUN_DIRECTORY` environment variable
+  --sqlite-path SQLITE_PATH
+                        Path to SQLITE database file, settable through
+                        `TDP_SQLITE_PATH` environment variable
+  --filter FILTER       Glob on list name
+  --dry                 Execute dag without running any action
+```

@@ -46,7 +46,7 @@ class ActionRunner:
                 and action not in self._failed_nodes + self._skipped_nodes
             ):
                 action_log = self.run(action)
-                if action_log.state == StateEnum.FAILURE:
+                if action_log.state == StateEnum.FAILURE.value:
                     logger.error(f"Action {action} failed !")
                     self._failed_nodes.append(action)
                     descendants = nx.descendants(self.dag.graph, action).intersection(
@@ -60,8 +60,8 @@ class ActionRunner:
                     self._success_nodes.append(action)
                 yield action_log
 
-    def run_to_node(self, node, node_filter=None):
-        actions = self.dag.get_actions_to_node(node)
+    def run_to_node(self, node=None, node_filter=None):
+        actions = self.dag.get_actions(node)
 
         if hasattr(node_filter, "search"):
             actions = self.dag.filter_actions_regex(actions, node_filter)
