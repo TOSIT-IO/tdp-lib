@@ -48,8 +48,6 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(logger_handler)
 logger.addFilter(CommandFilter())
 
-adapter = CommandAdapter(logger, {"command": "MAIN"})
-
 
 # ----------- Argument definition
 
@@ -130,6 +128,18 @@ def fill_browse_parser(parser):
         default=None,
         help="Path to SQLITE database file",
     )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=15,
+        help="Limit number of deployments returned",
+    )
+    parser.add_argument(
+        "--offset",
+        type=int,
+        default=0,
+        help="At which offset should the database query should start",
+    )
 
 
 class EnvDefault(argparse.Action):
@@ -192,9 +202,9 @@ def format_action_log(action_log, headers):
 # ----------- Process query functions
 
 
-def process_deployments_query(adapter, session_class):
+def process_deployments_query(adapter, limit, offset, session_class):
     headers = [key for key, _ in keyvalgen(DeploymentLog)]
-    query = select(DeploymentLog).order_by(DeploymentLog.id)
+    query = select(DeploymentLog).order_by(DeploymentLog.id).limit(limit).offset(offset)
 
     with session_class() as session:
         result = session.execute(query).scalars().fetchall()
@@ -299,13 +309,15 @@ def deploy_action(
         session.commit()
 
 
-def browse_action(adapter, deployment_id=None, action=None, sqlite_path=None):
+def browse_action(
+    adapter, limit, offset, deployment_id=None, action=None, sqlite_path=None
+):
     if sqlite_path is None:
         raise ValueError("SQLITE_PATH cannot be None")
     session_class = get_session_class(sqlite_path)
 
     if not deployment_id:
-        process_deployments_query(adapter, session_class)
+        process_deployments_query(adapter, limit, offset, session_class)
     else:
         if not action:
             process_single_deployment_query(adapter, session_class, deployment_id)
@@ -335,6 +347,8 @@ def main():
     elif args.command == "browse":
         browse_action(
             adapter,
+            args.limit,
+            args.offset,
             deployment_id=args.deployment_id,
             action=args.action,
             sqlite_path=args.sqlite_path,
