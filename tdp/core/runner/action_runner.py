@@ -16,9 +16,6 @@ class ActionRunner:
     def __init__(self, dag, executor):
         self.dag = dag
         self._executor = executor
-        self._failed_nodes = []
-        self._success_nodes = []
-        self._skipped_nodes = []
 
     def run(self, action):
         logger.debug(f"Running action {action}")
@@ -41,23 +38,13 @@ class ActionRunner:
 
     def _run_actions(self, actions):
         for action in actions:
-            if (
-                not self.dag.components[action].noop
-                and action not in self._failed_nodes + self._skipped_nodes
-            ):
+            if not self.dag.components[action].noop:
                 action_log = self.run(action)
                 if action_log.state == StateEnum.FAILURE.value:
                     logger.error(f"Action {action} failed !")
-                    self._failed_nodes.append(action)
-                    descendants = nx.descendants(self.dag.graph, action).intersection(
-                        actions
-                    )
-                    self._skipped_nodes.extend(descendants)
-                    for desc in descendants:
-                        logger.warning(f"Action {desc} will be skipped")
-                else:
-                    logger.info(f"Action {action} success")
-                    self._success_nodes.append(action)
+                    yield action_log
+                    return
+                logger.info(f"Action {action} success")
                 yield action_log
 
     def run_to_node(self, node=None, node_filter=None):
