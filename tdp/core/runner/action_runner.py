@@ -73,7 +73,7 @@ class ActionRunner:
         end = datetime.now()
 
         filtered_failures = filter(
-            lambda action_log: action_log.state == StateEnum.FAILURE, action_logs
+            lambda action_log: action_log.state == StateEnum.FAILURE.value, action_logs
         )
 
         state = StateEnum.FAILURE if any(filtered_failures) else StateEnum.SUCCESS
