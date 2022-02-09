@@ -14,15 +14,49 @@ from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 
-logger = logging.getLogger("tdp").getChild("dag")
+GREEN = "\033[0;32m"
+END = "\033[0m"
 
 DAG = Dag()
+
+logger = logging.getLogger("devtools.tdp")
+
+
+# ----------- Logging configuration
+
+
+class CommandAdapter(logging.LoggerAdapter):
+    def processs(self, msg, kwargs):
+        return "[%s] %s" % (self.extra["command"], msg), kwargs
+
+
+class CommandFilter(logging.Filter):
+    def filter(self, record):
+        if not "command" in record.__dict__:
+            setattr(record, "command", "MAIN")
+        return True
+
+
+logger_handler = logging.StreamHandler()
+logger_handler.setFormatter(
+    logging.Formatter(
+        f"[{GREEN}%(command)s{END}] [%(levelname)s] %(funcName)s - %(message)s"
+    )
+)
+
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logger_handler)
+logger.addFilter(CommandFilter())
+
+adapter = CommandAdapter(logger, {"command": "MAIN"})
+
 
 # ----------- Argument definition
 
 
 def arguments_definition():
     parser = argparse.ArgumentParser(description="TDP Runner")
+    parser.set_defaults(command="main")
     subparsers = parser.add_subparsers()
     nodes_parser = subparsers.add_parser("nodes", help="List nodes from components DAG")
     nodes_parser.set_defaults(command="nodes")
@@ -155,20 +189,16 @@ def format_action_log(action_log, headers):
     return {key: custom_format(key, getattr(action_log, key)) for key in headers}
 
 
-def format_single_action_log(action_log, headers):
-    return {key: getattr(action_log, key) for key in headers}
-
-
 # ----------- Process query functions
 
 
-def process_deployments_query(session_class):
+def process_deployments_query(adapter, session_class):
     headers = [key for key, _ in keyvalgen(DeploymentLog)]
     query = select(DeploymentLog).order_by(DeploymentLog.id)
 
     with session_class() as session:
         result = session.execute(query).scalars().fetchall()
-        logger.info(
+        adapter.info(
             "Deployments:\n"
             + tabulate(
                 [
@@ -180,7 +210,7 @@ def process_deployments_query(session_class):
         )
 
 
-def process_single_deployment_query(session_class, deployment_id):
+def process_single_deployment_query(adapter, session_class, deployment_id):
     deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
     action_headers = [key for key, _ in keyvalgen(ActionLog)]
     action_headers.remove("deployment")
@@ -192,7 +222,7 @@ def process_single_deployment_query(session_class, deployment_id):
 
     with session_class() as session:
         result = session.execute(query).scalars().fetchall()
-        logger.info(
+        adapter.info(
             "Deployment:\n"
             + tabulate(
                 [
@@ -202,7 +232,7 @@ def process_single_deployment_query(session_class, deployment_id):
                 headers="keys",
             )
         )
-        logger.info(
+        adapter.info(
             "Actions:\n"
             + tabulate(
                 [
@@ -214,7 +244,7 @@ def process_single_deployment_query(session_class, deployment_id):
         )
 
 
-def process_action_query(session_class, deployment_id, action):
+def process_action_query(adapter, session_class, deployment_id, action):
     headers = [key for key, _ in keyvalgen(ActionLog)]
     headers.remove("deployment")
     query = (
@@ -225,28 +255,30 @@ def process_action_query(session_class, deployment_id, action):
     )
     with session_class() as session:
         result = session.execute(query).scalars().fetchall()
-        logger.info(
+        action_logs = [action_log for action_log in result]
+        adapter.info(
             "Action:\n"
             + tabulate(
-                [
-                    format_single_action_log(action_log, headers)
-                    for action_log in result
-                ],
+                [format_action_log(action_log, headers) for action_log in action_logs],
                 headers="keys",
             )
         )
+        if action_logs:
+            action_log = action_logs[0]
+            adapter.info(f"{action_log.action} logs:\n" + str(action_log.logs, "utf-8"))
 
 
 # ----------- Commands
 
 
-def list_nodes():
+def list_nodes(adapter):
     endline = "\n- "
     components = endline.join(component for component in DAG.get_all_actions())
-    logger.info(f"Component list:{endline}{components}")
+    adapter.info(f"Component list:{endline}{components}")
 
 
 def deploy_action(
+    adapter,
     playbooks_directory,
     target=None,
     run_directory=None,
@@ -261,23 +293,24 @@ def deploy_action(
     action_runner = ActionRunner(DAG, ansible_executor)
     session_class = get_session_class(sqlite_path)
     with session_class() as session:
+        adapter.info(f"Deploying {target}")
         deployment = action_runner.run_to_node(target, filter)
         session.add(deployment)
         session.commit()
 
 
-def browse_action(deployment_id=None, action=None, sqlite_path=None):
+def browse_action(adapter, deployment_id=None, action=None, sqlite_path=None):
     if sqlite_path is None:
         raise ValueError("SQLITE_PATH cannot be None")
     session_class = get_session_class(sqlite_path)
 
     if not deployment_id:
-        process_deployments_query(session_class)
+        process_deployments_query(adapter, session_class)
     else:
         if not action:
-            process_single_deployment_query(session_class, deployment_id)
+            process_single_deployment_query(adapter, session_class, deployment_id)
         else:
-            process_action_query(session_class, deployment_id, action)
+            process_action_query(adapter, session_class, deployment_id, action)
 
 
 # ----------- Main
@@ -286,10 +319,12 @@ def browse_action(deployment_id=None, action=None, sqlite_path=None):
 def main():
     args = arguments_definition().parse_args()
     logger.debug("Arguments: " + str(vars(args)))
+    adapter = CommandAdapter(logger, {"command": args.command.upper()})
     if args.command == "nodes":
-        list_nodes()
+        list_nodes(adapter)
     elif args.command == "deploy":
         deploy_action(
+            adapter,
             playbooks_directory=args.playbooks_directory,
             target=args.target,
             run_directory=args.run_directory,
@@ -299,6 +334,7 @@ def main():
         )
     elif args.command == "browse":
         browse_action(
+            adapter,
             deployment_id=args.deployment_id,
             action=args.action,
             sqlite_path=args.sqlite_path,
