@@ -139,8 +139,8 @@ class Dag:
         Validation rules :
         - *_start actions can only be required from within its own service
         - *_install actions should only depend on other *_install actions
-        - Each service (HDFS, HBase, Hive, etc) should have *_install, *_init and *_start actions even if they are
-          "empty" (tagged with noop)
+        - Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
+          even if they are "empty" (tagged with noop)
         - Actions tagged with the noop flag should not have a playbook defined in the collection
         """
         # key: service_name
@@ -173,8 +173,8 @@ class Dag:
                         f"not an install action and should only depends on other install action"
                     )
 
-            # Each service (HDFS, HBase, Hive, etc) should have *_install, *_init and *_start actions even if they are
-            # "empty" (tagged with noop)
+            # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
+            # even if they are "empty" (tagged with noop)
             # Part 1
             if component.is_service():
                 services_actions.setdefault(component.service, set()).add(
@@ -195,10 +195,10 @@ class Dag:
                             f"Component '{component_name}' should have a playbook"
                         )
 
-        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_init and *_start actions even if they are
-        # "empty" (tagged with noop)
+        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
+        # even if they are "empty" (tagged with noop)
         # Part 2
-        actions_for_service = {"install", "start", "init"}
+        actions_for_service = {"install", "config", "start", "init"}
         for service, actions in services_actions.items():
             if not actions.issuperset(actions_for_service):
                 logger.warning(
