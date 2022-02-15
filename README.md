@@ -8,6 +8,7 @@ poetry run githooks setup
 
 Install optional dependencies for graph visualization:
 ```
+sudo apt install graphviz
 poetry install -E visualization
 ```
 
