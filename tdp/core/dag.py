@@ -176,10 +176,9 @@ class Dag:
             # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
             # even if they are "empty" (tagged with noop)
             # Part 1
+            service_actions = services_actions.setdefault(component.service, set())
             if component.is_service():
-                services_actions.setdefault(component.service, set()).add(
-                    component.action
-                )
+                service_actions.add(component.action)
 
             # Actions tagged with the noop flag should not have a playbook defined in the collection
             if self.playbooks_dir:
