@@ -142,6 +142,8 @@ class Dag:
         - Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
           even if they are "empty" (tagged with noop)
         - Actions tagged with the noop flag should not have a playbook defined in the collection
+        - Each service action (config, start, init) except the first (install) must have an explicit
+          dependency with the previous service action within the same service
         """
         # key: service_name
         # value: set of available actions for the service
@@ -179,6 +181,29 @@ class Dag:
             service_actions = services_actions.setdefault(component.service, set())
             if component.is_service():
                 service_actions.add(component.action)
+
+                # Each service action (config, start, init) except the first (install) must have an explicit
+                # dependency with the previous service action within the same service
+                actions_order = ["install", "config", "start", "init"]
+                # Check only if the action is in actions_order and is not the first
+                if (
+                    component.action in actions_order
+                    and component.action != actions_order[0]
+                ):
+                    previous_action = actions_order[
+                        actions_order.index(component.action) - 1
+                    ]
+                    previous_service_action = f"{component.service}_{previous_action}"
+                    previous_service_action_found = False
+                    # Loop over dependency and check if the service previous action is found
+                    for dependency in component.depends_on:
+                        if dependency == previous_service_action:
+                            previous_service_action_found = True
+                    if not previous_service_action_found:
+                        logger.warning(
+                            f"Component '{component_name}' is a service action and have to depends on "
+                            f"'{component.service}_{previous_action}'"
+                        )
 
             # Actions tagged with the noop flag should not have a playbook defined in the collection
             if self.playbooks_dir:
