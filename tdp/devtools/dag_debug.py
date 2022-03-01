@@ -35,6 +35,11 @@ def debug_dag_args():
         help="Each node argument will be process as regex pattern",
     )
     parser.add_argument(
+        "-t",
+        action="store_true",
+        help="Apply a transitive reduction on the DAG",
+    )
+    parser.add_argument(
         "nodes",
         nargs="*",
         default=None,
@@ -43,7 +48,7 @@ def debug_dag_args():
     return parser
 
 
-def debug_dag(nodes=None, pattern_format=None):
+def debug_dag(nodes=None, pattern_format=None, transitive_reduction=None):
     f"""{DAG_SUMMARY}
 
     This function will lookup in the program arguments to check wether there's a node if no node is specified.
@@ -51,15 +56,18 @@ def debug_dag(nodes=None, pattern_format=None):
         nodes (List[str], optional): Nodes on which to compute a graph. Defaults to None.
         pattern_format (str, optional): Pattern format for nodes argument: glob or regex
     """
-    if not nodes:
+    if not nodes or transitive_reduction is None:
         args = debug_dag_args().parse_args()
-        nodes = args.nodes
+        if not nodes:
+            nodes = args.nodes
 
-        if not pattern_format:
-            if args.g:
-                pattern_format = "glob"
-            elif args.r:
-                pattern_format = "regex"
+            if not pattern_format:
+                if args.g:
+                    pattern_format = "glob"
+                elif args.r:
+                    pattern_format = "regex"
+        if transitive_reduction is None:
+            transitive_reduction = args.t
 
     dag = Dag()
     graph = dag.graph
@@ -84,4 +92,6 @@ def debug_dag(nodes=None, pattern_format=None):
         for node in nodes:
             ancestors.update(nx.ancestors(graph, node))
         graph = graph.subgraph(ancestors)
+    if transitive_reduction:
+        graph = nx.transitive_reduction(graph)
     show(graph)
