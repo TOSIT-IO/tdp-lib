@@ -48,26 +48,15 @@ def debug_dag_args():
     return parser
 
 
-def debug_dag(nodes=None, pattern_format=None, transitive_reduction=None):
-    f"""{DAG_SUMMARY}
-
-    This function will lookup in the program arguments to check wether there's a node if no node is specified.
-    Args:
-        nodes (List[str], optional): Nodes on which to compute a graph. Defaults to None.
-        pattern_format (str, optional): Pattern format for nodes argument: glob or regex
-    """
-    if not nodes or transitive_reduction is None:
-        args = debug_dag_args().parse_args()
-        if not nodes:
-            nodes = args.nodes
-
-            if not pattern_format:
-                if args.g:
-                    pattern_format = "glob"
-                elif args.r:
-                    pattern_format = "regex"
-        if transitive_reduction is None:
-            transitive_reduction = args.t
+def debug_dag():
+    args = debug_dag_args().parse_args()
+    nodes = args.nodes
+    pattern_format = None
+    if args.g:
+        pattern_format = "glob"
+    elif args.r:
+        pattern_format = "regex"
+    transitive_reduction = args.t
 
     dag = Dag()
     graph = dag.graph
