@@ -15,6 +15,15 @@ from contextlib import contextmanager
 
 logger = logging.getLogger("tdp").getChild("variables")
 
+# https://stackoverflow.com/a/33300001
+def str_presenter(dumper, data):
+    if len(data.splitlines()) > 1:  # check for multiline string
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
+
+
+Dumper.add_representer(str, str_presenter)
+
 
 class Variables:
     """Manages a var file
@@ -140,7 +149,9 @@ class _VariablesIOWrapper(VariablesDict):
         yield
 
         self._file_descriptor.seek(0)
-        self._file_descriptor.write(yaml.dump(self._content, Dumper=Dumper))
+        self._file_descriptor.write(
+            yaml.dump(self._content, Dumper=Dumper, sort_keys=False, width=1000)
+        )
         self._file_descriptor.truncate()
         self._file_descriptor.flush()
         # https://docs.python.org/3/library/os.html#os.fsync
