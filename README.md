@@ -50,70 +50,23 @@ optional arguments:
 TDP is a development tool implemented to run actions easily
 
 #### TDP usage
-`tdp` is the main tool with 3 commands, `nodes`, `deploy` and `browse`
 
 ```
-usage: tdp [-h] {nodes,deploy,browse} ...
+usage: tdp [-h] {nodes,browse,deploy,init,default_diff,services_version} ...
 
 TDP Runner
 
 positional arguments:
-  {nodes,deploy,browse}
+  {nodes,browse,deploy,init,default_diff,services_version}
     nodes               List nodes from components DAG
-    deploy              Deploy's help
-    browse              Browse's help
+    browse              Browse deployment logs
+    deploy              Deploy TDP
+    init                Init database / services in tdp vars
+    default_diff        Difference between tdp_vars and defaults
+    services_version    Get the version of deployed services. (If a service
+                        has never been deployed, does not show it
 
 optional arguments:
   -h, --help            show this help message and exit
 ```
 
-#### Node usage
-```
-usage: tdp nodes [-h]
-
-optional arguments:
-  -h, --help  show this help message and exit
-```
-
-#### Deploy usage
-```
-usage: tdp deploy [-h] [--playbooks_directory PLAYBOOKS_DIRECTORY]
-                  [--run-directory RUN_DIRECTORY] [--sqlite-path SQLITE_PATH]
-                  [--filter FILTER] [--dry]
-                  [target]
-
-positional arguments:
-  target                Node in the dag, if no target is specified, all the
-                        nodes (minus the filter) are selected
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --playbooks_directory PLAYBOOKS_DIRECTORY
-                        Path to tdp-collection playbooks, settable through
-                        `TDP_PLAYBOOKS_DIRECTORY` environment variable
-  --run-directory RUN_DIRECTORY
-                        Working binary where the executor is launched
-                        (`ansible-playbook` for Ansible), settable through
-                        `TDP_RUN_DIRECTORY` environment variable
-  --sqlite-path SQLITE_PATH
-                        Path to SQLITE database file, settable through
-                        `TDP_SQLITE_PATH` environment variable
-  --filter FILTER       Glob on list name
-  --dry                 Execute dag without running any action
-```
-
-#### Browse usage
-
-```
-usage: tdp browse [-h] [--sqlite-path SQLITE_PATH] [deployment_id] [action]
-
-positional arguments:
-  deployment_id         Deployment to display
-  action                Action to display
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --sqlite-path SQLITE_PATH
-                        Path to SQLITE database file, settable through
-                        `TDP_SQLITE_PATH` environment variable
-```
