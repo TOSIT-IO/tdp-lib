@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
-from . import Base
+from tdp.core.models.base import Base
 
 
 class DeploymentLog(Base):
@@ -15,3 +15,4 @@ class DeploymentLog(Base):
     actions = relationship(
         "ActionLog", back_populates="deployment", order_by="ActionLog.start"
     )
+    services = relationship("ServiceLog", back_populates="deployment")

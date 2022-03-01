@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pytest
 
-from tdp.core.models import Base
+from tdp.core.models.base import Base
 from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.models.action_log import ActionLog
 
