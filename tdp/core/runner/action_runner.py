@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import Generator, List, Tuple
 import logging
 
 import networkx as nx
 
 from tdp.core.models.action_log import ActionLog
 from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.service_log import ServiceLog
 from tdp.core.runner.executor import StateEnum
 
 logger = logging.getLogger("tdp").getChild("action_runner")
@@ -13,9 +15,10 @@ logger = logging.getLogger("tdp").getChild("action_runner")
 class ActionRunner:
     """Run actions"""
 
-    def __init__(self, dag, executor):
+    def __init__(self, dag, executor, service_managers):
         self.dag = dag
         self._executor = executor
+        self._service_managers = service_managers
 
     def run(self, action):
         logger.debug(f"Running action {action}")
@@ -47,6 +50,26 @@ class ActionRunner:
                 logger.info(f"Action {action} success")
                 yield action_log
 
+    def _services_from_actions(self, actions):
+        """Returns a set of services from an action list"""
+        return {
+            self.dag.components[action].service
+            for action in actions
+            if not self.dag.components[action].noop
+        }
+
+    def _build_service_logs(self, action_logs):
+        services = self._services_from_actions(
+            action_log.action for action_log in action_logs
+        )
+        return [
+            ServiceLog(
+                service=self._service_managers[service_name].service,
+                version=self._service_managers[service_name].version,
+            )
+            for service_name in services
+        ]
+
     def run_to_node(self, node=None, node_filter=None):
         actions = self.dag.get_actions(node)
 
@@ -65,6 +88,7 @@ class ActionRunner:
 
         state = StateEnum.FAILURE if any(filtered_failures) else StateEnum.SUCCESS
 
+        service_logs = self._build_service_logs(action_logs)
         return DeploymentLog(
             target=node,
             filter=str(node_filter),
@@ -72,4 +96,5 @@ class ActionRunner:
             end=end,
             state=state.value,
             actions=action_logs,
+            services=service_logs,
         )

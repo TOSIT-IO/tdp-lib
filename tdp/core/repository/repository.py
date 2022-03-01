@@ -7,6 +7,14 @@ from weakref import proxy
 from tdp.core.variables import Variables
 
 
+class NoVersionYet(Exception):
+    pass
+
+
+class NotARepository(Exception):
+    pass
+
+
 class Repository(ABC):
     """Abstract class representing a versionned repository.
 
@@ -75,4 +83,12 @@ class Repository(ABC):
     @abstractmethod
     @contextmanager  # type: ignore
     def validate(self, message):
+        pass
+
+    @abstractmethod
+    def current_version(self):
+        pass
+
+    @abstractmethod
+    def is_clean(self):
         pass

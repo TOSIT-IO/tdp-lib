@@ -27,6 +27,7 @@ class Dag:
         self._components = None
         self._graph = None
         self._yaml_files = None
+        self._services = None
         self.playbooks_dir = playbooks_dir
 
         if yaml_files is None:
@@ -73,10 +74,23 @@ class Dag:
     def components(self, value):
         self._components = value
         del self.graph
+        del self.services
 
     @components.deleter
     def components(self):
         self.components = None
+
+    @property
+    def services(self):
+        if self._services is None:
+            self._services = list(
+                {component.service for component in self.components.values()}
+            )
+        return self._services
+
+    @services.deleter
+    def services(self):
+        self._services = None
 
     @property
     def graph(self):
