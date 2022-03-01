@@ -1,6 +1,6 @@
 from sqlalchemy import BLOB, Column, DateTime, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from . import Base
+from tdp.core.models.base import Base
 
 
 class ActionLog(Base):
