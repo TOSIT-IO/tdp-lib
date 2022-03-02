@@ -85,15 +85,14 @@ class ServiceManager:
         for service in services:
             service_directory: Path = services_directory / service.name
 
-            if not service_directory.exists():
-                logger.info(
-                    f"{service_directory.absolute()} does not exist, creating..."
-                )
+            try:
                 service_directory.mkdir(parents=True)
-            if not service_directory.is_dir():
-                raise ValueError(
-                    f"{service_directory.absolute()} should be a directory"
-                )
+                logger.info(f"{service_directory.absolute()} does not exist, created")
+            except FileExistsError:
+                if not service_directory.is_dir():
+                    raise ValueError(
+                        f"{service_directory.absolute()} should be a directory"
+                    )
 
             repo = GitRepository.init(service_directory)
             service_manager = ServiceManager(service, repo)
