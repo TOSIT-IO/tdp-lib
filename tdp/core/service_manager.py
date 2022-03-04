@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from collections import OrderedDict
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.variables import Variables
@@ -40,29 +41,33 @@ class ServiceManager:
 
         # dict with filepath as key and Path as value
         # a service can have multiple variable files present
-        var_paths = {
-            path.name: path for path in service_default_vars_directory.glob("*.yml")
-        }
+        default_var_paths = OrderedDict(
+            (path.name, path) for path in service_default_vars_directory.glob("*.yml")
+        )
 
         # If service has no default vars, put a key with a none value
-        if not var_paths:
-            var_paths[self.name + ".yml"] = None
+        if not default_var_paths:
+            default_var_paths[self.name + ".yml"] = None
 
         with self.repository.validate(
             f"{self.name}: initial commit"
-        ) as repostiory, repostiory.open_var_files(var_paths.keys()) as configurations:
+        ) as repostiory, repostiory.open_var_files(
+            default_var_paths.keys()
+        ) as configurations:
             # open_var_files returns an OrderedDict, therefore we can iterate over the two values with zip
-            for configuration, path in zip(configurations.values(), var_paths.values()):
-                if path:
+            for configuration, default_variables_path in zip(
+                configurations.values(), default_var_paths.values()
+            ):
+                if default_variables_path:
                     logger.info(
                         f"Initializing {self.name} with defaults from {service_default_vars_directory}"
                     )
-                    with Variables(path).open() as variables:
-                        configuration.update(variables._content)
+                    with Variables(default_variables_path).open() as variables:
+                        configuration.update(variables)
                 # service has no default vars
                 else:
                     logger.info(f"Initializing {self.name} without variables")
-                    configuration.update({})
+                    pass
 
     @staticmethod
     def initialize_service_managers(
@@ -73,17 +78,17 @@ class ServiceManager:
         Args:
             services (List[Service]): list of services
             services_directory (PathLike): path of the tdp vars
+            default_vars_directory (PathLike): path of the default tdp vars
 
         Returns:
             Dict[str, ServiceManager]: mapping of service with their manager
         """
         services_directory = Path(services_directory)
         default_vars_directory = Path(default_vars_directory)
-
         service_managers = {}
 
         for service in services:
-            service_directory: Path = services_directory / service.name
+            service_directory = services_directory / service.name
 
             try:
                 service_directory.mkdir(parents=True)

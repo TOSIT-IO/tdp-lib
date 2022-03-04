@@ -107,9 +107,12 @@ class VariablesDict:
         """update
 
         Args:
-            var (dict): variables that will be written to the group vars
+            var (Union[dict, VariablesDict]): variables that will be written to the group vars
         """
-        self._content.update(var)
+        if isinstance(var, VariablesDict):
+            self._content.update(var._content)
+        else:
+            self._content.update(var)
 
     def unset(self, key):
         """[summary]
