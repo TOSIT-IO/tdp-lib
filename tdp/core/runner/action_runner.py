@@ -1,8 +1,5 @@
 from datetime import datetime
-from typing import Generator, List, Tuple
 import logging
-
-import networkx as nx
 
 from tdp.core.models.action_log import ActionLog
 from tdp.core.models.deployment_log import DeploymentLog

@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from tabulate import tabulate
-from sqlalchemy import desc, distinct, select
 
 from tdp.core.models import Service, ServiceLog
 from tdp.core.models.base import keyvalgen
