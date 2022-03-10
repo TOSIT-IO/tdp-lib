@@ -12,6 +12,10 @@ class StateEnum(Enum):
             v.value for v in cls.__members__.values()
         )
 
+    @classmethod
+    def max_length(cls):
+        return max(len(state.value) for state in list(StateEnum))
+
 
 class Executor(ABC):
     """An Executor is an object able to run an action."""

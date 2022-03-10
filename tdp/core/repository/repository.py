@@ -6,6 +6,9 @@ from weakref import proxy
 
 from tdp.core.variables import Variables
 
+# Version string length isn't checked before inserting into database
+VERSION_MAX_LENGTH = 40
+
 
 class NoVersionYet(Exception):
     pass

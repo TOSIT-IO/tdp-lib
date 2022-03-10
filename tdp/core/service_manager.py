@@ -7,19 +7,19 @@ from tdp.core.variables import Variables
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 
+SERVICE_NAME_MAX_LENGTH = 15
+
 
 class ServiceManager:
-    def __init__(self, service, repository):
-        self._service = service
+    def __init__(self, service_name, repository):
+        if len(service_name) > SERVICE_NAME_MAX_LENGTH:
+            raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
+        self._name = service_name
         self._repo = repository
 
     @property
     def name(self):
-        return self.service.name
-
-    @property
-    def service(self):
-        return self._service
+        return self._name
 
     @property
     def repository(self):
@@ -88,7 +88,7 @@ class ServiceManager:
         service_managers = {}
 
         for service in services:
-            service_directory = services_directory / service.name
+            service_directory = services_directory / service
 
             try:
                 service_directory.mkdir(parents=True)
@@ -106,11 +106,9 @@ class ServiceManager:
                     f"{service_manager.name} is already initialized at {service_manager.version}"
                 )
             except NoVersionYet:
-                service_manager.initialize_variables(
-                    default_vars_directory / service.name
-                )
+                service_manager.initialize_variables(default_vars_directory / service)
 
-            service_managers[service.name] = service_manager
+            service_managers[service] = service_manager
 
         return service_managers
 
@@ -130,7 +128,7 @@ class ServiceManager:
         service_managers = {}
 
         for service in services:
-            repo = GitRepository(services_directory / service.name)
-            service_managers[service.name] = ServiceManager(service, repo)
+            repo = GitRepository(services_directory / service)
+            service_managers[service] = ServiceManager(service, repo)
 
         return service_managers

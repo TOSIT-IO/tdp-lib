@@ -61,7 +61,7 @@ class ActionRunner:
         )
         return [
             ServiceLog(
-                service=self._service_managers[service_name].service,
+                service=self._service_managers[service_name].name,
                 version=self._service_managers[service_name].version,
             )
             for service_name in services

@@ -1,15 +1,13 @@
 import difflib
-import os
+import pprint
+import yaml
+
 from pathlib import Path
-from tdp.core.models.service import Service
+
 from tdp.core.service_manager import ServiceManager
-from tdp.core.variables import Variables
 from tdp.devtools.run.colors import END, GREEN, RED, YELLOW
 from tdp.devtools.run.commands.command import Command
 from tdp.devtools.run.env_default import EnvDefault
-
-import yaml
-import pprint
 
 
 class DefaultDiffCommand(Command):
@@ -22,8 +20,9 @@ class DefaultDiffCommand(Command):
         self.service = args.service
 
     def run(self):
-        services = [Service(name=service) for service in self.dag.services]
-        service_managers = ServiceManager.get_service_managers(services, self.vars)
+        service_managers = ServiceManager.get_service_managers(
+            self.dag.services, self.vars
+        )
         collection_default_vars = self.collection_path / "tdp_vars_defaults"
 
         if self.service:
