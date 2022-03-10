@@ -1,7 +1,6 @@
 from pathlib import Path
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.service_manager import ServiceManager
-from tdp.core.variables import Variables
 from tdp.devtools.run.commands.command import Command
 from tdp.devtools.run.env_default import EnvDefault
 from tdp.devtools.run.session import init_db
@@ -19,7 +18,8 @@ class InitCommand(Command):
     def run(self):
         if self.sqlite_path is None:
             raise ValueError("SQLITE_PATH cannot be None")
-        services = init_db(self.dag.services, self.sqlite_path)
+        init_db(self.sqlite_path)
+        services = self.dag.services
         default_vars = self.collection_path / "tdp_vars_defaults"
         service_managers = ServiceManager.initialize_service_managers(
             services, self.vars, default_vars

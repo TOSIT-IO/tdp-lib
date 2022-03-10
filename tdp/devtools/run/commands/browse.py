@@ -126,7 +126,7 @@ class BrowseCommand(Command):
                         format_service_log(service_log, service_headers)
                         for action_log in result
                         for service_log in action_log.deployment.services
-                        if service_log.service.name == action_log.action.split("_")[0]
+                        if service_log.service == action_log.action.split("_")[0]
                     ],
                     headers="keys",
                 )
@@ -193,7 +193,7 @@ def format_deployment_log(deployment_log, headers):
             else:
                 return ",".join(action.action for action in value)
         elif key == "services":
-            return ",".join(str(service_log.service.name) for service_log in value)
+            return ",".join(str(service_log.service) for service_log in value)
         else:
             return str(value)
 
@@ -214,8 +214,6 @@ def format_service_log(service_log, headers):
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])
-        elif key == "service":
-            return value.name
         else:
             return str(value)
 

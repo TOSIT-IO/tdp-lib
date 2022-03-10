@@ -9,12 +9,17 @@ RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
 RE_GET_SERVICE = re.compile("^([^_]+)_.*")
 RE_GET_ACTION = re.compile(".*_([^_]+)$")
 
+NODE_NAME_MAX_LENGTH = 50
+
 
 class Component:
     def __init__(self, name, depends_on=None, noop=False):
         self.name = name
         self.depends_on = depends_on or []
         self.noop = noop
+
+        if len(name) > NODE_NAME_MAX_LENGTH:
+            raise ValueError(f"{name} is longer than {NODE_NAME_MAX_LENGTH}")
 
         match = RE_GET_SERVICE.search(self.name)
         if not match:

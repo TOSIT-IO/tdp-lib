@@ -1,8 +1,9 @@
 from pathlib import Path
+from sqlalchemy import func, tuple_
 
 from tabulate import tabulate
 
-from tdp.core.models import Service, ServiceLog
+from tdp.core.models import ServiceLog
 from tdp.core.models.base import keyvalgen
 from tdp.devtools.run.commands.command import Command
 from tdp.devtools.run.env_default import EnvDefault
@@ -25,10 +26,20 @@ class ServicesVersionCommand(Command):
                 key for key, _ in keyvalgen(ServiceLog) if key != "deployment"
             ]
 
+            latest_deployment_by_service = (
+                session.query(func.max(ServiceLog.deployment_id), ServiceLog.service)
+                .group_by(ServiceLog.service)
+                .subquery()
+            )
+
             service_latest_version = (
                 session.query(ServiceLog)
-                .group_by(ServiceLog.service_id)
                 .order_by(ServiceLog.deployment_id.desc())
+                .filter(
+                    tuple_(ServiceLog.deployment_id, ServiceLog.service).in_(
+                        latest_deployment_by_service
+                    )
+                )
                 .all()
             )
 
@@ -60,8 +71,6 @@ def format_service_log(service_log, headers):
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])
-        elif key == "service":
-            return value.name
         else:
             return str(value)
 
