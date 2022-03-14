@@ -5,9 +5,9 @@ from tabulate import tabulate
 
 from tdp.core.models import ActionLog, DeploymentLog, ServiceLog
 from tdp.core.models.base import keyvalgen
-from tdp.devtools.run.commands.command import Command
-from tdp.devtools.run.env_default import EnvDefault
-from tdp.devtools.run.session import get_session_class
+from tdp.cli.run.commands.command import Command
+from tdp.cli.run.env_default import EnvDefault
+from tdp.cli.run.session import get_session_class
 
 
 class BrowseCommand(Command):

@@ -5,9 +5,9 @@ import yaml
 from pathlib import Path
 
 from tdp.core.service_manager import ServiceManager
-from tdp.devtools.run.colors import END, GREEN, RED, YELLOW
-from tdp.devtools.run.commands.command import Command
-from tdp.devtools.run.env_default import EnvDefault
+from tdp.cli.run.colors import END, GREEN, RED, YELLOW
+from tdp.cli.run.commands.command import Command
+from tdp.cli.run.env_default import EnvDefault
 
 
 class DefaultDiffCommand(Command):
