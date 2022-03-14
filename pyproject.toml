@@ -19,11 +19,12 @@ matplotlib = { version = "3.3.4", optional = true }
 pydot = { version = "1.4.2", optional = true }
 GitPython = "3.1.18"
 SQLAlchemy = "^1.4.31"
+click = "8.0.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
 black = "21.12b0"
-poetry-githooks = "1.1.4"
+poetry-githooks = "2.0.0"
 tabulate = "0.8.9"
 
 [tool.poetry.extras]
