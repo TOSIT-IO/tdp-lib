@@ -9,7 +9,6 @@ homepage = "https://github.com/TOSIT-FR/tdp-lib"
 repository = "https://github.com/TOSIT-FR/tdp-lib"
 documentation = "https://github.com/TOSIT-FR/tdp-lib"
 packages = [{ include = "tdp" }]
-exclude = ["tdp/devtools"]
 
 [tool.poetry.dependencies]
 python = ">=3.6.2,<4.0"
@@ -31,8 +30,8 @@ tabulate = "0.8.9"
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
-dag = "tdp.devtools.dag_debug:debug_dag"
-tdp = "tdp.devtools.run.__main__:main"
+dag = "tdp.cli.dag_debug:debug_dag"
+tdp = "tdp.cli.run.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

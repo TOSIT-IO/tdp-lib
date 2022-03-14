@@ -11,7 +11,7 @@ try:
     import pydot
 except ImportError as e:
     raise RuntimeError(
-        "You need to install the 'visualization' extras to be able to use the devtools. Run 'poetry install --extras visualization'"
+        "You need to install the 'visualization' extras to be able to use the dag command. Run 'poetry install --extras visualization'"
     ) from e
 
 

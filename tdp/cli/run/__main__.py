@@ -3,17 +3,17 @@ import logging
 
 
 from tdp.core.dag import Dag
-from tdp.devtools.run.colors import END, GREEN
-from tdp.devtools.run.commands.browse import BrowseCommand
-from tdp.devtools.run.commands.deploy import DeployCommand
-from tdp.devtools.run.commands.default_diff import DefaultDiffCommand
-from tdp.devtools.run.commands.init import InitCommand
-from tdp.devtools.run.commands.nodes import NodesCommand
-from tdp.devtools.run.commands.service_versions import ServicesVersionCommand
+from tdp.cli.run.colors import END, GREEN
+from tdp.cli.run.commands.browse import BrowseCommand
+from tdp.cli.run.commands.deploy import DeployCommand
+from tdp.cli.run.commands.default_diff import DefaultDiffCommand
+from tdp.cli.run.commands.init import InitCommand
+from tdp.cli.run.commands.nodes import NodesCommand
+from tdp.cli.run.commands.service_versions import ServicesVersionCommand
 
 DAG = Dag()
 
-logger = logging.getLogger("devtools.tdp")
+logger = logging.getLogger("cli.tdp")
 
 
 # ----------- Logging configuration

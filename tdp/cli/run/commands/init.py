@@ -1,9 +1,9 @@
 from pathlib import Path
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.service_manager import ServiceManager
-from tdp.devtools.run.commands.command import Command
-from tdp.devtools.run.env_default import EnvDefault
-from tdp.devtools.run.session import init_db
+from tdp.cli.run.commands.command import Command
+from tdp.cli.run.env_default import EnvDefault
+from tdp.cli.run.session import init_db
 
 
 class InitCommand(Command):

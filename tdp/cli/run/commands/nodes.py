@@ -1,4 +1,4 @@
-from tdp.devtools.run.commands.command import Command
+from tdp.cli.run.commands.command import Command
 
 
 class NodesCommand(Command):

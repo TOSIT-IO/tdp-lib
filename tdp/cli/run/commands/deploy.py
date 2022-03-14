@@ -4,9 +4,9 @@ from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.service_manager import ServiceManager
 
-from tdp.devtools.run.commands.command import Command
-from tdp.devtools.run.env_default import EnvDefault
-from tdp.devtools.run.session import get_session_class
+from tdp.cli.run.commands.command import Command
+from tdp.cli.run.env_default import EnvDefault
+from tdp.cli.run.session import get_session_class
 
 
 class DeployCommand(Command):
