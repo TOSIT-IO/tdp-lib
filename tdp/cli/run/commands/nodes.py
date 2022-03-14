@@ -1,17 +1,11 @@
-from tdp.cli.run.commands.command import Command
+import click
+
+from tdp.cli.run.context import pass_dag
 
 
-class NodesCommand(Command):
-    """List nodes from components DAG"""
-
-    def __init__(self, adapter, args, dag) -> None:
-        super().__init__(adapter, args, dag)
-
-    def run(self):
-        endline = "\n- "
-        components = endline.join(component for component in self.dag.get_all_actions())
-        self.adapter.info(f"Component list:{endline}{components}")
-
-    @staticmethod
-    def fill_argument_definition(parser, dag):
-        parser.set_defaults(command=NodesCommand)
+@click.command(short_help="List nodes from components DAG")
+@pass_dag
+def nodes(dag):
+    endline = "\n- "
+    components = endline.join(component for component in dag.get_all_actions())
+    click.echo(f"Component list:{endline}{components}")

@@ -20,19 +20,19 @@ pydot = { version = "1.4.2", optional = true }
 GitPython = "3.1.18"
 SQLAlchemy = "^1.4.31"
 click = "8.0.4"
+tabulate = "0.8.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
 black = "21.12b0"
 poetry-githooks = "2.0.0"
-tabulate = "0.8.9"
 
 [tool.poetry.extras]
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
 dag = "tdp.cli.dag_debug:debug_dag"
-tdp = "tdp.cli.run.__main__:main"
+tdp = "tdp.cli.run.__main__:tdp"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
