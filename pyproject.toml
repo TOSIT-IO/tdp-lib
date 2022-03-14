@@ -31,8 +31,7 @@ poetry-githooks = "2.0.0"
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
-dag = "tdp.cli.dag_debug:debug_dag"
-tdp = "tdp.cli.run.__main__:tdp"
+tdp = "tdp.cli.__main__:tdp"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

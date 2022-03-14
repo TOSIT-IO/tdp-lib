@@ -1,10 +1,13 @@
-import argparse
 import fnmatch
 import re
 import networkx as nx
 
+import click
+
 from tdp.core.dag import Dag
 from tdp.core.dag_dot import show
+
+from tdp.cli.context import pass_dag
 
 try:
     import matplotlib
@@ -14,50 +17,35 @@ except ImportError as e:
         "You need to install the 'visualization' extras to be able to use the dag command. Run 'poetry install --extras visualization'"
     ) from e
 
+SHORT_DAG_SUMMARY = "Compute and display a graph."
 
-DAG_SUMMARY = (
-    "Compute and display a graph. Add node names to get a subgraph to the nodes."
+DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the nodes."
+
+
+@click.command(help=DAG_SUMMARY, short_help=SHORT_DAG_SUMMARY)
+@click.argument("nodes", nargs=-1)
+@click.option(
+    "-t",
+    "--transitive-reduction",
+    is_flag=True,
+    help="Apply a transitive reduction on the DAG",
 )
-
-
-def debug_dag_args():
-    parser = argparse.ArgumentParser(description=DAG_SUMMARY)
-    parser.description
-    group_pattern_format = parser.add_mutually_exclusive_group()
-    group_pattern_format.add_argument(
-        "-g",
-        action="store_true",
-        help="Each node argument will be process as glob pattern",
-    )
-    group_pattern_format.add_argument(
-        "-r",
-        action="store_true",
-        help="Each node argument will be process as regex pattern",
-    )
-    parser.add_argument(
-        "-t",
-        action="store_true",
-        help="Apply a transitive reduction on the DAG",
-    )
-    parser.add_argument(
-        "nodes",
-        nargs="*",
-        default=None,
-        help="Nodes on which to produce ancestors graph",
-    )
-    return parser
-
-
-def debug_dag():
-    args = debug_dag_args().parse_args()
-    nodes = args.nodes
-    pattern_format = None
-    if args.g:
-        pattern_format = "glob"
-    elif args.r:
-        pattern_format = "regex"
-    transitive_reduction = args.t
-
+@click.option(
+    "-g",
+    "--glob",
+    "pattern_format",
+    flag_value="glob",
+    help="Each node argument will be process as glob pattern",
+)
+@click.option(
+    "-r",
+    "--regex",
+    "pattern_format",
+    flag_value="regex",
+    help="Each node argument will be process as regex pattern",
+)
+@pass_dag
+def dag(dag, nodes, transitive_reduction, pattern_format):
     dag = Dag()
     graph = dag.graph
     if nodes:

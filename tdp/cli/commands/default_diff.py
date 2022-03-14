@@ -5,7 +5,7 @@ import yaml
 
 from pathlib import Path
 
-from tdp.cli.run.context import pass_dag
+from tdp.cli.context import pass_dag
 from tdp.core.service_manager import ServiceManager
 
 

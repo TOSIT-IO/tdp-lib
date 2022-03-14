@@ -1,6 +1,6 @@
 import click
 
-from tdp.cli.run.context import pass_dag
+from tdp.cli.context import pass_dag
 
 
 @click.command(short_help="List nodes from components DAG")

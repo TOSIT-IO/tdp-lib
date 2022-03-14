@@ -6,8 +6,8 @@ from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.service_manager import ServiceManager
 
-from tdp.cli.run.context import pass_dag
-from tdp.cli.run.session import get_session_class
+from tdp.cli.context import pass_dag
+from tdp.cli.session import get_session_class
 
 
 @click.command(short_help="Deploy TDP")

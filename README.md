@@ -22,32 +22,10 @@ Format the code:
 poetry run black .
 ```
 
-## Developper tools
-
-### DAG
-
-Dag is a custom tool installed in environment via poetry. It allows to visualize the components graph.
-
-To run `dag` you can either use `poetry run dag` or `dag` if you are inside the poetry shell.
-
-Dag usage:
-```
-usage: dag [-h] [-g | -r] [nodes [nodes ...]]
-
-Compute and display a graph. Add node names to get a subgraph to the nodes.
-
-positional arguments:
-  nodes       Nodes on which to produce ancestors graph
-
-optional arguments:
-  -h, --help  show this help message and exit
-  -g          Each node argument will be process as glob pattern
-  -r          Each node argument will be process as regex pattern
-```
-
+## Cli
 ### TDP
 
-TDP is a development tool implemented to run actions easily
+TDP is a cli implemented to run actions easily
 
 #### TDP usage
 
@@ -59,6 +37,7 @@ Options:
 
 Commands:
   browse            Browse deployment logs
+  dag               Compute and display a graph.
   default-diff      Difference between tdp_vars and defaults
   deploy            Deploy TDP
   init              Init database / services in tdp vars
