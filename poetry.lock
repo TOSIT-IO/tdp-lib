@@ -481,7 +481,7 @@ sqlcipher = ["sqlcipher3-binary"]
 name = "tabulate"
 version = "0.8.9"
 description = "Pretty-print tabular data"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -538,7 +538,7 @@ visualization = ["matplotlib", "pydot"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6.2,<4.0"
-content-hash = "03488e2e32ca87828a4c1175157554cf8cde5f30ff3166686c6ce5088d84c488"
+content-hash = "212d4c8ac9d8016c75a23fe8c88af8dcda1427d0590b5907c97ad5a07e586671"
 
 [metadata.files]
 ansible = [

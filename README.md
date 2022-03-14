@@ -52,21 +52,18 @@ TDP is a development tool implemented to run actions easily
 #### TDP usage
 
 ```
-usage: tdp [-h] {nodes,browse,deploy,init,default_diff,services_version} ...
+Usage: tdp [OPTIONS] COMMAND [ARGS]...
 
-TDP Runner
+Options:
+  --help  Show this message and exit.
 
-positional arguments:
-  {nodes,browse,deploy,init,default_diff,services_version}
-    nodes               List nodes from components DAG
-    browse              Browse deployment logs
-    deploy              Deploy TDP
-    init                Init database / services in tdp vars
-    default_diff        Difference between tdp_vars and defaults
-    services_version    Get the version of deployed services. (If a service
-                        has never been deployed, does not show it
-
-optional arguments:
-  -h, --help            show this help message and exit
+Commands:
+  browse            Browse deployment logs
+  default-diff      Difference between tdp_vars and defaults
+  deploy            Deploy TDP
+  init              Init database / services in tdp vars
+  nodes             List nodes from components DAG
+  service-versions  Get the version of deployed services.(If a service has
+                    never been deployed, does not show it)
 ```
 

@@ -1,69 +1,61 @@
 from pathlib import Path
 from sqlalchemy import func, tuple_
-
 from tabulate import tabulate
+
+import click
 
 from tdp.core.models import ServiceLog
 from tdp.core.models.base import keyvalgen
-from tdp.cli.run.commands.command import Command
-from tdp.cli.run.env_default import EnvDefault
+
 from tdp.cli.run.session import get_session_class
 
 
-class ServicesVersionCommand(Command):
-    """Get the version of deployed services. (If a service has never been deployed, does not show it)"""
+@click.command(
+    short_help=(
+        "Get the version of deployed services."
+        "(If a service has never been deployed, does not show it)"
+    )
+)
+@click.option(
+    "--sqlite-path",
+    envvar="TDP_SQLITE_PATH",
+    required=True,
+    type=Path,
+    help="Path to SQLITE database file",
+)
+def service_versions(sqlite_path):
+    session_class = get_session_class(sqlite_path)
+    with session_class() as session:
+        service_headers = [
+            key for key, _ in keyvalgen(ServiceLog) if key != "deployment"
+        ]
 
-    def __init__(self, adapter, args, dag) -> None:
-        super().__init__(adapter, args, dag)
-        self.sqlite_path = args.sqlite_path
+        latest_deployment_by_service = (
+            session.query(func.max(ServiceLog.deployment_id), ServiceLog.service)
+            .group_by(ServiceLog.service)
+            .subquery()
+        )
 
-    def run(self):
-        if self.sqlite_path is None:
-            raise ValueError("SQLITE_PATH cannot be None")
-        session_class = get_session_class(self.sqlite_path)
-        with session_class() as session:
-            service_headers = [
-                key for key, _ in keyvalgen(ServiceLog) if key != "deployment"
-            ]
-
-            latest_deployment_by_service = (
-                session.query(func.max(ServiceLog.deployment_id), ServiceLog.service)
-                .group_by(ServiceLog.service)
-                .subquery()
-            )
-
-            service_latest_version = (
-                session.query(ServiceLog)
-                .order_by(ServiceLog.deployment_id.desc())
-                .filter(
-                    tuple_(ServiceLog.deployment_id, ServiceLog.service).in_(
-                        latest_deployment_by_service
-                    )
-                )
-                .all()
-            )
-
-            self.adapter.info(
-                "Service versions:\n"
-                + tabulate(
-                    [
-                        format_service_log(service_log, service_headers)
-                        for service_log in service_latest_version
-                    ],
-                    headers="keys",
+        service_latest_version = (
+            session.query(ServiceLog)
+            .order_by(ServiceLog.deployment_id.desc())
+            .filter(
+                tuple_(ServiceLog.deployment_id, ServiceLog.service).in_(
+                    latest_deployment_by_service
                 )
             )
+            .all()
+        )
 
-    @staticmethod
-    def fill_argument_definition(parser, dag):
-        parser.set_defaults(command=ServicesVersionCommand)
-        parser.add_argument(
-            "--sqlite-path",
-            action=EnvDefault,
-            envvar="TDP_SQLITE_PATH",
-            type=Path,
-            default=None,
-            help="Path to SQLITE database file",
+        click.echo(
+            "Service versions:\n"
+            + tabulate(
+                [
+                    format_service_log(service_log, service_headers)
+                    for service_log in service_latest_version
+                ],
+                headers="keys",
+            )
         )
 
 
