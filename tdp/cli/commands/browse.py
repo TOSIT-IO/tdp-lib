@@ -7,7 +7,7 @@ from tabulate import tabulate
 
 from tdp.core.models import ActionLog, DeploymentLog, ServiceLog
 from tdp.core.models.base import keyvalgen
-from tdp.cli.run.session import get_session_class
+from tdp.cli.session import get_session_class
 
 
 @click.command(short_help="Browse deployment logs")
