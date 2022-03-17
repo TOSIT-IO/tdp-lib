@@ -24,7 +24,9 @@ from tdp.cli.session import init_db
     type=Path,
     help="Path to tdp-collection",
 )
-@click.option("--vars", envvar="TDP_VARS", type=Path, help="Path to the tdp vars")
+@click.option(
+    "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
+)
 @pass_dag
 def init(dag, sqlite_path, collection_path, vars):
     init_db(sqlite_path)
