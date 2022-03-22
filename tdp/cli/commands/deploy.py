@@ -40,7 +40,7 @@ from tdp.cli.session import get_session_class
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
 @pass_dag
 def deploy(dag, target, sqlite_path, collection_path, run_directory, vars, filter, dry):
-    if target not in dag.components:
+    if target and target not in dag.components:
         raise ValueError(f"{target} is not a valid node")
     playbooks_directory = collection_path / "playbooks"
     run_directory = run_directory.absolute() if run_directory else None
@@ -56,7 +56,10 @@ def deploy(dag, target, sqlite_path, collection_path, run_directory, vars, filte
         check_services_cleanliness(service_managers)
 
         action_runner = ActionRunner(dag, ansible_executor, service_managers)
-        click.echo(f"Deploying {target}")
+        if target:
+            click.echo(f"Deploying {target}")
+        else:
+            click.echo(f"Deploying TDP")
         deployment = action_runner.run_to_node(target, filter)
         session.add(deployment)
         session.commit()
