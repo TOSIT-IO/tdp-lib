@@ -4,6 +4,7 @@ from collections import OrderedDict
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.variables import Variables
+from tdp.core.component import Component
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 
@@ -11,11 +12,12 @@ SERVICE_NAME_MAX_LENGTH = 15
 
 
 class ServiceManager:
-    def __init__(self, service_name, repository):
+    def __init__(self, service_name, repository, dag):
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
         self._repo = repository
+        self._dag = dag
 
     @property
     def name(self):
@@ -24,6 +26,10 @@ class ServiceManager:
     @property
     def repository(self):
         return self._repo
+
+    @property
+    def dag(self):
+        return self._dag
 
     @property
     def version(self):
@@ -70,13 +76,11 @@ class ServiceManager:
                     pass
 
     @staticmethod
-    def initialize_service_managers(
-        services, services_directory, default_vars_directory
-    ):
+    def initialize_service_managers(dag, services_directory, default_vars_directory):
         """get a dict of service managers
 
         Args:
-            services (List[Service]): list of services
+            dag (Dag): components DAG
             services_directory (PathLike): path of the tdp vars
             default_vars_directory (PathLike): path of the default tdp vars
 
@@ -87,7 +91,7 @@ class ServiceManager:
         default_vars_directory = Path(default_vars_directory)
         service_managers = {}
 
-        for service in services:
+        for service in dag.services:
             service_directory = services_directory / service
 
             try:
@@ -100,7 +104,7 @@ class ServiceManager:
                     )
 
             repo = GitRepository.init(service_directory)
-            service_manager = ServiceManager(service, repo)
+            service_manager = ServiceManager(service, repo, dag)
             try:
                 logger.info(
                     f"{service_manager.name} is already initialized at {service_manager.version}"
@@ -113,11 +117,11 @@ class ServiceManager:
         return service_managers
 
     @staticmethod
-    def get_service_managers(services, services_directory):
+    def get_service_managers(dag, services_directory):
         """get a dict of service managers
 
         Args:
-            services (List[Service]): list of services
+            dag (Dag): components DAG
             services_directory (PathLike): path of the tdp vars
 
         Returns:
@@ -127,8 +131,31 @@ class ServiceManager:
 
         service_managers = {}
 
-        for service in services:
+        for service in dag.services:
             repo = GitRepository(services_directory / service)
-            service_managers[service] = ServiceManager(service, repo)
+            service_managers[service] = ServiceManager(service, repo, dag)
 
         return service_managers
+
+    def components_modified(self, version):
+        """get a list of component modified since version
+
+        Args:
+            version (str): how far to look
+
+        Returns:
+            List[Component]: components modified
+        """
+        files_modified = self._repo.files_modified(version)
+        components_modified = set()
+        for file_modified in files_modified:
+            component = Component(Path(file_modified).stem + "_config")
+            # If component is a service, all component inside this service have to be returned
+            if component.is_service():
+                service_components = self.dag.services_components[component.service]
+                components_modified.update(
+                    (c for c in service_components if c.action == "config")
+                )
+            else:
+                components_modified.add(component)
+        return list(components_modified)

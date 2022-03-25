@@ -52,7 +52,7 @@ def deploy(dag, target, sqlite_path, collection_path, run_directory, vars, filte
     )
     session_class = get_session_class(sqlite_path)
     with session_class() as session:
-        service_managers = ServiceManager.get_service_managers(dag.services, vars)
+        service_managers = ServiceManager.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)
 
         action_runner = ActionRunner(dag, ansible_executor, service_managers)

@@ -30,10 +30,9 @@ from tdp.cli.session import init_db
 @pass_dag
 def init(dag, sqlite_path, collection_path, vars):
     init_db(sqlite_path)
-    services = dag.services
     default_vars = collection_path / "tdp_vars_defaults"
     service_managers = ServiceManager.initialize_service_managers(
-        services, vars, default_vars
+        dag, vars, default_vars
     )
     for name, service_manager in service_managers.items():
         try:
