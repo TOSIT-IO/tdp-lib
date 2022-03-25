@@ -1,8 +1,8 @@
 import pytest
 
-from git import Repo, InvalidGitRepositoryError
+from git import Repo
 
-from tdp.core.repository.git_repository import GitRepository
+from tdp.core.repository.git_repository import GitRepository, NotARepository
 
 
 @pytest.fixture(scope="function")
@@ -13,7 +13,7 @@ def git_repository(tmp_path):
 
 
 def test_git_repository_fails_if_path_is_not_a_git_repo(tmp_path):
-    with pytest.raises(InvalidGitRepositoryError):
+    with pytest.raises(NotARepository):
         git_repository = GitRepository(tmp_path)
         with git_repository.validate("test commit"):
             pass
