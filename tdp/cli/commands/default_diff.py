@@ -23,7 +23,7 @@ from tdp.core.service_manager import ServiceManager
 )
 @pass_dag
 def default_diff(dag, service, collection_path, vars):
-    service_managers = ServiceManager.get_service_managers(dag.services, vars)
+    service_managers = ServiceManager.get_service_managers(dag, vars)
     collection_default_vars = collection_path / "tdp_vars_defaults"
 
     if service:
