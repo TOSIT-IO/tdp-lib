@@ -50,3 +50,12 @@ class GitRepository(Repository):
 
     def is_clean(self):
         return not self._repo.is_dirty()
+
+    def files_modified(self, commit):
+        with self._lock:
+            files = set()
+            diff_index = self._repo.head.commit.diff(commit)
+            for diff in diff_index:
+                files.add(diff.a_path)
+                files.add(diff.b_path)
+            return list(files)

@@ -95,3 +95,7 @@ class Repository(ABC):
     @abstractmethod
     def is_clean(self):
         pass
+
+    @abstractmethod
+    def files_modified(self, commit):
+        pass

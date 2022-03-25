@@ -1,3 +1,4 @@
+from pathlib import Path
 import pytest
 
 from git import Repo
@@ -10,6 +11,12 @@ def git_repository(tmp_path):
     git_repository = GitRepository.init(tmp_path)
 
     return git_repository
+
+
+# https://stackoverflow.com/a/40884093
+@pytest.fixture(scope="function")
+def git_commit_empty_tree():
+    return "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
 def test_git_repository_fails_if_path_is_not_a_git_repo(tmp_path):
@@ -50,3 +57,70 @@ def test_git_repository_multiple_validations(git_repository):
         last_commit = repo.head.commit
         assert len(file_list) == len(last_commit.stats.files)
         assert set(file_list) == set(last_commit.stats.files)
+
+
+def test_git_repository_files_added(git_repository, git_commit_empty_tree):
+    file_list = [
+        "foo",
+        "bar",
+    ]
+    with Path(git_repository.path, file_list[0]).open("w") as fd:
+        fd.write("foo\n")
+    with Path(git_repository.path, file_list[1]).open("w") as fd:
+        fd.write("bar\n")
+
+    with Repo(git_repository.path) as repo:
+        repo.index.add(file_list)
+        repo.index.commit("add files")
+
+    assert sorted(git_repository.files_modified(git_commit_empty_tree)) == sorted(
+        file_list
+    )
+
+
+def test_git_repository_files_added_and_removed(git_repository, git_commit_empty_tree):
+    file_list = [
+        "foo",
+        "bar",
+    ]
+    with Path(git_repository.path, file_list[0]).open("w") as fd:
+        fd.write("foo\n")
+    with Path(git_repository.path, file_list[1]).open("w") as fd:
+        fd.write("bar\n")
+
+    with Repo(git_repository.path) as repo:
+        repo.index.add(file_list)
+        repo.index.commit("add files")
+        repo.index.remove([file_list[0]])
+        repo.index.commit("remove first file")
+
+    assert sorted(git_repository.files_modified(git_commit_empty_tree)) == sorted(
+        [file_list[1]]
+    )
+
+
+def test_git_repository_file_updated(git_repository):
+    file_list = [
+        "foo",
+        "bar",
+    ]
+    with Path(git_repository.path, file_list[0]).open("w") as fd:
+        fd.write("foo\n")
+    with Path(git_repository.path, file_list[1]).open("w") as fd:
+        fd.write("bar\n")
+
+    initial_commit = None
+    with Repo(git_repository.path) as repo:
+        repo.index.add(file_list)
+        initial_commit = str(repo.index.commit("add files"))
+
+    with Path(git_repository.path, file_list[0]).open("w") as fd:
+        fd.write("foobar\n")
+
+    with Repo(git_repository.path) as repo:
+        repo.index.add([file_list[0]])
+        repo.index.commit("update first file")
+
+    assert sorted(git_repository.files_modified(initial_commit)) == sorted(
+        [file_list[0]]
+    )
