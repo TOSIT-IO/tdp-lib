@@ -1,14 +1,13 @@
 import click
-from tdp.cli.commands.dag import dag
-from tdp.cli.commands.deploy import deploy
-
-from tdp.core.dag import Dag
 
 from tdp.cli.commands.browse import browse
+from tdp.cli.commands.dag import dag
 from tdp.cli.commands.default_diff import default_diff
+from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.init import init
 from tdp.cli.commands.nodes import nodes
 from tdp.cli.commands.service_versions import service_versions
+from tdp.core.dag import Dag
 
 
 @click.group()

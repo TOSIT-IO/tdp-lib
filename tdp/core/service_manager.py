@@ -1,10 +1,11 @@
 import logging
-from pathlib import Path
 from collections import OrderedDict
+from pathlib import Path
+
+from tdp.core.component import Component
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.variables import Variables
-from tdp.core.component import Component
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 

@@ -1,6 +1,7 @@
 from sqlalchemy import select
-from tdp.core.models.base import Base
+
 from tdp.core.models.action_log import ActionLog
+from tdp.core.models.base import Base
 from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.models.service_log import ServiceLog
 

@@ -2,12 +2,11 @@ from pathlib import Path
 
 import click
 
+from tdp.cli.context import pass_dag
+from tdp.cli.session import get_session_class
 from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.service_manager import ServiceManager
-
-from tdp.cli.context import pass_dag
-from tdp.cli.session import get_session_class
 
 
 @click.command(short_help="Deploy TDP")

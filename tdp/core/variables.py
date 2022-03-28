@@ -1,16 +1,16 @@
 import copy
-from functools import wraps
 import logging
 import os
+from contextlib import contextmanager
+from functools import wraps
 from weakref import proxy
+
 import yaml
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
-from contextlib import contextmanager
 
 
 logger = logging.getLogger("tdp").getChild("variables")

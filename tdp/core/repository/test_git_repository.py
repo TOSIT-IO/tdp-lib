@@ -1,6 +1,6 @@
 from pathlib import Path
-import pytest
 
+import pytest
 from git import Repo
 
 from tdp.core.repository.git_repository import GitRepository, NotARepository

@@ -1,10 +1,9 @@
-from contextlib import contextmanager
 import logging
+from contextlib import contextmanager
 
-from git import Repo, InvalidGitRepositoryError, NoSuchPathError
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 
-from tdp.core.repository.repository import NoVersionYet, NotARepository, Repository
-
+from tdp.core.repository.repository import NotARepository, NoVersionYet, Repository
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 

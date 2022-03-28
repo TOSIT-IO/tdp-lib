@@ -1,13 +1,12 @@
 from pathlib import Path
+
+import click
 from sqlalchemy import func, tuple_
 from tabulate import tabulate
 
-import click
-
+from tdp.cli.session import get_session_class
 from tdp.core.models import ServiceLog
 from tdp.core.models.base import keyvalgen
-
-from tdp.cli.session import get_session_class
 
 
 @click.command(

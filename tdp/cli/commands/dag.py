@@ -1,13 +1,12 @@
 import fnmatch
 import re
-import networkx as nx
 
 import click
-
-from tdp.core.dag import Dag
-from tdp.core.dag_dot import show
+import networkx as nx
 
 from tdp.cli.context import pass_dag
+from tdp.core.dag import Dag
+from tdp.core.dag_dot import show
 
 try:
     import matplotlib

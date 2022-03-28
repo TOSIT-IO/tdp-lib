@@ -1,14 +1,13 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-import pytest
-
-from tdp.core.models.base import Base
-from tdp.core.models.deployment_log import DeploymentLog
-from tdp.core.models.action_log import ActionLog
-
-
 import logging
 from datetime import datetime
+
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from tdp.core.models.action_log import ActionLog
+from tdp.core.models.base import Base
+from tdp.core.models.deployment_log import DeploymentLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 

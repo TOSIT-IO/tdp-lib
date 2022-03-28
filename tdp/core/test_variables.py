@@ -1,10 +1,8 @@
 import ansible.constants as C
-from ansible.inventory.manager import InventoryManager
-from ansible.vars.manager import VariableManager
-from ansible.parsing.dataloader import DataLoader
-
 import pytest
-
+from ansible.inventory.manager import InventoryManager
+from ansible.parsing.dataloader import DataLoader
+from ansible.vars.manager import VariableManager
 
 from tdp.core.variables import Variables
 

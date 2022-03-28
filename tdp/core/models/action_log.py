@@ -1,4 +1,4 @@
-from sqlalchemy import LargeBinary, Column, DateTime, Integer, String, ForeignKey
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import relationship
 
 from tdp.core.component import NODE_NAME_MAX_LENGTH

@@ -1,13 +1,12 @@
 from pathlib import Path
 
 import click
-
 from sqlalchemy import select
 from tabulate import tabulate
 
+from tdp.cli.session import get_session_class
 from tdp.core.models import ActionLog, DeploymentLog, ServiceLog
 from tdp.core.models.base import keyvalgen
-from tdp.cli.session import get_session_class
 
 
 @click.command(short_help="Browse deployment logs")
