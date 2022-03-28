@@ -1,21 +1,22 @@
-from copy import Error
-from networkx.classes.function import subgraph
-import yaml
+import fnmatch
 import logging
+import os
+import re
+from copy import Error
+from pathlib import Path
+
+import networkx as nx
+import yaml
+from networkx.classes.function import subgraph
+
+import tdp.components
+from tdp.core.component import Component
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
 
-import tdp.components
-from tdp.core.component import Component
-
-from pathlib import Path
-import fnmatch
-import re
-import networkx as nx
-import os
 
 logger = logging.getLogger("tdp").getChild("dag")
 

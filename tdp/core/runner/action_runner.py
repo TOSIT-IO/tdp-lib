@@ -1,5 +1,5 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 
 from tdp.core.models.action_log import ActionLog
 from tdp.core.models.deployment_log import DeploymentLog

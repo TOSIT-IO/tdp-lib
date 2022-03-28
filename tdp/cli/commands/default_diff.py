@@ -1,9 +1,9 @@
-import click
 import difflib
 import pprint
-import yaml
-
 from pathlib import Path
+
+import click
+import yaml
 
 from tdp.cli.context import pass_dag
 from tdp.core.service_manager import ServiceManager

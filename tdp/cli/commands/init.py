@@ -3,10 +3,9 @@ from pathlib import Path
 import click
 
 from tdp.cli.context import pass_dag
-
+from tdp.cli.session import init_db
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.service_manager import ServiceManager
-from tdp.cli.session import init_db
 
 
 @click.command(short_help="Init database / services in tdp vars")

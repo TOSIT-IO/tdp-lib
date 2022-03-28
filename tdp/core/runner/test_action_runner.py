@@ -1,6 +1,6 @@
 import logging
-import pytest
 
+import pytest
 
 from tdp.core.dag import Dag
 from tdp.core.runner.action_runner import ActionRunner
