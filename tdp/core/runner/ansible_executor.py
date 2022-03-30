@@ -28,7 +28,7 @@ class AnsibleExecutor(Executor):
                 for stdout_line in iter(res.stdout.readline, ""):
                     print(stdout_line)
                     byte_stream.write(bytes(stdout_line, "utf-8"))
-                state = StateEnum.SUCCESS if res.poll() == 0 else StateEnum.FAILURE
+                state = StateEnum.SUCCESS if res.wait() == 0 else StateEnum.FAILURE
             except KeyboardInterrupt:
                 logger.debug("KeyboardInterrupt caught")
                 byte_stream.write(b"\nKeyboardInterrupt")
