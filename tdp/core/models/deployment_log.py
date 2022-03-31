@@ -13,6 +13,7 @@ class DeploymentLog(Base):
     __tablename__ = "deployment_log"
 
     id = Column(Integer, primary_key=True)
+    sources = Column(JSON)
     targets = Column(JSON)
     filter = Column(String(length=NODE_NAME_MAX_LENGTH))
     start = Column(DateTime)

@@ -79,6 +79,7 @@ def process_single_deployment_query(session_class, deployment_id):
 
     with session_class() as session:
         result = session.execute(query).scalars().fetchall()
+        sources = result[0].sources or ["None"]
         targets = result[0].targets or ["None"]
         click.echo(
             "Deployment:\n"
@@ -90,6 +91,7 @@ def process_single_deployment_query(session_class, deployment_id):
                 headers="keys",
             )
         )
+        click.echo("Sources:\n  " + tabulate({"source": sources}, headers="keys"))
         click.echo("Targets:\n  " + tabulate({"target": targets}, headers="keys"))
         click.echo(
             "Services:\n"
@@ -152,7 +154,7 @@ def process_action_query(session_class, deployment_id, action):
 
 def format_deployment_log(deployment_log, headers):
     def custom_format(key, value):
-        if key == "targets" and value is not None:
+        if key in ["sources", "targets"] and value is not None:
             if len(value) > 2:
                 return value[0] + ",...," + value[-1]
             else:
