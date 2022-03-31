@@ -143,19 +143,16 @@ class Dag:
     def graph(self):
         self.graph = None
 
-    def get_actions(self, node=None):
-        if node:
-            return self.get_actions_to_node(node)
+    def get_actions(self, nodes=None):
+        if nodes:
+            return self.get_actions_to_nodes(nodes)
         return self.get_all_actions()
 
-    def get_actions_to_node(self, node):
-        actions = list(
-            nx.lexicographical_topological_sort(
-                self.graph.subgraph(nx.ancestors(self.graph, node))
-            )
-        )
-        actions.append(node)
-        return actions
+    def get_actions_to_nodes(self, nodes):
+        nodes_set = set(nodes)
+        for node in nodes:
+            nodes_set.update(nx.ancestors(self.graph, node))
+        return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
 
     def get_all_actions(self):
         return list(nx.lexicographical_topological_sort(self.graph))
@@ -262,8 +259,3 @@ class Dag:
                     f"Service '{service}' have these actions {actions} and at least one action is missing from "
                     f"{actions_for_service}"
                 )
-
-
-if __name__ == "__main__":
-    dag = Dag()
-    print(dag.get_actions_to_node("hdfs_init"))
