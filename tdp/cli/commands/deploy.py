@@ -13,7 +13,18 @@ from tdp.core.service_manager import ServiceManager
 
 
 @click.command(short_help="Deploy TDP")
-@click.argument("targets", required=False, nargs=-1)
+@click.option(
+    "--sources",
+    type=str,
+    metavar="s1,s2,...",
+    help="Nodes where the run start (separate with comma)",
+)
+@click.option(
+    "--targets",
+    type=str,
+    metavar="t1,t2,...",
+    help="Nodes where the run stop (separate with comma)",
+)
 @click.option(
     "--sqlite-path",
     envvar="TDP_SQLITE_PATH",
@@ -42,9 +53,24 @@ from tdp.core.service_manager import ServiceManager
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
 @pass_dag
 def deploy(
-    dag, targets, sqlite_path, collection_path, run_directory, vars, filter, dry
+    dag,
+    sources,
+    targets,
+    sqlite_path,
+    collection_path,
+    run_directory,
+    vars,
+    filter,
+    dry,
 ):
-    set_difference = set(targets).difference(dag.components)
+    set_nodes = set()
+    if sources:
+        sources = sources.split(",")
+        set_nodes.update(sources)
+    if targets:
+        targets = targets.split(",")
+        set_nodes.update(targets)
+    set_difference = set_nodes.difference(dag.components)
     if set_difference:
         raise ValueError(f"{set_difference} are not valid nodes")
     playbooks_directory = collection_path / "playbooks"
@@ -61,12 +87,15 @@ def deploy(
         check_services_cleanliness(service_managers)
 
         action_runner = ActionRunner(dag, ansible_executor, service_managers)
-        if targets:
-            click.echo(f"Deploying {targets}")
+        if sources:
+            click.echo(f"Deploying from {sources}")
+        elif targets:
+            click.echo(f"Deploying to {targets}")
         else:
             click.echo(f"Deploying TDP")
-            targets = None
-        deployment = action_runner.run_to_nodes(targets, filter)
+        deployment = action_runner.run_nodes(
+            sources=sources, targets=targets, node_filter=filter
+        )
         session.add(deployment)
         session.commit()
 

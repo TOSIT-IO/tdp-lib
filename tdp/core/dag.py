@@ -143,15 +143,23 @@ class Dag:
     def graph(self):
         self.graph = None
 
-    def get_actions(self, nodes=None):
-        if nodes:
-            return self.get_actions_to_nodes(nodes)
+    def get_actions(self, sources=None, targets=None):
+        if sources:
+            return self.get_actions_from_nodes(sources)
+        elif targets:
+            return self.get_actions_to_nodes(targets)
         return self.get_all_actions()
 
     def get_actions_to_nodes(self, nodes):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.ancestors(self.graph, node))
+        return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
+
+    def get_actions_from_nodes(self, nodes):
+        nodes_set = set(nodes)
+        for node in nodes:
+            nodes_set.update(nx.descendants(self.graph, node))
         return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
 
     def get_all_actions(self):

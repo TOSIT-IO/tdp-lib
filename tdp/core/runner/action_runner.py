@@ -70,8 +70,8 @@ class ActionRunner:
             for service_name in services
         ]
 
-    def run_to_nodes(self, nodes=None, node_filter=None):
-        actions = self.dag.get_actions(nodes)
+    def run_nodes(self, sources=None, targets=None, node_filter=None):
+        actions = self.dag.get_actions(sources=sources, targets=targets)
 
         if hasattr(node_filter, "search"):
             actions = self.dag.filter_actions_regex(actions, node_filter)
@@ -90,7 +90,8 @@ class ActionRunner:
 
         service_logs = self._build_service_logs(action_logs)
         return DeploymentLog(
-            targets=nodes,
+            sources=sources,
+            targets=targets,
             filter=str(node_filter),
             start=start,
             end=end,
