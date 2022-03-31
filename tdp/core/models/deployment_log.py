@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy import JSON, Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from tdp.core.component import NODE_NAME_MAX_LENGTH
@@ -13,7 +13,7 @@ class DeploymentLog(Base):
     __tablename__ = "deployment_log"
 
     id = Column(Integer, primary_key=True)
-    target = Column(String(length=NODE_NAME_MAX_LENGTH))
+    targets = Column(JSON)
     filter = Column(String(length=NODE_NAME_MAX_LENGTH))
     start = Column(DateTime)
     end = Column(DateTime)

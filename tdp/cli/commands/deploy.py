@@ -13,7 +13,7 @@ from tdp.core.service_manager import ServiceManager
 
 
 @click.command(short_help="Deploy TDP")
-@click.argument("target", required=False)
+@click.argument("targets", required=False, nargs=-1)
 @click.option(
     "--sqlite-path",
     envvar="TDP_SQLITE_PATH",
@@ -41,9 +41,12 @@ from tdp.core.service_manager import ServiceManager
 @click.option("--filter", type=str, help="Glob on list name")
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
 @pass_dag
-def deploy(dag, target, sqlite_path, collection_path, run_directory, vars, filter, dry):
-    if target and target not in dag.components:
-        raise ValueError(f"{target} is not a valid node")
+def deploy(
+    dag, targets, sqlite_path, collection_path, run_directory, vars, filter, dry
+):
+    set_difference = set(targets).difference(dag.components)
+    if set_difference:
+        raise ValueError(f"{set_difference} are not valid nodes")
     playbooks_directory = collection_path / "playbooks"
     run_directory = run_directory.absolute() if run_directory else None
 
@@ -58,11 +61,12 @@ def deploy(dag, target, sqlite_path, collection_path, run_directory, vars, filte
         check_services_cleanliness(service_managers)
 
         action_runner = ActionRunner(dag, ansible_executor, service_managers)
-        if target:
-            click.echo(f"Deploying {target}")
+        if targets:
+            click.echo(f"Deploying {targets}")
         else:
             click.echo(f"Deploying TDP")
-        deployment = action_runner.run_to_node(target, filter)
+            targets = None
+        deployment = action_runner.run_to_nodes(targets, filter)
         session.add(deployment)
         session.commit()
 
