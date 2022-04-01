@@ -1,3 +1,6 @@
+# Copyright 2022 TOSIT.IO
+# SPDX-License-Identifier: Apache-2.0
+
 from abc import ABC, abstractmethod, abstractstaticmethod
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
