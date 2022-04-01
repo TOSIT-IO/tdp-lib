@@ -1,3 +1,6 @@
+# Copyright 2022 TOSIT.IO
+# SPDX-License-Identifier: Apache-2.0
+
 import click
 
 from tdp.cli.commands.browse import browse

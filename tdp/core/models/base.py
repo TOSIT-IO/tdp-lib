@@ -1,3 +1,6 @@
+# Copyright 2022 TOSIT.IO
+# SPDX-License-Identifier: Apache-2.0
+
 from sqlalchemy import MetaData
 from sqlalchemy.orm import declarative_base
 

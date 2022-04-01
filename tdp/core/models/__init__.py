@@ -1,3 +1,6 @@
+# Copyright 2022 TOSIT.IO
+# SPDX-License-Identifier: Apache-2.0
+
 from sqlalchemy import select
 
 from tdp.core.models.action_log import ActionLog
