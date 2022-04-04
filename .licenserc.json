@@ -4,7 +4,9 @@
     "# SPDX-License-Identifier: Apache-2.0"
   ],
   "ignore": [
-    ".github"
+    ".github",
+    "tdp/components/__init__.py",
+    "tdp/core/__init__.py"
   ]
 }
 
