@@ -12,8 +12,9 @@ from tdp.cli.commands.nodes import nodes
 from tdp.cli.commands.service_versions import service_versions
 from tdp.core.dag import Dag
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.group()
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 def tdp(ctx):
     ctx.obj = Dag()
