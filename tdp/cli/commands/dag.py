@@ -46,8 +46,13 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     flag_value="regex",
     help="Each node argument will be process as regex pattern",
 )
+@click.option(
+    "-ct",
+    "--color-to",
+    help="List of node to color to, separated with a comma (,)",
+)
 @pass_dag
-def dag(dag, nodes, transitive_reduction, pattern_format):
+def dag(dag, nodes, transitive_reduction, pattern_format, color_to):
     dag = Dag()
     graph = dag.graph
     if nodes:
@@ -73,4 +78,7 @@ def dag(dag, nodes, transitive_reduction, pattern_format):
         graph = graph.subgraph(ancestors)
     if transitive_reduction:
         graph = nx.transitive_reduction(graph)
-    show(graph)
+    node_to_colors = set()
+    if color_to:
+        node_to_colors.update(dag.get_actions_to_nodes(color_to.split(",")))
+    show(graph, node_to_colors)
