@@ -1,6 +1,15 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+"""
+The `Dag` class reads YAML :py:mod:`~tdp.components` files
+and validate it according to components rules(cf. components' rules section)
+to build the DAG.
+
+It is used to get a list of actions by performing a topological sort on the DAG
+or on a subgraph of the DAG.
+"""
+
 import fnmatch
 import logging
 import os
@@ -163,6 +172,11 @@ class Dag:
         return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
 
     def get_all_actions(self):
+        """gets all action from the graph sorted topologically and lexicographically.
+
+        :return: a topologically and lexicographically sorted string list
+        :rtype: List[str]
+        """
         return list(nx.lexicographical_topological_sort(self.graph))
 
     def filter_actions_glob(self, actions, glob):
@@ -173,15 +187,12 @@ class Dag:
         return list(filter(compiled_regex.match, actions))
 
     def validate(self):
-        """
-        Validation rules :
-        - *_start actions can only be required from within its own service
-        - *_install actions should only depend on other *_install actions
-        - Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-          even if they are "empty" (tagged with noop)
+        r"""Validation rules :
+        - \*_start actions can only be required from within its own service
+        - \*_install actions should only depend on other \*_install actions
+        - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start actions even if they are "empty" (tagged with noop)
         - Actions tagged with the noop flag should not have a playbook defined in the collection
-        - Each service action (config, start, init) except the first (install) must have an explicit
-          dependency with the previous service action within the same service
+        - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service action within the same service
         """
         # key: service_name
         # value: set of available actions for the service

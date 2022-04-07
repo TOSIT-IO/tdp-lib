@@ -45,11 +45,13 @@ class VariablesDict:
     """Manages internal content logic. Internal instanciation only.
 
     This object implements the getitem, setitem and delitem methods, allowing for:
-    ```python
+
+    .. code-block:: python
+
         variables["key1"] = "value1" # set the value `value1` to the key `key1`
-        value = variables["key1] # get the value at the key `key1`
+        value = variables["key1"] # get the value at the key `key1`
         del variables["key1"] # deletes value at key `key1`
-    ```"""
+    """
 
     def __init__(self, content):
         """
@@ -68,20 +70,19 @@ class VariablesDict:
         self.unset(key)
 
     def get(self, key, default=None):
-        """Returns a copy of the value matching the key in inner content.
+        """get a value matching the key in inner content.
 
         Returns a deepcopy of the value, in case a dict is returned and to prevent
         modification of the content outside of this class.  We don't support
         listening to the value of a shallow copy (yet).
-        Args:
-            key ([Hashable]): Key in inner content object (must be YAML compatible)
-            default ([Any], optional): Value to return if the key is absent from the inner content. Defaults to None.
 
-        Raises:
-            e: KeyError when key is missing and no default value has been provided
-
-        Returns:
-            [Any]: Value inside the inner content
+        :param key: Key in inner content object (must be YAML compatible)
+        :type key: Hashable
+        :param default: Value to return if the key is absent from the inner content. Defaults to None.
+        :type default: Any, optional
+        :raises e: KeyError when key is missing and no default value has been provided
+        :return: Value inside the inner content
+        :rtype: Any
         """
         subkeys = key.split(".")
         cursor = self._content
@@ -124,10 +125,10 @@ class VariablesDict:
             self._content = updated_content
 
     def unset(self, key):
-        """[summary]
+        """unset key in variables, supports nested keys
 
-        Args:
-            key ([type]): key to delete (using dot notation for complexe keys)
+        :param var: key to delete (using dot notation for complexe keys)
+        :type var: str
         """
         subkeys = key.split(".")
         cursor = self._content

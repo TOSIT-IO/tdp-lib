@@ -25,7 +25,7 @@ class Repository(ABC):
     """Abstract class representing a versionned repository.
 
     A versionned repository is a folder where modification are stored and versionned.
-    An implementation of this class is `tdp.core.git_repository.GitRepository`.
+    An implementation of this class is :py:class:`~tdp.core.repository.git_repository.GitRepository`.
     It uses Git as a versionning engine.
     """
 

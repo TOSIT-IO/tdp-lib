@@ -26,6 +26,6 @@ poetry run black .
 
 Documentation can be found inside:
 
-* [docs](docs/index.md) for documentation index
-* [docs/cli](docs/cli/index.md) for CLI documentation index
-* [docs/Developer Quick Start](docs/cli/developer_quick_start.md)
+* [docs](docs/developer/index.rst) for documentation index
+* [docs/cli](docs/developer/cli/index.rst) for CLI documentation index
+* [docs/Developer Quick Start](docs/developer/cli/developer_quick_start.rst)
