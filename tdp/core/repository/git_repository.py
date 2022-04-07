@@ -12,6 +12,11 @@ logger = logging.getLogger("tdp").getChild("git_repository")
 
 
 class GitRepository(Repository):
+    """
+    `GitRepository` is an implementation for `Repository` which usee
+    local Git repository to manage files with versionning.
+    """
+
     def __init__(self, path):
         super().__init__(path)
         try:
