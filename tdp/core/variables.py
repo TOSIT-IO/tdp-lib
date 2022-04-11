@@ -106,16 +106,22 @@ class VariablesDict:
                 cursor[".".join(subkeys[index:])] = value
                 break
 
-    def update(self, var):
+    def update(self, var, merge=True):
         """update
 
         Args:
             var (Union[dict, VariablesDict]): variables that will be written to the group vars
+            merge (Bool): whether variables must be merged or overwritten
         """
         if isinstance(var, VariablesDict):
-            self._content.update(var._content)
+            updated_content = var._content
         else:
-            self._content.update(var)
+            updated_content = var
+
+        if merge:
+            self._content.update(updated_content)
+        else:
+            self._content = updated_content
 
     def unset(self, key):
         """[summary]
@@ -184,6 +190,6 @@ class _VariablesIOWrapper(VariablesDict):
         with self._flush_on_write():
             super().unset(key)
 
-    def update(self, var):
+    def update(self, var, *args, **kwargs):
         with self._flush_on_write():
-            super().update(var)
+            super().update(var, *args, **kwargs)
