@@ -51,8 +51,14 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     "--color-to",
     help="List of node to color to, separated with a comma (,)",
 )
+@click.option(
+    "-cf",
+    "--color-from",
+    help="Nodes that will be colored after applying get_actions_to_nodes, separed with a comma (,)",
+    type=str,
+)
 @pass_dag
-def dag(dag, nodes, transitive_reduction, pattern_format, color_to):
+def dag(dag, nodes, transitive_reduction, pattern_format, color_to, color_from):
     dag = Dag()
     graph = dag.graph
     if nodes:
@@ -78,7 +84,13 @@ def dag(dag, nodes, transitive_reduction, pattern_format, color_to):
         graph = graph.subgraph(ancestors)
     if transitive_reduction:
         graph = nx.transitive_reduction(graph)
-    node_to_colors = set()
+    nodes_to_color = set()
     if color_to:
-        node_to_colors.update(dag.get_actions_to_nodes(color_to.split(",")))
-    show(graph, node_to_colors)
+        nodes_to_color.update(dag.get_actions_to_nodes(color_to.split(",")))
+    if color_from:
+        nodes_from = dag.get_actions_from_nodes(color_from.split(","))
+        if nodes_to_color:
+            nodes_to_color = nodes_to_color.intersection(nodes_from)
+        else:
+            nodes_to_color = nodes_from
+    show(graph, nodes_to_color)
