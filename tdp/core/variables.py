@@ -138,6 +138,9 @@ class VariablesDict:
                 cursor.pop(".".join(subkeys[index:]))
                 break
 
+    def to_dict(self):
+        return copy.deepcopy(self._content)
+
 
 class _VariablesIOWrapper(VariablesDict):
     def __init__(self, path):
