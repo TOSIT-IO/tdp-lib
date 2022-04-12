@@ -21,14 +21,14 @@ def to_pydot(graph, nodes_to_color=None):
     # Hack to add node defaults at the first position
     pydot_graph.set_node_defaults(shape="box", fontname="Roboto")
     for dot_node in dot_nodes:
-        if dot_node.get_name() in nodes_to_color:
+        if dot_node.get_name().strip('"') in nodes_to_color:
             dot_node.set_color("indianred")
             dot_node.add_style("filled")
         pydot_graph.add_node(dot_node)
     for dot_edge in dot_edges:
         if (
-            dot_edge.get_source() in nodes_to_color
-            and dot_edge.get_destination() in nodes_to_color
+            dot_edge.get_source().strip('"') in nodes_to_color
+            and dot_edge.get_destination().strip('"') in nodes_to_color
         ):
             dot_edge.set_color("indianred")
         pydot_graph.add_edge(dot_edge)
