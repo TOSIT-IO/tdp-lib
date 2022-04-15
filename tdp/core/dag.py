@@ -32,6 +32,19 @@ except ImportError:
 
 logger = logging.getLogger("tdp").getChild("dag")
 
+SERVICE_PRIORITY = {
+    "zookeeper": 1,
+    "hadoop": 2,
+    "ranger": 3,
+    "hdfs": 4,
+    "yarn": 5,
+    "hive": 6,
+    "hbase": 7,
+    "spark": 8,
+    "knox": 9,
+}
+DEFAULT_SERVICE_PRIORITY = 99
+
 
 class Dag:
     """Generate DAG with components dependencies"""
@@ -152,6 +165,20 @@ class Dag:
     def graph(self):
         self.graph = None
 
+    def topological_sort(self, nodes=None):
+        graph = self.graph
+        if nodes:
+            graph = self.graph.subgraph(nodes)
+
+        def custom_key(node):
+            component = self.components[node]
+            component_priority = SERVICE_PRIORITY.get(
+                component.service, DEFAULT_SERVICE_PRIORITY
+            )
+            return f"{component_priority:02d}_{node}"
+
+        return list(nx.lexicographical_topological_sort(graph, custom_key))
+
     def get_actions(self, sources=None, targets=None):
         if sources:
             return self.get_actions_from_nodes(sources)
@@ -163,13 +190,13 @@ class Dag:
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.ancestors(self.graph, node))
-        return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
+        return self.topological_sort(nodes_set)
 
     def get_actions_from_nodes(self, nodes):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.descendants(self.graph, node))
-        return list(nx.lexicographical_topological_sort(self.graph.subgraph(nodes_set)))
+        return self.topological_sort(nodes_set)
 
     def get_all_actions(self):
         """gets all action from the graph sorted topologically and lexicographically.
@@ -177,7 +204,7 @@ class Dag:
         :return: a topologically and lexicographically sorted string list
         :rtype: List[str]
         """
-        return list(nx.lexicographical_topological_sort(self.graph))
+        return self.topological_sort(self.graph)
 
     def filter_actions_glob(self, actions, glob):
         return fnmatch.filter(actions, glob)
