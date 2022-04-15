@@ -3,10 +3,12 @@
 
 import networkx as nx
 
+from tdp.core.component import Component
+
 
 # Needed :
 #   pip install pydot
-def to_pydot(graph, nodes_to_color=None):
+def to_pydot(graph, nodes_to_color=None, cluster_service=False):
     if not nodes_to_color:
         nodes_to_color = []
     pydot_graph = nx.nx_pydot.to_pydot(graph)
@@ -33,15 +35,33 @@ def to_pydot(graph, nodes_to_color=None):
             dot_edge.set_color("indianred")
         pydot_graph.add_edge(dot_edge)
 
+    if cluster_service:
+        import pydot
+
+        subgraphs = {}
+        for dot_node in dot_nodes:
+            # Dot node name can be quoted, remove it
+            component_name = dot_node.get_name().strip('"')
+            component = Component(component_name)
+            subgraphs.setdefault(
+                component.service,
+                pydot.Cluster(
+                    component.service, label=component.service, fontname="Roboto"
+                ),
+            ).add_node(pydot.Node(component_name))
+
+        for service_name, subgraph in sorted(subgraphs.items()):
+            pydot_graph.add_subgraph(subgraph)
+
     return pydot_graph
 
 
 # Needed :
 #   pip install matplotlib
 #   apt install graphviz
-def show(graph, nodes_to_color=None):
+def show(graph, *args, **kwargs):
     if isinstance(graph, nx.classes.Graph):
-        graph = to_pydot(graph, nodes_to_color)
+        graph = to_pydot(graph, *args, **kwargs)
 
     import io
     import matplotlib.pyplot as plt
