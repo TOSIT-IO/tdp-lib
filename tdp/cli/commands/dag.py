@@ -57,8 +57,16 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     help="Nodes that will be colored after applying get_actions_to_nodes, separed with a comma (,)",
     type=str,
 )
+@click.option(
+    "-c",
+    "--cluster",
+    is_flag=True,
+    help="Group node into cluster inside each service",
+)
 @pass_dag
-def dag(dag, nodes, transitive_reduction, pattern_format, color_to, color_from):
+def dag(
+    dag, nodes, transitive_reduction, pattern_format, color_to, color_from, cluster
+):
     dag = Dag()
     graph = dag.graph
     if nodes:
@@ -93,4 +101,4 @@ def dag(dag, nodes, transitive_reduction, pattern_format, color_to, color_from):
             nodes_to_color = nodes_to_color.intersection(nodes_from)
         else:
             nodes_to_color = nodes_from
-    show(graph, nodes_to_color)
+    show(graph, nodes_to_color, cluster)
