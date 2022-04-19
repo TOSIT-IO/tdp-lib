@@ -5,8 +5,12 @@
   ],
   "ignore": [
     ".github",
+    "tdp/cli/__init__.py",
+    "tdp/cli/commands/__init__.py",
     "tdp/components/__init__.py",
-    "tdp/core/__init__.py"
+    "tdp/core/__init__.py",
+    "tdp/core/repository/__init__.py",
+    "tdp/core/runner/__init__.py"
   ]
 }
 
