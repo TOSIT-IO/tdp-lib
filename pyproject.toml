@@ -22,7 +22,6 @@ SQLAlchemy = "^1.4.31"
 click = "8.0.4"
 tabulate = "0.8.9"
 Sphinx = {version = "4.5.0", optional = true}
-sphinx-markdown-builder = {version = "0.5.5", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
@@ -32,7 +31,7 @@ isort = "4.3.21"
 taskipy = "1.10.1"
 
 [tool.poetry.extras]
-docs = ["Sphinx", "sphinx-markdown-builder"]
+docs = ["Sphinx"]
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
@@ -45,7 +44,6 @@ docs_path = "docs"
 docs-generate = {cmd = "sphinx-apidoc --output-dir {docs_path} --module-first --doc-project TDP --doc-author TOSIT --full --force tdp '*test*'", use_vars = true}
 docs-clean = {cmd = "make -C {docs_path} clean", use_vars = true}
 docs-html = {cmd = "make -C {docs_path} html", use_vars = true}
-docs-markdown = {cmd = "make -C {docs_path} markdown", use_vars = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
