@@ -29,7 +29,7 @@ class AnsibleExecutor(Executor):
                     universal_newlines=True,
                 )
                 for stdout_line in iter(res.stdout.readline, ""):
-                    print(stdout_line)
+                    print(stdout_line, end="")
                     byte_stream.write(bytes(stdout_line, "utf-8"))
                 state = StateEnum.SUCCESS if res.wait() == 0 else StateEnum.FAILURE
             except KeyboardInterrupt:
