@@ -29,3 +29,10 @@ Documentation can be found inside:
 * [docs](docs/developer/index.rst) for documentation index
 * [docs/cli](docs/developer/cli/index.rst) for CLI documentation index
 * [docs/Developer Quick Start](docs/developer/cli/developer_quick_start.rst)
+
+To generate the documentation:
+
+```
+poetry install -E docs
+poetry run task docs-generate
+```
