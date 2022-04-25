@@ -34,5 +34,5 @@ To generate the documentation:
 
 ```
 poetry install -E docs
-poetry run task docs-generate
+poetry run task docs-html
 ```
