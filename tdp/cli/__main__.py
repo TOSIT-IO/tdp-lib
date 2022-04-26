@@ -9,6 +9,7 @@ from tdp.cli.commands.default_diff import default_diff
 from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.init import init
 from tdp.cli.commands.nodes import nodes
+from tdp.cli.commands.playbooks import playbooks
 from tdp.cli.commands.run import run
 from tdp.cli.commands.service_versions import service_versions
 
@@ -27,5 +28,6 @@ tdp.add_command(default_diff)
 tdp.add_command(deploy)
 tdp.add_command(init)
 tdp.add_command(nodes)
+tdp.add_command(playbooks)
 tdp.add_command(run)
 tdp.add_command(service_versions)
