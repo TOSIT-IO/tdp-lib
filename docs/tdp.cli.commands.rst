@@ -57,6 +57,14 @@ tdp.cli.commands.nodes module
    :undoc-members:
    :show-inheritance:
 
+tdp.cli.commands.playbooks module
+---------------------------------
+
+.. automodule:: tdp.cli.commands.playbooks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tdp.cli.commands.service\_versions module
 -----------------------------------------
 
