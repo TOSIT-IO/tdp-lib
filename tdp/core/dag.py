@@ -33,15 +33,16 @@ except ImportError:
 logger = logging.getLogger("tdp").getChild("dag")
 
 SERVICE_PRIORITY = {
-    "zookeeper": 1,
-    "hadoop": 2,
-    "ranger": 3,
-    "hdfs": 4,
-    "yarn": 5,
-    "hive": 6,
-    "hbase": 7,
-    "spark": 8,
-    "knox": 9,
+    "exporter": 1,
+    "zookeeper": 2,
+    "hadoop": 3,
+    "ranger": 4,
+    "hdfs": 5,
+    "yarn": 6,
+    "hive": 7,
+    "hbase": 8,
+    "spark": 9,
+    "knox": 10,
 }
 DEFAULT_SERVICE_PRIORITY = 99
 
