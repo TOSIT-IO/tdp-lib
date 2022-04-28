@@ -47,17 +47,14 @@ class GitRepository(Repository):
         with self._lock:
             yield self
             try:
-                if len(self._repo.index.diff("HEAD")) > 0:
-                    commit = self._repo.index.commit(msg)
-                    logger.info(f"commit: [{commit.hexsha}] {msg}")
-                else:
+                if len(self._repo.index.diff("HEAD")) == 0:
                     raise EmptyCommit("The commit has no diff")
             except BadName as e:
                 logger.debug(
                     f"error during diff: {e}. Probably because the repo is still empty."
                 )
-                commit = self._repo.index.commit(msg)
-                logger.info(f"commit: [{commit.hexsha}] {msg}")
+            commit = self._repo.index.commit(msg)
+            logger.info(f"commit: [{commit.hexsha}] {msg}")
 
     def add_for_validation(self, path):
         with self._lock:
