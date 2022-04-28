@@ -21,6 +21,10 @@ class NotARepository(Exception):
     pass
 
 
+class EmptyCommit(Exception):
+    pass
+
+
 class Repository(ABC):
     """Abstract class representing a versionned repository.
 

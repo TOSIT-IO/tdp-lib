@@ -6,7 +6,11 @@ from pathlib import Path
 import pytest
 from git import Repo
 
-from tdp.core.repository.git_repository import GitRepository, NotARepository
+from tdp.core.repository.git_repository import (
+    EmptyCommit,
+    GitRepository,
+    NotARepository,
+)
 
 
 @pytest.fixture(scope="function")
@@ -127,3 +131,22 @@ def test_git_repository_file_updated(git_repository):
     assert sorted(git_repository.files_modified(initial_commit)) == sorted(
         [file_list[0]]
     )
+
+
+def test_git_repository_no_validation(git_repository):
+    # first commit sets the value
+    commit_message = "[HIVE] set nb cores"
+    hive_yml = "group_vars/hive.yml"
+    with git_repository.validate(
+        commit_message
+    ) as repository, repository.open_var_file(hive_yml) as hive:
+        hive["nb_cores"] = 2
+
+    # second commit does not change anything
+    commit_message = "[HIVE] no changes"
+    hive_yml = "group_vars/hive.yml"
+    with pytest.raises(EmptyCommit):
+        with git_repository.validate(
+            commit_message
+        ) as repository, repository.open_var_file(hive_yml) as hive:
+            hive["nb_cores"] = 2
