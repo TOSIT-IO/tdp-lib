@@ -21,7 +21,18 @@ Developer Quick Start (sqlite backend)
      # this folder is to store sqlite db file
      user@yourmachine:export TDP_SQLITE_PATH=~/sqlite-data/tdp.db
      # this folder is to store tdp service configuration, please found default value at ~/tdp-collection/tdp_vars_defaults
-     user@yourmachine:export TDP_VARS=~/tdp-vars
+     # the path must contain the string `tdp_vars`
+     user@yourmachine:export TDP_VARS=~/tdp_vars
+
+#. you must configure ansible to point to your TDP_VARS
+
+   .. code-block:: cfg
+
+     [defaults]
+     inventory=your_inventory,..,~/tdp_vars
+
+     [inventory]
+     enable_plugins = tosit.tdp.inventory,..,your_plugins
 
 #. launch tdp init  
 
