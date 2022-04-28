@@ -108,5 +108,10 @@ def check_services_cleanliness(service_managers):
     ]
     if unclean_services:
         for name in unclean_services:
-            click.echo(f"{name} repository is not in a clean state")
-        raise ValueError("Some services are in a dirty state")
+            click.echo(
+                f'"{name}" repository is not in a clean state.'
+                " Check that all modifications are committed."
+            )
+        raise click.ClickException(
+            "Some services are in a dirty state, commit your modifications."
+        )
