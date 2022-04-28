@@ -1,6 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -10,6 +11,8 @@ from tabulate import tabulate
 from tdp.cli.session import get_session_class
 from tdp.core.models import ActionLog, DeploymentLog, ServiceLog
 from tdp.core.models.base import keyvalgen
+
+LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 
 
 @click.command(short_help="Browse deployment logs")
@@ -152,6 +155,10 @@ def process_action_query(session_class, deployment_id, action):
             click.echo(f"{action_log.action} logs:\n" + str(action_log.logs, "utf-8"))
 
 
+def translate_timezone(timestamp):
+    return timestamp.replace(tzinfo=timezone.utc).astimezone(LOCAL_TIMEZONE)
+
+
 def format_deployment_log(deployment_log, headers):
     def custom_format(key, value):
         if key in ["sources", "targets"] and value is not None:
@@ -166,6 +173,8 @@ def format_deployment_log(deployment_log, headers):
                 return ",".join(action.action for action in value)
         elif key == "services":
             return ",".join(str(service_log.service) for service_log in value)
+        elif isinstance(value, datetime):
+            return translate_timezone(value)
         else:
             return str(value)
 
@@ -176,6 +185,8 @@ def format_action_log(action_log, headers):
     def custom_format(key, value):
         if key == "logs":
             return str(value[:40])
+        elif isinstance(value, datetime):
+            return translate_timezone(value)
         else:
             return str(value)
 
