@@ -23,9 +23,9 @@ class ActionRunner:
     def run(self, action):
         logger.debug(f"Running action {action}")
 
-        start = datetime.now()
+        start = datetime.utcnow()
         state, logs = self._executor.execute(action)
-        end = datetime.now()
+        end = datetime.utcnow()
 
         if not StateEnum.has_value(state):
             logger.error(
@@ -78,9 +78,9 @@ class ActionRunner:
         elif node_filter:
             actions = self.dag.filter_actions_glob(actions, node_filter)
 
-        start = datetime.now()
+        start = datetime.utcnow()
         action_logs = list(self._run_actions(actions))
-        end = datetime.now()
+        end = datetime.utcnow()
 
         filtered_failures = filter(
             lambda action_log: action_log.state == StateEnum.FAILURE.value, action_logs

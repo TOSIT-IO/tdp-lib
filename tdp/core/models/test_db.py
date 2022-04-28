@@ -25,12 +25,15 @@ def session_class():
 
 def test_add_object(session_class):
     deployment = DeploymentLog(
-        targets=["init_hdfs"], start=datetime.now(), end=datetime.now(), state="SUCCESS"
+        targets=["init_hdfs"],
+        start=datetime.utcnow(),
+        end=datetime.utcnow(),
+        state="SUCCESS",
     )
     action = ActionLog(
         action="start_hdfs",
-        start=datetime.now(),
-        end=datetime.now(),
+        start=datetime.utcnow(),
+        end=datetime.utcnow(),
         state="SUCCESS",
         logs=b"log",
     )

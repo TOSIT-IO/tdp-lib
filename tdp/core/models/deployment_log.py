@@ -16,8 +16,8 @@ class DeploymentLog(Base):
     sources = Column(JSON)
     targets = Column(JSON)
     filter = Column(String(length=NODE_NAME_MAX_LENGTH))
-    start = Column(DateTime)
-    end = Column(DateTime)
+    start = Column(DateTime(timezone=False))
+    end = Column(DateTime(timezone=False))
     state = Column(String(length=StateEnum.max_length()))
     actions = relationship(
         "ActionLog", back_populates="deployment", order_by="ActionLog.start"
