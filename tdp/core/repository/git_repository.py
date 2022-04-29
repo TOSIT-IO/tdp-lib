@@ -4,9 +4,14 @@
 import logging
 from contextlib import contextmanager
 
-from git import InvalidGitRepositoryError, NoSuchPathError, Repo
+from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 
-from tdp.core.repository.repository import NotARepository, NoVersionYet, Repository
+from tdp.core.repository.repository import (
+    EmptyCommit,
+    NotARepository,
+    NoVersionYet,
+    Repository,
+)
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 
@@ -41,6 +46,13 @@ class GitRepository(Repository):
     def validate(self, msg):
         with self._lock:
             yield self
+            try:
+                if len(self._repo.index.diff("HEAD")) == 0:
+                    raise EmptyCommit("The commit has no diff")
+            except BadName as e:
+                logger.debug(
+                    f"error during diff: {e}. Probably because the repo is still empty."
+                )
             commit = self._repo.index.commit(msg)
             logger.info(f"commit: [{commit.hexsha}] {msg}")
 
