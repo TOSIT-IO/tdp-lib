@@ -143,10 +143,15 @@ def test_git_repository_no_validation(git_repository):
         hive["nb_cores"] = 2
 
     # second commit does not change anything
-    commit_message = "[HIVE] no changes"
+    commit_message_mock = "[HIVE] no changes"
     hive_yml = "group_vars/hive.yml"
     with pytest.raises(EmptyCommit):
         with git_repository.validate(
-            commit_message
+            commit_message_mock
         ) as repository, repository.open_var_file(hive_yml) as hive:
             hive["nb_cores"] = 2
+
+    with Repo(git_repository.path) as repo:
+        assert not repo.is_dirty()
+        last_commit = repo.head.commit
+        assert last_commit.message == commit_message
