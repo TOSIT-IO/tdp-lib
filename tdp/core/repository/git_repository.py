@@ -48,7 +48,9 @@ class GitRepository(Repository):
             yield self
             try:
                 if len(self._repo.index.diff("HEAD")) == 0:
-                    raise EmptyCommit("The commit has no diff")
+                    raise EmptyCommit(
+                        "validating these changes would produce no difference"
+                    )
             except BadName as e:
                 logger.debug(
                     f"error during diff: {e}. Probably because the repo is still empty."
