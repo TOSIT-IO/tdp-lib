@@ -5,8 +5,8 @@ from pathlib import Path
 
 import click
 
-from tdp.cli.context import pass_dag
 from tdp.cli.session import get_session_class
+from tdp.cli.utils import create_dag_from_collection_path
 from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.service_manager import ServiceManager
@@ -51,9 +51,7 @@ from tdp.core.service_manager import ServiceManager
 )
 @click.option("--filter", type=str, help="Glob on list name")
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
-@pass_dag
 def deploy(
-    dag,
     sources,
     targets,
     sqlite_path,
@@ -63,6 +61,7 @@ def deploy(
     filter,
     dry,
 ):
+    dag = create_dag_from_collection_path(collection_path)
     set_nodes = set()
     if sources:
         sources = sources.split(",")

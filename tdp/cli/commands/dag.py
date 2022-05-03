@@ -3,12 +3,12 @@
 
 import fnmatch
 import re
+from pathlib import Path
 
 import click
 import networkx as nx
 
-from tdp.cli.context import pass_dag
-from tdp.core.dag import Dag
+from tdp.cli.utils import create_dag_from_collection_path
 from tdp.core.dag_dot import show
 
 try:
@@ -26,6 +26,13 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
 
 @click.command(help=DAG_SUMMARY, short_help=SHORT_DAG_SUMMARY)
 @click.argument("nodes", nargs=-1)
+@click.option(
+    "--collection-path",
+    envvar="TDP_COLLECTION_PATH",
+    required=True,
+    type=Path,
+    help="Path to tdp-collection",
+)
 @click.option(
     "-t",
     "--transitive-reduction",
@@ -63,11 +70,16 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     is_flag=True,
     help="Group node into cluster inside each service",
 )
-@pass_dag
 def dag(
-    dag, nodes, transitive_reduction, pattern_format, color_to, color_from, cluster
+    collection_path,
+    nodes,
+    transitive_reduction,
+    pattern_format,
+    color_to,
+    color_from,
+    cluster,
 ):
-    dag = Dag()
+    dag = create_dag_from_collection_path(collection_path)
     graph = dag.graph
     if nodes:
         if pattern_format:

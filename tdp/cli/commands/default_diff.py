@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 import yaml
 
-from tdp.cli.context import pass_dag
+from tdp.cli.utils import create_dag_from_collection_path
 from tdp.core.service_manager import ServiceManager
 
 
@@ -24,8 +24,8 @@ from tdp.core.service_manager import ServiceManager
 @click.option(
     "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
 )
-@pass_dag
-def default_diff(dag, service, collection_path, vars):
+def default_diff(service, collection_path, vars):
+    dag = create_dag_from_collection_path(collection_path)
     service_managers = ServiceManager.get_service_managers(dag, vars)
     collection_default_vars = collection_path / "tdp_vars_defaults"
 
