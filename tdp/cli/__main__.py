@@ -18,7 +18,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.pass_context
 def tdp(ctx):
-    ctx.obj = Dag()
+    pass
 
 
 tdp.add_command(browse)
