@@ -8,7 +8,7 @@ from pathlib import Path
 import click
 import networkx as nx
 
-from tdp.cli.utils import create_dag_from_collection_path
+from tdp.core.dag import Dag
 from tdp.core.dag_dot import show
 
 try:
@@ -79,7 +79,7 @@ def dag(
     color_from,
     cluster,
 ):
-    dag = create_dag_from_collection_path(collection_path)
+    dag = Dag.from_collection(collection_path)
     graph = dag.graph
     if nodes:
         if pattern_format:
