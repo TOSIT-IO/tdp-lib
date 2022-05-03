@@ -62,6 +62,10 @@ class Dag:
         self.yaml_files = yaml_files
         self.playbooks_dir = playbooks_dir
 
+    @staticmethod
+    def from_collection(collection_path):
+        return Dag((Path(collection_path) / DAG_FOLDER_NAME).glob("*" + DAG_EXTENSION))
+
     @property
     def yaml_files(self):
         if self._yaml_files is not None:

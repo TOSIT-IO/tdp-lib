@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from tdp.cli.session import init_db
-from tdp.cli.utils import create_dag_from_collection_path
+from tdp.core.dag import Dag
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.service_manager import ServiceManager
 
@@ -30,7 +30,7 @@ from tdp.core.service_manager import ServiceManager
     "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
 )
 def init(sqlite_path, collection_path, vars):
-    dag = create_dag_from_collection_path(collection_path)
+    dag = Dag.from_collection(collection_path)
     init_db(sqlite_path)
     default_vars = collection_path / "tdp_vars_defaults"
     service_managers = ServiceManager.initialize_service_managers(
