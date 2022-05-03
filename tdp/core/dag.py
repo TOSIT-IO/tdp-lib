@@ -21,7 +21,6 @@ import networkx as nx
 import yaml
 from networkx.classes.function import subgraph
 
-import tdp.components
 from tdp.core.component import Component
 
 try:
@@ -64,7 +63,7 @@ class Dag:
 
     @staticmethod
     def from_collection(collection_path):
-        return Dag((Path(collection_path) / DAG_FOLDER_NAME).glob("*" + DAG_EXTENSION))
+        return Dag(list((Path(collection_path) / DAG_FOLDER_NAME).glob("*" + DAG_EXTENSION)))
 
     @property
     def yaml_files(self):
