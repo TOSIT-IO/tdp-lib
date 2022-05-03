@@ -46,21 +46,21 @@ SERVICE_PRIORITY = {
 }
 DEFAULT_SERVICE_PRIORITY = 99
 
+DAG_FOLDER_NAME = "tdp_lib_dag"
+DAG_EXTENSION = ".yml"
+
 
 class Dag:
     """Generate DAG with components dependencies"""
 
-    def __init__(self, yaml_files=None, playbooks_dir=None):
+    def __init__(self, yaml_files, playbooks_dir=None):
         self._components = None
         self._graph = None
         self._yaml_files = None
         self._services = None
         self._services_components = None
-        self.playbooks_dir = playbooks_dir
-
-        if yaml_files is None:
-            yaml_files = list((Path(tdp.components.__file__).parent).glob("*.yml"))
         self.yaml_files = yaml_files
+        self.playbooks_dir = playbooks_dir
 
     @property
     def yaml_files(self):
