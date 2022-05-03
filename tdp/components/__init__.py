@@ -1,3 +1,0 @@
-"""
-See :doc:`developer/components`
-"""
