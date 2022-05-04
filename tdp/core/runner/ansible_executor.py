@@ -12,9 +12,8 @@ logger = logging.getLogger("tdp").getChild("ansible_executor")
 
 
 class AnsibleExecutor(Executor):
-    def __init__(self, playbooks_directory, run_directory=None, dry=False):
+    def __init__(self, run_directory=None, dry=False):
         # TODO configurable via config file
-        self._playdir = playbooks_directory
         self._rundir = run_directory
         self._dry = dry
 
@@ -39,8 +38,7 @@ class AnsibleExecutor(Executor):
             return state, byte_stream.getvalue()
 
     def execute(self, action):
-        playbook_action = os.path.join(self._playdir, action + ".yml")
-        command = ["ansible-playbook", playbook_action]
+        command = ["ansible-playbook", action]
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return StateEnum.SUCCESS, b""

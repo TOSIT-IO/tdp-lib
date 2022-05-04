@@ -20,16 +20,16 @@ class ActionRunner:
         self._executor = executor
         self._service_managers = service_managers
 
-    def run(self, action):
+    def run(self, action, action_file):
         logger.debug(f"Running action {action}")
 
         start = datetime.utcnow()
-        state, logs = self._executor.execute(action)
+        state, logs = self._executor.execute(action_file)
         end = datetime.utcnow()
 
         if not StateEnum.has_value(state):
             logger.error(
-                f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{action}'))"
+                f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{action_file}'))"
             )
             state = StateEnum.FAILURE
         elif not isinstance(state, StateEnum):
@@ -41,8 +41,12 @@ class ActionRunner:
 
     def _run_actions(self, actions):
         for action in actions:
-            if not self.dag.components[action].noop:
-                action_log = self.run(action)
+            component = self.dag.components[action]
+            if not component.noop:
+                action_file = self.dag.collections[component.collection_name].actions[
+                    action
+                ]
+                action_log = self.run(action, action_file)
                 if action_log.state == StateEnum.FAILURE.value:
                     logger.error(f"Action {action} failed !")
                     yield action_log
