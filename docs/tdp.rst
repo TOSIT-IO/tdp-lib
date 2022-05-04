@@ -13,5 +13,4 @@ Subpackages
    :maxdepth: 4
 
    tdp.cli
-   tdp.components
    tdp.core

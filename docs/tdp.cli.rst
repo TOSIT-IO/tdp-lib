@@ -17,18 +17,18 @@ Subpackages
 Submodules
 ----------
 
-tdp.cli.context module
-----------------------
-
-.. automodule:: tdp.cli.context
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tdp.cli.session module
 ----------------------
 
 .. automodule:: tdp.cli.session
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.cli.utils module
+----------------------
+
+.. automodule:: tdp.cli.utils
    :members:
    :undoc-members:
    :show-inheritance:
