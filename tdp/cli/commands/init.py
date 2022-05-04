@@ -1,11 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import os
 from pathlib import Path
 
 import click
 
 from tdp.cli.session import init_db
+from tdp.cli.utils import collection_paths
 from tdp.core.dag import Dag
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.service_manager import ServiceManager
@@ -23,19 +25,16 @@ from tdp.core.service_manager import ServiceManager
     "--collection-path",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    type=Path,
-    help="Path to tdp-collection",
+    callback=collection_paths,  # transforms list of path into list of Collection
+    help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
     "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
 )
 def init(sqlite_path, collection_path, vars):
-    dag = Dag.from_collection(collection_path)
+    dag = Dag.from_collections(collection_path)
     init_db(sqlite_path)
-    default_vars = collection_path / "tdp_vars_defaults"
-    service_managers = ServiceManager.initialize_service_managers(
-        dag, vars, default_vars
-    )
+    service_managers = ServiceManager.initialize_service_managers(dag, vars)
     for name, service_manager in service_managers.items():
         try:
             click.echo(f"{name}: {service_manager.version}")

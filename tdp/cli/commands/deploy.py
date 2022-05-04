@@ -1,11 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import os
 from pathlib import Path
 
 import click
 
 from tdp.cli.session import get_session_class
+from tdp.cli.utils import collection_paths
 from tdp.core.dag import Dag
 from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
@@ -35,9 +37,9 @@ from tdp.core.service_manager import ServiceManager
 @click.option(
     "--collection-path",
     envvar="TDP_COLLECTION_PATH",
-    type=Path,
-    help="Path to tdp-collection",
     required=True,
+    callback=collection_paths,  # transforms list of path into list of Collection
+    help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
     "--run-directory",
@@ -61,7 +63,9 @@ def deploy(
     filter,
     dry,
 ):
-    dag = Dag.from_collection(collection_path)
+    if not vars.exists():
+        raise click.BadParameter(f"{vars} does not exist")
+    dag = Dag.from_collections(collection_path)
     set_nodes = set()
     if sources:
         sources = sources.split(",")
@@ -71,12 +75,10 @@ def deploy(
         set_nodes.update(targets)
     set_difference = set_nodes.difference(dag.components)
     if set_difference:
-        raise ValueError(f"{set_difference} are not valid nodes")
-    playbooks_directory = collection_path / "playbooks"
+        raise click.BadParameter(f"{set_difference} are not valid nodes")
     run_directory = run_directory.absolute() if run_directory else None
 
     ansible_executor = AnsibleExecutor(
-        playbooks_directory=playbooks_directory,
         run_directory=run_directory,
         dry=dry,
     )

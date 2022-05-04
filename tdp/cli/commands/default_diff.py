@@ -2,14 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import difflib
+import os
 import pprint
+from collections import OrderedDict
 from pathlib import Path
 
 import click
-import yaml
 
+from tdp.cli.utils import collection_paths
+from tdp.core.collection import DEFAULT_VARS_FOLDER_NAME
 from tdp.core.dag import Dag
-from tdp.core.service_manager import ServiceManager
+from tdp.core.service_manager import ServiceManager, merge_collection_vars
+from tdp.core.variables import Variables
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
@@ -18,39 +22,44 @@ from tdp.core.service_manager import ServiceManager
     "--collection-path",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    type=Path,
-    help="Path to tdp-collection",
+    callback=collection_paths,  # transforms list of path into list of Collection
+    help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
     "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
 )
 def default_diff(service, collection_path, vars):
-    dag = Dag.from_collection(collection_path)
+    if not vars.exists():
+        raise click.BadParameter(f"{vars} does not exist")
+    dag = Dag.from_collections(collection_path)
     service_managers = ServiceManager.get_service_managers(dag, vars)
-    collection_default_vars = collection_path / "tdp_vars_defaults"
 
     if service:
-        service_diff(collection_default_vars, service_managers[service])
+        service_diff(service_managers[service])
     else:
         for service in dag.services:
-            service_diff(collection_default_vars, service_managers[service])
+            service_diff(service_managers[service])
 
 
-def service_diff(collection_default_vars, service):
+def service_diff(service):
     """computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars
 
     Args:
         collection_default_vars (Path): default vars path
         service (ServiceManager): service to compare's manager
     """
-    default_service_vars = collection_default_vars / service.name
     # key: filename with extension, value: PosixPath(filepath)
-    default_service_vars_paths = {
-        path.name: path for path in default_service_vars.glob("*.yml")
-    }
+    default_service_vars_paths = OrderedDict()
+    for collection in service.dag.collections.values():
+        default_vars = collection.get_service_default_vars(service.name)
+        if not default_vars:
+            continue
+        for name, path in default_vars:
+            default_service_vars_paths.setdefault(name, []).append(path)
+
     for (
         default_service_vars_filename,
-        default_service_vars_filepath,
+        default_service_vars_filepaths,
     ) in default_service_vars_paths.items():
         tdp_vars_service_vars_filepath = service.path / default_service_vars_filename
         if not tdp_vars_service_vars_filepath.exists():
@@ -61,36 +70,43 @@ def service_diff(collection_default_vars, service):
                 )
             )
             continue
+        service_varfile = {}
+        with Variables(tdp_vars_service_vars_filepath).open() as service_variables:
+            service_varfile = service_variables.to_dict()
 
-        with default_service_vars_filepath.open(
-            "r"
-        ) as default_service_varfile, tdp_vars_service_vars_filepath.open(
-            "r"
-        ) as service_varfile:
-            default_service_varfile_content = pprint.pformat(
-                yaml.safe_load(default_service_varfile)
-            ).splitlines()
-            service_varfile_content = pprint.pformat(
-                yaml.safe_load(service_varfile)
-            ).splitlines()
-            # left_path = tdp_vars_defaults/{service}/{filename}
-            left_path = str(
-                default_service_vars_filepath.relative_to(
-                    collection_default_vars.parent
+        default_service_varfile = {}
+        for default_service_vars_filepath in default_service_vars_filepaths:
+            with Variables(default_service_vars_filepath).open() as default_variables:
+                default_service_varfile = merge_collection_vars(
+                    default_service_varfile, default_variables.to_dict()
                 )
-            )
-            # right_path = {your_tdp_vars}/{service}/{filename}
-            right_path = str(
-                tdp_vars_service_vars_filepath.relative_to(service.path.parent.parent)
-            )
-            compute_and_print_difference(
-                service_name=service.name,
-                left_content=default_service_varfile_content,
-                right_content=service_varfile_content,
-                left_path=left_path,
-                right_path=right_path,
-                filename=default_service_vars_filename,
-            )
+
+        service_varfile_content = pprint.pformat(service_varfile).splitlines()
+        default_service_varfile_content = pprint.pformat(
+            default_service_varfile
+        ).splitlines()
+
+        # left_path = tdp_vars_defaults/{service}/{filename}
+        # multiple paths if merged from multiple collections
+        paths = [
+            str(filepath.relative_to(find_parent(filepath, DEFAULT_VARS_FOLDER_NAME)))
+            for filepath in default_service_vars_filepaths
+        ]
+        context = "" if len(paths) < 2 else " <-- merged"
+        left_path = ",".join(paths) + context
+
+        # right_path = {your_tdp_vars}/{service}/{filename}
+        right_path = str(
+            tdp_vars_service_vars_filepath.relative_to(service.path.parent.parent)
+        )
+        compute_and_print_difference(
+            service_name=service.name,
+            left_content=default_service_varfile_content,
+            right_content=service_varfile_content,
+            left_path=left_path,
+            right_path=right_path,
+            filename=default_service_vars_filename,
+        )
 
 
 def compute_and_print_difference(
@@ -128,3 +144,10 @@ def color_line(line: str):
         return click.style(line, fg="green")
 
     return line
+
+
+def find_parent(path, name):
+    parent_path = path
+    while parent_path.name != name and parent_path is not None:
+        parent_path = parent_path.parent
+    return parent_path.parent.parent
