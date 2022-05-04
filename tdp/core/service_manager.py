@@ -5,6 +5,9 @@ import logging
 from collections import OrderedDict
 from pathlib import Path
 
+from ansible.utils.vars import merge_hash
+
+from tdp.core.collection import YML_EXTENSION
 from tdp.core.component import Component
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
@@ -13,6 +16,10 @@ from tdp.core.variables import Variables
 logger = logging.getLogger("tdp").getChild("git_repository")
 
 SERVICE_NAME_MAX_LENGTH = 15
+
+
+def merge_collection_vars(dict_a, dict_b):
+    return merge_hash(dict_a, dict_b)
 
 
 class ServiceManager:
@@ -47,52 +54,60 @@ class ServiceManager:
     def path(self):
         return self.repository.path
 
-    def initialize_variables(self, service_default_vars_directory):
+    def initialize_variables(self):
 
-        # dict with filepath as key and Path as value
+        # dict with filename as key and a list of paths as value
         # a service can have multiple variable files present
-        default_var_paths = OrderedDict(
-            (path.name, path) for path in service_default_vars_directory.glob("*.yml")
-        )
+        # will look through every collections
+        default_var_paths = OrderedDict()
+        for collection in self.dag.collections.values():
+            default_vars = collection.get_service_default_vars(self.name)
+            if not default_vars:
+                continue
+            for name, path in default_vars:
+                default_var_paths.setdefault(name, []).append(path)
 
         # If service has no default vars, put a key with a none value
         if not default_var_paths:
-            default_var_paths[self.name + ".yml"] = None
+            default_var_paths[self.name + YML_EXTENSION] = None
 
         with self.repository.validate(
             f"{self.name}: initial commit"
         ) as repostiory, repostiory.open_var_files(
             default_var_paths.keys()
         ) as configurations:
-            # open_var_files returns an OrderedDict, therefore we can iterate over the two values with zip
-            for configuration, default_variables_path in zip(
-                configurations.values(), default_var_paths.values()
-            ):
-                if default_variables_path:
+            # open_var_files returns an OrderedDict with filename as key, and Variables as value
+            for configuration_file, configuration in configurations.items():
+                default_variables_paths = default_var_paths[configuration_file]
+                if default_variables_paths:
                     logger.info(
-                        f"Initializing {self.name} with defaults from {service_default_vars_directory}"
+                        f"Initializing {self.name} with defaults from {', '.join(str(path) for path in default_variables_paths)}"
                     )
-                    with Variables(default_variables_path).open() as variables:
-                        configuration.update(variables)
+                    merge_result = {}
+                    for default_variables_path in default_variables_paths:
+                        with Variables(default_variables_path).open() as variables:
+                            merge_result = merge_collection_vars(
+                                merge_result, variables.to_dict()
+                            )
+
+                    configuration.update(merge_result)
                 # service has no default vars
                 else:
                     logger.info(f"Initializing {self.name} without variables")
                     pass
 
     @staticmethod
-    def initialize_service_managers(dag, services_directory, default_vars_directory):
-        """get a dict of service managers
+    def initialize_service_managers(dag, services_directory):
+        """get a dict of service managers, initialize all services if needed
 
         Args:
             dag (Dag): components DAG
-            services_directory (PathLike): path of the tdp vars
-            default_vars_directory (PathLike): path of the default tdp vars
+            services_directory (Union[str, Path]): path of the tdp vars
 
         Returns:
             Dict[str, ServiceManager]: mapping of service with their manager
         """
         services_directory = Path(services_directory)
-        default_vars_directory = Path(default_vars_directory)
         service_managers = {}
 
         for service in dag.services:
@@ -114,7 +129,7 @@ class ServiceManager:
                     f"{service_manager.name} is already initialized at {service_manager.version}"
                 )
             except NoVersionYet:
-                service_manager.initialize_variables(default_vars_directory / service)
+                service_manager.initialize_variables()
 
             service_managers[service] = service_manager
 

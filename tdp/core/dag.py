@@ -11,16 +11,16 @@ or on a subgraph of the DAG.
 """
 
 import fnmatch
+import functools
 import logging
-import os
 import re
-from copy import Error
+from collections import OrderedDict
 from pathlib import Path
 
 import networkx as nx
 import yaml
-from networkx.classes.function import subgraph
 
+from tdp.core.collection import Collection
 from tdp.core.component import Component
 
 try:
@@ -45,57 +45,86 @@ SERVICE_PRIORITY = {
 }
 DEFAULT_SERVICE_PRIORITY = 99
 
-DAG_FOLDER_NAME = "tdp_lib_dag"
-DAG_EXTENSION = ".yml"
-
 
 class Dag:
     """Generate DAG with components dependencies"""
 
-    def __init__(self, yaml_files, playbooks_dir=None):
+    def __init__(self, collections):
+        """
+        :param collections: ordered mapping of collections, with names used as keys
+        :type collections: OrderedDict[str, Collection]
+        """
+        self._collections = collections
         self._components = None
         self._graph = None
         self._yaml_files = None
         self._services = None
         self._services_components = None
-        self.yaml_files = yaml_files
-        self.playbooks_dir = playbooks_dir
 
     @staticmethod
-    def from_collection(collection_path):
-        return Dag(list((Path(collection_path) / DAG_FOLDER_NAME).glob("*" + DAG_EXTENSION)))
+    def from_collection(collection):
+        """Factory method to build a dag from a single collection. Leniant on input type
+
+        :param collection: one collection
+        :type collection: Union[str, Path, Collection]
+        :raises ValueError: if invalid type
+        :return: Dag built from input
+        :rtype: Dag
+        """
+        if isinstance(collection, (str, Path)):
+            return Dag.from_collections([Collection.from_path(collection)])
+        elif isinstance(collection, Collection):
+            return Dag.from_collections([collection])
+        raise ValueError("collection must be either an str, a Path or a Collection")
+
+    @staticmethod
+    def from_collections(collections):
+        """Factory method to build a dag from multiple collections
+
+        Ordering of the sequence is what will determine the loading order of the components.
+
+        :param collections: Ordered Sequence of Collection
+        :type collections: Sequence[Collection]
+        :return: Dag built from x collections
+        :rtype: Dag
+        """
+        collections = OrderedDict(
+            (collection.name, collection) for collection in collections
+        )
+
+        return Dag(collections)
 
     @property
-    def yaml_files(self):
-        if self._yaml_files is not None:
-            return self._yaml_files
-        return []
-
-    @yaml_files.setter
-    def yaml_files(self, value):
-        self._yaml_files = value
-        del self.components
-
-    @yaml_files.deleter
-    def yaml_files(self):
-        self.yaml_files = None
+    def collections(self):
+        return self._collections
 
     @property
     def components(self):
         if self._components is not None:
             return self._components
 
-        components_list = []
-        for yaml_file in self.yaml_files:
-            with yaml_file.open("r") as component_file:
-                components_list.extend(yaml.load(component_file, Loader=Loader) or [])
-
         components = {}
-        for component in components_list:
-            name = component["name"]
-            if name in components:
-                raise ValueError(f'"{name}" is declared several times')
-            components[name] = Component(**component)
+        for collection_name, collection in self._collections.items():
+            components_list = []
+            for yaml_file in collection.dag_yamls:
+                with yaml_file.open("r") as component_file:
+                    components_list.extend(
+                        yaml.load(component_file, Loader=Loader) or []
+                    )
+
+            for component in components_list:
+                name = component["name"]
+                if name in components:
+                    raise ValueError(
+                        (
+                            f'"{name}" is declared at least twice,'
+                            f" first in {components[name].collection_name}, "
+                            f" second in {collection_name}"
+                        )
+                    )
+                components[name] = Component(
+                    collection_name=collection_name, **component
+                )
 
         self._components = components
         self.validate()
@@ -229,10 +258,11 @@ class Dag:
         # value: set of available actions for the service
         services_actions = {}
 
-        if not self.playbooks_dir:
-            logger.warning(f"playbooks_dir is not defined, skip playbooks validations")
+        def warning(collection_name, message):
+            logger.warning(message + f", collection: {collection_name}")
 
         for component_name, component in self.components.items():
+            c_warning = functools.partial(warning, component.collection_name)
             for dependency in component.depends_on:
                 # *_start actions can only be required from within its own service
                 dependency_service = self.components[dependency].service
@@ -240,7 +270,7 @@ class Dag:
                     dependency.endswith("_start")
                     and dependency_service != component.service
                 ):
-                    logger.warning(
+                    c_warning(
                         f"Component '{component_name}' is in service '{component.service}', depends on "
                         f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                         f"only depends on start action within its own service"
@@ -250,7 +280,7 @@ class Dag:
                 if component_name.endswith("_install") and not dependency.endswith(
                     "_install"
                 ):
-                    logger.warning(
+                    c_warning(
                         f"Component '{component_name}' is an install action, depends on '{dependency}' which is "
                         f"not an install action and should only depends on other install action"
                     )
@@ -280,24 +310,21 @@ class Dag:
                         if dependency == previous_service_action:
                             previous_service_action_found = True
                     if not previous_service_action_found:
-                        logger.warning(
+                        c_warning(
                             f"Component '{component_name}' is a service action and have to depends on "
                             f"'{component.service}_{previous_action}'"
                         )
 
             # Actions tagged with the noop flag should not have a playbook defined in the collection
-            if self.playbooks_dir:
-                playbooks = os.listdir(self.playbooks_dir)
-                if f"{component_name}.yml" in playbooks:
-                    if component.noop:
-                        logger.warning(
-                            f"Component '{component_name}' is noop and the playbook should not exist"
-                        )
-                else:
-                    if not component.noop:
-                        logger.warning(
-                            f"Component '{component_name}' should have a playbook"
-                        )
+
+            if component_name in self._collections[component.collection_name].actions:
+                if component.noop:
+                    c_warning(
+                        f"Component '{component_name}' is noop and the playbook should not exist"
+                    )
+            else:
+                if not component.noop:
+                    c_warning(f"Component '{component_name}' should have a playbook")
 
         # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
         # even if they are "empty" (tagged with noop)
