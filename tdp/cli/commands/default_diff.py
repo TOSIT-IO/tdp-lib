@@ -10,7 +10,7 @@ from pathlib import Path
 import click
 
 from tdp.cli.utils import collection_paths
-from tdp.core.collection import DEFAULT_VARS_FOLDER_NAME
+from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.dag import Dag
 from tdp.core.service_manager import ServiceManager, merge_collection_vars
 from tdp.core.variables import Variables
@@ -89,7 +89,9 @@ def service_diff(service):
         # left_path = tdp_vars_defaults/{service}/{filename}
         # multiple paths if merged from multiple collections
         paths = [
-            str(filepath.relative_to(find_parent(filepath, DEFAULT_VARS_FOLDER_NAME)))
+            str(
+                filepath.relative_to(find_parent(filepath, DEFAULT_VARS_DIRECTORY_NAME))
+            )
             for filepath in default_service_vars_filepaths
         ]
         context = "" if len(paths) < 2 else " <-- merged"
