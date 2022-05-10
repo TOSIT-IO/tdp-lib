@@ -9,15 +9,6 @@ import click
 import networkx as nx
 
 from tdp.core.dag import Dag
-from tdp.core.dag_dot import show
-
-try:
-    import matplotlib
-    import pydot
-except ImportError as e:
-    raise RuntimeError(
-        "You need to install the 'visualization' extras to be able to use the dag command. Run 'poetry install --extras visualization'"
-    ) from e
 
 SHORT_DAG_SUMMARY = "Compute and display a graph."
 
@@ -79,6 +70,7 @@ def dag(
     color_from,
     cluster,
 ):
+    show = import_show()
     dag = Dag.from_collection(collection_path)
     graph = dag.graph
     if nodes:
@@ -114,3 +106,16 @@ def dag(
         else:
             nodes_to_color = nodes_from
     show(graph, nodes_to_color, cluster)
+
+
+def import_show():
+    try:
+        import matplotlib
+        import pydot
+    except ImportError as e:
+        raise click.ClickException(
+            "You need to install the 'visualization' extras to be able to use the dag command. Run 'poetry install --extras visualization'"
+        ) from e
+    from tdp.core.dag_dot import show
+
+    return show
