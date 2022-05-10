@@ -63,7 +63,7 @@ class Dag:
 
     @staticmethod
     def from_collection(collection):
-        """Factory method to build a dag from a single collection. Leniant on input type
+        """Factory method to build a dag from a single collection. Lenient on input type
 
         :param collection: one collection
         :type collection: Union[str, Path, Collection]
