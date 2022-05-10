@@ -98,6 +98,11 @@ class Dag:
     def collections(self):
         return self._collections
 
+    @collections.setter
+    def collections(self, collections):
+        self._collections = collections
+        del self.components
+
     @property
     def components(self):
         if self._components is not None:
