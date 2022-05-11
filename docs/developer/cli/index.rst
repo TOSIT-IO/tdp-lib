@@ -24,5 +24,6 @@ Usage
     deploy            Deploy TDP
     init              Init database / services in tdp vars
     nodes             List nodes from components DAG
+    run               Run single TDP action
     service-versions  Get the version of deployed services.(If a service has
                       never been deployed, does not show it)
