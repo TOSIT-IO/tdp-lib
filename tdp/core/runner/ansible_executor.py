@@ -38,7 +38,7 @@ class AnsibleExecutor(Executor):
             return state, byte_stream.getvalue()
 
     def execute(self, action):
-        command = ["ansible-playbook", action]
+        command = ["ansible-playbook", str(action)]
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return StateEnum.SUCCESS, b""
