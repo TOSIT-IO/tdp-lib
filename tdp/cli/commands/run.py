@@ -15,18 +15,7 @@ from tdp.core.service_manager import ServiceManager
 
 
 @click.command(short_help="Deploy TDP")
-@click.option(
-    "--sources",
-    type=str,
-    metavar="s1,s2,...",
-    help="Nodes where the run start (separate with comma)",
-)
-@click.option(
-    "--targets",
-    type=str,
-    metavar="t1,t2,...",
-    help="Nodes where the run stop (separate with comma)",
-)
+@click.argument("node")
 @click.option(
     "--sqlite-path",
     envvar="TDP_SQLITE_PATH",
@@ -51,31 +40,29 @@ from tdp.core.service_manager import ServiceManager
 @click.option(
     "--vars", envvar="TDP_VARS", type=Path, help="Path to the tdp vars", required=True
 )
-@click.option("--filter", type=str, help="Glob on list name")
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
-def deploy(
-    sources,
-    targets,
+def run(
+    node,
     sqlite_path,
     collection_path,
     run_directory,
     vars,
-    filter,
     dry,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag.from_collections(collection_path)
-    set_nodes = set()
-    if sources:
-        sources = sources.split(",")
-        set_nodes.update(sources)
-    if targets:
-        targets = targets.split(",")
-        set_nodes.update(targets)
-    set_difference = set_nodes.difference(dag.components)
-    if set_difference:
-        raise click.BadParameter(f"{set_difference} are not valid nodes")
+
+    component = dag.components.get(node, None)
+    if not component:
+        raise click.BadParameter(f"{node} is not a valid node")
+
+    if component.noop:
+        raise click.BadParameter(
+            f"{node} is tagged as noop and thus"
+            " cannot be executed in an unitary deployment"
+        )
+
     run_directory = run_directory.absolute() if run_directory else None
 
     ansible_executor = AnsibleExecutor(
@@ -88,14 +75,7 @@ def deploy(
         check_services_cleanliness(service_managers)
 
         action_runner = ActionRunner(dag, ansible_executor, service_managers)
-        if sources:
-            click.echo(f"Deploying from {sources}")
-        elif targets:
-            click.echo(f"Deploying to {targets}")
-        else:
-            click.echo(f"Deploying TDP")
-        deployment = action_runner.run_nodes(
-            sources=sources, targets=targets, node_filter=filter
-        )
+        click.echo(f"Deploying {node}")
+        deployment = action_runner.run_nodes(targets=[node], node_filter=node)
         session.add(deployment)
         session.commit()
