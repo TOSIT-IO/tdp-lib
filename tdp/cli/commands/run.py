@@ -14,7 +14,7 @@ from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.service_manager import ServiceManager
 
 
-@click.command(short_help="Deploy TDP")
+@click.command(short_help="Run single TDP action")
 @click.argument("node")
 @click.option(
     "--sqlite-path",
