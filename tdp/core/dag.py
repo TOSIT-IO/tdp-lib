@@ -41,7 +41,8 @@ SERVICE_PRIORITY = {
     "hive": 7,
     "hbase": 8,
     "spark": 9,
-    "knox": 10,
+    "spark3": 10,
+    "knox": 11,
 }
 DEFAULT_SERVICE_PRIORITY = 99
 
