@@ -104,7 +104,7 @@ Developer Quick Start (sqlite backend)
 
    .. code-block:: shell
 
-     user@yourmachine:tdp deploy zookeeper_install --dry
+     user@yourmachine:tdp deploy --targets zookeeper_install --dry
      2022-03-16 16:50:21,379 - DEBUG - tdp.<module> - Logger initialized
      2022-03-16 16:50:21,838 - WARNING - tdp.dag.validate - playbooks_dir is not defined, skip playbooks validations
      Deploying zookeeper_install
