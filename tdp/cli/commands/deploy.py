@@ -9,8 +9,8 @@ import click
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths
 from tdp.core.dag import Dag
-from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
+from tdp.core.runner.operation_runner import OperationRunner
 from tdp.core.service_manager import ServiceManager
 
 
@@ -52,7 +52,7 @@ from tdp.core.service_manager import ServiceManager
     "--vars", envvar="TDP_VARS", type=Path, help="Path to the tdp vars", required=True
 )
 @click.option("--filter", type=str, help="Glob on list name")
-@click.option("--dry", is_flag=True, help="Execute dag without running any action")
+@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
 def deploy(
     sources,
     targets,
@@ -73,7 +73,7 @@ def deploy(
     if targets:
         targets = targets.split(",")
         set_nodes.update(targets)
-    set_difference = set_nodes.difference(dag.components)
+    set_difference = set_nodes.difference(dag.operations)
     if set_difference:
         raise click.BadParameter(f"{set_difference} are not valid nodes")
     run_directory = run_directory.absolute() if run_directory else None
@@ -87,14 +87,14 @@ def deploy(
         service_managers = ServiceManager.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)
 
-        action_runner = ActionRunner(dag, ansible_executor, service_managers)
+        operation_runner = OperationRunner(dag, ansible_executor, service_managers)
         if sources:
             click.echo(f"Deploying from {sources}")
         elif targets:
             click.echo(f"Deploying to {targets}")
         else:
             click.echo(f"Deploying TDP")
-        deployment = action_runner.run_nodes(
+        deployment = operation_runner.run_nodes(
             sources=sources, targets=targets, node_filter=filter
         )
         session.add(deployment)

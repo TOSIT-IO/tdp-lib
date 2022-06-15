@@ -1,10 +1,10 @@
-Components
+Operations
 ==========
 
 Definition
 ----------
 
-A component is composed of 3 parts: service name, component name, action.
+An operation is composed of 3 parts: service name, component name, action.
 
 Each service has components and each component has actions.
 
@@ -29,24 +29,24 @@ Directed acyclic graph (DAG)
 
 This type of graph can be used to schedule the deployment and the configuration of components with ordering constraints by using a topological sort (or topological ordering) to produce a list of nodes which respect the ordering constraints.
 
-Inside TDP, we use a DAG to deploy a component before another and determine which components should be restarted if a component configuration is updated.
+Inside TDP, we use a DAG to execute an operation before another and determine which components should be restarted if a component configuration is updated.
 
-Each node (or vertex) is a component and edges are dependencies constraints.
+Each node (or vertex) is an operation and edges are dependencies constraints.
 
 Dependency
 ----------
 
-To build the DAG, each component define a list of dependencies, for example, before running `config`, we must perform `install` in order to have binaires and users.
+To build the DAG, each operation defines a list of dependencies, for example, before running `config`, we must perform `install` in order to have binaires and users.
 
 Noop flag
 ---------
 
-A component can have a `noop` flag to indicate that this component should be in the DAG but nothing is executed.
+An operation can have a `noop` flag to indicate that this operation should be in the DAG but nothing is executed.
 
 YAML format
 -----------
 
-YAML is used to defined components and dependencies, for example:
+YAML is used to defined operations and dependencies, for example:
 
 .. code-block:: yaml
 
@@ -62,10 +62,10 @@ YAML is used to defined components and dependencies, for example:
 Rules
 -----
 
-The components DAG follow rules:
+The operations DAG follow rules:
 
-* ``*_start`` actions can only be required from within its own service
-* ``*_install`` actions should only depend on other `*_install` actions
-* Each service (HDFS, HBase, Hive, etc) should have ``*_install``, ``*_config``, ``*_init`` and ``*_start`` actions even if they are "empty" (tagged with `noop`)
-* Actions tagged with the `noop` flag should not have a playbook defined in the collection
-* Each service action (`config`, `start`, `init`) except the first (`install`) must have an explicit dependency with the previous service action within the same service
+* ``*_start`` operations can only be required from within its own service
+* ``*_install`` operations should only depend on other ``*_install`` operations
+* Each service (HDFS, HBase, Hive, etc) should have ``*_install``, ``*_config``, ``*_init`` and ``*_start`` operations even if they are "empty" (tagged with noop)
+* Operations tagged with the noop flag should not have a playbook defined in its collection
+* Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service

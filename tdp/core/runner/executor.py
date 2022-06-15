@@ -21,16 +21,16 @@ class StateEnum(Enum):
 
 
 class Executor(ABC):
-    """An Executor is an object able to run an action."""
+    """An Executor is an object able to run an operation."""
 
     @abstractmethod
-    def execute(self, action):
-        """Executes an action
+    def execute(self, operation):
+        """Executes an operation
 
         Args:
-            action (str): Action name
+            operation (str): Operation name
 
         Returns:
-            Tuple[StateEnum, bytes]: Whether an action is a success as well as its logs in UTF-8 bytes.
+            Tuple[StateEnum, bytes]: Whether an operation is a success as well as its logs in UTF-8 bytes.
         """
         pass

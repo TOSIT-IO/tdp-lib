@@ -8,7 +8,7 @@ from pathlib import Path
 from ansible.utils.vars import merge_hash
 
 from tdp.core.collection import YML_EXTENSION
-from tdp.core.component import Component
+from tdp.core.operation import Operation
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.variables import Variables
@@ -101,7 +101,7 @@ class ServiceManager:
         """get a dict of service managers, initialize all services if needed
 
         Args:
-            dag (Dag): components DAG
+            dag (Dag): operations' DAG
             services_directory (Union[str, Path]): path of the tdp vars
 
         Returns:
@@ -140,7 +140,7 @@ class ServiceManager:
         """get a dict of service managers
 
         Args:
-            dag (Dag): components DAG
+            dag (Dag): operations' DAG
             services_directory (PathLike): path of the tdp vars
 
         Returns:
@@ -157,24 +157,24 @@ class ServiceManager:
         return service_managers
 
     def components_modified(self, version):
-        """get a list of component modified since version
+        """get a list of operations that modified components since version
 
         Args:
             version (str): how far to look
 
         Returns:
-            List[Component]: components modified
+            List[Operation]: operations that modified components
         """
         files_modified = self._repo.files_modified(version)
         components_modified = set()
         for file_modified in files_modified:
-            component = Component(Path(file_modified).stem + "_config")
-            # If component is a service, all component inside this service have to be returned
-            if component.is_service():
-                service_components = self.dag.services_components[component.service]
+            operation = Operation(Path(file_modified).stem + "_config")
+            # If operation is about a service, all components inside this service have to be returned
+            if operation.is_service():
+                service_operations = self.dag.services_operations[operation.service]
                 components_modified.update(
-                    (c for c in service_components if c.action == "config")
+                    (c for c in service_operations if c.action == "config")
                 )
             else:
-                components_modified.add(component)
+                components_modified.add(operation)
         return list(components_modified)

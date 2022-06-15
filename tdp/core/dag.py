@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-The `Dag` class reads YAML :py:mod:`~tdp.components` files
-and validate it according to components rules(cf. components' rules section)
+The `Dag` class reads YAML from collection's dag files
+and validates it according to operations rules(cf. operations' rules section)
 to build the DAG.
 
-It is used to get a list of actions by performing a topological sort on the DAG
+It is used to get a list of operations by performing a topological sort on the DAG
 or on a subgraph of the DAG.
 """
 
@@ -21,7 +21,7 @@ import networkx as nx
 import yaml
 
 from tdp.core.collection import Collection
-from tdp.core.component import Component
+from tdp.core.operation import Operation
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
@@ -48,7 +48,7 @@ DEFAULT_SERVICE_PRIORITY = 99
 
 
 class Dag:
-    """Generate DAG with components dependencies"""
+    """Generate DAG with operations' dependencies"""
 
     def __init__(self, collections):
         """
@@ -56,11 +56,11 @@ class Dag:
         :type collections: OrderedDict[str, Collection]
         """
         self._collections = collections
-        self._components = None
+        self._operations = None
         self._graph = None
         self._yaml_files = None
         self._services = None
-        self._services_components = None
+        self._services_operations = None
 
     @staticmethod
     def from_collection(collection):
@@ -82,7 +82,7 @@ class Dag:
     def from_collections(collections):
         """Factory method to build a dag from multiple collections
 
-        Ordering of the sequence is what will determine the loading order of the components.
+        Ordering of the sequence is what will determine the loading order of the operations.
 
         :param collections: Ordered Sequence of Collection
         :type collections: Sequence[Collection]
@@ -102,70 +102,70 @@ class Dag:
     @collections.setter
     def collections(self, collections):
         self._collections = collections
-        del self.components
+        del self.operations
 
     @property
-    def components(self):
-        if self._components is not None:
-            return self._components
+    def operations(self):
+        if self._operations is not None:
+            return self._operations
 
-        components = {}
+        operations = {}
         for collection_name, collection in self._collections.items():
-            components_list = []
+            operations_list = []
             for yaml_file in collection.dag_yamls:
-                with yaml_file.open("r") as component_file:
-                    components_list.extend(
-                        yaml.load(component_file, Loader=Loader) or []
+                with yaml_file.open("r") as operation_file:
+                    operations_list.extend(
+                        yaml.load(operation_file, Loader=Loader) or []
                     )
 
-            for component in components_list:
-                name = component["name"]
-                if name in components:
+            for operation in operations_list:
+                name = operation["name"]
+                if name in operations:
                     raise ValueError(
                         (
                             f'"{name}" is declared at least twice,'
-                            f" first in {components[name].collection_name}, "
+                            f" first in {operations[name].collection_name}, "
                             f" second in {collection_name}"
                         )
                     )
-                components[name] = Component(
-                    collection_name=collection_name, **component
+                operations[name] = Operation(
+                    collection_name=collection_name, **operation
                 )
 
-        self._components = components
+        self._operations = operations
         self.validate()
-        return self._components
+        return self._operations
 
-    @components.setter
-    def components(self, value):
-        self._components = value
+    @operations.setter
+    def operations(self, value):
+        self._operations = value
         del self.graph
-        del self.services_components
+        del self.services_operations
         del self.services
 
-    @components.deleter
-    def components(self):
-        self.components = None
+    @operations.deleter
+    def operations(self):
+        self.operations = None
 
     @property
-    def services_components(self):
-        if self._services_components is None:
-            self._services_components = {}
-            for component in self.components.values():
-                self._services_components.setdefault(component.service, []).append(
-                    component
+    def services_operations(self):
+        if self._services_operations is None:
+            self._services_operations = {}
+            for operation in self.operations.values():
+                self._services_operations.setdefault(operation.service, []).append(
+                    operation
                 )
-        return self._services_components
+        return self._services_operations
 
-    @services_components.deleter
-    def services_components(self):
-        self._services_components = None
+    @services_operations.deleter
+    def services_operations(self):
+        self._services_operations = None
         del self.services
 
     @property
     def services(self):
         if self._services is None:
-            self._services = list(self.services_components.keys())
+            self._services = list(self.services_operations.keys())
         return self._services
 
     @services.deleter
@@ -177,18 +177,18 @@ class Dag:
         if self._graph is not None:
             return self._graph
 
-        component_names = sorted(self.components.keys())
+        operation_names = sorted(self.operations.keys())
         DG = nx.DiGraph()
-        DG.add_nodes_from(component_names)
+        DG.add_nodes_from(operation_names)
 
-        for component_name in component_names:
-            component = self.components[component_name]
-            for dependency in sorted(component.depends_on):
-                if dependency not in self.components:
+        for operation_name in operation_names:
+            operation = self.operations[operation_name]
+            for dependency in sorted(operation.depends_on):
+                if dependency not in self.operations:
                     raise ValueError(
-                        f'Dependency "{dependency}" does not exist for component "{component_name}"'
+                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
                     )
-                DG.add_edge(dependency, component_name)
+                DG.add_edge(dependency, operation_name)
 
         if nx.is_directed_acyclic_graph(DG):
             self._graph = DG
@@ -210,55 +210,55 @@ class Dag:
             graph = self.graph.subgraph(nodes)
 
         def custom_key(node):
-            component = self.components[node]
-            component_priority = SERVICE_PRIORITY.get(
-                component.service, DEFAULT_SERVICE_PRIORITY
+            operation = self.operations[node]
+            operation_priority = SERVICE_PRIORITY.get(
+                operation.service, DEFAULT_SERVICE_PRIORITY
             )
-            return f"{component_priority:02d}_{node}"
+            return f"{operation_priority:02d}_{node}"
 
         return list(nx.lexicographical_topological_sort(graph, custom_key))
 
-    def get_actions(self, sources=None, targets=None):
+    def get_operations(self, sources=None, targets=None):
         if sources:
-            return self.get_actions_from_nodes(sources)
+            return self.get_operations_from_nodes(sources)
         elif targets:
-            return self.get_actions_to_nodes(targets)
-        return self.get_all_actions()
+            return self.get_operations_to_nodes(targets)
+        return self.get_all_operations()
 
-    def get_actions_to_nodes(self, nodes):
+    def get_operations_to_nodes(self, nodes):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.ancestors(self.graph, node))
         return self.topological_sort(nodes_set)
 
-    def get_actions_from_nodes(self, nodes):
+    def get_operations_from_nodes(self, nodes):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.descendants(self.graph, node))
         return self.topological_sort(nodes_set)
 
-    def get_all_actions(self):
-        """gets all action from the graph sorted topologically and lexicographically.
+    def get_all_operations(self):
+        """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
         :rtype: List[str]
         """
         return self.topological_sort(self.graph)
 
-    def filter_actions_glob(self, actions, glob):
-        return fnmatch.filter(actions, glob)
+    def filter_operations_glob(self, operations, glob):
+        return fnmatch.filter(operations, glob)
 
-    def filter_actions_regex(self, actions, regex):
+    def filter_operations_regex(self, operations, regex):
         compiled_regex = re.compile(regex)
-        return list(filter(compiled_regex.match, actions))
+        return list(filter(compiled_regex.match, operations))
 
     def validate(self):
         r"""Validation rules :
-        - \*_start actions can only be required from within its own service
-        - \*_install actions should only depend on other \*_install actions
-        - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start actions even if they are "empty" (tagged with noop)
-        - Actions tagged with the noop flag should not have a playbook defined in the collection
-        - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service action within the same service
+        - \*_start operations can only be required from within its own service
+        - \*_install operations should only depend on other \*_install operations
+        - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
+        - Operations tagged with the noop flag should not have a playbook defined in the collection
+        - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
         """
         # key: service_name
         # value: set of available actions for the service
@@ -267,70 +267,73 @@ class Dag:
         def warning(collection_name, message):
             logger.warning(message + f", collection: {collection_name}")
 
-        for component_name, component in self.components.items():
-            c_warning = functools.partial(warning, component.collection_name)
-            for dependency in component.depends_on:
-                # *_start actions can only be required from within its own service
-                dependency_service = self.components[dependency].service
+        for operation_name, operation in self.operations.items():
+            c_warning = functools.partial(warning, operation.collection_name)
+            for dependency in operation.depends_on:
+                # *_start operations can only be required from within its own service
+                dependency_service = self.operations[dependency].service
                 if (
                     dependency.endswith("_start")
-                    and dependency_service != component.service
+                    and dependency_service != operation.service
                 ):
                     c_warning(
-                        f"Component '{component_name}' is in service '{component.service}', depends on "
+                        f"Operation '{operation_name}' is in service '{operation.service}', depends on "
                         f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                         f"only depends on start action within its own service"
                     )
 
-                # *_install actions should only depend on other *_install actions
-                if component_name.endswith("_install") and not dependency.endswith(
+                # *_install operations should only depend on other *_install operations
+                if operation_name.endswith("_install") and not dependency.endswith(
                     "_install"
                 ):
                     c_warning(
-                        f"Component '{component_name}' is an install action, depends on '{dependency}' which is "
+                        f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
                         f"not an install action and should only depends on other install action"
                     )
 
             # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
             # even if they are "empty" (tagged with noop)
             # Part 1
-            service_actions = services_actions.setdefault(component.service, set())
-            if component.is_service():
-                service_actions.add(component.action)
+            service_actions = services_actions.setdefault(operation.service, set())
+            if operation.is_service():
+                service_actions.add(operation.action)
 
                 # Each service action (config, start, init) except the first (install) must have an explicit
                 # dependency with the previous service action within the same service
                 actions_order = ["install", "config", "start", "init"]
                 # Check only if the action is in actions_order and is not the first
                 if (
-                    component.action in actions_order
-                    and component.action != actions_order[0]
+                    operation.action in actions_order
+                    and operation.action != actions_order[0]
                 ):
                     previous_action = actions_order[
-                        actions_order.index(component.action) - 1
+                        actions_order.index(operation.action) - 1
                     ]
-                    previous_service_action = f"{component.service}_{previous_action}"
+                    previous_service_action = f"{operation.service}_{previous_action}"
                     previous_service_action_found = False
                     # Loop over dependency and check if the service previous action is found
-                    for dependency in component.depends_on:
+                    for dependency in operation.depends_on:
                         if dependency == previous_service_action:
                             previous_service_action_found = True
                     if not previous_service_action_found:
                         c_warning(
-                            f"Component '{component_name}' is a service action and have to depends on "
-                            f"'{component.service}_{previous_action}'"
+                            f"Operation '{operation_name}' is a service action and has to depend on "
+                            f"'{operation.service}_{previous_action}'"
                         )
 
-            # Actions tagged with the noop flag should not have a playbook defined in the collection
+            # Operations tagged with the noop flag should not have a playbook defined in the collection
 
-            if component_name in self._collections[component.collection_name].actions:
-                if component.noop:
+            if (
+                operation_name
+                in self._collections[operation.collection_name].operations
+            ):
+                if operation.noop:
                     c_warning(
-                        f"Component '{component_name}' is noop and the playbook should not exist"
+                        f"Operation '{operation_name}' is noop and the playbook should not exist"
                     )
             else:
-                if not component.noop:
-                    c_warning(f"Component '{component_name}' should have a playbook")
+                if not operation.noop:
+                    c_warning(f"Operation '{operation_name}' should have a playbook")
 
         # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
         # even if they are "empty" (tagged with noop)

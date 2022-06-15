@@ -15,7 +15,7 @@ RE_GET_ACTION = re.compile(".*_([^_]+)$")
 NODE_NAME_MAX_LENGTH = 50
 
 
-class Component:
+class Operation:
     def __init__(self, name, collection_name=None, depends_on=None, noop=False):
         self.name = name
         self.collection_name = collection_name

@@ -10,7 +10,7 @@ from tdp.cli.utils import collection_paths
 from tdp.core.dag import Dag
 
 
-@click.command(short_help="List nodes from components DAG")
+@click.command(short_help="List nodes from operations DAG")
 @click.option(
     "--collection-path",
     envvar="TDP_COLLECTION_PATH",
@@ -21,5 +21,5 @@ from tdp.core.dag import Dag
 def nodes(collection_path):
     dag = Dag.from_collections(collection_path)
     endline = "\n- "
-    components = endline.join(component for component in dag.get_all_actions())
-    click.echo(f"Component list:{endline}{components}")
+    operations = endline.join(operation for operation in dag.get_all_operations())
+    click.echo(f"Operation list:{endline}{operations}")

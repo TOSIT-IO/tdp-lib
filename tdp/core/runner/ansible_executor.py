@@ -3,7 +3,6 @@
 
 import io
 import logging
-import os
 import subprocess
 
 from .executor import Executor, StateEnum
@@ -37,8 +36,8 @@ class AnsibleExecutor(Executor):
                 return StateEnum.FAILURE, byte_stream.getvalue()
             return state, byte_stream.getvalue()
 
-    def execute(self, action):
-        command = ["ansible-playbook", str(action)]
+    def execute(self, operation):
+        command = ["ansible-playbook", str(operation)]
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return StateEnum.SUCCESS, b""

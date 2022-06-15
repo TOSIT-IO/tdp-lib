@@ -3,7 +3,7 @@
 
 import networkx as nx
 
-from tdp.core.component import Component
+from tdp.core.operation import Operation
 
 
 # Needed :
@@ -41,14 +41,14 @@ def to_pydot(graph, nodes_to_color=None, cluster_service=False):
         subgraphs = {}
         for dot_node in dot_nodes:
             # Dot node name can be quoted, remove it
-            component_name = dot_node.get_name().strip('"')
-            component = Component(component_name)
+            operation_name = dot_node.get_name().strip('"')
+            operation = Operation(operation_name)
             subgraphs.setdefault(
-                component.service,
+                operation.service,
                 pydot.Cluster(
-                    component.service, label=component.service, fontname="Roboto"
+                    operation.service, label=operation.service, fontname="Roboto"
                 ),
-            ).add_node(pydot.Node(component_name))
+            ).add_node(pydot.Node(operation_name))
 
         for service_name, subgraph in sorted(subgraphs.items()):
             pydot_graph.add_subgraph(subgraph)
