@@ -9,12 +9,12 @@ import click
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths
 from tdp.core.dag import Dag
-from tdp.core.runner.action_runner import ActionRunner
 from tdp.core.runner.ansible_executor import AnsibleExecutor
+from tdp.core.runner.operation_runner import OperationRunner
 from tdp.core.service_manager import ServiceManager
 
 
-@click.command(short_help="Run single TDP action")
+@click.command(short_help="Run single TDP operation")
 @click.argument("node")
 @click.option(
     "--sqlite-path",
@@ -40,7 +40,7 @@ from tdp.core.service_manager import ServiceManager
 @click.option(
     "--vars", envvar="TDP_VARS", type=Path, help="Path to the tdp vars", required=True
 )
-@click.option("--dry", is_flag=True, help="Execute dag without running any action")
+@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
 def run(
     node,
     sqlite_path,
@@ -53,11 +53,11 @@ def run(
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag.from_collections(collection_path)
 
-    component = dag.components.get(node, None)
-    if not component:
+    operation = dag.operations.get(node, None)
+    if not operation:
         raise click.BadParameter(f"{node} is not a valid node")
 
-    if component.noop:
+    if operation.noop:
         raise click.BadParameter(
             f"{node} is tagged as noop and thus"
             " cannot be executed in an unitary deployment"
@@ -74,8 +74,8 @@ def run(
         service_managers = ServiceManager.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)
 
-        action_runner = ActionRunner(dag, ansible_executor, service_managers)
+        operation_runner = OperationRunner(dag, ansible_executor, service_managers)
         click.echo(f"Deploying {node}")
-        deployment = action_runner.run_nodes(targets=[node], node_filter=node)
+        deployment = operation_runner.run_nodes(targets=[node], node_filter=node)
         session.add(deployment)
         session.commit()

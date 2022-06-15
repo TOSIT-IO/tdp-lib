@@ -9,10 +9,10 @@ tdp.core.runner package
 Submodules
 ----------
 
-tdp.core.runner.action\_runner module
--------------------------------------
+tdp.core.runner.operation\_runner module
+----------------------------------------
 
-.. automodule:: tdp.core.runner.action_runner
+.. automodule:: tdp.core.runner.operation_runner
    :members:
    :undoc-members:
    :show-inheritance:

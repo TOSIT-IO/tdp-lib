@@ -9,10 +9,10 @@ tdp.core.models package
 Submodules
 ----------
 
-tdp.core.models.action\_log module
-----------------------------------
+tdp.core.models.operation\_log module
+-------------------------------------
 
-.. automodule:: tdp.core.models.action_log
+.. automodule:: tdp.core.models.operation_log
    :members:
    :undoc-members:
    :show-inheritance:

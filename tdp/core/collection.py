@@ -4,7 +4,7 @@
 from pathlib import Path
 
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
-ACTION_DIRECTORY_NAME = "playbooks"
+OPERATION_DIRECTORY_NAME = "playbooks"
 DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
 
 YML_EXTENSION = ".yml"
@@ -12,7 +12,7 @@ YML_EXTENSION = ".yml"
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
-    ACTION_DIRECTORY_NAME,
+    OPERATION_DIRECTORY_NAME,
 ]
 
 
@@ -20,7 +20,7 @@ class Collection:
     def __init__(self, path):
         self._path = Path(path)
         self._dag_yamls = None
-        self._actions = None
+        self._operations = None
 
     @staticmethod
     def from_path(path):
@@ -54,8 +54,8 @@ class Collection:
         return self._path / DEFAULT_VARS_DIRECTORY_NAME
 
     @property
-    def actions_directory(self):
-        return self._path / ACTION_DIRECTORY_NAME
+    def operations_directory(self):
+        return self._path / OPERATION_DIRECTORY_NAME
 
     @property
     def dag_yamls(self):
@@ -64,13 +64,13 @@ class Collection:
         return self._dag_yamls
 
     @property
-    def actions(self):
-        if not self._actions:
-            self._actions = {
+    def operations(self):
+        if not self._operations:
+            self._operations = {
                 playbook.stem: playbook
-                for playbook in self.actions_directory.glob("*" + YML_EXTENSION)
+                for playbook in self.operations_directory.glob("*" + YML_EXTENSION)
             }
-        return self._actions
+        return self._operations
 
     def get_service_default_vars(self, name):
         service_path = self.default_vars_directory / name

@@ -1,7 +1,7 @@
 Command Line Interface
 ======================
 
-TDP is a cli implemented to run actions easily
+TDP is a cli implemented to run operations easily
 
 .. toctree::
  
@@ -23,9 +23,9 @@ Usage
     default-diff      Difference between tdp_vars and defaults
     deploy            Deploy TDP
     init              Init database / services in tdp vars
-    nodes             List nodes from components DAG
+    nodes             List nodes from operations DAG
     playbooks         Generate meta playbooks in order to use tdp-collection
                       without tdp-lib
-    run               Run single TDP action
+    run               Run single TDP operation
     service-versions  Get the version of deployed services.(If a service has
                       never been deployed, does not show it)

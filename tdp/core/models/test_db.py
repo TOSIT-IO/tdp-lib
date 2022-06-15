@@ -8,9 +8,9 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from tdp.core.models.action_log import ActionLog
 from tdp.core.models.base import Base
 from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.operation_log import OperationLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 
@@ -30,19 +30,19 @@ def test_add_object(session_class):
         end=datetime.utcnow(),
         state="SUCCESS",
     )
-    action = ActionLog(
-        action="start_hdfs",
+    operation = OperationLog(
+        operation="start_hdfs",
         start=datetime.utcnow(),
         end=datetime.utcnow(),
         state="SUCCESS",
         logs=b"log",
     )
-    deployment.actions.append(action)
+    deployment.operations.append(operation)
     logger.info(deployment)
-    logger.info(action)
+    logger.info(operation)
     with session_class() as session:
         session.add(deployment)
         session.commit()
         deployment = session.get(DeploymentLog, deployment.id)
         logger.info(deployment)
-        logger.info(deployment.actions)
+        logger.info(deployment.operations)

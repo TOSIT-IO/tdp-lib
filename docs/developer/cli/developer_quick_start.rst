@@ -48,7 +48,7 @@ Developer Quick Start (sqlite backend)
      user@yourmachine:tdp init
      2022-03-16 16:01:10,610 - DEBUG - tdp.<module> - Logger initialized
      2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine BEGIN (implicit)
-     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("action_log")
+     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("operation_log")
      2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine [raw sql] ()
      2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("deployment_log")
      2022-03-16 16:01:11,071 INFO sqlalchemy.engine.Engine [raw sql] ()
@@ -108,15 +108,15 @@ Developer Quick Start (sqlite backend)
      2022-03-16 16:50:21,379 - DEBUG - tdp.<module> - Logger initialized
      2022-03-16 16:50:21,838 - WARNING - tdp.dag.validate - playbooks_dir is not defined, skip playbooks validations
      Deploying zookeeper_install
-     2022-03-16 16:50:21,918 - DEBUG - tdp.action_runner.run - Running action zookeeper_client_install
+     2022-03-16 16:50:21,918 - DEBUG - tdp.operation_runner.run - Running operation zookeeper_client_install
      2022-03-16 16:50:21,918 - INFO - tdp.ansible_executor.execute - [DRY MODE] Ansible command: ansible-playbook /home/diode-xue01/workspace/tdp-ops/tdp/ansible/collections/ansible_collections/tosit/tdp/playbooks/zookeeper_client_install.yml
-     2022-03-16 16:50:21,924 - INFO - tdp.action_runner._run_actions - Action zookeeper_client_install success
-     2022-03-16 16:50:21,924 - DEBUG - tdp.action_runner.run - Running action zookeeper_server_install
+     2022-03-16 16:50:21,924 - INFO - tdp.operation_runner._run_operations - Operation zookeeper_client_install success
+     2022-03-16 16:50:21,924 - DEBUG - tdp.operation_runner.run - Running operation zookeeper_server_install
      2022-03-16 16:50:21,924 - INFO - tdp.ansible_executor.execute - [DRY MODE] Ansible command: ansible-playbook /home/diode-xue01/workspace/tdp-ops/tdp/ansible/collections/ansible_collections/tosit/tdp/playbooks/zookeeper_server_install.yml
-     2022-03-16 16:50:21,924 - INFO - tdp.action_runner._run_actions - Action zookeeper_server_install success
-     2022-03-16 16:50:21,924 - DEBUG - tdp.action_runner.run - Running action zookeeper_kerberos_install
+     2022-03-16 16:50:21,924 - INFO - tdp.operation_runner._run_operations - Operation zookeeper_server_install success
+     2022-03-16 16:50:21,924 - DEBUG - tdp.operation_runner.run - Running operation zookeeper_kerberos_install
      2022-03-16 16:50:21,924 - INFO - tdp.ansible_executor.execute - [DRY MODE] Ansible command: ansible-playbook /home/diode-xue01/workspace/tdp-ops/tdp/ansible/collections/ansible_collections/tosit/tdp/playbooks/zookeeper_kerberos_install.yml
-     2022-03-16 16:50:21,924 - INFO - tdp.action_runner._run_actions - Action zookeeper_kerberos_install success
+     2022-03-16 16:50:21,924 - INFO - tdp.operation_runner._run_operations - Operation zookeeper_kerberos_install success
 
 #. check deployment
 
@@ -125,7 +125,7 @@ Developer Quick Start (sqlite backend)
      user@yourmachine:tdp browse
      2022-03-16 17:22:43,295 - DEBUG - tdp.<module> - Logger initialized
      Deployments:
-       id  target             filter    start                       end                         state    actions                                                  services
+       id  target             filter    start                       end                         state    operations                                                  services
      ----  -----------------  --------  --------------------------  --------------------------  -------  -------------------------------------------------------  ----------
        1  zookeeper_install  None      2022-03-16 16:50:21.918121  2022-03-16 16:50:21.925006  Success  zookeeper_client_install,...,zookeeper_kerberos_install  zookeeper
        2  zookeeper_install  None      2022-03-16 16:54:42.950678  2022-03-16 16:54:42.957124  Success  zookeeper_client_install,...,zookeeper_kerberos_install  zookeeper

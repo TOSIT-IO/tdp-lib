@@ -19,10 +19,10 @@ Subpackages
 Submodules
 ----------
 
-tdp.core.component module
+tdp.core.operation module
 -------------------------
 
-.. automodule:: tdp.core.component
+.. automodule:: tdp.core.operation
    :members:
    :undoc-members:
    :show-inheritance:

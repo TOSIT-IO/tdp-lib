@@ -8,8 +8,8 @@ import click
 import networkx as nx
 
 from tdp.cli.utils import collection_paths
-from tdp.core.component import Component
 from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
+from tdp.core.operation import Operation
 
 
 @click.command(
@@ -34,23 +34,23 @@ def playbooks(services, collection_path, output_dir):
     dag = Dag.from_collections(collection_path)
     # services DAG
     dag_services = nx.DiGraph()
-    # For each service, get all components with DAG topological_sort order
-    dag_services_components = {}
-    for component_name in dag.get_all_actions():
-        component = dag.components[component_name]
-        dag_services.add_node(component.service)
-        for dependency in component.depends_on:
-            dependency_component = Component(dependency)
-            if dependency_component.service != component.service:
-                dag_services.add_edge(dependency_component.service, component.service)
-        dag_services_components.setdefault(component.service, []).append(component)
+    # For each service, get all operations with DAG topological_sort order
+    dag_service_operations = {}
+    for operation_name in dag.get_all_operations():
+        operation = dag.operations[operation_name]
+        dag_services.add_node(operation.service)
+        for dependency in operation.depends_on:
+            dependency_operation = Operation(dependency)
+            if dependency_operation.service != operation.service:
+                dag_services.add_edge(dependency_operation.service, operation.service)
+        dag_service_operations.setdefault(operation.service, []).append(operation)
 
     if not nx.is_directed_acyclic_graph(dag_services):
         raise RuntimeError("dag_services is not a DAG")
 
     def custom_key(node):
-        component_priority = SERVICE_PRIORITY.get(node, DEFAULT_SERVICE_PRIORITY)
-        return f"{component_priority:02d}_{node}"
+        operation_priority = SERVICE_PRIORITY.get(node, DEFAULT_SERVICE_PRIORITY)
+        return f"{operation_priority:02d}_{node}"
 
     dag_services_order = nx.lexicographical_topological_sort(dag_services, custom_key)
 
@@ -85,22 +85,22 @@ def playbooks(services, collection_path, output_dir):
             with Path(meta_dir, f"{service}.yml").open("w") as service_fd:
                 write_copyright_licence_headers(service_fd)
                 service_fd.write("---\n")
-                for component in dag_services_components[service]:
-                    if not component.noop:
+                for operation in dag_service_operations[service]:
+                    if not operation.noop:
                         service_fd.write(
-                            f"- import_playbook: {playbooks_prefix}{component.name}.yml\n"
+                            f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                         )
                     else:
-                        service_fd.write(f"# {component.name}\n")
+                        service_fd.write(f"# {operation.name}\n")
 
     with Path(meta_dir, "all.yml").open("w") as all_fd:
         write_copyright_licence_headers(all_fd)
         all_fd.write("---\n")
-        for component_name in dag.get_all_actions():
-            component = dag.components[component_name]
-            if not component.noop:
+        for operation_name in dag.get_all_operations():
+            operation = dag.operations[operation_name]
+            if not operation.noop:
                 all_fd.write(
-                    f"- import_playbook: {playbooks_prefix}{component_name}.yml\n"
+                    f"- import_playbook: {playbooks_prefix}{operation_name}.yml\n"
                 )
             else:
-                all_fd.write(f"# {component_name}\n")
+                all_fd.write(f"# {operation_name}\n")

@@ -53,7 +53,7 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
 @click.option(
     "-cf",
     "--color-from",
-    help="Nodes that will be colored after applying get_actions_to_nodes, separed with a comma (,)",
+    help="Nodes that will be colored after applying get_operations_to_nodes, separed with a comma (,)",
     type=str,
 )
 @click.option(
@@ -99,9 +99,9 @@ def dag(
         graph = nx.transitive_reduction(graph)
     nodes_to_color = set()
     if color_to:
-        nodes_to_color.update(dag.get_actions_to_nodes(color_to.split(",")))
+        nodes_to_color.update(dag.get_operations_to_nodes(color_to.split(",")))
     if color_from:
-        nodes_from = dag.get_actions_from_nodes(color_from.split(","))
+        nodes_from = dag.get_operations_from_nodes(color_from.split(","))
         if nodes_to_color:
             nodes_to_color = nodes_to_color.intersection(nodes_from)
         else:

@@ -5,17 +5,17 @@ Models store classes which define the database schema.
 
 .. _action_log:
 
-ActionLog
----------
+OperationLog
+------------
 
-Each DAG node is a component with an action. When an action is launched and finished the results are stored.
+Each DAG node is an operation with an action. When an operation is performed and finished the results are stored.
 
 .. _deployment_log:
 
 DeploymentLog
 -------------
 
-A `DeploymentLog` is the result of running multiple actions and for each service the version deployed.
+A `DeploymentLog` is the result of running multiple operations and for each service the version deployed.
 
 ServiceLog
 ----------
