@@ -1,9 +1,14 @@
+[![Python Version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 # TDP Lib
 
 Install tdp lib for dev:
 ```
 poetry install # Installs dependencies and the package in venv
-poetry run githooks setup
+poetry run pre-commit install --hook-type pre-commit
+poetry run pre-commit install --hook-type commit-msg
 ```
 
 Install optional dependencies for graph visualization:
