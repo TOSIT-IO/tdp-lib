@@ -8,8 +8,9 @@ logger = logging.getLogger("tdp").getChild("component")
 
 # service: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
-# component: <service>_<component>_<action>
+# operation: <service>_<component>_<action>
 RE_GET_SERVICE = re.compile("^([^_]+)_.*")
+RE_GET_COMPONENT = re.compile("^[^_]+_(.*)_[^_]+$")
 RE_GET_ACTION = re.compile(".*_([^_]+)$")
 
 NODE_NAME_MAX_LENGTH = 50
@@ -35,6 +36,12 @@ class Operation:
             raise ValueError(f"Fail to parse action name for component '{self.name}'")
         self.action = match.group(1)
 
+        match = RE_GET_COMPONENT.search(self.name)
+        if not match:
+            self.component = None
+        else:
+            self.component = match.group(1)
+
     def is_service(self):
-        """Return True if the component is a service, False otherwise"""
+        """Return True if the operation is about a service, False otherwise"""
         return bool(RE_IS_SERVICE.search(self.name))
