@@ -1,7 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import os
+
 import click
+from dotenv import load_dotenv
 
 from tdp.cli.commands.browse import browse
 from tdp.cli.commands.dag import dag
@@ -14,6 +17,8 @@ from tdp.cli.commands.run import run
 from tdp.cli.commands.service_versions import service_versions
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+load_dotenv(os.environ.get("TDP_ENVIRONMENT_FILE", ".env"))
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
