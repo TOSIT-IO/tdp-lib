@@ -45,14 +45,14 @@ class Repository(ABC):
         self._lock.release()
 
     @contextmanager
-    def open_var_file(self, path):
+    def open_var_file(self, path, fail_if_does_not_exist=False):
         """Returns a Variables object managed, simplyfing use.
 
         Returns a Variables object automatically closed when parent context manager closes it.
         Adds the underlying file for validation.
         Args:
             path ([PathLike]): Path to open as a Variables file.
-
+            fail_if_does_not_exist ([bool]): Whether or not the function should raise an error when file does not exist
         Yields:
             [Proxy[Variables]]: A weakref of the Variables object, to prevent the creation of strong references
                 outside the caller's context
@@ -61,6 +61,8 @@ class Repository(ABC):
             path = self.path / path
             path.parent.mkdir(parents=True, exist_ok=True)
             if not path.exists():
+                if fail_if_does_not_exist:
+                    raise ValueError("Path does not exist")
                 path.touch()
             with Variables(path).open() as variables:
                 yield variables
