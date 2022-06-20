@@ -54,6 +54,18 @@ class ServiceManager:
     def path(self):
         return self.repository.path
 
+    def get_component_name(self, component):
+        operations_filtered = list(
+            filter(
+                lambda operation: operation.component == component,
+                self._dag.services_operations[self.name],
+            )
+        )
+        if operations_filtered:
+            operation = operations_filtered[0]
+            return self.name + "_" + operation.component
+        raise ValueError(f"Service {self.name} does not have a component {component}")
+
     def initialize_variables(self):
 
         # dict with filename as key and a list of paths as value
