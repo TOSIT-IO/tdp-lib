@@ -81,16 +81,15 @@ def process_single_deployment_query(session_class, deployment_id):
     )
 
     with session_class() as session:
-        result = session.execute(query).scalars().fetchall()
-        sources = result[0].sources or ["None"]
-        targets = result[0].targets or ["None"]
+        deployment_log = session.execute(query).scalar_one_or_none()
+        if deployment_log is None:
+            raise click.ClickException(f"Deployment id {deployment_id} does not exist")
+        sources = deployment_log.sources or ["None"]
+        targets = deployment_log.targets or ["None"]
         click.echo(
             "Deployment:\n"
             + tabulate(
-                [
-                    format_deployment_log(deployment_log, deployment_headers)
-                    for deployment_log in result
-                ],
+                [format_deployment_log(deployment_log, deployment_headers)],
                 headers="keys",
             )
         )
@@ -101,7 +100,6 @@ def process_single_deployment_query(session_class, deployment_id):
             + tabulate(
                 [
                     format_service_log(service_logs, service_headers)
-                    for deployment_log in result
                     for service_logs in deployment_log.services
                 ],
                 headers="keys",
@@ -112,7 +110,7 @@ def process_single_deployment_query(session_class, deployment_id):
             + tabulate(
                 [
                     format_operation_log(operation_log, operation_headers)
-                    for operation_log in result[0].operations
+                    for operation_log in deployment_log.operations
                 ],
                 headers="keys",
             )
@@ -129,14 +127,17 @@ def process_operation_query(session_class, deployment_id, operation):
         .order_by(OperationLog.start)
     )
     with session_class() as session:
-        result = session.execute(query).scalars().fetchall()
-        operation_logs = [operation_log for operation_log in result]
+        operation_log = session.execute(query).scalar_one_or_none()
+        if operation_log is None:
+            raise click.ClickException(
+                f"Operation {operation} does exist in deployment {deployment_id}"
+            )
+
         click.echo(
             "Service:\n"
             + tabulate(
                 [
                     format_service_log(service_log, service_headers)
-                    for operation_log in result
                     for service_log in operation_log.deployment.services
                     if service_log.service == operation_log.operation.split("_")[0]
                 ],
@@ -146,15 +147,11 @@ def process_operation_query(session_class, deployment_id, operation):
         click.echo(
             "Operation:\n"
             + tabulate(
-                [
-                    format_operation_log(operation_log, headers)
-                    for operation_log in operation_logs
-                ],
+                [format_operation_log(operation_log, headers)],
                 headers="keys",
             )
         )
-        if operation_logs:
-            operation_log = operation_logs[0]
+        if operation_log.logs:
             click.echo(
                 f"{operation_log.operation} logs:\n" + str(operation_log.logs, "utf-8")
             )
