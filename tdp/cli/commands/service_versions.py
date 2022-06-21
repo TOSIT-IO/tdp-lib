@@ -4,7 +4,7 @@
 from pathlib import Path
 
 import click
-from sqlalchemy import func, tuple_
+from sqlalchemy import func, select, tuple_
 from tabulate import tabulate
 
 from tdp.cli.session import get_session_class
@@ -32,11 +32,9 @@ def service_versions(sqlite_path):
             key for key, _ in keyvalgen(ServiceLog) if key != "deployment"
         ]
 
-        latest_deployment_by_service = (
-            session.query(func.max(ServiceLog.deployment_id), ServiceLog.service)
-            .group_by(ServiceLog.service)
-            .subquery()
-        )
+        latest_deployment_by_service = select(
+            func.max(ServiceLog.deployment_id), ServiceLog.service
+        ).group_by(ServiceLog.service)
 
         service_latest_version = (
             session.query(ServiceLog)
