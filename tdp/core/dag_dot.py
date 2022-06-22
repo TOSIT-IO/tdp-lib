@@ -64,8 +64,9 @@ def show(graph, *args, **kwargs):
         graph = to_pydot(graph, *args, **kwargs)
 
     import io
-    import matplotlib.pyplot as plt
+
     import matplotlib.image as mpimg
+    import matplotlib.pyplot as plt
 
     dot_png = graph.create(format="png")
 
