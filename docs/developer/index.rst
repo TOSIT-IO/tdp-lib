@@ -7,7 +7,7 @@ TDP Lib documentation
     cli/index
     operations
     core/index
-    
+
 
 The lib code is inside `tdp` folder.
 
@@ -16,4 +16,4 @@ The lib code is inside `tdp` folder.
 * :doc:`core/index` is the lib main code folder.
 
 
-   
+

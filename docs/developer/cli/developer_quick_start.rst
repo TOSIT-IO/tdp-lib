@@ -8,7 +8,7 @@ Developer Quick Start (sqlite backend)
    .. code-block:: shell
 
      user@yourmachine:sudo apt-get install sqlite
-     user@yourmachine:mkdir sqlite-data 
+     user@yourmachine:mkdir sqlite-data
 
 #. set environment variables (tdp cli will read it, and you don't need to mention it afterwards)
 
@@ -17,7 +17,7 @@ Developer Quick Start (sqlite backend)
      # this folder is local repo of tdp-collection
      user@yourmachine:export TDP_COLLECTION_PATH=~/tdp-collection
      # this folder is working directory of tdp deployment in which you put ansible.cfg, inventory.ini and topology.ini.
-     user@yourmachine:export TDP_RUN_DIRECTORY=~/working-dir  
+     user@yourmachine:export TDP_RUN_DIRECTORY=~/working-dir
      # this folder is to store sqlite db file
      user@yourmachine:export TDP_SQLITE_PATH=~/sqlite-data/tdp.db
      # this folder is to store tdp service configuration, please find default values at $TDP_COLLECTION_PATH/tdp_vars_defaults
@@ -35,13 +35,13 @@ Developer Quick Start (sqlite backend)
      [inventory]
      enable_plugins = tosit.tdp.inventory,..,your_plugins
 
-#. launch tdp init  
+#. launch tdp init
 
    .. code-block:: shell
 
      user@yourmachine:cd tdp-lib
      user@yourmachine:poetry shell
- 
+
      Spawning shell within /home/user/.cache/pypoetry/virtualenvs/tdp-lib-wP9YBfm3-py3.6
      user@yourmachine:~/tdp-lib$ . /home/user/.cache/pypoetry/virtualenvs/tdp-lib-wP9YBfm3-py3.6/bin/activate
 
@@ -93,14 +93,14 @@ Developer Quick Start (sqlite backend)
      - hbase_ranger_install
      ...
      ...
- 
+
 #. visualise a subgraph of the dag to a specific node (ex : zookeeper_install)
 
    .. code-block:: shell
 
      user@yourmachine:tdp dag zookeeper_install
 
-#. choose a target node in the dag (ex : zookeeper_install) and launch tdp deploy (dry run)  
+#. choose a target node in the dag (ex : zookeeper_install) and launch tdp deploy (dry run)
 
    .. code-block:: shell
 

@@ -24,9 +24,10 @@ from tdp.core.collection import Collection
 from tdp.core.operation import Operation
 
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 
 
 logger = logging.getLogger("tdp").getChild("dag")

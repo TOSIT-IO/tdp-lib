@@ -4,7 +4,7 @@ Command Line Interface
 TDP is a cli implemented to run operations easily
 
 .. toctree::
- 
+
   developer_quick_start
 
 Usage

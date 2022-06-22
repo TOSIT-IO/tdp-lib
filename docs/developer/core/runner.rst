@@ -23,5 +23,5 @@ in order to run operations with Ansible. The operation name is the Ansible playb
 OperationRunner
 ---------------
 
-:py:class:`~tdp.core.runner.operation_runner.OperationRunner` uses :py:class:`~tdp.core.runner.executor.Executor` implementations to run one operation 
+:py:class:`~tdp.core.runner.operation_runner.OperationRunner` uses :py:class:`~tdp.core.runner.executor.Executor` implementations to run one operation
 or run multiple opertaions with the DAG ordering constraints.
