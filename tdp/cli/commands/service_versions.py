@@ -18,14 +18,19 @@ from tdp.core.models import OperationLog, ServiceLog
     )
 )
 @click.option(
-    "--sqlite-path",
-    envvar="TDP_SQLITE_PATH",
+    "--database-dsn",
+    envvar="TDP_DATABASE_DSN",
     required=True,
-    type=Path,
-    help="Path to SQLITE database file",
+    type=str,
+    help=(
+        "Database Data Source Name, in sqlalchemy driver form "
+        "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
+        "You might need to install the relevant driver to your installation (such "
+        "as psycopg2 for postgresql)"
+    ),
 )
-def service_versions(sqlite_path):
-    session_class = get_session_class(sqlite_path)
+def service_versions(database_dsn):
+    session_class = get_session_class(database_dsn)
     with session_class() as session:
 
         latest_success_service_version = (
