@@ -17,11 +17,16 @@ from tdp.core.service_manager import ServiceManager
 @click.command(short_help="Run single TDP operation")
 @click.argument("node")
 @click.option(
-    "--sqlite-path",
-    envvar="TDP_SQLITE_PATH",
-    type=Path,
-    help="Path to SQLITE database file",
+    "--database-dsn",
+    envvar="TDP_DATABASE_DSN",
     required=True,
+    type=str,
+    help=(
+        "Database Data Source Name, in sqlalchemy driver form "
+        "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
+        "You might need to install the relevant driver to your installation (such "
+        "as psycopg2 for postgresql)"
+    ),
 )
 @click.option(
     "--collection-path",
@@ -43,7 +48,7 @@ from tdp.core.service_manager import ServiceManager
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
 def run(
     node,
-    sqlite_path,
+    database_dsn,
     collection_path,
     run_directory,
     vars,
@@ -69,7 +74,7 @@ def run(
         run_directory=run_directory,
         dry=dry,
     )
-    session_class = get_session_class(sqlite_path)
+    session_class = get_session_class(database_dsn)
     with session_class() as session:
         service_managers = ServiceManager.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)

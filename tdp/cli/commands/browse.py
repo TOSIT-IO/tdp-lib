@@ -19,11 +19,16 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
 @click.option(
-    "--sqlite-path",
-    envvar="TDP_SQLITE_PATH",
+    "--database-dsn",
+    envvar="TDP_DATABASE_DSN",
     required=True,
-    type=Path,
-    help="Path to SQLITE database file",
+    type=str,
+    help=(
+        "Database Data Source Name, in sqlalchemy driver form "
+        "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
+        "You might need to install the relevant driver to your installation (such "
+        "as psycopg2 for postgresql)"
+    ),
 )
 @click.option(
     "--limit",
@@ -39,8 +44,8 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
     default=0,
     help="At which offset should the database query should start",
 )
-def browse(deployment_id, operation, sqlite_path, limit, offset):
-    session_class = get_session_class(sqlite_path)
+def browse(deployment_id, operation, database_dsn, limit, offset):
+    session_class = get_session_class(database_dsn)
 
     if not deployment_id:
         process_deployments_query(session_class, limit, offset)
