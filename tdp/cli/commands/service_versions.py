@@ -32,25 +32,26 @@ from tdp.core.models import OperationLog, ServiceLog
 def service_versions(database_dsn):
     session_class = get_session_class(database_dsn)
     with session_class() as session:
+        max_depid_label = f"max_{ServiceLog.deployment_id.name}"
 
         latest_success_service_version = (
             session.query(
-                func.max(ServiceLog.deployment_id).label("deployment_id"),
-                ServiceLog.service.label("service"),
-                func.substr(ServiceLog.version, 1, 7).label("version"),
+                func.max(ServiceLog.deployment_id).label(max_depid_label),
+                ServiceLog.service,
+                func.substr(ServiceLog.version, 1, 7),
             )
             .join(
                 OperationLog,
                 and_(
                     ServiceLog.deployment_id == OperationLog.deployment_id,
                     OperationLog.operation.like(
-                        ServiceLog.service + "\_%", escape="\\"
+                        ServiceLog.service + "\\_%", escape="\\"
                     ),
                 ),
             )
             .filter(OperationLog.state == "Success")
             .group_by(ServiceLog.service, ServiceLog.version)
-            .order_by("deployment_id", "service")
+            .order_by(max_depid_label, ServiceLog.service)
             .all()
         )
 
@@ -58,6 +59,10 @@ def service_versions(database_dsn):
             "Service versions:\n"
             + tabulate(
                 latest_success_service_version,
-                headers=["deployment_id", "service", "version"],
+                headers=[
+                    ServiceLog.deployment_id.name,
+                    ServiceLog.service.name,
+                    ServiceLog.version.name,
+                ],
             )
         )
