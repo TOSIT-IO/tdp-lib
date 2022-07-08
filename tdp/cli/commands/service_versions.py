@@ -9,6 +9,7 @@ from tabulate import tabulate
 
 from tdp.cli.session import get_session_class
 from tdp.core.models import OperationLog, ServiceLog
+from tdp.core.runner.executor import StateEnum
 
 
 @click.command(
@@ -49,7 +50,7 @@ def service_versions(database_dsn):
                     ),
                 ),
             )
-            .filter(OperationLog.state == "Success")
+            .filter(OperationLog.state == StateEnum.SUCCESS.value)
             .group_by(ServiceLog.service, ServiceLog.version)
             .order_by(max_depid_label, ServiceLog.service)
             .all()
