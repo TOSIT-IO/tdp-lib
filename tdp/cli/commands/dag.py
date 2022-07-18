@@ -72,7 +72,7 @@ def dag(
     cluster,
 ):
     show = import_show()
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     graph = dag.graph
     if nodes:
         if pattern_format:

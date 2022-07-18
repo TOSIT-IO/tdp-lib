@@ -70,7 +70,7 @@ def deploy(
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     set_nodes = set()
     if sources:
         sources = sources.split(",")

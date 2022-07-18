@@ -41,7 +41,7 @@ class OperationRunner:
 
     def _run_operations(self, operation_names):
         for operation_name in operation_names:
-            operation = self.dag.operations[operation_name]
+            operation = self.dag.collections.operations[operation_name]
             if not operation.noop:
                 operation_file = self.dag.collections[
                     operation.collection_name
@@ -57,9 +57,9 @@ class OperationRunner:
     def _services_from_operations(self, operation_names):
         """Returns a set of services from an operation list"""
         return {
-            self.dag.operations[operation_name].service
+            self.dag.collections.operations[operation_name].service
             for operation_name in operation_names
-            if not self.dag.operations[operation_name].noop
+            if not self.dag.collections.operations[operation_name].noop
         }
 
     def _build_service_logs(self, operation_logs):

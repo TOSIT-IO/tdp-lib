@@ -56,7 +56,7 @@ def run(
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
 
     operation = dag.operations.get(node, None)
     if not operation:

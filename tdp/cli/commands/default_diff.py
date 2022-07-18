@@ -31,7 +31,7 @@ from tdp.core.variables import Variables
 def default_diff(service, collection_path, vars):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     service_managers = ServiceManager.get_service_managers(dag, vars)
 
     if service:

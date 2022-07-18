@@ -6,13 +6,17 @@ import os
 import click
 
 from tdp.core.collection import Collection
+from tdp.core.collections import Collections
 
 
 def collection_paths(ctx, param, value):
     if not value:
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
-    collections = [Collection.from_path(split) for split in value.split(os.pathsep)]
+    collections_list = [
+        Collection.from_path(split) for split in value.split(os.pathsep)
+    ]
+    collections = Collections.from_collection_list(collections_list)
 
     return collections
 

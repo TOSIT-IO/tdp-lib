@@ -14,21 +14,8 @@ import fnmatch
 import functools
 import logging
 import re
-from collections import OrderedDict
-from pathlib import Path
 
 import networkx as nx
-import yaml
-
-from tdp.core.collection import Collection
-from tdp.core.operation import Operation
-
-try:
-    from yaml import CDumper as Dumper
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Dumper, Loader
-
 
 logger = logging.getLogger("tdp").getChild("dag")
 
@@ -53,8 +40,8 @@ class Dag:
 
     def __init__(self, collections):
         """
-        :param collections: ordered mapping of collections, with names used as keys
-        :type collections: OrderedDict[str, Collection]
+        :param collections: Collections object
+        :type collections: Collections
         """
         self._collections = collections
         self._operations = None
@@ -62,39 +49,6 @@ class Dag:
         self._yaml_files = None
         self._services = None
         self._services_operations = None
-
-    @staticmethod
-    def from_collection(collection):
-        """Factory method to build a dag from a single collection. Lenient on input type
-
-        :param collection: one collection
-        :type collection: Union[str, Path, Collection]
-        :raises ValueError: if invalid type
-        :return: Dag built from input
-        :rtype: Dag
-        """
-        if isinstance(collection, (str, Path)):
-            return Dag.from_collections([Collection.from_path(collection)])
-        elif isinstance(collection, Collection):
-            return Dag.from_collections([collection])
-        raise ValueError("collection must be either an str, a Path or a Collection")
-
-    @staticmethod
-    def from_collections(collections):
-        """Factory method to build a dag from multiple collections
-
-        Ordering of the sequence is what will determine the loading order of the operations.
-
-        :param collections: Ordered Sequence of Collection
-        :type collections: Sequence[Collection]
-        :return: Dag built from x collections
-        :rtype: Dag
-        """
-        collections = OrderedDict(
-            (collection.name, collection) for collection in collections
-        )
-
-        return Dag(collections)
 
     @property
     def collections(self):
@@ -110,30 +64,7 @@ class Dag:
         if self._operations is not None:
             return self._operations
 
-        operations = {}
-        for collection_name, collection in self._collections.items():
-            operations_list = []
-            for yaml_file in collection.dag_yamls:
-                with yaml_file.open("r") as operation_file:
-                    operations_list.extend(
-                        yaml.load(operation_file, Loader=Loader) or []
-                    )
-
-            for operation in operations_list:
-                name = operation["name"]
-                if name in operations:
-                    raise ValueError(
-                        (
-                            f'"{name}" is declared at least twice,'
-                            f" first in {operations[name].collection_name}, "
-                            f" second in {collection_name}"
-                        )
-                    )
-                operations[name] = Operation(
-                    collection_name=collection_name, **operation
-                )
-
-        self._operations = operations
+        self._operations = self._collections.dag_operations
         self.validate()
         return self._operations
 

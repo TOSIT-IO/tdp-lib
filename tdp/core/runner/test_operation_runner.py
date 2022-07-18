@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from collections import OrderedDict
 
 import pytest
 
 from tdp.core.collection import YML_EXTENSION, Collection
+from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.operation import Operation
 from tdp.core.runner.executor import Executor, StateEnum
@@ -28,18 +30,29 @@ class MockServiceManager(ServiceManager):
 class MockCollection(Collection):
     @property
     def operations(self):
-        class FakeDict:
-            def __getitem__(self, value):
-                return str(value) + YML_EXTENSION
+        return {
+            "zookeeper_server_install": "zookeeper_server_install" + YML_EXTENSION,
+            "zookeeper_server_config": "zookeeper_server_config" + YML_EXTENSION,
+            "zookeeper_server_start": "zookeeper_server_start" + YML_EXTENSION,
+            "zookeeper_server_init": "zookeeper_server_init" + YML_EXTENSION,
+            "zookeeper_init": "zookeeper_init" + YML_EXTENSION,
+        }
 
-        return FakeDict()
+
+class MockCollections(Collections):
+    def _init_operations(self):
+        pass
 
 
 @pytest.fixture(scope="function")
 def mock_dag():
-    dag = object.__new__(Dag)
-    dag._collections = {"pytest": MockCollection("/pytest")}
-    dag.operations = {
+    collections_dict = OrderedDict(
+        [
+            ("pytest", MockCollection("/pytest")),
+        ]
+    )
+    collections = MockCollections(collections_dict)
+    collections._dag_operations = {
         "zookeeper_server_install": Operation("zookeeper_server_install", "pytest"),
         "zookeeper_server_config": Operation(
             "zookeeper_server_config", "pytest", depends_on=["zookeeper_server_install"]
@@ -54,6 +67,7 @@ def mock_dag():
             "zookeeper_init", "pytest", depends_on=["zookeeper_server_init"]
         ),
     }
+    dag = Dag(collections)
     return dag
 
 

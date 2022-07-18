@@ -31,7 +31,7 @@ from tdp.core.operation import Operation
     default=".",
 )
 def playbooks(services, collection_path, output_dir):
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     # services DAG
     dag_services = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
