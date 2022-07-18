@@ -19,7 +19,7 @@ from tdp.core.dag import Dag
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 def nodes(collection_path):
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     endline = "\n- "
     operations = endline.join(operation for operation in dag.get_all_operations())
     click.echo(f"Operation list:{endline}{operations}")

@@ -37,7 +37,7 @@ from tdp.core.service_manager import ServiceManager
     "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
 )
 def init(database_dsn, collection_path, vars):
-    dag = Dag.from_collections(collection_path)
+    dag = Dag(collection_path)
     init_db(database_dsn)
     service_managers = ServiceManager.initialize_service_managers(dag, vars)
     for name, service_manager in service_managers.items():
