@@ -1,10 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from pathlib import Path
-
 import click
-from sqlalchemy import and_, func
+from sqlalchemy import and_, desc, func, select, tuple_
 from tabulate import tabulate
 
 from tdp.cli.session import get_session_class
@@ -32,14 +30,14 @@ from tdp.core.runner.executor import StateEnum
 )
 def service_versions(database_dsn):
     session_class = get_session_class(database_dsn)
+
     with session_class() as session:
         max_depid_label = f"max_{ServiceLog.deployment_id.name}"
 
-        latest_success_service_version = (
-            session.query(
+        latest_success_for_each_service = (
+            select(
                 func.max(ServiceLog.deployment_id).label(max_depid_label),
                 ServiceLog.service,
-                func.substr(ServiceLog.version, 1, 7),
             )
             .join(
                 OperationLog,
@@ -51,15 +49,28 @@ def service_versions(database_dsn):
                 ),
             )
             .filter(OperationLog.state == StateEnum.SUCCESS.value)
-            .group_by(ServiceLog.service, ServiceLog.version)
-            .order_by(max_depid_label, ServiceLog.service)
+            .group_by(ServiceLog.service)
+        )
+
+        service_logs_matching_subquery = (
+            session.query(
+                ServiceLog.deployment_id,
+                ServiceLog.service,
+                func.substr(ServiceLog.version, 1, 7),
+            )
+            .filter(
+                tuple_(ServiceLog.deployment_id, ServiceLog.service).in_(
+                    latest_success_for_each_service
+                )
+            )
+            .order_by(desc(ServiceLog.deployment_id))
             .all()
         )
 
         click.echo(
             "Service versions:\n"
             + tabulate(
-                latest_success_service_version,
+                service_logs_matching_subquery,
                 headers=[
                     ServiceLog.deployment_id.name,
                     ServiceLog.service.name,
