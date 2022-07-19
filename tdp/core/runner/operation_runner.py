@@ -39,10 +39,13 @@ class OperationRunner:
             operation=operation, start=start, end=end, state=state.value, logs=logs
         )
 
-    def _run_operations(self, operation_names):
+    def _run_operations(self, operation_names, restart=False):
         for operation_name in operation_names:
             operation = self.dag.collections.operations[operation_name]
             if not operation.noop:
+                if restart:
+                    operation_name = operation_name.replace("_start", "_restart")
+                    operation = self.dag.collections.operations[operation_name]
                 operation_file = self.dag.collections[
                     operation.collection_name
                 ].operations[operation_name]
@@ -74,7 +77,7 @@ class OperationRunner:
             for service_name in services
         ]
 
-    def run_nodes(self, sources=None, targets=None, node_filter=None):
+    def run_nodes(self, sources=None, targets=None, node_filter=None, restart=False):
         operation_names = self.dag.get_operations(sources=sources, targets=targets)
 
         if hasattr(node_filter, "search"):
@@ -87,7 +90,7 @@ class OperationRunner:
             )
 
         start = datetime.utcnow()
-        operation_logs = list(self._run_operations(operation_names))
+        operation_logs = list(self._run_operations(operation_names, restart=restart))
         end = datetime.utcnow()
 
         filtered_failures = filter(

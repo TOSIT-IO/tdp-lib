@@ -34,6 +34,7 @@ class MockCollection(Collection):
             "zookeeper_server_install": "zookeeper_server_install" + YML_EXTENSION,
             "zookeeper_server_config": "zookeeper_server_config" + YML_EXTENSION,
             "zookeeper_server_start": "zookeeper_server_start" + YML_EXTENSION,
+            "zookeeper_server_restart": "zookeeper_server_restart" + YML_EXTENSION,
             "zookeeper_server_init": "zookeeper_server_init" + YML_EXTENSION,
             "zookeeper_init": "zookeeper_init" + YML_EXTENSION,
         }
@@ -67,6 +68,12 @@ def mock_dag():
             "zookeeper_init", "pytest", depends_on=["zookeeper_server_init"]
         ),
     }
+    collections._other_operations = {
+        "zookeeper_server_restart": Operation(
+            "zookeeper_server_restart",
+            "pytest",
+        ),
+    }
     dag = Dag(collections)
     return dag
 
@@ -81,8 +88,7 @@ def operation_runner(mock_dag):
     return OperationRunner(mock_dag, executor, service_managers)
 
 
-def test_operation_runner(operation_runner):
-    """Mock tests"""
+def test_operation_runner_filter(operation_runner):
     deployment_log = operation_runner.run_nodes(
         targets=["zookeeper_init"], node_filter="*_install"
     )
@@ -94,3 +100,24 @@ def test_operation_runner(operation_runner):
             deployment_log.operations,
         )
     ), "Filter should have removed every init operations from dag"
+
+
+def test_operation_runner_restart(operation_runner):
+    deployment_log = operation_runner.run_nodes(
+        targets=["zookeeper_init"],
+        restart=True,
+    )
+    logger.info(deployment_log)
+    logger.info(deployment_log.operations)
+    assert any(
+        filter(
+            lambda operation_log: "_restart" in operation_log.operation,
+            deployment_log.operations,
+        )
+    ), "A restart operation should be present"
+    assert not any(
+        filter(
+            lambda operation_log: "_start" in operation_log.operation,
+            deployment_log.operations,
+        )
+    ), "The restart flag should have removed every start operations from dag"
