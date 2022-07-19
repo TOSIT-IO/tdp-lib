@@ -22,7 +22,7 @@ from tdp.core.variables import Variables
     "--collection-path",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into list of Collection
+    callback=collection_paths,  # transforms list of path into Collections
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
