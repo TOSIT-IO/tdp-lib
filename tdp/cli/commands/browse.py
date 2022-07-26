@@ -57,7 +57,9 @@ def browse(deployment_id, operation, database_dsn, limit, offset):
 
 
 def process_deployments_query(session_class, limit, offset):
-    headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    headers = DeploymentLog.__table__.columns.keys() + [
+        str(DeploymentLog.services).split(".")[1]
+    ]
     query = select(DeploymentLog).order_by(DeploymentLog.id).limit(limit).offset(offset)
 
     with session_class() as session:
@@ -75,7 +77,9 @@ def process_deployments_query(session_class, limit, offset):
 
 
 def process_single_deployment_query(session_class, deployment_id):
-    deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    deployment_headers = DeploymentLog.__table__.columns.keys() + [
+        str(DeploymentLog.services).split(".")[1]
+    ]
     operation_headers = [key for key, _ in keyvalgen(OperationLog)]
     service_headers = [key for key, _ in keyvalgen(ServiceLog) if key != "deployment"]
     operation_headers.remove("deployment")
@@ -173,11 +177,6 @@ def format_deployment_log(deployment_log, headers):
                 return value[0] + ",...," + value[-1]
             else:
                 return ",".join(value)
-        elif key == "operations":
-            if len(value) > 2:
-                return value[0].operation + ",...," + value[-1].operation
-            else:
-                return ",".join(operation_log.operation for operation_log in value)
         elif key == "services":
             return ",".join(str(service_log.service) for service_log in value)
         elif isinstance(value, datetime):
