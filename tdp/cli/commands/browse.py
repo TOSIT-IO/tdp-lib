@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime, timezone
-from pathlib import Path
 
 import click
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from tabulate import tabulate
 
 from tdp.cli.session import get_session_class
@@ -46,122 +46,146 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 )
 def browse(deployment_id, operation, database_dsn, limit, offset):
     session_class = get_session_class(database_dsn)
-
-    if not deployment_id:
-        process_deployments_query(session_class, limit, offset)
-    else:
-        if not operation:
-            process_single_deployment_query(session_class, deployment_id)
+    try:
+        if not deployment_id:
+            print_formatted_deployments(get_deployments(session_class, limit, offset))
         else:
-            process_operation_query(session_class, deployment_id, operation)
+            if not operation:
+                print_formatted_deployment(get_deployment(session_class, deployment_id))
+            else:
+                print_formatted_operation_log(
+                    get_operation_log(session_class, deployment_id, operation)
+                )
+    except Exception as e:
+        raise click.ClickException(str(e)) from e
 
 
-def process_deployments_query(session_class, limit, offset):
-    headers = DeploymentLog.__table__.columns.keys() + [
-        str(DeploymentLog.services).split(".")[1]
-    ]
-    query = select(DeploymentLog).order_by(DeploymentLog.id).limit(limit).offset(offset)
-
-    with session_class() as session:
-        result = session.execute(query).scalars().fetchall()
-        click.echo(
-            "Deployments:\n"
-            + tabulate(
-                [
-                    format_deployment_log(deployment_log, headers)
-                    for deployment_log in result
-                ],
-                headers="keys",
-            )
-        )
-
-
-def process_single_deployment_query(session_class, deployment_id):
-    deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
-    operation_headers = [key for key, _ in keyvalgen(OperationLog)]
-    service_headers = [key for key, _ in keyvalgen(ServiceLog) if key != "deployment"]
-    operation_headers.remove("deployment")
+def get_deployments(session_class, limit, offset):
     query = (
         select(DeploymentLog)
+        .options(joinedload(DeploymentLog.services))
+        .order_by(DeploymentLog.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    with session_class() as session:
+        return session.execute(query).unique().scalars().fetchall()
+
+
+def get_deployment(session_class, deployment_id):
+    query = (
+        select(DeploymentLog)
+        .options(
+            joinedload(DeploymentLog.services), joinedload(DeploymentLog.operations)
+        )
         .where(DeploymentLog.id == deployment_id)
         .order_by(DeploymentLog.id)
     )
 
     with session_class() as session:
-        deployment_log = session.execute(query).scalar_one_or_none()
+        deployment_log = session.execute(query).unique().scalar_one_or_none()
         if deployment_log is None:
             raise click.ClickException(f"Deployment id {deployment_id} does not exist")
-        sources = deployment_log.sources or ["None"]
-        targets = deployment_log.targets or ["None"]
-        click.echo(
-            "Deployment:\n"
-            + tabulate(
-                [format_deployment_log(deployment_log, deployment_headers)],
-                headers="keys",
-            )
-        )
-        click.echo("Sources:\n  " + tabulate({"source": sources}, headers="keys"))
-        click.echo("Targets:\n  " + tabulate({"target": targets}, headers="keys"))
-        click.echo(
-            "Services:\n"
-            + tabulate(
-                [
-                    format_service_log(service_logs, service_headers)
-                    for service_logs in deployment_log.services
-                ],
-                headers="keys",
-            )
-        )
-        click.echo(
-            "Operations:\n"
-            + tabulate(
-                [
-                    format_operation_log(operation_log, operation_headers)
-                    for operation_log in deployment_log.operations
-                ],
-                headers="keys",
-            )
-        )
+        return deployment_log
 
 
-def process_operation_query(session_class, deployment_id, operation):
-    headers = [key for key, _ in keyvalgen(OperationLog) if key != "deployment"]
-    service_headers = [key for key, _ in keyvalgen(ServiceLog) if key != "deployment"]
+def get_operation_log(session_class, deployment_id, operation):
     query = (
         select(OperationLog)
+        .options(joinedload(OperationLog.deployment), joinedload("deployment.services"))
         .where(OperationLog.deployment_id == deployment_id)
         .where(OperationLog.operation == operation)
         .order_by(OperationLog.start)
     )
     with session_class() as session:
-        operation_log = session.execute(query).scalar_one_or_none()
+        operation_log = session.execute(query).unique().scalar_one_or_none()
         if operation_log is None:
-            raise click.ClickException(
+            raise ValueError(
                 f"Operation {operation} does exist in deployment {deployment_id}"
             )
+        return operation_log
 
-        click.echo(
-            "Service:\n"
-            + tabulate(
-                [
-                    format_service_log(service_log, service_headers)
-                    for service_log in operation_log.deployment.services
-                    if service_log.service == operation_log.operation.split("_")[0]
-                ],
-                headers="keys",
-            )
+
+def print_formatted_deployments(deployments):
+    headers = DeploymentLog.__table__.columns.keys() + [
+        str(DeploymentLog.services).split(".")[1]
+    ]
+    click.echo(
+        "Deployments:\n"
+        + tabulate(
+            [
+                format_deployment_log(deployment_log, headers)
+                for deployment_log in deployments
+            ],
+            headers="keys",
         )
-        click.echo(
-            "Operation:\n"
-            + tabulate(
-                [format_operation_log(operation_log, headers)],
-                headers="keys",
-            )
+    )
+
+
+def print_formatted_deployment(deployment_log):
+    deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    operation_headers = OperationLog.__table__.columns.keys()
+    service_headers = ServiceLog.__table__.columns.keys()
+
+    sources = deployment_log.sources or ["None"]
+    targets = deployment_log.targets or ["None"]
+    click.echo(
+        "Deployment:\n"
+        + tabulate(
+            [format_deployment_log(deployment_log, deployment_headers)],
+            headers="keys",
         )
-        if operation_log.logs:
-            click.echo(
-                f"{operation_log.operation} logs:\n" + str(operation_log.logs, "utf-8")
-            )
+    )
+    click.echo("Sources:\n  " + tabulate({"source": sources}, headers="keys"))
+    click.echo("Targets:\n  " + tabulate({"target": targets}, headers="keys"))
+    click.echo(
+        "Services:\n"
+        + tabulate(
+            [
+                format_service_log(service_logs, service_headers)
+                for service_logs in deployment_log.services
+            ],
+            headers="keys",
+        )
+    )
+    click.echo(
+        "Operations:\n"
+        + tabulate(
+            [
+                format_operation_log(operation_log, operation_headers)
+                for operation_log in deployment_log.operations
+            ],
+            headers="keys",
+        )
+    )
+
+
+def print_formatted_operation_log(operation_log):
+    headers = OperationLog.__table__.columns.keys()
+    service_headers = ServiceLog.__table__.columns.keys()
+
+    click.echo(
+        "Service:\n"
+        + tabulate(
+            [
+                format_service_log(service_log, service_headers)
+                for service_log in operation_log.deployment.services
+                if service_log.service == operation_log.operation.split("_")[0]
+            ],
+            headers="keys",
+        )
+    )
+    click.echo(
+        "Operation:\n"
+        + tabulate(
+            [format_operation_log(operation_log, headers)],
+            headers="keys",
+        )
+    )
+    if operation_log.logs:
+        click.echo(
+            f"{operation_log.operation} logs:\n" + str(operation_log.logs, "utf-8")
+        )
 
 
 def translate_timezone(timestamp):
