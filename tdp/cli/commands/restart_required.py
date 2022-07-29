@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import re
 from pathlib import Path
 
 import click
@@ -92,6 +93,7 @@ def restart_required(
         deployment = operation_runner.run_nodes(
             sources=list(components_modified),
             restart=True,
+            node_filter=re.compile(r".+_(config|start)"),
         )
         session.add(deployment)
         session.commit()
