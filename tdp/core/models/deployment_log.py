@@ -19,7 +19,13 @@ class DeploymentLog(Base):
     start = Column(DateTime(timezone=False))
     end = Column(DateTime(timezone=False))
     state = Column(String(length=StateEnum.max_length()))
+    type = Column(String(length=50))
     operations = relationship(
         "OperationLog", back_populates="deployment", order_by="OperationLog.start"
     )
     services = relationship("ServiceLog", back_populates="deployment")
+
+    __mapper_args__ = {
+        "polymorphic_identity": __tablename__,
+        "polymorphic_on": type,
+    }
