@@ -90,10 +90,17 @@ def restart_required(
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)
 
-        deployment = operation_runner.run_nodes(
+        operation_iterator = operation_runner.run_nodes(
             sources=list(components_modified),
             restart=True,
             node_filter=re.compile(r".+_(config|start)"),
         )
-        session.add(deployment)
+        session.add(operation_iterator.deployment_log)
+        # insert pending deployment log
+        session.commit()
+        for operation in operation_iterator:
+            session.add(operation)
+            session.commit()
+        # notify sqlalchemy deployment log has been updated
+        session.merge(operation_iterator.deployment_log)
         session.commit()

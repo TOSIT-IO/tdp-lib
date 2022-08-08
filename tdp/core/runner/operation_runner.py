@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from collections.abc import Iterator
 from datetime import datetime
 
 from tdp.core.models.deployment_log import DeploymentLog
@@ -10,6 +11,59 @@ from tdp.core.models.service_log import ServiceLog
 from tdp.core.runner.executor import StateEnum
 
 logger = logging.getLogger("tdp").getChild("operation_runner")
+
+
+class OperationIterator(Iterator):
+    def __init__(self, dag, service_managers, deployment_log, operations):
+        self._dag = dag
+        self._service_managers = service_managers
+        self._deployment_log = deployment_log
+        self._operations = operations
+
+    @property
+    def deployment_log(self):
+        return self._deployment_log
+
+    def __next__(self):
+        try:
+            operation_log = next(self._operations)
+            self.deployment_log.operations.append(operation_log)
+            return operation_log
+        except StopIteration as e:
+            self.fill_deployment_log_at_end()
+            raise e
+        except Exception as e:
+            self.fill_deployment_log_at_end(state=StateEnum.FAILURE.value)
+            raise e
+
+    def fill_deployment_log_at_end(self, state=None):
+        self.deployment_log.end = datetime.utcnow()
+        self.deployment_log.state = (
+            state if state else self.deployment_log.operations[-1].state
+        )
+        self.deployment_log.services = self._build_service_logs(
+            self.deployment_log.operations
+        )
+
+    def _services_from_operations(self, operation_names):
+        """Returns a set of services from an operation list"""
+        return {
+            self._dag.collections.operations[operation_name].service
+            for operation_name in operation_names
+            if not self._dag.collections.operations[operation_name].noop
+        }
+
+    def _build_service_logs(self, operation_logs):
+        services = self._services_from_operations(
+            operation_log.operation for operation_log in operation_logs
+        )
+        return [
+            ServiceLog(
+                service=self._service_managers[service_name].name,
+                version=self._service_managers[service_name].version,
+            )
+            for service_name in services
+        ]
 
 
 class OperationRunner:
@@ -57,26 +111,6 @@ class OperationRunner:
                 logger.info(f"Operation {operation_name} success")
                 yield operation_log
 
-    def _services_from_operations(self, operation_names):
-        """Returns a set of services from an operation list"""
-        return {
-            self.dag.collections.operations[operation_name].service
-            for operation_name in operation_names
-            if not self.dag.collections.operations[operation_name].noop
-        }
-
-    def _build_service_logs(self, operation_logs):
-        services = self._services_from_operations(
-            operation_log.operation for operation_log in operation_logs
-        )
-        return [
-            ServiceLog(
-                service=self._service_managers[service_name].name,
-                version=self._service_managers[service_name].version,
-            )
-            for service_name in services
-        ]
-
     def run_nodes(self, sources=None, targets=None, node_filter=None, restart=False):
         operation_names = self.dag.get_operations(sources=sources, targets=targets)
 
@@ -90,24 +124,18 @@ class OperationRunner:
             )
 
         start = datetime.utcnow()
-        operation_logs = list(self._run_operations(operation_names, restart=restart))
-        end = datetime.utcnow()
-
-        filtered_failures = filter(
-            lambda operation_log: operation_log.state == StateEnum.FAILURE.value,
-            operation_logs,
+        operation_logs_generator = self._run_operations(
+            operation_names, restart=restart
         )
 
-        state = StateEnum.FAILURE if any(filtered_failures) else StateEnum.SUCCESS
-
-        service_logs = self._build_service_logs(operation_logs)
-        return DeploymentLog(
+        deployment_log = DeploymentLog(
             sources=sources,
             targets=targets,
-            filter=str(node_filter),
+            filter=str(node_filter) if node_filter else None,
             start=start,
-            end=end,
-            state=state.value,
-            operations=operation_logs,
-            services=service_logs,
+            state=StateEnum.PENDING.value,
+        )
+
+        return OperationIterator(
+            self.dag, self._service_managers, deployment_log, operation_logs_generator
         )
