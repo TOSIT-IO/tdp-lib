@@ -81,6 +81,15 @@ def run(
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)
         click.echo(f"Deploying {node}")
-        deployment = operation_runner.run_nodes(targets=[node], node_filter=node)
-        session.add(deployment)
+        operation_iterator = operation_runner.run_nodes(
+            targets=[node], node_filter=node
+        )
+        session.add(operation_iterator.deployment_log)
+        # insert pending deployment log
+        session.commit()
+        for operation in operation_iterator:
+            session.add(operation)
+            session.commit()
+        # notify sqlalchemy deployment log has been updated
+        session.merge(operation_iterator.deployment_log)
         session.commit()

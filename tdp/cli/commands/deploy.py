@@ -99,8 +99,15 @@ def deploy(
             click.echo(f"Deploying to {targets}")
         else:
             click.echo(f"Deploying TDP")
-        deployment = operation_runner.run_nodes(
+        operation_iterator = operation_runner.run_nodes(
             sources=sources, targets=targets, node_filter=filter
         )
-        session.add(deployment)
+        session.add(operation_iterator.deployment_log)
+        # insert pending deployment log
+        session.commit()
+        for operation in operation_iterator:
+            session.add(operation)
+            session.commit()
+        # notify sqlalchemy deployment log has been updated
+        session.merge(operation_iterator.deployment_log)
         session.commit()

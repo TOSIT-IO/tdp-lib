@@ -8,6 +8,7 @@ from enum import Enum
 class StateEnum(Enum):
     SUCCESS = "Success"
     FAILURE = "Failure"
+    PENDING = "Pending"
 
     @classmethod
     def has_value(cls, value):
