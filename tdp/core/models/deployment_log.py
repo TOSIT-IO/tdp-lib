@@ -15,11 +15,12 @@ class DeploymentLog(Base):
     id = Column(Integer, primary_key=True)
     sources = Column(JSON)
     targets = Column(JSON)
-    filter = Column(String(length=NODE_NAME_MAX_LENGTH))
-    start = Column(DateTime(timezone=False))
-    end = Column(DateTime(timezone=False))
+    filter_expression = Column(String(length=NODE_NAME_MAX_LENGTH))
+    start_time = Column(DateTime(timezone=False))
+    end_time = Column(DateTime(timezone=False))
     state = Column(String(length=StateEnum.max_length()))
+
     operations = relationship(
-        "OperationLog", back_populates="deployment", order_by="OperationLog.start"
+        "OperationLog", back_populates="deployment", order_by="OperationLog.start_time"
     )
     services = relationship("ServiceLog", back_populates="deployment")
