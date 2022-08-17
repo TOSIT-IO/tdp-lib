@@ -15,4 +15,5 @@ class ServiceLog(Base):
     deployment_id = Column(Integer, ForeignKey("deployment_log.id"), primary_key=True)
     service = Column(String(length=SERVICE_NAME_MAX_LENGTH), primary_key=True)
     version = Column(String(length=VERSION_MAX_LENGTH), nullable=False)
+
     deployment = relationship("DeploymentLog", back_populates="services")

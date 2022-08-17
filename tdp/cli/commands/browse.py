@@ -95,7 +95,7 @@ def get_operation_log(session_class, deployment_id, operation):
         .options(joinedload(OperationLog.deployment), joinedload("deployment.services"))
         .where(OperationLog.deployment_id == deployment_id)
         .where(OperationLog.operation == operation)
-        .order_by(OperationLog.start)
+        .order_by(OperationLog.start_time)
     )
     with session_class() as session:
         operation_log = session.execute(query).unique().scalar_one_or_none()

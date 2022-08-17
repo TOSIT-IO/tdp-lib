@@ -37,7 +37,7 @@ class OperationIterator(Iterator):
             raise e
 
     def fill_deployment_log_at_end(self, state=None):
-        self.deployment_log.end = datetime.utcnow()
+        self.deployment_log.end_time = datetime.utcnow()
         self.deployment_log.state = (
             state if state else self.deployment_log.operations[-1].state
         )
@@ -90,7 +90,11 @@ class OperationRunner:
             state = StateEnum(state)
 
         return OperationLog(
-            operation=operation, start=start, end=end, state=state.value, logs=logs
+            operation=operation,
+            start_time=start,
+            end_time=end,
+            state=state.value,
+            logs=logs,
         )
 
     def _run_operations(self, operation_names, restart=False):
@@ -131,8 +135,8 @@ class OperationRunner:
         deployment_log = DeploymentLog(
             sources=sources,
             targets=targets,
-            filter=str(node_filter) if node_filter else None,
-            start=start,
+            filter_expression=str(node_filter) if node_filter else None,
+            start_time=start,
             state=StateEnum.PENDING.value,
         )
 

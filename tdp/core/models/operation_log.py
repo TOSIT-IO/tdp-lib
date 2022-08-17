@@ -14,8 +14,9 @@ class OperationLog(Base):
 
     deployment_id = Column(Integer, ForeignKey("deployment_log.id"), primary_key=True)
     operation = Column(String(length=NODE_NAME_MAX_LENGTH), primary_key=True)
-    start = Column(DateTime(timezone=False))
-    end = Column(DateTime(timezone=False))
+    start_time = Column(DateTime(timezone=False))
+    end_time = Column(DateTime(timezone=False))
     state = Column(String(length=StateEnum.max_length()))
     logs = Column(LargeBinary)
+
     deployment = relationship("DeploymentLog", back_populates="operations")
