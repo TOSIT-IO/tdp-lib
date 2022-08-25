@@ -27,7 +27,7 @@ class OperationIterator(Iterator):
     def __next__(self):
         try:
             operation_log = next(self._operations)
-            self.deployment_log.operations.append(operation_log)
+            operation_log.deployment = self._deployment_log
             return operation_log
         except StopIteration as e:
             self.fill_deployment_log_at_end()
