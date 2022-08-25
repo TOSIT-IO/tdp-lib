@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import JSON, Column, DateTime, Integer, String
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from tdp.core.models.base import Base
@@ -19,6 +19,7 @@ class DeploymentLog(Base):
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
     state = Column(String(length=StateEnum.max_length()))
+    using_dag = Column(Boolean, default=True)
 
     operations = relationship(
         "OperationLog", back_populates="deployment", order_by="OperationLog.start_time"

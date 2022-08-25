@@ -81,9 +81,7 @@ def run(
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)
         click.echo(f"Deploying {node}")
-        operation_iterator = operation_runner.run_nodes(
-            targets=[node], node_filter=node
-        )
+        operation_iterator = operation_runner.run_operations([node])
         session.add(operation_iterator.deployment_log)
         # insert pending deployment log
         session.commit()
