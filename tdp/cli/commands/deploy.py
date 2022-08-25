@@ -100,7 +100,7 @@ def deploy(
         else:
             click.echo(f"Deploying TDP")
         operation_iterator = operation_runner.run_nodes(
-            sources=sources, targets=targets, node_filter=filter
+            sources=sources, targets=targets, filter_expression=filter
         )
         session.add(operation_iterator.deployment_log)
         # insert pending deployment log

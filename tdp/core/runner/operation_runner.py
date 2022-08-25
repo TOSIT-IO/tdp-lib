@@ -66,6 +66,66 @@ class OperationIterator(Iterator):
         ]
 
 
+class OperationPlan:
+    def __init__(
+        self,
+        operations,
+        using_dag,
+        targets=None,
+        sources=None,
+        filter_expression=None,
+        restart=False,
+    ):
+        self.operations = operations
+        self.targets = targets
+        self.sources = sources
+        self.filter_expression = filter_expression
+        self.restart = restart
+        self.using_dag = using_dag
+
+    def get_deployment_args(self):
+        deployment_args = {"using_dag": self.using_dag}
+        if self.using_dag:
+            deployment_args.update(
+                {
+                    "targets": self.targets,
+                    "sources": self.sources,
+                    "filter_expression": self.filter_expression,
+                }
+            )
+        else:
+            deployment_args.update({"targets": self.operations})
+        return deployment_args
+
+    @staticmethod
+    def from_dag(
+        dag, targets=None, sources=None, filter_expression=None, restart=False
+    ):
+        operation_names = dag.get_operations(sources=sources, targets=targets)
+
+        if hasattr(filter_expression, "search"):
+            operation_names = dag.filter_operations_regex(
+                operation_names, filter_expression
+            )
+        elif filter_expression:
+            operation_names = dag.filter_operations_glob(
+                operation_names, filter_expression
+            )
+
+        return OperationPlan(
+            operation_names,
+            using_dag=True,
+            targets=targets,
+            sources=sources,
+            filter_expression=filter_expression,
+            restart=restart,
+        )
+
+    @staticmethod
+    def from_operations(operations, restart=False):
+        return OperationPlan(operations, using_dag=False, restart=restart)
+
+
 class OperationRunner:
     """Run operations"""
 
@@ -115,29 +175,28 @@ class OperationRunner:
                 logger.info(f"Operation {operation_name} success")
                 yield operation_log
 
-    def run_nodes(self, sources=None, targets=None, node_filter=None, restart=False):
-        operation_names = self.dag.get_operations(sources=sources, targets=targets)
+    def run_nodes(
+        self, sources=None, targets=None, filter_expression=None, restart=False
+    ):
+        operation_plan = OperationPlan.from_dag(
+            self.dag, targets, sources, filter_expression, restart
+        )
+        return self.run_operation_plan(operation_plan)
 
-        if hasattr(node_filter, "search"):
-            operation_names = self.dag.filter_operations_regex(
-                operation_names, node_filter
-            )
-        elif node_filter:
-            operation_names = self.dag.filter_operations_glob(
-                operation_names, node_filter
-            )
+    def run_operations(self, operations, restart=False):
+        operation_plan = OperationPlan.from_operations(operations, restart)
+        return self.run_operation_plan(operation_plan)
 
+    def run_operation_plan(self, operation_plan):
         start = datetime.utcnow()
         operation_logs_generator = self._run_operations(
-            operation_names, restart=restart
+            operation_plan.operations, operation_plan.restart
         )
 
         deployment_log = DeploymentLog(
-            sources=sources,
-            targets=targets,
-            filter_expression=str(node_filter) if node_filter else None,
             start_time=start,
             state=StateEnum.PENDING.value,
+            **operation_plan.get_deployment_args(),
         )
 
         return OperationIterator(
