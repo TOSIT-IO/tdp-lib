@@ -89,9 +89,12 @@ def operation_runner(mock_dag):
 
 
 def test_operation_runner_filter(operation_runner):
-    deployment_log = operation_runner.run_nodes(
-        targets=["zookeeper_init"], node_filter="*_install"
+    operation_iterator = operation_runner.run_nodes(
+        targets=["zookeeper_init"], filter_expression="*_install"
     )
+
+    list(operation_iterator)
+    deployment_log = operation_iterator.deployment_log
     logger.info(deployment_log)
     logger.info(deployment_log.operations)
     assert not any(
@@ -103,10 +106,12 @@ def test_operation_runner_filter(operation_runner):
 
 
 def test_operation_runner_restart(operation_runner):
-    deployment_log = operation_runner.run_nodes(
+    operation_iterator = operation_runner.run_nodes(
         targets=["zookeeper_init"],
         restart=True,
     )
+    list(operation_iterator)
+    deployment_log = operation_iterator.deployment_log
     logger.info(deployment_log)
     logger.info(deployment_log.operations)
     assert any(

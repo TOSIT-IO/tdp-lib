@@ -26,14 +26,14 @@ def session_class():
 def test_add_object(session_class):
     deployment = DeploymentLog(
         targets=["init_hdfs"],
-        start=datetime.utcnow(),
-        end=datetime.utcnow(),
+        start_time=datetime.utcnow(),
+        end_time=datetime.utcnow(),
         state="SUCCESS",
     )
     operation = OperationLog(
         operation="start_hdfs",
-        start=datetime.utcnow(),
-        end=datetime.utcnow(),
+        start_time=datetime.utcnow(),
+        end_time=datetime.utcnow(),
         state="SUCCESS",
         logs=b"log",
     )
