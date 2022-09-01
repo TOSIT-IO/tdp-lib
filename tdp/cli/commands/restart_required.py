@@ -93,7 +93,7 @@ def restart_required(
         operation_iterator = operation_runner.run_nodes(
             sources=list(components_modified),
             restart=True,
-            node_filter=re.compile(r".+_(config|start)"),
+            filter_expression=re.compile(r".+_(config|start)"),
         )
         session.add(operation_iterator.deployment_log)
         # insert pending deployment log
