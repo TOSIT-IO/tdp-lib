@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator
 from datetime import datetime
 
-from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.deployment_log import DeploymentLog, FilterTypeEnum
 from tdp.core.models.operation_log import OperationLog
 from tdp.core.models.service_log import ServiceLog
 from tdp.core.runner.executor import StateEnum
@@ -74,12 +74,14 @@ class OperationPlan:
         targets=None,
         sources=None,
         filter_expression=None,
+        filter_type=None,
         restart=False,
     ):
         self.operations = operations
         self.targets = targets
         self.sources = sources
         self.filter_expression = filter_expression
+        self.filter_type = filter_type
         self.restart = restart
         self.using_dag = using_dag
 
@@ -91,6 +93,7 @@ class OperationPlan:
                     "targets": self.targets,
                     "sources": self.sources,
                     "filter_expression": self.filter_expression,
+                    "filter_type": self.filter_type,
                 }
             )
         else:
@@ -102,22 +105,29 @@ class OperationPlan:
         dag, targets=None, sources=None, filter_expression=None, restart=False
     ):
         operation_names = dag.get_operations(sources=sources, targets=targets)
-
-        if hasattr(filter_expression, "search"):
+        if filter_expression and hasattr(filter_expression, "search"):
             operation_names = dag.filter_operations_regex(
                 operation_names, filter_expression
             )
+            str_filter = filter_expression.pattern
+            filter_type = FilterTypeEnum.REGEX.value
         elif filter_expression:
             operation_names = dag.filter_operations_glob(
                 operation_names, filter_expression
             )
+            str_filter = filter_expression
+            filter_type = FilterTypeEnum.GLOB.value
+        else:
+            str_filter = None
+            filter_type = None
 
         return OperationPlan(
             operation_names,
             using_dag=True,
             targets=targets,
             sources=sources,
-            filter_expression=filter_expression,
+            filter_expression=str_filter,
+            filter_type=filter_type,
             restart=restart,
         )
 
