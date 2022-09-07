@@ -102,12 +102,16 @@ def deploy(
         operation_iterator = operation_runner.run_nodes(
             sources=sources, targets=targets, filter_expression=filter
         )
-        session.add(operation_iterator.deployment_log)
-        # insert pending deployment log
-        session.commit()
-        for operation in operation_iterator:
-            session.add(operation)
+        if dry:
+            for operation in operation_iterator:
+                pass
+        else:
+            session.add(operation_iterator.deployment_log)
+            # insert pending deployment log
             session.commit()
-        # notify sqlalchemy deployment log has been updated
-        session.merge(operation_iterator.deployment_log)
-        session.commit()
+            for operation in operation_iterator:
+                session.add(operation)
+                session.commit()
+            # notify sqlalchemy deployment log has been updated
+            session.merge(operation_iterator.deployment_log)
+            session.commit()
