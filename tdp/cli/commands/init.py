@@ -34,7 +34,11 @@ from tdp.core.service_manager import ServiceManager
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
-    "--vars", envvar="TDP_VARS", required=True, type=Path, help="Path to the tdp vars"
+    "--vars",
+    envvar="TDP_VARS",
+    required=True,
+    type=click.Path(resolve_path=True, path_type=Path),
+    help="Path to the tdp vars",
 )
 def init(database_dsn, collection_path, vars):
     dag = Dag(collection_path)
