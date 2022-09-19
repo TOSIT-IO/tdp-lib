@@ -44,7 +44,11 @@ from tdp.core.service_manager import ServiceManager
     required=True,
 )
 @click.option(
-    "--vars", envvar="TDP_VARS", type=Path, help="Path to the tdp vars", required=True
+    "--vars",
+    envvar="TDP_VARS",
+    required=True,
+    type=click.Path(resolve_path=True, path_type=Path),
+    help="Path to the tdp vars",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
 def restart_required(
