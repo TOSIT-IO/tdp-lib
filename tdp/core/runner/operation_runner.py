@@ -67,6 +67,10 @@ class OperationIterator(Iterator):
         ]
 
 
+class EmptyOperationPlan(Exception):
+    pass
+
+
 class OperationPlan:
     def __init__(
         self,
@@ -121,7 +125,10 @@ class OperationPlan:
         else:
             str_filter = None
             filter_type = None
-
+        if len(operation_names) == 0:
+            raise EmptyOperationPlan(
+                "Combination of parameters resulted into an empty list of Operations"
+            )
         return OperationPlan(
             operation_names,
             using_dag=True,
