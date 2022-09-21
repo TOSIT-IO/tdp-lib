@@ -8,6 +8,7 @@ from datetime import datetime
 from tdp.core.models.deployment_log import DeploymentLog, FilterTypeEnum
 from tdp.core.models.operation_log import OperationLog
 from tdp.core.models.service_log import ServiceLog
+from tdp.core.operation import Operation
 from tdp.core.runner.executor import StateEnum
 
 logger = logging.getLogger("tdp").getChild("operation_runner")
@@ -167,22 +168,29 @@ class OperationRunner:
             logs=logs,
         )
 
-    def _run_operations(self, operation_names, restart=False):
-        for operation_name in operation_names:
-            operation = self.dag.collections.operations[operation_name]
+    def _run_operations(self, operations, restart=False):
+        for operation in operations:
+            if isinstance(operation, str):
+                operation = self.dag.collections.operations[operation]
+            elif isinstance(operation, Operation):
+                pass
+            else:
+                raise ValueError(
+                    f"operation should be of type str or Operation, not {type(operation)}"
+                )
             if not operation.noop:
                 if restart:
-                    operation_name = operation_name.replace("_start", "_restart")
+                    operation_name = operation.name.replace("_start", "_restart")
                     operation = self.dag.collections.operations[operation_name]
                 operation_file = self.dag.collections[
                     operation.collection_name
-                ].operations[operation_name]
-                operation_log = self.run(operation_name, operation_file)
+                ].operations[operation.name]
+                operation_log = self.run(operation.name, operation_file)
                 if operation_log.state == StateEnum.FAILURE.value:
-                    logger.error(f"Operation {operation_name} failed !")
+                    logger.error(f"Operation {operation.name} failed !")
                     yield operation_log
                     return
-                logger.info(f"Operation {operation_name} success")
+                logger.info(f"Operation {operation.name} success")
                 yield operation_log
 
     def run_nodes(
