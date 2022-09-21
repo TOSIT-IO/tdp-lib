@@ -103,9 +103,12 @@ def deploy(
             click.echo(f"Deploying to {targets}")
         else:
             click.echo(f"Deploying TDP")
-        operation_iterator = operation_runner.run_nodes(
-            sources=sources, targets=targets, filter_expression=filter
-        )
+        try:
+            operation_iterator = operation_runner.run_nodes(
+                sources=sources, targets=targets, filter_expression=filter
+            )
+        except ValueError as e:
+            raise click.ClickException(str(e)) from e
         if dry:
             for operation in operation_iterator:
                 pass
