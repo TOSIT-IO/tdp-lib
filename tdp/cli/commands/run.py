@@ -15,7 +15,7 @@ from tdp.core.service_manager import ServiceManager
 
 
 @click.command(short_help="Run single TDP operation")
-@click.argument("node")
+@click.argument("operation_name")
 @click.option(
     "--database-dsn",
     envvar="TDP_DATABASE_DSN",
@@ -49,9 +49,9 @@ from tdp.core.service_manager import ServiceManager
     type=click.Path(resolve_path=True, path_type=Path),
     help="Path to the tdp vars",
 )
-@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
+@click.option("--dry", is_flag=True, help="Execute without running any operation")
 def run(
-    node,
+    operation_name,
     database_dsn,
     collection_path,
     run_directory,
@@ -62,13 +62,13 @@ def run(
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag(collection_path)
 
-    operation = dag.operations.get(node, None)
+    operation = dag.collections.operations.get(operation_name, None)
     if not operation:
-        raise click.BadParameter(f"{node} is not a valid node")
+        raise click.BadParameter(f"{operation_name} is not a valid operation")
 
     if operation.noop:
         raise click.BadParameter(
-            f"{node} is tagged as noop and thus"
+            f"{operation_name} is tagged as noop and thus"
             " cannot be executed in an unitary deployment"
         )
 
@@ -84,8 +84,8 @@ def run(
         check_services_cleanliness(service_managers)
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)
-        click.echo(f"Deploying {node}")
-        operation_iterator = operation_runner.run_operations([node])
+        click.echo(f"Deploying {operation}")
+        operation_iterator = operation_runner.run_operations([operation])
         if dry:
             for operation in operation_iterator:
                 pass
