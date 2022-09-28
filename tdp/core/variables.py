@@ -1,14 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import copy
 import logging
 import os
-from contextlib import contextmanager
-from functools import wraps
+from collections.abc import MutableMapping
 from weakref import proxy
 
 import yaml
+from ansible.utils.vars import merge_hash as _merge_hash
 
 try:
     from yaml import CDumper as Dumper
@@ -29,6 +28,10 @@ def str_presenter(dumper, data):
 Dumper.add_representer(str, str_presenter)
 
 
+def merge_hash(dict_a, dict_b):
+    return _merge_hash(dict_a, dict_b)
+
+
 class Variables:
     """Manages a var file
 
@@ -42,7 +45,7 @@ class Variables:
         return _VariablesIOWrapper(self._file_path)
 
 
-class VariablesDict:
+class VariablesDict(MutableMapping):
     """Manages internal content logic. Internal instanciation only.
 
     This object implements the getitem, setitem and delitem methods, allowing for:
@@ -61,95 +64,33 @@ class VariablesDict:
         """
         self._content = content
 
+    def copy(self):
+        return self._content.copy()
+
+    def merge(self, mapping):
+        self._content = merge_hash(self._content, mapping)
+
     def __getitem__(self, key):
-        return self.get(key)
+        return self._content.__getitem__(key)
 
     def __setitem__(self, key, value):
-        self.set(key, value)
+        return self._content.__setitem__(key, value)
 
     def __delitem__(self, key):
-        self.unset(key)
+        return self._content.__delitem__(key)
 
-    def get(self, key, default=None):
-        """get a value matching the key in inner content.
+    def __len__(self) -> int:
+        return self._content.__len__()
 
-        Returns a deepcopy of the value, in case a dict is returned and to prevent
-        modification of the content outside of this class.  We don't support
-        listening to the value of a shallow copy (yet).
-
-        :param key: Key in inner content object (must be YAML compatible)
-        :type key: Hashable
-        :param default: Value to return if the key is absent from the inner content. Defaults to None.
-        :type default: Any, optional
-        :raises e: KeyError when key is missing and no default value has been provided
-        :return: Value inside the inner content
-        :rtype: Any
-        """
-        subkeys = key.split(".")
-        cursor = self._content
-        try:
-            for index, subkey in enumerate(subkeys):
-                if cursor.get(subkey) and index < (len(subkeys) - 1):
-                    cursor = cursor[subkey]
-                else:
-                    return copy.deepcopy(cursor.get(".".join(subkeys[index:])))
-        except KeyError as e:
-            if default:
-                return default
-            raise e
-
-    def set(self, key, value):
-        subkeys = key.split(".")
-        cursor = self._content
-        for index, subkey in enumerate(subkeys):
-            if cursor.get(subkey) and index < (len(subkeys) - 1):
-                cursor = cursor[subkey]
-            else:
-                cursor[".".join(subkeys[index:])] = value
-                break
-
-    def update(self, var, merge=True):
-        """update
-
-        Args:
-            var (Union[dict, VariablesDict]): variables that will be written to the group vars
-            merge (Bool): whether variables must be merged or overwritten
-        """
-        if isinstance(var, VariablesDict):
-            updated_content = var._content
-        else:
-            updated_content = var
-
-        if merge:
-            self._content.update(updated_content)
-        else:
-            self._content = updated_content
-
-    def unset(self, key):
-        """unset key in variables, supports nested keys
-
-        :param var: key to delete (using dot notation for complexe keys)
-        :type var: str
-        """
-        subkeys = key.split(".")
-        cursor = self._content
-        for index, subkey in enumerate(subkeys):
-            if cursor.get(subkey) and index < (len(subkeys) - 1):
-                cursor = cursor[subkey]
-            else:
-                cursor.pop(".".join(subkeys[index:]))
-                break
-
-    def to_dict(self):
-        return copy.deepcopy(self._content)
+    def __iter__(self):
+        return self._content.__iter__()
 
 
 class _VariablesIOWrapper(VariablesDict):
     def __init__(self, path):
         self._file_path = path
         self._file_descriptor = open(self._file_path, "r+")
-        content = yaml.load(self._file_descriptor, Loader=Loader) or {}
-        super().__init__(content)
+        self._content = yaml.load(self._file_descriptor, Loader=Loader) or {}
 
     def __enter__(self):
         return proxy(self)
@@ -157,14 +98,11 @@ class _VariablesIOWrapper(VariablesDict):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
 
-    @contextmanager
-    def _flush_on_write(self):
+    def _flush_on_disk(self):
         if not self._file_descriptor or self._file_descriptor.closed:
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
             )
-        yield
-
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
             yaml.dump(self._content, Dumper=Dumper, sort_keys=False, width=1000)
@@ -176,25 +114,10 @@ class _VariablesIOWrapper(VariablesDict):
 
     def close(self):
         if self._file_descriptor and not self._file_descriptor.closed:
+            self._flush_on_disk()
             self._file_descriptor.close()
             self._variables_dict = None
         else:
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
             )
-
-    def get(self, key, default=None):
-        with self._flush_on_write():
-            return super().get(key, default)
-
-    def set(self, key, value):
-        with self._flush_on_write():
-            super().set(key, value)
-
-    def unset(self, key):
-        with self._flush_on_write():
-            super().unset(key)
-
-    def update(self, var, *args, **kwargs):
-        with self._flush_on_write():
-            super().update(var, *args, **kwargs)

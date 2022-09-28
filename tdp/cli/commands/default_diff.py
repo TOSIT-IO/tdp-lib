@@ -12,8 +12,8 @@ import click
 from tdp.cli.utils import collection_paths
 from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.dag import Dag
-from tdp.core.service_manager import ServiceManager, merge_collection_vars
-from tdp.core.variables import Variables
+from tdp.core.service_manager import ServiceManager
+from tdp.core.variables import Variables, merge_hash
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
@@ -76,13 +76,13 @@ def service_diff(service):
             continue
         service_varfile = {}
         with Variables(tdp_vars_service_vars_filepath).open() as service_variables:
-            service_varfile = service_variables.to_dict()
+            service_varfile = service_variables.copy()
 
         default_service_varfile = {}
         for default_service_vars_filepath in default_service_vars_filepaths:
             with Variables(default_service_vars_filepath).open() as default_variables:
-                default_service_varfile = merge_collection_vars(
-                    default_service_varfile, default_variables.to_dict()
+                default_service_varfile = merge_hash(
+                    default_service_varfile, default_variables
                 )
 
         service_varfile_content = pprint.pformat(service_varfile).splitlines()

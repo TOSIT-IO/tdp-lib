@@ -58,7 +58,7 @@ def test_variables_unset(dummy_inventory):
                 },
             },
         )
-        variables.unset("hdfs_property")
+        del variables["hdfs_property"]
 
     assert "hdfs_property" not in variable_manager.get_vars(
         host=inventory.get_host("master01")
@@ -79,7 +79,7 @@ def test_variables_unset_nested(dummy_inventory):
             },
         )
 
-        variables.unset("hdfs_site.hdfs.nested.property")
+        del variables["hdfs_site"]["hdfs.nested.property"]
 
     assert "hdfs.nested.property" not in variable_manager.get_vars(
         host=inventory.get_host("master01")
@@ -120,12 +120,8 @@ def test_variables_item_is_deletable(dummy_inventory):
                 },
             },
         )
-        del variables["hdfs_site.hdfs.nested.property"]
+        del variables["hdfs_property"]
 
-    assert "hdfs.nested.property" not in variable_manager.get_vars(
+    assert "hdfs_property" not in variable_manager.get_vars(
         host=inventory.get_host("master01")
-    ).get("hdfs_site")
-
-    assert "another_value" == variable_manager.get_vars(
-        host=inventory.get_host("master01")
-    ).get("hdfs_site").get("hdfs.another.nested.property")
+    )
