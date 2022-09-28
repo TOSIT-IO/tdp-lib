@@ -5,21 +5,15 @@ import logging
 from collections import OrderedDict
 from pathlib import Path
 
-from ansible.utils.vars import merge_hash
-
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import Operation
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
-from tdp.core.variables import Variables
+from tdp.core.variables import Variables, merge_hash
 
 logger = logging.getLogger("tdp").getChild("git_repository")
 
 SERVICE_NAME_MAX_LENGTH = 15
-
-
-def merge_collection_vars(dict_a, dict_b):
-    return merge_hash(dict_a, dict_b)
 
 
 class ServiceManager:
@@ -98,9 +92,7 @@ class ServiceManager:
                     merge_result = {}
                     for default_variables_path in default_variables_paths:
                         with Variables(default_variables_path).open() as variables:
-                            merge_result = merge_collection_vars(
-                                merge_result, variables.to_dict()
-                            )
+                            merge_result = merge_hash(merge_result, variables)
 
                     configuration.update(merge_result)
                 # service has no default vars
