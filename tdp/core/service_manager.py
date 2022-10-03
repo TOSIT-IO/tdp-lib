@@ -60,7 +60,7 @@ class ServiceManager:
             return self.name + "_" + operation.component
         raise ValueError(f"Service {self.name} does not have a component {component}")
 
-    def initialize_variables(self):
+    def initialize_variables(self, override_folder=None):
 
         # dict with filename as key and a list of paths as value
         # a service can have multiple variable files present
@@ -72,6 +72,15 @@ class ServiceManager:
                 continue
             for name, path in default_vars:
                 default_var_paths.setdefault(name, []).append(path)
+
+        # If there is an override folder, search for varfiles and append to variables paths
+        if override_folder:
+            service_override_folder = Path(override_folder) / self.name
+            if service_override_folder.exists() and service_override_folder.is_dir():
+                for override_path in service_override_folder.glob("*" + YML_EXTENSION):
+                    default_var_paths.setdefault(override_path.name, []).append(
+                        override_path
+                    )
 
         # If service has no default vars, put a key with a none value
         if not default_var_paths:
@@ -101,12 +110,13 @@ class ServiceManager:
                     pass
 
     @staticmethod
-    def initialize_service_managers(dag, services_directory):
+    def initialize_service_managers(dag, services_directory, override_folder=None):
         """get a dict of service managers, initialize all services if needed
 
         Args:
             dag (Dag): operations' DAG
             services_directory (Union[str, Path]): path of the tdp vars
+            override_folder (Optional[str | Path]): path of tdp vars overrides
 
         Returns:
             Dict[str, ServiceManager]: mapping of service with their manager
@@ -133,7 +143,7 @@ class ServiceManager:
                     f"{service_manager.name} is already initialized at {service_manager.version}"
                 )
             except NoVersionYet:
-                service_manager.initialize_variables()
+                service_manager.initialize_variables(override_folder)
 
             service_managers[service] = service_manager
 
