@@ -12,7 +12,7 @@ import click
 from tdp.cli.utils import collection_paths
 from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.dag import Dag
-from tdp.core.variables import ServiceManager, Variables, merge_hash
+from tdp.core.variables import ServiceVariables, Variables, merge_hash
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
@@ -35,7 +35,7 @@ def default_diff(service, collection_path, vars):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag(collection_path)
-    service_managers = ServiceManager.get_service_managers(dag, vars)
+    service_managers = ServiceVariables.get_service_managers(dag, vars)
 
     if service:
         service_diff(service_managers[service])

@@ -10,7 +10,7 @@ from tdp.cli.session import init_db
 from tdp.cli.utils import collection_paths
 from tdp.core.dag import Dag
 from tdp.core.repository.repository import NoVersionYet
-from tdp.core.variables import ServiceManager
+from tdp.core.variables import ServiceVariables
 
 
 @click.command(short_help="Init database / services in tdp vars")
@@ -49,6 +49,6 @@ from tdp.core.variables import ServiceManager
 def init(database_dsn, collection_path, vars, overrides):
     dag = Dag(collection_path)
     init_db(database_dsn)
-    service_managers = ServiceManager.initialize_service_managers(dag, vars, overrides)
+    service_managers = ServiceVariables.initialize_service_managers(dag, vars, overrides)
     for name, service_manager in service_managers.items():
         click.echo(f"{name}: {service_manager.version}")

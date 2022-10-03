@@ -13,7 +13,7 @@ from tdp.cli.utils import check_services_cleanliness, collection_paths
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.runner.operation_runner import EmptyOperationPlan, OperationRunner
-from tdp.core.variables import ServiceManager
+from tdp.core.variables import ServiceVariables
 
 
 @click.command(short_help="Restart required TDP services")
@@ -74,7 +74,7 @@ def restart_required(
             get_latest_success_service_version_query()
         ).all()
 
-        service_managers = ServiceManager.get_service_managers(dag, vars)
+        service_managers = ServiceVariables.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)
 
         components_modified = set()

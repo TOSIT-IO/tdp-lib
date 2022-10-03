@@ -16,7 +16,7 @@ logger = logging.getLogger("tdp").getChild("git_repository")
 SERVICE_NAME_MAX_LENGTH = 15
 
 
-class ServiceManager:
+class ServiceVariables:
     def __init__(self, service_name, repository, dag):
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
@@ -137,7 +137,7 @@ class ServiceManager:
                     )
 
             repo = GitRepository.init(service_directory)
-            service_manager = ServiceManager(service, repo, dag)
+            service_manager = ServiceVariables(service, repo, dag)
             try:
                 logger.info(
                     f"{service_manager.name} is already initialized at {service_manager.version}"
@@ -166,7 +166,7 @@ class ServiceManager:
 
         for service in dag.services:
             repo = GitRepository(services_directory / service)
-            service_managers[service] = ServiceManager(service, repo, dag)
+            service_managers[service] = ServiceVariables(service, repo, dag)
 
         return service_managers
 
