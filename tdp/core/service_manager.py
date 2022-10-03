@@ -91,7 +91,7 @@ class ServiceManager:
                     )
                     merge_result = {}
                     for default_variables_path in default_variables_paths:
-                        with Variables(default_variables_path).open() as variables:
+                        with Variables(default_variables_path).open("r") as variables:
                             merge_result = merge_hash(merge_result, variables)
 
                     configuration.update(merge_result)

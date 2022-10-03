@@ -41,8 +41,8 @@ class Variables:
     def __init__(self, file_path):
         self._file_path = file_path
 
-    def open(self):
-        return _VariablesIOWrapper(self._file_path)
+    def open(self, mode=None):
+        return _VariablesIOWrapper(self._file_path, mode)
 
 
 class VariablesDict(MutableMapping):
@@ -87,9 +87,9 @@ class VariablesDict(MutableMapping):
 
 
 class _VariablesIOWrapper(VariablesDict):
-    def __init__(self, path):
+    def __init__(self, path, mode=None):
         self._file_path = path
-        self._file_descriptor = open(self._file_path, "r+")
+        self._file_descriptor = open(self._file_path, mode or "r+")
         self._content = yaml.load(self._file_descriptor, Loader=Loader) or {}
 
     def __enter__(self):
@@ -103,6 +103,10 @@ class _VariablesIOWrapper(VariablesDict):
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
             )
+
+        if not self._file_descriptor.writable():
+            return
+
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
             yaml.dump(self._content, Dumper=Dumper, sort_keys=False, width=1000)
