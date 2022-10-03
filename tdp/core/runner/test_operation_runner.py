@@ -12,7 +12,7 @@ from tdp.core.dag import Dag
 from tdp.core.operation import Operation
 from tdp.core.runner.executor import Executor, StateEnum
 from tdp.core.runner.operation_runner import OperationRunner
-from tdp.core.service_manager import ServiceManager
+from tdp.core.variables import ServiceManager
 
 logger = logging.getLogger("tdp").getChild("test_operation_runner")
 
