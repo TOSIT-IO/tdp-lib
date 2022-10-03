@@ -11,7 +11,7 @@ from tdp.cli.utils import check_services_cleanliness, collection_paths
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.runner.operation_runner import OperationRunner
-from tdp.core.variables import ServiceManager
+from tdp.core.variables import ServiceVariables
 
 
 @click.command(short_help="Deploy TDP")
@@ -93,7 +93,7 @@ def deploy(
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        service_managers = ServiceManager.get_service_managers(dag, vars)
+        service_managers = ServiceVariables.get_service_managers(dag, vars)
         check_services_cleanliness(service_managers)
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)

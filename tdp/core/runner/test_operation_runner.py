@@ -12,7 +12,7 @@ from tdp.core.dag import Dag
 from tdp.core.operation import Operation
 from tdp.core.runner.executor import Executor, StateEnum
 from tdp.core.runner.operation_runner import OperationRunner
-from tdp.core.variables import ServiceManager
+from tdp.core.variables import ServiceVariables
 
 logger = logging.getLogger("tdp").getChild("test_operation_runner")
 
@@ -22,7 +22,7 @@ class MockExecutor(Executor):
         return StateEnum.SUCCESS, f"{operation} LOG SUCCESS".encode("utf-8")
 
 
-class MockServiceManager(ServiceManager):
+class MockServiceManager(ServiceVariables):
     def version(self):
         return "foo"
 
