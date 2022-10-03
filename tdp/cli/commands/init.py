@@ -40,13 +40,15 @@ from tdp.core.service_manager import ServiceManager
     type=click.Path(resolve_path=True, path_type=Path),
     help="Path to the tdp vars",
 )
-def init(database_dsn, collection_path, vars):
+@click.option(
+    "--overrides",
+    required=False,
+    type=click.Path(exists=True, resolve_path=True, path_type=Path),
+    help="Path to tdp vars overrides",
+)
+def init(database_dsn, collection_path, vars, overrides):
     dag = Dag(collection_path)
     init_db(database_dsn)
-    service_managers = ServiceManager.initialize_service_managers(dag, vars)
+    service_managers = ServiceManager.initialize_service_managers(dag, vars, overrides)
     for name, service_manager in service_managers.items():
-        try:
-            click.echo(f"{name}: {service_manager.version}")
-        except NoVersionYet:
-            click.echo(f"Initializing {name}")
-            service_manager.initiliaze_variables(service_manager)
+        click.echo(f"{name}: {service_manager.version}")
