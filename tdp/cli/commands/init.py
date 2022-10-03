@@ -10,7 +10,7 @@ from tdp.cli.session import init_db
 from tdp.cli.utils import collection_paths
 from tdp.core.dag import Dag
 from tdp.core.repository.repository import NoVersionYet
-from tdp.core.service_manager import ServiceManager
+from tdp.core.variables import ServiceManager
 
 
 @click.command(short_help="Init database / services in tdp vars")

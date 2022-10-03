@@ -12,8 +12,7 @@ import click
 from tdp.cli.utils import collection_paths
 from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.dag import Dag
-from tdp.core.service_manager import ServiceManager
-from tdp.core.variables import Variables, merge_hash
+from tdp.core.variables import ServiceManager, Variables, merge_hash
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
