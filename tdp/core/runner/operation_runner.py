@@ -16,9 +16,9 @@ logger = logging.getLogger("tdp").getChild("operation_runner")
 
 
 class OperationIterator(Iterator):
-    def __init__(self, dag, service_managers, deployment_log, operations):
+    def __init__(self, dag, cluster_variables, deployment_log, operations):
         self._dag = dag
-        self._service_managers = service_managers
+        self._cluster_variables = cluster_variables
         self._deployment_log = deployment_log
         self._operations = operations
 
@@ -61,8 +61,8 @@ class OperationIterator(Iterator):
         )
         return [
             ServiceLog(
-                service=self._service_managers[service_name].name,
-                version=self._service_managers[service_name].version,
+                service=self._cluster_variables[service_name].name,
+                version=self._cluster_variables[service_name].version,
             )
             for service_name in services
         ]
@@ -152,10 +152,10 @@ class OperationPlan:
 class OperationRunner:
     """Run operations"""
 
-    def __init__(self, dag, executor, service_managers):
+    def __init__(self, dag, executor, cluster_variables):
         self.dag = dag
         self._executor = executor
-        self._service_managers = service_managers
+        self._cluster_variables = cluster_variables
 
     def run(self, operation, operation_file):
         logger.debug(f"Running operation {operation}")
@@ -230,5 +230,5 @@ class OperationRunner:
         )
 
         return OperationIterator(
-            self.dag, self._service_managers, deployment_log, operation_logs_generator
+            self.dag, self._cluster_variables, deployment_log, operation_logs_generator
         )

@@ -120,7 +120,7 @@ class _VariablesIOWrapper(VariablesDict):
         if self._file_descriptor and not self._file_descriptor.closed:
             self._flush_on_disk()
             self._file_descriptor.close()
-            self._variables_dict = None
+            self._content = None
         else:
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
