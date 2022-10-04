@@ -12,7 +12,7 @@ from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
-from tdp.core.runner.operation_runner import OperationRunner
+from tdp.core.runner.operation_runner import EmptyOperationPlan, OperationRunner
 from tdp.core.service_manager import ServiceManager
 
 
@@ -93,12 +93,17 @@ def restart_required(
             return
 
         operation_runner = OperationRunner(dag, ansible_executor, service_managers)
-
-        operation_iterator = operation_runner.run_nodes(
-            sources=list(components_modified),
-            restart=True,
-            filter_expression=re.compile(r".+_(config|start)"),
-        )
+        try:
+            operation_iterator = operation_runner.run_nodes(
+                sources=list(components_modified),
+                restart=True,
+                filter_expression=re.compile(r".+_(config|start)"),
+            )
+        except EmptyOperationPlan:
+            click.echo(
+                f"Component(s) [{', '.join(components_modified)}] don't have any operation associated to restart (excluding noop). Nothing to restart."
+            )
+            return
         if dry:
             for operation in operation_iterator:
                 pass

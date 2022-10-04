@@ -4,6 +4,7 @@
 import logging
 from collections.abc import Iterator
 from datetime import datetime
+from operator import itemgetter
 
 from tdp.core.models.deployment_log import DeploymentLog, FilterTypeEnum
 from tdp.core.models.operation_log import OperationLog
@@ -125,12 +126,16 @@ class OperationPlan:
         else:
             str_filter = None
             filter_type = None
-        if len(operation_names) == 0:
+        # Converting operations names into their actual Operation object
+        operations = itemgetter(*operation_names)(dag.operations)
+        # Removing all noop operations
+        operations = list(filter(lambda operation: operation.noop is False, operations))
+        if len(operations) == 0:
             raise EmptyOperationPlan(
-                "Combination of parameters resulted into an empty list of Operations"
+                "Combination of parameters resulted into an empty list of Operations (noop excluded)"
             )
         return OperationPlan(
-            operation_names,
+            operations,
             using_dag=True,
             targets=targets,
             sources=sources,
