@@ -9,14 +9,6 @@ tdp.core.models package
 Submodules
 ----------
 
-tdp.core.models.operation\_log module
--------------------------------------
-
-.. automodule:: tdp.core.models.operation_log
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tdp.core.models.base module
 ---------------------------
 
@@ -29,6 +21,14 @@ tdp.core.models.deployment\_log module
 --------------------------------------
 
 .. automodule:: tdp.core.models.deployment_log
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.core.models.operation\_log module
+-------------------------------------
+
+.. automodule:: tdp.core.models.operation_log
    :members:
    :undoc-members:
    :show-inheritance:

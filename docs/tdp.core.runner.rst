@@ -9,14 +9,6 @@ tdp.core.runner package
 Submodules
 ----------
 
-tdp.core.runner.operation\_runner module
-----------------------------------------
-
-.. automodule:: tdp.core.runner.operation_runner
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tdp.core.runner.ansible\_executor module
 ----------------------------------------
 
@@ -29,6 +21,14 @@ tdp.core.runner.executor module
 -------------------------------
 
 .. automodule:: tdp.core.runner.executor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.core.runner.operation\_runner module
+----------------------------------------
+
+.. automodule:: tdp.core.runner.operation_runner
    :members:
    :undoc-members:
    :show-inheritance:
