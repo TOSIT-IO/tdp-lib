@@ -15,14 +15,23 @@ Subpackages
    tdp.core.models
    tdp.core.repository
    tdp.core.runner
+   tdp.core.variables
 
 Submodules
 ----------
 
-tdp.core.operation module
--------------------------
+tdp.core.collection module
+--------------------------
 
-.. automodule:: tdp.core.operation
+.. automodule:: tdp.core.collection
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.core.collections module
+---------------------------
+
+.. automodule:: tdp.core.collections
    :members:
    :undoc-members:
    :show-inheritance:
@@ -43,10 +52,10 @@ tdp.core.dag\_dot module
    :undoc-members:
    :show-inheritance:
 
-tdp.core.service\_manager module
---------------------------------
+tdp.core.operation module
+-------------------------
 
-.. automodule:: tdp.core.service_manager
+.. automodule:: tdp.core.operation
    :members:
    :undoc-members:
    :show-inheritance:
@@ -55,14 +64,6 @@ tdp.core.topology module
 ------------------------
 
 .. automodule:: tdp.core.topology
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tdp.core.variables module
--------------------------
-
-.. automodule:: tdp.core.variables
    :members:
    :undoc-members:
    :show-inheritance:

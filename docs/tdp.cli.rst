@@ -26,7 +26,7 @@ tdp.cli.session module
    :show-inheritance:
 
 tdp.cli.utils module
-----------------------
+--------------------
 
 .. automodule:: tdp.cli.utils
    :members:

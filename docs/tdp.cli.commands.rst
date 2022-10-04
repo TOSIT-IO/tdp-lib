@@ -65,6 +65,30 @@ tdp.cli.commands.playbooks module
    :undoc-members:
    :show-inheritance:
 
+tdp.cli.commands.queries module
+-------------------------------
+
+.. automodule:: tdp.cli.commands.queries
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.cli.commands.restart\_required module
+-----------------------------------------
+
+.. automodule:: tdp.cli.commands.restart_required
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.cli.commands.run module
+---------------------------
+
+.. automodule:: tdp.cli.commands.run
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tdp.cli.commands.service\_versions module
 -----------------------------------------
 

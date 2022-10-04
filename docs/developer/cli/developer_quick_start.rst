@@ -46,32 +46,42 @@ Developer Quick Start (sqlite backend)
      user@yourmachine:~/tdp-lib$ . /home/user/.cache/pypoetry/virtualenvs/tdp-lib-wP9YBfm3-py3.6/bin/activate
 
      user@yourmachine:tdp init
-     2022-03-16 16:01:10,610 - DEBUG - tdp.<module> - Logger initialized
-     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine BEGIN (implicit)
-     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("operation_log")
-     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine [raw sql] ()
-     2022-03-16 16:01:11,070 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("deployment_log")
-     2022-03-16 16:01:11,071 INFO sqlalchemy.engine.Engine [raw sql] ()
-     2022-03-16 16:01:11,071 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("service_log")
-     2022-03-16 16:01:11,071 INFO sqlalchemy.engine.Engine [raw sql] ()
-     2022-03-16 16:01:11,071 INFO sqlalchemy.engine.Engine COMMIT
-     2022-03-16 16:01:11,076 - WARNING - tdp.dag.validate - playbooks_dir is not defined, skip playbooks validations
-     2022-03-16 16:01:11,080 - INFO - tdp.git_repository.initialize_service_managers - hbase is already initialized at 47db11a622bfa215cdb7c705692c13dafd2f8ac9
-     2022-03-16 16:01:11,085 - INFO - tdp.git_repository.initialize_service_managers - hadoop is already initialized at 4e29c563d1f8bb1dec0698d9726708f85f365903
-     2022-03-16 16:01:11,091 - INFO - tdp.git_repository.initialize_service_managers - zookeeper is already initialized at a4e3fe869572f017878d3a1de61955f67bde3d0c
-     2022-03-16 16:01:11,099 - INFO - tdp.git_repository.initialize_service_managers - hive is already initialized at 1f565413e4682b76b92f24385a7ade68cccc4d09
-     2022-03-16 16:01:11,106 - INFO - tdp.git_repository.initialize_service_managers - ranger is already initialized at 5bcf03f2c6acae7a2248e185ef9cf5634e9d799c
-     2022-03-16 16:01:11,113 - INFO - tdp.git_repository.initialize_service_managers - hdfs is already initialized at 18c2097e6f13ea2162ef1217c690a6b62cb005e1
-     2022-03-16 16:01:11,117 - INFO - tdp.git_repository.initialize_service_managers - yarn is already initialized at 6e5aaca19c4dafec26e383fc7630a599985c7140
-     2022-03-16 16:01:11,120 - INFO - tdp.git_repository.initialize_service_managers - spark is already initialized at 95ff5d25fe7006320cc628aa5a63eefcc098391e
-     hbase: 47db11a622bfa215cdb7c705692c13dafd2f8ac9
-     hadoop: 4e29c563d1f8bb1dec0698d9726708f85f365903
-     zookeeper: a4e3fe869572f017878d3a1de61955f67bde3d0c
-     hive: 1f565413e4682b76b92f24385a7ade68cccc4d09
-     ranger: 5bcf03f2c6acae7a2248e185ef9cf5634e9d799c
-     hdfs: 18c2097e6f13ea2162ef1217c690a6b62cb005e1
-     yarn: 6e5aaca19c4dafec26e383fc7630a599985c7140
-     spark: 95ff5d25fe7006320cc628aa5a63eefcc098391e
+     2022-10-04 12:38:24,823 - DEBUG - tdp.<module> - Logger initialized
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("deployment_log")
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine [raw sql] ()
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("operation_log")
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine [raw sql] ()
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("service_log")
+     2022-10-04 12:38:25,275 INFO sqlalchemy.engine.Engine [raw sql] ()
+     2022-10-04 12:38:25,276 INFO sqlalchemy.engine.Engine COMMIT
+     2022-10-04 12:38:25,280 - INFO - tdp.cluster_variables.initialize_cluster_variables - spark3 is already initialized at 23d6ecdbffdd72ab038fda80193cb9a0394cde16
+     2022-10-04 12:38:25,283 - INFO - tdp.cluster_variables.initialize_cluster_variables - exporter is already initialized at a4e906cbdad42179543d7bc1d19b9f1b3205ac4c
+     2022-10-04 12:38:25,287 - INFO - tdp.cluster_variables.initialize_cluster_variables - zookeeper is already initialized at d820a9e62da81a4b2a3e88ec5c0d26b430388238
+     2022-10-04 12:38:25,292 - INFO - tdp.cluster_variables.initialize_cluster_variables - knox is already initialized at 6bfffa7074d7a8dd66c221501de15c99f2cb9dbd
+     2022-10-04 12:38:25,297 - INFO - tdp.cluster_variables.initialize_cluster_variables - hdfs is already initialized at 3b9dc99b6c734e467e4da3870ee819234d7f9381
+     2022-10-04 12:38:25,301 - INFO - tdp.cluster_variables.initialize_cluster_variables - hbase is already initialized at 8ab1262f8ca7a6fbcda6f5878391b676d48de2b0
+     2022-10-04 12:38:25,305 - INFO - tdp.cluster_variables.initialize_cluster_variables - yarn is already initialized at dcfde77e17d94a860765f9a391d790b3c82a21c1
+     2022-10-04 12:38:25,311 - INFO - tdp.cluster_variables.initialize_cluster_variables - hadoop is already initialized at 7e3bfefb598e82126ad59b967b70b777e177cca5
+     2022-10-04 12:38:25,317 - INFO - tdp.cluster_variables.initialize_cluster_variables - tdp_cluster is already initialized at 279f89c2490e2715a19803ddf1c3c41634b6d017
+     2022-10-04 12:38:25,320 - INFO - tdp.cluster_variables.initialize_cluster_variables - spark is already initialized at 30b46f768a2e9cf2eb2fececda9848d9069d08f1
+     2022-10-04 12:38:25,323 - INFO - tdp.cluster_variables.initialize_cluster_variables - all is already initialized at 1eca4647419b1de0f9f756ec39a3929199c95e98
+     2022-10-04 12:38:25,327 - INFO - tdp.cluster_variables.initialize_cluster_variables - ranger is already initialized at db8bdbabf5444fdbd886f34a8b5703f445500fa1
+     2022-10-04 12:38:25,330 - INFO - tdp.cluster_variables.initialize_cluster_variables - hive is already initialized at 979c8be37130112dc257ef1036a49c8ee97971db
+     2022-10-04 12:38:25,339 - INFO - tdp.cluster_variables.initialize_cluster_variables - hadoop is already initialized at 7e3bfefb598e82126ad59b967b70b777e177cca5
+     spark3: 23d6ecdbffdd72ab038fda80193cb9a0394cde16
+     exporter: a4e906cbdad42179543d7bc1d19b9f1b3205ac4c
+     zookeeper: d820a9e62da81a4b2a3e88ec5c0d26b430388238
+     knox: 6bfffa7074d7a8dd66c221501de15c99f2cb9dbd
+     hdfs: 3b9dc99b6c734e467e4da3870ee819234d7f9381
+     hbase: 8ab1262f8ca7a6fbcda6f5878391b676d48de2b0
+     yarn: dcfde77e17d94a860765f9a391d790b3c82a21c1
+     hadoop: 7e3bfefb598e82126ad59b967b70b777e177cca5
+     tdp_cluster: 279f89c2490e2715a19803ddf1c3c41634b6d017
+     spark: 30b46f768a2e9cf2eb2fececda9848d9069d08f1
+     all: 1eca4647419b1de0f9f756ec39a3929199c95e98
+     ranger: db8bdbabf5444fdbd886f34a8b5703f445500fa1
+     hive: 979c8be37130112dc257ef1036a49c8ee97971db
 
 #. list all nodes
 
