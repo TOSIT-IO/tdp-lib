@@ -34,12 +34,14 @@ def test_git_repository_fails_if_path_is_not_a_git_repo(tmp_path):
 
 
 def test_git_repository_is_validated(git_repository):
-    commit_message = "[HIVE] update nb cores"
+    commit_message = "hive: update nb cores"
+    group_vars = git_repository.path / "group_vars"
     hive_yml = "group_vars/hive.yml"
-    with git_repository.validate(
-        commit_message
-    ) as repository, repository.open_var_file(hive_yml) as hive:
-        hive["nb_cores"] = 2
+    group_vars.mkdir()
+    with git_repository.validate(commit_message) as repository:
+        with (repository.path / hive_yml).open("w") as hive_fd:
+            hive_fd.write("nb_cores: 2")
+        repository.add_for_validation([hive_yml])
 
     with Repo(git_repository.path) as repo:
         assert not repo.is_dirty()
@@ -49,15 +51,24 @@ def test_git_repository_is_validated(git_repository):
 
 
 def test_git_repository_multiple_validations(git_repository):
+    group_vars = git_repository.path / "group_vars"
+    group_vars.mkdir()
     file_list = [
         "group_vars/hive_s2.yml",
         "group_vars/hive_metastore.yml",
     ]
-    with git_repository.validate(
-        "[HIVE] setup hive high availability"
-    ) as repository, repository.open_var_files(file_list) as confs:
-        confs["group_vars/hive_s2.yml"].update({"hive_site": {"nb_hiveserver2": 8}})
-        confs["group_vars/hive_metastore.yml"].update({"nb_threads": 4})
+    with git_repository.validate("[HIVE] setup hive high availability") as repository:
+        with (repository.path / file_list[0]).open("w") as hive_s2_fd, (
+            repository.path / file_list[1]
+        ).open("w") as hive_metastore_fd:
+            hive_s2_fd.write(
+                """
+            hive_site:
+              nb_hiveserver2: 0
+            """
+            )
+            hive_metastore_fd.write("nb_threads: 4")
+        repository.add_for_validation(file_list)
 
     with Repo(git_repository.path) as repo:
         assert not repo.is_dirty()
@@ -136,20 +147,22 @@ def test_git_repository_file_updated(git_repository):
 def test_git_repository_no_validation(git_repository):
     # first commit sets the value
     commit_message = "[HIVE] set nb cores"
+    group_vars = git_repository.path / "group_vars"
+    group_vars.mkdir()
     hive_yml = "group_vars/hive.yml"
-    with git_repository.validate(
-        commit_message
-    ) as repository, repository.open_var_file(hive_yml) as hive:
-        hive["nb_cores"] = 2
+    with git_repository.validate(commit_message) as repository:
+        with (repository.path / hive_yml).open("w") as hive_fd:
+            hive_fd.write("nb_core: 2")
+        repository.add_for_validation([hive_yml])
 
     # second commit does not change anything
     commit_message_mock = "[HIVE] no changes"
     hive_yml = "group_vars/hive.yml"
     with pytest.raises(EmptyCommit):
-        with git_repository.validate(
-            commit_message_mock
-        ) as repository, repository.open_var_file(hive_yml) as hive:
-            hive["nb_cores"] = 2
+        with git_repository.validate(commit_message) as repository:
+            with open(repository.path / hive_yml, "w") as hive_fd:
+                hive_fd.write("nb_core: 2")
+            repository.add_for_validation([hive_yml])
 
     with Repo(git_repository.path) as repo:
         assert not repo.is_dirty()

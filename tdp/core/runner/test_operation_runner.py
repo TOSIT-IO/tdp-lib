@@ -22,7 +22,7 @@ class MockExecutor(Executor):
         return StateEnum.SUCCESS, f"{operation} LOG SUCCESS".encode("utf-8")
 
 
-class MockServiceManager(ServiceVariables):
+class MockServiceVariables(ServiceVariables):
     def version(self):
         return "foo"
 
@@ -81,11 +81,11 @@ def mock_dag():
 @pytest.fixture(scope="function")
 def operation_runner(mock_dag):
     executor = MockExecutor()
-    service_manager = MockServiceManager("zookeeper", None, mock_dag)
-    service_managers = {
-        "zookeeper": service_manager,
+    service_variables = MockServiceVariables("zookeeper", None)
+    cluster_variables = {
+        "zookeeper": service_variables,
     }
-    return OperationRunner(mock_dag, executor, service_managers)
+    return OperationRunner(mock_dag, executor, cluster_variables)
 
 
 def test_operation_runner_filter(operation_runner):
