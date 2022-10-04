@@ -7,11 +7,11 @@ from pathlib import Path
 import click
 
 from tdp.cli.session import get_session_class
-from tdp.cli.utils import check_services_cleanliness, collection_paths
+from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.runner.operation_runner import OperationRunner
-from tdp.core.variables import ServiceVariables
+from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Run single TDP operation")
@@ -30,9 +30,10 @@ from tdp.core.variables import ServiceVariables
 )
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -53,14 +54,14 @@ from tdp.core.variables import ServiceVariables
 def run(
     operation_name,
     database_dsn,
-    collection_path,
+    collections,
     run_directory,
     vars,
     dry,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag(collection_path)
+    dag = Dag(collections)
 
     operation = dag.collections.operations.get(operation_name, None)
     if not operation:
@@ -80,10 +81,10 @@ def run(
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        service_managers = ServiceVariables.get_service_managers(dag, vars)
-        check_services_cleanliness(service_managers)
+        cluster_variables = ClusterVariables.get_cluster_variables(vars)
+        check_services_cleanliness(cluster_variables)
 
-        operation_runner = OperationRunner(dag, ansible_executor, service_managers)
+        operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
         click.echo(f"Deploying {operation}")
         operation_iterator = operation_runner.run_operations([operation])
         if dry:

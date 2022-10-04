@@ -7,10 +7,8 @@ from pathlib import Path
 import click
 
 from tdp.cli.session import init_db
-from tdp.cli.utils import collection_paths
-from tdp.core.dag import Dag
-from tdp.core.repository.repository import NoVersionYet
-from tdp.core.variables import ServiceVariables
+from tdp.cli.utils import collection_paths_to_collections
+from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Init database / services in tdp vars")
@@ -28,9 +26,10 @@ from tdp.core.variables import ServiceVariables
 )
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -46,9 +45,10 @@ from tdp.core.variables import ServiceVariables
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
     help="Path to tdp vars overrides",
 )
-def init(database_dsn, collection_path, vars, overrides):
-    dag = Dag(collection_path)
+def init(database_dsn, collections, vars, overrides):
     init_db(database_dsn)
-    service_managers = ServiceVariables.initialize_service_managers(dag, vars, overrides)
-    for name, service_manager in service_managers.items():
+    cluster_variables = ClusterVariables.initialize_cluster_variables(
+        collections, vars, overrides
+    )
+    for name, service_manager in cluster_variables.items():
         click.echo(f"{name}: {service_manager.version}")
