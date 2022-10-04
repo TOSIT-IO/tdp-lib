@@ -58,10 +58,10 @@ class GitRepository(Repository):
             commit = self._repo.index.commit(msg)
             logger.info(f"commit: [{commit.hexsha}] {msg}")
 
-    def add_for_validation(self, path):
+    def add_for_validation(self, paths):
         with self._lock:
-            self._repo.index.add([str(path)])
-            logger.debug(f"{path} staged")
+            self._repo.index.add(paths)
+            logger.debug(f"{', '.join(paths)} staged")
 
     def current_version(self):
         try:

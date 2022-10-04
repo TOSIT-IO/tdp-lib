@@ -3,26 +3,24 @@
 
 import logging
 from collections import OrderedDict
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import Operation
-from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import NoVersionYet
-from tdp.core.variables import Variables, merge_hash
+from tdp.core.variables.variables import Variables, merge_hash
 
-logger = logging.getLogger("tdp").getChild("git_repository")
+logger = logging.getLogger("tdp").getChild("service_variables")
 
 SERVICE_NAME_MAX_LENGTH = 15
 
 
 class ServiceVariables:
-    def __init__(self, service_name, repository, dag):
+    def __init__(self, service_name, repository):
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
         self._repo = repository
-        self._dag = dag
 
     @property
     def name(self):
@@ -31,10 +29,6 @@ class ServiceVariables:
     @property
     def repository(self):
         return self._repo
-
-    @property
-    def dag(self):
-        return self._dag
 
     @property
     def version(self):
@@ -48,11 +42,12 @@ class ServiceVariables:
     def path(self):
         return self.repository.path
 
-    def get_component_name(self, component):
+    # TODO: move this function outside of this class, or move the dag part
+    def get_component_name(self, dag, component):
         operations_filtered = list(
             filter(
                 lambda operation: operation.component == component,
-                self._dag.services_operations[self.name],
+                dag.services_operations[self.name],
             )
         )
         if operations_filtered:
@@ -60,117 +55,65 @@ class ServiceVariables:
             return self.name + "_" + operation.component
         raise ValueError(f"Service {self.name} does not have a component {component}")
 
-    def initialize_variables(self, override_folder=None):
-
-        # dict with filename as key and a list of paths as value
-        # a service can have multiple variable files present
-        # will look through every collections
-        default_var_paths = OrderedDict()
-        for collection in self.dag.collections.values():
-            default_vars = collection.get_service_default_vars(self.name)
-            if not default_vars:
-                continue
-            for name, path in default_vars:
-                default_var_paths.setdefault(name, []).append(path)
-
-        # If there is an override folder, search for varfiles and append to variables paths
-        if override_folder:
-            service_override_folder = Path(override_folder) / self.name
-            if service_override_folder.exists() and service_override_folder.is_dir():
-                for override_path in service_override_folder.glob("*" + YML_EXTENSION):
-                    default_var_paths.setdefault(override_path.name, []).append(
-                        override_path
-                    )
-
-        # If service has no default vars, put a key with a none value
-        if not default_var_paths:
-            default_var_paths[self.name + YML_EXTENSION] = None
-
-        with self.repository.validate(
-            f"{self.name}: initial commit"
-        ) as repostiory, repostiory.open_var_files(
-            default_var_paths.keys()
+    def update_from_variables_folder(self, message, tdp_vars_overrides):
+        override_files = list(tdp_vars_overrides.glob("*" + YML_EXTENSION))
+        service_files_to_open = [override_file.name for override_file in override_files]
+        with self.open_var_files(
+            f"{self.name}: {message}", service_files_to_open
         ) as configurations:
-            # open_var_files returns an OrderedDict with filename as key, and Variables as value
-            for configuration_file, configuration in configurations.items():
-                default_variables_paths = default_var_paths[configuration_file]
-                if default_variables_paths:
-                    logger.info(
-                        f"Initializing {self.name} with defaults from {', '.join(str(path) for path in default_variables_paths)}"
-                    )
-                    merge_result = {}
-                    for default_variables_path in default_variables_paths:
-                        with Variables(default_variables_path).open("r") as variables:
-                            merge_result = merge_hash(merge_result, variables)
+            for file in override_files:
+                logger.info(f"Initializing {self.name} with variables from {file}")
+                with Variables(file).open("r") as variables:
+                    configurations[file.name].merge(variables)
 
-                    configuration.update(merge_result)
-                # service has no default vars
-                else:
-                    logger.info(f"Initializing {self.name} without variables")
-                    pass
+    @contextmanager
+    def _open_var_file(self, path, fail_if_does_not_exist=False):
+        """Returns a Variables object managed, simplyfing use.
 
-    @staticmethod
-    def initialize_service_managers(dag, services_directory, override_folder=None):
-        """get a dict of service managers, initialize all services if needed
-
+        Returns a Variables object automatically closed when parent context manager closes it.
         Args:
-            dag (Dag): operations' DAG
-            services_directory (Union[str, Path]): path of the tdp vars
-            override_folder (Optional[str | Path]): path of tdp vars overrides
-
-        Returns:
-            Dict[str, ServiceManager]: mapping of service with their manager
+            path ([PathLike]): Path to open as a Variables file.
+            fail_if_does_not_exist ([bool]): Whether or not the function should raise an error when file does not exist
+        Yields:
+            [Proxy[Variables]]: A weakref of the Variables object, to prevent the creation of strong references
+                outside the caller's context
         """
-        services_directory = Path(services_directory)
-        service_managers = {}
+        path = self.path / path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            if fail_if_does_not_exist:
+                raise ValueError("Path does not exist")
+            path.touch()
+        with Variables(path).open() as variables:
+            yield variables
 
-        for service in dag.services:
-            service_directory = services_directory / service
+    @contextmanager
+    def open_var_files(self, message, paths, fail_if_does_not_exist=False):
+        """Returns an OrderedDict of dict[path] = Variables object
 
-            try:
-                service_directory.mkdir(parents=True)
-                logger.info(f"{service_directory.absolute()} does not exist, created")
-            except FileExistsError:
-                if not service_directory.is_dir():
-                    raise ValueError(
-                        f"{service_directory.absolute()} should be a directory"
-                    )
+        Adds the underlying files for validation.
+        Args:
+            paths ([List[PathLike]]): List of paths to open
 
-            repo = GitRepository.init(service_directory)
-            service_manager = ServiceVariables(service, repo, dag)
-            try:
-                logger.info(
-                    f"{service_manager.name} is already initialized at {service_manager.version}"
+        Yields:
+            [OrderedDict[PathLike, Variables]]: Returns an OrderedDict where keys
+                are sorted by the order of the input paths
+        """
+        with self.repository.validate(message), ExitStack() as stack:
+            yield OrderedDict(
+                (
+                    path,
+                    stack.enter_context(
+                        self._open_var_file(path, fail_if_does_not_exist)
+                    ),
                 )
-            except NoVersionYet:
-                service_manager.initialize_variables(override_folder)
+                for path in paths
+            )
+            stack.close()
+            self.repository.add_for_validation(paths)
 
-            service_managers[service] = service_manager
-
-        return service_managers
-
-    @staticmethod
-    def get_service_managers(dag, services_directory):
-        """get a dict of service managers
-
-        Args:
-            dag (Dag): operations' DAG
-            services_directory (PathLike): path of the tdp vars
-
-        Returns:
-            Dict[str, ServiceManager]: mapping of service with their manager
-        """
-        services_directory = Path(services_directory)
-
-        service_managers = {}
-
-        for service in dag.services:
-            repo = GitRepository(services_directory / service)
-            service_managers[service] = ServiceVariables(service, repo, dag)
-
-        return service_managers
-
-    def components_modified(self, version):
+    # TODO: move this function outside of this class, or move the dag part
+    def components_modified(self, dag, version):
         """get a list of operations that modified components since version
 
         Args:
@@ -185,7 +128,7 @@ class ServiceVariables:
             operation = Operation(Path(file_modified).stem + "_config")
             # If operation is about a service, all components inside this service have to be returned
             if operation.is_service():
-                service_operations = self.dag.services_operations[operation.service]
+                service_operations = dag.services_operations[operation.service]
                 components_modified.update(
                     (c for c in service_operations if c.action == "config")
                 )

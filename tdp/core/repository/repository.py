@@ -2,12 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod, abstractstaticmethod
-from collections import OrderedDict
-from contextlib import ExitStack, contextmanager
+from contextlib import contextmanager
 from threading import RLock
 from weakref import proxy
-
-from tdp.core.variables import Variables
 
 # Version string length isn't checked before inserting into database
 VERSION_MAX_LENGTH = 40
@@ -44,52 +41,12 @@ class Repository(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._lock.release()
 
-    @contextmanager
-    def open_var_file(self, path, fail_if_does_not_exist=False):
-        """Returns a Variables object managed, simplyfing use.
-
-        Returns a Variables object automatically closed when parent context manager closes it.
-        Adds the underlying file for validation.
-        Args:
-            path ([PathLike]): Path to open as a Variables file.
-            fail_if_does_not_exist ([bool]): Whether or not the function should raise an error when file does not exist
-        Yields:
-            [Proxy[Variables]]: A weakref of the Variables object, to prevent the creation of strong references
-                outside the caller's context
-        """
-        with self._lock:
-            path = self.path / path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.exists():
-                if fail_if_does_not_exist:
-                    raise ValueError("Path does not exist")
-                path.touch()
-            with Variables(path).open() as variables:
-                yield variables
-            self.add_for_validation(path)
-
-    @contextmanager
-    def open_var_files(self, paths):
-        """Returns an OrderedDict of dict[path] = Variables object
-
-        Args:
-            paths ([List[PathLike]]): List of paths to open
-
-        Yields:
-            [OrderedDict[PathLike, Variables]]: Returns an OrderedDict where keys
-                are sorted by the order of the input paths
-        """
-        with self._lock, ExitStack() as stack:
-            yield OrderedDict(
-                (path, stack.enter_context(self.open_var_file(path))) for path in paths
-            )
-
     @abstractstaticmethod
     def init(path):
         pass
 
     @abstractmethod
-    def add_for_validation(self, path):
+    def add_for_validation(self, paths):
         pass
 
     @abstractmethod
