@@ -9,7 +9,7 @@ from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 
 
-def collection_paths(ctx, param, value):
+def collection_paths_to_collections(ctx, param, value):
     if not value:
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
@@ -21,11 +21,11 @@ def collection_paths(ctx, param, value):
     return collections
 
 
-def check_services_cleanliness(service_managers):
+def check_services_cleanliness(cluster_variables):
     unclean_services = [
-        service_manager.name
-        for service_manager in service_managers.values()
-        if not service_manager.clean
+        service_variables.name
+        for service_variables in cluster_variables.values()
+        if not service_variables.clean
     ]
     if unclean_services:
         for name in unclean_services:

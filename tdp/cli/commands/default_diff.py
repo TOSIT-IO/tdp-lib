@@ -9,19 +9,19 @@ from pathlib import Path
 
 import click
 
-from tdp.cli.utils import collection_paths
+from tdp.cli.utils import collection_paths_to_collections
 from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
-from tdp.core.dag import Dag
-from tdp.core.variables import ServiceVariables, Variables, merge_hash
+from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
 @click.argument("service", required=False)
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -31,29 +31,28 @@ from tdp.core.variables import ServiceVariables, Variables, merge_hash
     type=click.Path(resolve_path=True, path_type=Path),
     help="Path to the tdp vars",
 )
-def default_diff(service, collection_path, vars):
+def default_diff(service, collections, vars):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag(collection_path)
-    service_managers = ServiceVariables.get_service_managers(dag, vars)
+    cluster_variables = ClusterVariables.get_cluster_variables(vars)
 
     if service:
-        service_diff(service_managers[service])
+        service_diff(collections, cluster_variables[service])
     else:
-        for service in dag.services:
-            service_diff(service_managers[service])
+        for service, service_variables in cluster_variables.items():
+            service_diff(collections, service_variables)
 
 
-def service_diff(service):
+def service_diff(collections, service):
     """computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars
 
     Args:
-        collection_default_vars (Path): default vars path
+        collections (Collections): Collections object
         service (ServiceManager): service to compare's manager
     """
     # key: filename with extension, value: PosixPath(filepath)
     default_service_vars_paths = OrderedDict()
-    for collection in service.dag.collections.values():
+    for collection in collections.values():
         default_vars = collection.get_service_default_vars(service.name)
         if not default_vars:
             continue

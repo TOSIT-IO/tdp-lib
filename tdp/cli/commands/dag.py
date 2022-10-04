@@ -8,7 +8,7 @@ import re
 import click
 import networkx as nx
 
-from tdp.cli.utils import collection_paths
+from tdp.cli.utils import collection_paths_to_collections
 from tdp.core.dag import Dag
 
 SHORT_DAG_SUMMARY = "Compute and display a graph."
@@ -20,9 +20,10 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
 @click.argument("nodes", nargs=-1)
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -63,7 +64,7 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     help="Group node into cluster inside each service",
 )
 def dag(
-    collection_path,
+    collections,
     nodes,
     transitive_reduction,
     pattern_format,
@@ -72,7 +73,7 @@ def dag(
     cluster,
 ):
     show = import_show()
-    dag = Dag(collection_path)
+    dag = Dag(collections)
     graph = dag.graph
     if nodes:
         if pattern_format:

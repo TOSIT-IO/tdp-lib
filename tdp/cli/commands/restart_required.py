@@ -9,11 +9,11 @@ import click
 
 from tdp.cli.commands.queries import get_latest_success_service_version_query
 from tdp.cli.session import get_session_class
-from tdp.cli.utils import check_services_cleanliness, collection_paths
+from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.runner.operation_runner import EmptyOperationPlan, OperationRunner
-from tdp.core.variables import ServiceVariables
+from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Restart required TDP services")
@@ -31,9 +31,10 @@ from tdp.core.variables import ServiceVariables
 )
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -53,14 +54,14 @@ from tdp.core.variables import ServiceVariables
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
 def restart_required(
     database_dsn,
-    collection_path,
+    collections,
     run_directory,
     vars,
     dry,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
-    dag = Dag(collection_path)
+    dag = Dag(collections)
     run_directory = run_directory.absolute() if run_directory else None
 
     ansible_executor = AnsibleExecutor(
@@ -74,17 +75,17 @@ def restart_required(
             get_latest_success_service_version_query()
         ).all()
 
-        service_managers = ServiceVariables.get_service_managers(dag, vars)
-        check_services_cleanliness(service_managers)
+        cluster_variables = ClusterVariables.get_cluster_variables(vars)
+        check_services_cleanliness(cluster_variables)
 
         components_modified = set()
         for deployment_id, service, version in latest_success_service_version:
-            if service not in service_managers:
+            if service not in cluster_variables:
                 raise RuntimeError(
                     f"Service '{service}' is deployed but the repository is missing."
                 )
-            for component_modified in service_managers[service].components_modified(
-                version
+            for component_modified in cluster_variables[service].components_modified(
+                dag, version
             ):
                 components_modified.add(component_modified.name)
 
@@ -92,7 +93,7 @@ def restart_required(
             click.echo("Nothing needs to be restarted")
             return
 
-        operation_runner = OperationRunner(dag, ansible_executor, service_managers)
+        operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
         try:
             operation_iterator = operation_runner.run_nodes(
                 sources=list(components_modified),

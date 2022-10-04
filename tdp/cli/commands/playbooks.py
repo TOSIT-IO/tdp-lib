@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 import networkx as nx
 
-from tdp.cli.utils import collection_paths
+from tdp.cli.utils import collection_paths_to_collections
 from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
 from tdp.core.operation import Operation
 
@@ -18,9 +18,10 @@ from tdp.core.operation import Operation
 @click.argument("services", required=False, nargs=-1)
 @click.option(
     "--collection-path",
+    "collections",
     envvar="TDP_COLLECTION_PATH",
     required=True,
-    callback=collection_paths,  # transforms list of path into Collections
+    callback=collection_paths_to_collections,  # transforms into Collections object
     help=f"List of paths separated by your os' path separator ({os.pathsep})",
 )
 @click.option(
@@ -30,8 +31,8 @@ from tdp.core.operation import Operation
     required=False,
     default=".",
 )
-def playbooks(services, collection_path, output_dir):
-    dag = Dag(collection_path)
+def playbooks(services, collections, output_dir):
+    dag = Dag(collections)
     # services DAG
     dag_services = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
