@@ -26,7 +26,9 @@ class ClusterVariables(Mapping):
         return self._service_variables_dict.__iter__()
 
     @staticmethod
-    def initialize_cluster_variables(collections, tdp_vars, override_folder=None):
+    def initialize_cluster_variables(
+        collections, tdp_vars, override_folder=None, repository_class=GitRepository
+    ):
         """get an instance of ClusterVariables, initialize all services if needed
 
         Args:
@@ -71,7 +73,7 @@ class ClusterVariables(Mapping):
                 if service in cluster_variables:
                     service_variables = cluster_variables[service]
                 else:
-                    repo = GitRepository.init(service_tdp_vars)
+                    repo = repository_class.init(service_tdp_vars)
                     service_variables = ServiceVariables(service, repo)
                     cluster_variables[service] = service_variables
 
@@ -90,7 +92,7 @@ class ClusterVariables(Mapping):
         return ClusterVariables(cluster_variables)
 
     @staticmethod
-    def get_cluster_variables(tdp_vars):
+    def get_cluster_variables(tdp_vars, repository_class=GitRepository):
         """get an instance of ClusterVariables
 
         Args:
@@ -106,7 +108,7 @@ class ClusterVariables(Mapping):
         tdp_vars = Path(tdp_vars)
         for path in tdp_vars.iterdir():
             if path.is_dir():
-                repo = GitRepository(tdp_vars / path.name)
+                repo = repository_class(tdp_vars / path.name)
                 cluster_variables[path.name] = ServiceVariables(path.name, repo)
 
         return ClusterVariables(cluster_variables)
