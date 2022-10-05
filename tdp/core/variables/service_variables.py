@@ -42,6 +42,14 @@ class ServiceVariables:
     def path(self):
         return self.repository.path
 
+    def get_variables(self, component):
+        """Return copy of the variables"""
+        component_path = self._repo.path / (component + YML_EXTENSION)
+        if not component_path.exists():
+            return None
+        with Variables(component_path).open("r") as variables:
+            return variables.copy()
+
     # TODO: move this function outside of this class, or move the dag part
     def get_component_name(self, dag, component):
         operations_filtered = list(
