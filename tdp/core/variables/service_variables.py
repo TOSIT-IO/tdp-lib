@@ -58,11 +58,9 @@ class ServiceVariables:
     def update_from_variables_folder(self, message, tdp_vars_overrides):
         override_files = list(tdp_vars_overrides.glob("*" + YML_EXTENSION))
         service_files_to_open = [override_file.name for override_file in override_files]
-        with self.open_var_files(
-            f"{self.name}: {message}", service_files_to_open
-        ) as configurations:
+        with self.open_var_files(f"{message}", service_files_to_open) as configurations:
             for file in override_files:
-                logger.info(f"Initializing {self.name} with variables from {file}")
+                logger.info(f"Updating {self.name} with variables from {file}")
                 with Variables(file).open("r") as variables:
                     configurations[file.name].merge(variables)
 
