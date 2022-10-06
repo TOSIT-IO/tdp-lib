@@ -37,8 +37,7 @@ def playbooks(services, collections, output_dir):
     dag_services = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
     dag_service_operations = {}
-    for operation_name in dag.get_all_operations():
-        operation = dag.operations[operation_name]
+    for operation in dag.get_all_operations():
         dag_services.add_node(operation.service)
         for dependency in operation.depends_on:
             dependency_operation = Operation(dependency)
@@ -97,11 +96,10 @@ def playbooks(services, collections, output_dir):
     with Path(meta_dir, "all.yml").open("w") as all_fd:
         write_copyright_licence_headers(all_fd)
         all_fd.write("---\n")
-        for operation_name in dag.get_all_operations():
-            operation = dag.operations[operation_name]
+        for operation in dag.get_all_operations():
             if not operation.noop:
                 all_fd.write(
-                    f"- import_playbook: {playbooks_prefix}{operation_name}.yml\n"
+                    f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                 )
             else:
-                all_fd.write(f"# {operation_name}\n")
+                all_fd.write(f"# {operation.name}\n")

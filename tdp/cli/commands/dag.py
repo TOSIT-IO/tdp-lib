@@ -100,9 +100,15 @@ def dag(
         graph = nx.transitive_reduction(graph)
     nodes_to_color = set()
     if color_to:
-        nodes_to_color.update(dag.get_operations_to_nodes(color_to.split(",")))
+        nodes_to_color.update(
+            list(
+                map(lambda o: o.name, dag.get_operations_to_nodes(color_to.split(",")))
+            )
+        )
     if color_from:
-        nodes_from = dag.get_operations_from_nodes(color_from.split(","))
+        nodes_from = list(
+            map(lambda o: o.name, dag.get_operations_from_nodes(color_from.split(",")))
+        )
         if nodes_to_color:
             nodes_to_color = nodes_to_color.intersection(nodes_from)
         else:
