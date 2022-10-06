@@ -8,6 +8,7 @@ import click
 
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
+from tdp.cli.commands.browse import get_deployment
 from tdp.core.dag import Dag
 from tdp.core.runner.ansible_executor import AnsibleExecutor
 from tdp.core.runner.operation_runner import OperationRunner
@@ -19,7 +20,7 @@ from tdp.core.variables import ClusterVariables
     "--sources",
     type=str,
     metavar="s1,s2,...",
-    help="Nodes where the run start (separate with comma)",
+    help="Nodes where the run start (separate with comma), cannot be used with --resume",
 )
 @click.option(
     "--targets",
@@ -63,6 +64,12 @@ from tdp.core.variables import ClusterVariables
 )
 @click.option("--filter", type=str, help="Glob on list name")
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
+@click.option(
+    "--resume",
+    type=str,
+    metavar="dep_id",
+    help="Resume a previous deployment, cannot be used with --sources",
+)
 def deploy(
     sources,
     targets,
@@ -72,6 +79,7 @@ def deploy(
     vars,
     filter,
     dry,
+    resume,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
@@ -96,7 +104,18 @@ def deploy(
     with session_class() as session:
         cluster_variables = ClusterVariables.get_cluster_variables(vars)
         check_services_cleanliness(cluster_variables)
-
+        if resume:
+            if sources:
+                raise click.BadParameter(f"sources and resume can not be used together")
+            resumed_deployment = get_deployment(session_class, resume)
+            last_failed_operation = resumed_deployment.operations[-1].operation
+            if resumed_deployment.operations[-1].state == "Success":
+                raise click.BadParameter(
+                    f"Nothing to resume, deployment n°{resume} was sucessful"
+                )
+            else:
+                click.echo(f"Resuming deployment n°{resume}")
+                sources = [last_failed_operation]
         operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
         if sources:
             click.echo(f"Deploying from {sources}")
