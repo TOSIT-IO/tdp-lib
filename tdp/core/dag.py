@@ -109,13 +109,10 @@ class Dag:
         if self._graph is not None:
             return self._graph
 
-        operation_names = sorted(self.operations.keys())
         DG = nx.DiGraph()
-        DG.add_nodes_from(operation_names)
-
-        for operation_name in operation_names:
-            operation = self.operations[operation_name]
-            for dependency in sorted(operation.depends_on):
+        for operation_name, operation in self.operations.items():
+            DG.add_node(operation_name)
+            for dependency in operation.depends_on:
                 if dependency not in self.operations:
                     raise ValueError(
                         f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
@@ -148,7 +145,12 @@ class Dag:
             )
             return f"{operation_priority:02d}_{node}"
 
-        return list(nx.lexicographical_topological_sort(graph, custom_key))
+        return list(
+            map(
+                lambda node: self.operations[node],
+                nx.lexicographical_topological_sort(graph, custom_key),
+            )
+        )
 
     def get_operations(self, sources=None, targets=None):
         if sources:
@@ -178,11 +180,11 @@ class Dag:
         return self.topological_sort(self.graph)
 
     def filter_operations_glob(self, operations, glob):
-        return fnmatch.filter(operations, glob)
+        return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
 
     def filter_operations_regex(self, operations, regex):
         compiled_regex = re.compile(regex)
-        return list(filter(compiled_regex.match, operations))
+        return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
 
     def validate(self):
         r"""Validation rules :

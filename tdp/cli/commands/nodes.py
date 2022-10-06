@@ -21,5 +21,5 @@ from tdp.core.dag import Dag
 def nodes(collections):
     dag = Dag(collections)
     endline = "\n- "
-    operations = endline.join(operation for operation in dag.get_all_operations())
+    operations = endline.join(operation.name for operation in dag.get_all_operations())
     click.echo(f"Operation list:{endline}{operations}")
