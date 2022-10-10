@@ -73,12 +73,14 @@ def service_diff(collections, service):
             )
             continue
         service_varfile = {}
-        with Variables(tdp_vars_service_vars_filepath).open() as service_variables:
+        with Variables(tdp_vars_service_vars_filepath).open("r") as service_variables:
             service_varfile = service_variables.copy()
 
         default_service_varfile = {}
         for default_service_vars_filepath in default_service_vars_filepaths:
-            with Variables(default_service_vars_filepath).open() as default_variables:
+            with Variables(default_service_vars_filepath).open(
+                "r"
+            ) as default_variables:
                 default_service_varfile = merge_hash(
                     default_service_varfile, default_variables
                 )
