@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from sqlalchemy import and_, desc, func, select, tuple_
+from sqlalchemy.orm import joinedload
 
-from tdp.core.models import OperationLog, ServiceLog
+from tdp.core.models import DeploymentLog, OperationLog, ServiceLog
 from tdp.core.runner.executor import StateEnum
 
 
@@ -39,3 +40,20 @@ def get_latest_success_service_version_query():
         )
         .order_by(desc(ServiceLog.deployment_id))
     )
+
+
+def get_deployment(session_class, deployment_id):
+    query = (
+        select(DeploymentLog)
+        .options(
+            joinedload(DeploymentLog.services), joinedload(DeploymentLog.operations)
+        )
+        .where(DeploymentLog.id == deployment_id)
+        .order_by(DeploymentLog.id)
+    )
+
+    with session_class() as session:
+        deployment_log = session.execute(query).unique().scalar_one_or_none()
+        if deployment_log is None:
+            raise click.ClickException(f"Deployment id {deployment_id} does not exist")
+        return deployment_log

@@ -11,6 +11,7 @@ from tabulate import tabulate
 from tdp.cli.session import get_session_class
 from tdp.core.models import DeploymentLog, OperationLog, ServiceLog
 from tdp.core.models.base import keyvalgen
+from tdp.cli.commands.queries import get_deployment
 
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 
@@ -70,23 +71,6 @@ def get_deployments(session_class, limit, offset):
     )
     with session_class() as session:
         return session.execute(query).unique().scalars().fetchall()
-
-
-def get_deployment(session_class, deployment_id):
-    query = (
-        select(DeploymentLog)
-        .options(
-            joinedload(DeploymentLog.services), joinedload(DeploymentLog.operations)
-        )
-        .where(DeploymentLog.id == deployment_id)
-        .order_by(DeploymentLog.id)
-    )
-
-    with session_class() as session:
-        deployment_log = session.execute(query).unique().scalar_one_or_none()
-        if deployment_log is None:
-            raise click.ClickException(f"Deployment id {deployment_id} does not exist")
-        return deployment_log
 
 
 def get_operation_log(session_class, deployment_id, operation):
