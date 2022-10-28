@@ -117,7 +117,7 @@ def deploy(
                     f"Nothing to resume, deployment #{resume} was successful"
                 )
             else:
-                click.echo(f"Resuming deployment n°{resume}")
+                click.echo(f"Resuming deployment #{resume}")
             if resumed_deployment.targets is not None:
                 targets = resumed_deployment.targets
             if resumed_deployment.sources is not None:
