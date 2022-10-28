@@ -109,7 +109,7 @@ def deploy(
         if resume:
             if sources or targets:
                 raise click.BadParameter(
-                    f"sources or targets resume can not be used resume"
+                    f"sources or targets can not be used with resume"
                 )
             resumed_deployment = get_deployment(session_class, resume)
             if resumed_deployment.operations[-1].state == "Success":
