@@ -114,7 +114,7 @@ def deploy(
             resumed_deployment = get_deployment(session_class, resume)
             if resumed_deployment.operations[-1].state == "Success":
                 raise click.BadParameter(
-                    f"Nothing to resume, deployment n°{resume} was sucessful"
+                    f"Nothing to resume, deployment #{resume} was successful"
                 )
             else:
                 click.echo(f"Resuming deployment n°{resume}")
