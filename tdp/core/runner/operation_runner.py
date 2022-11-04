@@ -15,11 +15,11 @@ logger = logging.getLogger("tdp").getChild("operation_runner")
 
 
 class OperationIterator(Iterator):
-    def __init__(self, dag, cluster_variables, deployment_log, operations):
-        self._dag = dag
+    def __init__(self, cluster_variables, deployment_log, operations, operation_plan):
         self._cluster_variables = cluster_variables
         self._deployment_log = deployment_log
         self._operations = operations
+        self._operation_plan = operation_plan
 
     @property
     def deployment_log(self):
@@ -39,25 +39,22 @@ class OperationIterator(Iterator):
 
     def fill_deployment_log_at_end(self, state=None):
         self.deployment_log.end_time = datetime.utcnow()
-        self.deployment_log.state = (
-            state if state else self.deployment_log.operations[-1].state
-        )
-        self.deployment_log.services = self._build_service_logs(
-            self.deployment_log.operations
-        )
+        if not state is None:
+            self.deployment_log.state = state
+        elif len(self.deployment_log.operations) > 0:
+            self.deployment_log.state = self.deployment_log.operations[-1].state
+        else:
+            # case deployment is finised with only noop performed
+            self.deployment_log.state = StateEnum.SUCCESS.value
 
-    def _services_from_operations(self, operation_names):
+        self.deployment_log.services = self._build_service_logs()
+
+    def _services_from_operations(self):
         """Returns a set of services from an operation list"""
-        return {
-            self._dag.collections.operations[operation_name].service
-            for operation_name in operation_names
-            if not self._dag.collections.operations[operation_name].noop
-        }
+        return {operation.service for operation in self._operation_plan.operations}
 
-    def _build_service_logs(self, operation_logs):
-        services = self._services_from_operations(
-            operation_log.operation for operation_log in operation_logs
-        )
+    def _build_service_logs(self):
+        services = self._services_from_operations()
         return [
             ServiceLog(
                 service=self._cluster_variables[service_name].name,
@@ -121,11 +118,9 @@ class OperationPlan:
         else:
             str_filter = None
             filter_type = None
-        # Removing all noop operations
-        operations = list(filter(lambda operation: operation.noop is False, operations))  # type: ignore
         if len(operations) == 0:
             raise EmptyOperationPlan(
-                "Combination of parameters resulted into an empty list of Operations (noop excluded)"
+                "Combination of parameters resulted into an empty list of Operations (noop included)"
             )
         return OperationPlan(
             operations,
@@ -223,5 +218,8 @@ class OperationRunner:
         )
 
         return OperationIterator(
-            self.dag, self._cluster_variables, deployment_log, operation_logs_generator
+            self._cluster_variables,
+            deployment_log,
+            operation_logs_generator,
+            operation_plan,
         )
