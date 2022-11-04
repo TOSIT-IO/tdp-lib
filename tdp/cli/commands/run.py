@@ -15,7 +15,7 @@ from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Run single TDP operation")
-@click.argument("operation_name")
+@click.argument("operation_names", nargs=-1, required=True)
 @click.option(
     "--database-dsn",
     envvar="TDP_DATABASE_DSN",
@@ -52,7 +52,7 @@ from tdp.core.variables import ClusterVariables
 )
 @click.option("--dry", is_flag=True, help="Execute without running any operation")
 def run(
-    operation_name,
+    operation_names,
     database_dsn,
     collections,
     run_directory,
@@ -63,15 +63,18 @@ def run(
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag(collections)
 
-    operation = dag.collections.operations.get(operation_name, None)
-    if not operation:
-        raise click.BadParameter(f"{operation_name} is not a valid operation")
+    operations = []
+    for operation_name in operation_names:
+        operation = dag.collections.operations.get(operation_name, None)
+        if not operation:
+            raise click.BadParameter(f"{operation_name} is not a valid operation")
 
-    if operation.noop:
-        raise click.BadParameter(
-            f"{operation_name} is tagged as noop and thus"
-            " cannot be executed in an unitary deployment"
-        )
+        if operation.noop:
+            raise click.BadParameter(
+                f"{operation_name} is tagged as noop and thus"
+                " cannot be executed in an unitary deployment"
+            )
+        operations.append(operation)
 
     run_directory = run_directory.absolute() if run_directory else None
 
@@ -85,8 +88,8 @@ def run(
         check_services_cleanliness(cluster_variables)
 
         operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
-        click.echo(f"Deploying {operation.name}")
-        operation_iterator = operation_runner.run_operations([operation])
+        click.echo(f"Deploying {', '.join(map(lambda op: op.name, operations))}")
+        operation_iterator = operation_runner.run_operations(operations)
         if dry:
             for operation in operation_iterator:
                 pass
