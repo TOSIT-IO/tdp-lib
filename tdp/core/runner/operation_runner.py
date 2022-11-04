@@ -99,7 +99,7 @@ class OperationPlan:
                 }
             )
         else:
-            deployment_args.update({"targets": self.operations})
+            deployment_args.update({"targets": [op.name for op in self.operations]})
         return deployment_args
 
     @staticmethod

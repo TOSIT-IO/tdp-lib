@@ -85,7 +85,7 @@ def run(
         check_services_cleanliness(cluster_variables)
 
         operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
-        click.echo(f"Deploying {operation}")
+        click.echo(f"Deploying {operation.name}")
         operation_iterator = operation_runner.run_operations([operation])
         if dry:
             for operation in operation_iterator:
