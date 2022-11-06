@@ -45,3 +45,11 @@ class Operation:
     def is_service(self):
         """Return True if the operation is about a service, False otherwise"""
         return bool(RE_IS_SERVICE.search(self.name))
+
+    def __repr__(self):
+        return (
+            f"Operation(name={self.name}, "
+            f"collection_name={self.collection_name}, "
+            f"depends_on={self.depends_on}, "
+            f"noop={self.noop})"
+        )
