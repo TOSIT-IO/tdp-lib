@@ -9,8 +9,7 @@ import click
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
-from tdp.core.runner.ansible_executor import AnsibleExecutor
-from tdp.core.runner.operation_runner import OperationRunner
+from tdp.core.runner import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.variables import ClusterVariables
 
 
@@ -97,7 +96,9 @@ def deploy(
         cluster_variables = ClusterVariables.get_cluster_variables(vars)
         check_services_cleanliness(cluster_variables)
 
-        operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
+        deployment_runner = DeploymentRunner(
+            collections, ansible_executor, cluster_variables
+        )
         if sources:
             click.echo(f"Deploying from {sources}")
         elif targets:
@@ -105,21 +106,22 @@ def deploy(
         else:
             click.echo(f"Deploying TDP")
         try:
-            operation_iterator = operation_runner.run_nodes(
-                sources=sources, targets=targets, filter_expression=filter
+            deployment_plan = DeploymentPlan.from_dag(
+                dag, sources=sources, targets=targets, filter_expression=filter
             )
-        except ValueError as e:
+        except Exception as e:
             raise click.ClickException(str(e)) from e
+        deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:
-            for operation in operation_iterator:
+            for operation in deployment_iterator:
                 pass
         else:
-            session.add(operation_iterator.deployment_log)
+            session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation in operation_iterator:
+            for operation in deployment_iterator:
                 session.add(operation)
                 session.commit()
             # notify sqlalchemy deployment log has been updated
-            session.merge(operation_iterator.deployment_log)
+            session.merge(deployment_iterator.log)
             session.commit()

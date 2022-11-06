@@ -3,8 +3,7 @@
 
 from sqlalchemy import and_, desc, func, select, tuple_
 
-from tdp.core.models import OperationLog, ServiceLog
-from tdp.core.runner.executor import StateEnum
+from tdp.core.models import OperationLog, ServiceLog, StateEnum
 
 
 def get_latest_success_service_version_query():
@@ -22,7 +21,7 @@ def get_latest_success_service_version_query():
                 OperationLog.operation.like(ServiceLog.service + "\\_%", escape="\\"),
             ),
         )
-        .filter(OperationLog.state == StateEnum.SUCCESS.value)
+        .filter(OperationLog.state == StateEnum.SUCCESS)
         .group_by(ServiceLog.service)
     )
 

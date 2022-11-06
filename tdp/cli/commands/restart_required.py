@@ -11,8 +11,12 @@ from tdp.cli.commands.queries import get_latest_success_service_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
-from tdp.core.runner.ansible_executor import AnsibleExecutor
-from tdp.core.runner.operation_runner import EmptyOperationPlan, OperationRunner
+from tdp.core.runner import (
+    AnsibleExecutor,
+    DeploymentPlan,
+    DeploymentRunner,
+    EmptyDeploymentPlanError,
+)
 from tdp.core.variables import ClusterVariables
 
 
@@ -93,28 +97,31 @@ def restart_required(
             click.echo("Nothing needs to be restarted")
             return
 
-        operation_runner = OperationRunner(dag, ansible_executor, cluster_variables)
+        deployment_runner = DeploymentRunner(
+            collections, ansible_executor, cluster_variables
+        )
         try:
-            operation_iterator = operation_runner.run_nodes(
+            deployment_plan = DeploymentPlan.from_dag(
+                dag,
                 sources=list(components_modified),
                 restart=True,
                 filter_expression=re.compile(r".+_(config|start)"),
             )
-        except EmptyOperationPlan:
-            click.echo(
+        except EmptyDeploymentPlanError:
+            raise click.ClickException(
                 f"Component(s) [{', '.join(components_modified)}] don't have any operation associated to restart (excluding noop). Nothing to restart."
             )
-            return
+        deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:
-            for operation in operation_iterator:
+            for operation in deployment_iterator:
                 pass
         else:
-            session.add(operation_iterator.deployment_log)
+            session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation in operation_iterator:
+            for operation in deployment_iterator:
                 session.add(operation)
                 session.commit()
             # notify sqlalchemy deployment log has been updated
-            session.merge(operation_iterator.deployment_log)
+            session.merge(deployment_iterator.log)
             session.commit()
