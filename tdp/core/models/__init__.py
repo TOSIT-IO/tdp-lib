@@ -1,12 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import select
-
-from tdp.core.models.base import Base
-from tdp.core.models.deployment_log import DeploymentLog
-from tdp.core.models.operation_log import OperationLog
-from tdp.core.models.service_log import ServiceLog
+from .base import Base
+from .deployment_log import DeploymentLog, FilterTypeEnum
+from .operation_log import OperationLog
+from .service_log import ServiceLog
+from .state_enum import StateEnum
 
 
 def init_database(engine):

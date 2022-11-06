@@ -133,7 +133,7 @@ class Dag:
     def graph(self):
         self.graph = None
 
-    def topological_sort(self, nodes=None):
+    def topological_sort(self, nodes=None, restart=False):
         graph = self.graph
         if nodes:
             graph = self.graph.subgraph(nodes)
@@ -145,39 +145,44 @@ class Dag:
             )
             return f"{operation_priority:02d}_{node}"
 
+        def to_restart(node):
+            if restart:
+                return node.replace("_start", "_restart")
+            return node
+
         return list(
             map(
-                lambda node: self.operations[node],
+                lambda node: self.collections.operations[to_restart(node)],
                 nx.lexicographical_topological_sort(graph, custom_key),
             )
         )
 
-    def get_operations(self, sources=None, targets=None):
+    def get_operations(self, sources=None, targets=None, restart=False):
         if sources:
-            return self.get_operations_from_nodes(sources)
+            return self.get_operations_from_nodes(sources, restart)
         elif targets:
-            return self.get_operations_to_nodes(targets)
-        return self.get_all_operations()
+            return self.get_operations_to_nodes(targets, restart)
+        return self.get_all_operations(restart)
 
-    def get_operations_to_nodes(self, nodes):
+    def get_operations_to_nodes(self, nodes, restart=False):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.ancestors(self.graph, node))
-        return self.topological_sort(nodes_set)
+        return self.topological_sort(nodes_set, restart)
 
-    def get_operations_from_nodes(self, nodes):
+    def get_operations_from_nodes(self, nodes, restart=False):
         nodes_set = set(nodes)
         for node in nodes:
             nodes_set.update(nx.descendants(self.graph, node))
-        return self.topological_sort(nodes_set)
+        return self.topological_sort(nodes_set, restart)
 
-    def get_all_operations(self):
+    def get_all_operations(self, restart=False):
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
         :rtype: List[str]
         """
-        return self.topological_sort(self.graph)
+        return self.topological_sort(self.graph, restart)
 
     def filter_operations_glob(self, operations, glob):
         return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore

@@ -5,7 +5,9 @@ import io
 import logging
 import subprocess
 
-from .executor import Executor, StateEnum
+from tdp.core.models import StateEnum
+
+from .executor import Executor
 
 logger = logging.getLogger("tdp").getChild("ansible_executor")
 
@@ -26,6 +28,8 @@ class AnsibleExecutor(Executor):
                     cwd=self._rundir,
                     universal_newlines=True,
                 )
+                if res.stdout is None:
+                    raise Exception("Process has not stdout")
                 for stdout_line in iter(res.stdout.readline, ""):
                     print(stdout_line, end="")
                     byte_stream.write(bytes(stdout_line, "utf-8"))
