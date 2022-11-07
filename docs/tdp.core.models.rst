@@ -40,3 +40,11 @@ tdp.core.models.service\_log module
    :members:
    :undoc-members:
    :show-inheritance:
+
+tdp.core.models.state\_enum module
+----------------------------------
+
+.. automodule:: tdp.core.models.state_enum
+   :members:
+   :undoc-members:
+   :show-inheritance:
