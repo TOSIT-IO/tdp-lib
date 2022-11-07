@@ -1,7 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import ansible.constants as C
 import pytest
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader

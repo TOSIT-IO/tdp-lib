@@ -6,7 +6,6 @@ import logging
 import ansible.constants as C
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
-from ansible.vars.manager import VariableManager
 
 logger = logging.getLogger("tdp").getChild("topology")
 

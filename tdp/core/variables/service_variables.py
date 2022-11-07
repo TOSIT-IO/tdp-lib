@@ -8,7 +8,7 @@ from pathlib import Path
 
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import Operation
-from tdp.core.variables.variables import Variables, merge_hash
+from tdp.core.variables.variables import Variables
 
 logger = logging.getLogger("tdp").getChild("service_variables")
 
