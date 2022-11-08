@@ -17,6 +17,8 @@ import re
 
 import networkx as nx
 
+from tdp.core.operation import Operation
+
 logger = logging.getLogger("tdp").getChild("dag")
 
 SERVICE_PRIORITY = {
@@ -33,6 +35,10 @@ SERVICE_PRIORITY = {
     "knox": 11,
 }
 DEFAULT_SERVICE_PRIORITY = 99
+
+
+class MissingOperationError(Exception):
+    pass
 
 
 class Dag:
@@ -145,14 +151,31 @@ class Dag:
             )
             return f"{operation_priority:02d}_{node}"
 
-        def to_restart(node):
+        def to_operation(node):
+            try:
+                operation = self.collections.operations[node]
+            except KeyError as e:
+                raise MissingOperationError(f"{node} is missing an operation") from e
             if restart:
-                return node.replace("_start", "_restart")
-            return node
+                node_replaced = node.replace("_start", "_restart")
+                if operation.noop:
+                    # if start operation is a noop, outputs a noop restart operation
+                    return Operation(
+                        name=node_replaced,
+                        collection_name="replace_restart_noop",
+                        noop=True,
+                    )
+                try:
+                    return self.collections.operations[node_replaced]
+                except KeyError as e:
+                    raise MissingOperationError(
+                        f"{node_replaced} is missing an operation"
+                    ) from e
+            return operation
 
         return list(
             map(
-                lambda node: self.collections.operations[to_restart(node)],
+                lambda node: to_operation(node),
                 nx.lexicographical_topological_sort(graph, custom_key),
             )
         )
