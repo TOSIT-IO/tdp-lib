@@ -8,7 +8,9 @@ import click
 
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
+from tdp.cli.commands.queries import get_deployment
 from tdp.core.dag import Dag
+from tdp.core.models.state_enum import StateEnum
 from tdp.core.runner import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.variables import ClusterVariables
 
@@ -62,6 +64,12 @@ from tdp.core.variables import ClusterVariables
 )
 @click.option("--filter", type=str, help="Glob on list name")
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
+@click.option(
+    "--resume",
+    type=str,
+    metavar="dep_id",
+    help="Resume a previous deployment, cannot be used with --sources or --targets",
+)
 def deploy(
     sources,
     targets,
@@ -71,6 +79,7 @@ def deploy(
     vars,
     filter,
     dry,
+    resume,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
@@ -99,6 +108,27 @@ def deploy(
         deployment_runner = DeploymentRunner(
             collections, ansible_executor, cluster_variables
         )
+        if resume:
+            if sources or targets:
+                raise click.BadParameter(
+                    f"sources or targets can not be used with resume"
+                )
+            resumed_deployment = get_deployment(session_class, resume)
+            if (
+                len(resumed_deployment.operations)
+                and resumed_deployment.operations[-1].state == StateEnum.SUCCESS
+            ):
+                raise click.BadParameter(
+                    f"Nothing to resume, deployment #{resume} was successful"
+                )
+            else:
+                click.echo(f"Resuming deployment #{resume}")
+            if resumed_deployment.targets is not None:
+                targets = resumed_deployment.targets
+            if resumed_deployment.sources is not None:
+                sources = resumed_deployment.sources
+            if resumed_deployment.filter_expression is not None:
+                filter = resumed_deployment.filter_expression
         if sources:
             click.echo(f"Deploying from {sources}")
         elif targets:
@@ -106,9 +136,34 @@ def deploy(
         else:
             click.echo(f"Deploying TDP")
         try:
-            deployment_plan = DeploymentPlan.from_dag(
-                dag, sources=sources, targets=targets, filter_expression=filter
-            )
+            if resume:
+                deployment_plan_to_resume = DeploymentPlan.from_dag(
+                    dag, targets, sources, filter
+                )
+                original_operations = [
+                    operation.name for operation in deployment_plan_to_resume.operations
+                ]
+                # print(original_operations)
+                succeeded_operations = [
+                    operation.operation
+                    for operation in resumed_deployment.operations
+                    if operation.state == StateEnum.SUCCESS
+                ]
+                # print(succeeded_operations)
+                remaining_operations_list = list(
+                    set(original_operations) - set(succeeded_operations)
+                )
+                # print(remaining_operations_list)
+                remaining_operations = [
+                    operation
+                    for operation in deployment_plan_to_resume.operations
+                    if operation.name in remaining_operations_list
+                ]
+                deployment_plan = DeploymentPlan.from_resume(remaining_operations)
+            else:
+                deployment_plan = DeploymentPlan.from_dag(
+                    dag, sources=sources, targets=targets, filter_expression=filter
+                )
         except Exception as e:
             raise click.ClickException(str(e)) from e
         deployment_iterator = deployment_runner.run(deployment_plan)

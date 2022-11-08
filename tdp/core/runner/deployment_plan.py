@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from tdp.core.models import FilterTypeEnum
+from tdp.core.models.deployment_type_enum import DeploymentTypeEnum
 
 
 class EmptyDeploymentPlanError(Exception):
@@ -37,7 +38,7 @@ class DeploymentPlan:
             )
 
         deployment_args = dict(
-            using_dag=True,
+            deployment_type=DeploymentTypeEnum.DAG,
             targets=targets,
             sources=sources,
             filter_expression=str_filter,
@@ -51,6 +52,14 @@ class DeploymentPlan:
     def from_operations(operations):
         deployment_args = dict(
             targets=[operation.name for operation in operations],
-            using_dag=False,
+            deployment_type=DeploymentTypeEnum.OPERATIONS,
+        )
+        return DeploymentPlan(operations, deployment_args)
+
+    @staticmethod
+    def from_resume(operations):
+        deployment_args = dict(
+            targets=[operation.name for operation in operations],
+            deployment_type=DeploymentTypeEnum.RESUME,
         )
         return DeploymentPlan(operations, deployment_args)
