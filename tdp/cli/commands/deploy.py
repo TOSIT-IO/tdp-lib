@@ -143,17 +143,14 @@ def deploy(
                 original_operations = [
                     operation.name for operation in deployment_plan_to_resume.operations
                 ]
-                # print(original_operations)
                 succeeded_operations = [
                     operation.operation
                     for operation in resumed_deployment.operations
                     if operation.state == StateEnum.SUCCESS
                 ]
-                # print(succeeded_operations)
                 remaining_operations_list = list(
                     set(original_operations) - set(succeeded_operations)
                 )
-                # print(remaining_operations_list)
                 remaining_operations = [
                     operation
                     for operation in deployment_plan_to_resume.operations
