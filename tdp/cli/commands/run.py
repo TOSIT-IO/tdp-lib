@@ -94,14 +94,16 @@ def run(
         deployment_plan = DeploymentPlan.from_operations(operations)
         deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:
-            for operation in deployment_iterator:
+            for _ in deployment_iterator:
                 pass
         else:
             session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation in deployment_iterator:
-                session.add(operation)
+            for operation_log, service_component_log in deployment_iterator:
+                session.add(operation_log)
+                if service_component_log is not None:
+                    session.add(service_component_log)
                 session.commit()
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)

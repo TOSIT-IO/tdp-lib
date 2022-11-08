@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from tdp.cli.commands.queries import get_latest_success_service_version_query
+from tdp.cli.commands.queries import get_latest_success_service_component_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
@@ -76,15 +76,20 @@ def restart_required(
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        latest_success_service_version = session.execute(
-            get_latest_success_service_version_query()
+        latest_success_service_component_version = session.execute(
+            get_latest_success_service_component_version_query()
         ).all()
 
         cluster_variables = ClusterVariables.get_cluster_variables(vars)
         check_services_cleanliness(cluster_variables)
 
         components_modified = set()
-        for deployment_id, service, version in latest_success_service_version:
+        for (
+            _deployment_id,
+            service,
+            _component,
+            version,
+        ) in latest_success_service_component_version:
             if service not in cluster_variables:
                 raise RuntimeError(
                     f"Service '{service}' is deployed but the repository is missing."
@@ -106,7 +111,7 @@ def restart_required(
                 dag,
                 sources=list(components_modified),
                 restart=True,
-                filter_expression=re.compile(r".+_(config|start)"),
+                filter_expression=re.compile(r".+_(config|(re|)start)"),
             )
         except EmptyDeploymentPlanError:
             raise click.ClickException(
@@ -114,14 +119,16 @@ def restart_required(
             )
         deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:
-            for operation in deployment_iterator:
+            for _ in deployment_iterator:
                 pass
         else:
             session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation in deployment_iterator:
-                session.add(operation)
+            for operation_log, service_component_log in deployment_iterator:
+                session.add(operation_log)
+                if service_component_log is not None:
+                    session.add(service_component_log)
                 session.commit()
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)

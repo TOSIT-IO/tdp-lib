@@ -1,43 +1,59 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import and_, desc, func, select, tuple_
+from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
 
-from tdp.core.models import DeploymentLog, OperationLog, ServiceLog, StateEnum
+from tdp.core.models import DeploymentLog, ServiceComponentLog
 
 
-def get_latest_success_service_version_query():
-    max_depid_label = f"max_{ServiceLog.deployment_id.name}"
+def get_latest_success_service_component_version_query():
+    max_depid_label = f"max_{ServiceComponentLog.deployment_id.name}"
 
     latest_success_for_each_service = (
         select(
-            func.max(ServiceLog.deployment_id).label(max_depid_label),
-            ServiceLog.service,
+            func.max(ServiceComponentLog.deployment_id).label(max_depid_label),
+            ServiceComponentLog.service,
+            ServiceComponentLog.component,
         )
-        .join(
-            OperationLog,
-            and_(
-                ServiceLog.deployment_id == OperationLog.deployment_id,
-                OperationLog.operation.like(ServiceLog.service + "\\_%", escape="\\"),
-            ),
-        )
-        .filter(OperationLog.state == StateEnum.SUCCESS)
-        .group_by(ServiceLog.service)
+        .group_by(ServiceComponentLog.service, ServiceComponentLog.component)
+        .subquery()
     )
-
+    # Request with or_ because querying with a tuple of 3 attributes using in_ operator
+    # does not work when the value can be null (because NULL in_ NULL is translated to `NULL = NULL` which returns NULL)
     return (
         select(
-            ServiceLog.deployment_id,
-            ServiceLog.service,
-            func.substr(ServiceLog.version, 1, 7),
+            ServiceComponentLog.deployment_id,
+            ServiceComponentLog.service,
+            ServiceComponentLog.component,
+            func.substr(ServiceComponentLog.version, 1, 7),
         )
         .filter(
-            tuple_(ServiceLog.deployment_id, ServiceLog.service).in_(
-                latest_success_for_each_service
+            or_(
+                tuple_(
+                    ServiceComponentLog.deployment_id,
+                    ServiceComponentLog.service,
+                    ServiceComponentLog.component,
+                ).in_(latest_success_for_each_service),
+                and_(
+                    tuple_(
+                        ServiceComponentLog.deployment_id,
+                        ServiceComponentLog.service,
+                    ).in_(
+                        select(
+                            latest_success_for_each_service.c[0],
+                            latest_success_for_each_service.c[1],
+                        )
+                    ),
+                    ServiceComponentLog.component.is_(None),
+                ),
             )
         )
-        .order_by(desc(ServiceLog.deployment_id))
+        .order_by(
+            desc(ServiceComponentLog.deployment_id),
+            ServiceComponentLog.service,
+            ServiceComponentLog.component,
+        )
     )
 
 
@@ -45,7 +61,8 @@ def get_deployment(session_class, deployment_id):
     query = (
         select(DeploymentLog)
         .options(
-            joinedload(DeploymentLog.services), joinedload(DeploymentLog.operations)
+            joinedload(DeploymentLog.service_components),
+            joinedload(DeploymentLog.operations),
         )
         .where(DeploymentLog.id == deployment_id)
         .order_by(DeploymentLog.id)
@@ -62,7 +79,8 @@ def get_last_deployment(session_class):
     query = (
         select(DeploymentLog)
         .options(
-            joinedload(DeploymentLog.services), joinedload(DeploymentLog.operations)
+            joinedload(DeploymentLog.service_components),
+            joinedload(DeploymentLog.operations),
         )
         .order_by(DeploymentLog.id.desc())
         .limit(1)
