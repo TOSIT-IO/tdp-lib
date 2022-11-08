@@ -33,10 +33,10 @@ tdp.core.models.operation\_log module
    :undoc-members:
    :show-inheritance:
 
-tdp.core.models.service\_log module
------------------------------------
+tdp.core.models.service\_component\_log module
+----------------------------------------------
 
-.. automodule:: tdp.core.models.service_log
+.. automodule:: tdp.core.models.service_component_log
    :members:
    :undoc-members:
    :show-inheritance:
