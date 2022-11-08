@@ -68,7 +68,7 @@ from tdp.core.variables import ClusterVariables
     "--resume",
     type=str,
     metavar="dep_id",
-    help="Resume a previous deployment, cannot be used with --sources or --targets",
+    help="Resume a previous deployment, cannot be used with --sources, --targets or --filter",
 )
 def deploy(
     sources,
@@ -109,9 +109,9 @@ def deploy(
             collections, ansible_executor, cluster_variables
         )
         if resume:
-            if sources or targets:
+            if sources or targets or filter:
                 raise click.BadParameter(
-                    f"sources or targets can not be used with resume"
+                    f"sources, targets or filter can not be used with resume"
                 )
             resumed_deployment = get_deployment(session_class, resume)
             if (
