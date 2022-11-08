@@ -4,7 +4,7 @@
 from .base import Base
 from .deployment_log import DeploymentLog, FilterTypeEnum
 from .operation_log import OperationLog
-from .service_log import ServiceLog
+from .service_component_log import ServiceComponentLog
 from .state_enum import StateEnum
 
 

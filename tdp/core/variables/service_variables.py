@@ -7,12 +7,10 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
 from tdp.core.collection import YML_EXTENSION
-from tdp.core.operation import Operation
+from tdp.core.operation import SERVICE_NAME_MAX_LENGTH, Operation
 from tdp.core.variables.variables import Variables
 
 logger = logging.getLogger("tdp").getChild("service_variables")
-
-SERVICE_NAME_MAX_LENGTH = 15
 
 
 class ServiceVariables:

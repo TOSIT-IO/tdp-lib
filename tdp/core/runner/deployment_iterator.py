@@ -2,12 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from collections import defaultdict
 from datetime import datetime
 from typing import Iterator
 
-from tdp.core.models import ServiceLog, StateEnum
+from tdp.core.models import ServiceComponentLog, StateEnum
 
 logger = logging.getLogger("tdp").getChild("deployment_iterator")
+
+
+class _Flags:
+    def __init__(self, configured=False, started=False):
+        self.configured = configured
+        self.started = started
 
 
 class DeploymentIterator(Iterator):
@@ -18,43 +25,53 @@ class DeploymentIterator(Iterator):
         self._cluster_variables = cluster_variables
         self._iter = iter(self._operations)
         self._failed = False
-        self._service_logs = {}
+        self._service_component_logs = defaultdict(_Flags)
         self.log.start_time = datetime.utcnow()
 
     def __next__(self):
-        # TODO: handle better when solving #203
         try:
             while True:
                 if self._failed == True:
                     raise StopIteration()
                 operation = next(self._iter)
-                if not operation.service in self._service_logs:
-                    service_log = ServiceLog(
+                service_component = self._service_component_logs[
+                    (operation.service, operation.component)
+                ]
+
+                service_component_log = None
+                if operation.action == "config":
+                    service_component.configured = True
+
+                if (
+                    operation.action in ("start", "restart")
+                    and service_component.configured == True
+                    and service_component.started == False
+                ):
+                    service_component_log = ServiceComponentLog(
                         service=operation.service,
+                        component=operation.component,
                         version=self._cluster_variables[operation.service].version,
                     )
-                    self._service_logs[operation.service] = service_log
+                    service_component_log.deployment = self.log
+
+                    service_component.started = True
 
                 if operation.noop == False:
                     operation_log = self._run_operation(operation)
                     operation_log.deployment = self.log
                     self._failed = operation_log.state == StateEnum.FAILURE
-                    return operation_log
+                    return operation_log, service_component_log
+        # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
-            self._fill_deployment_log_at_end(self.log)
+            self.log.end_time = datetime.utcnow()
+            if len(self.log.operations) > 0:
+                self.log.state = self.log.operations[-1].state
+            else:
+                # case deployment is finised with only noop performed
+                self.log.state = StateEnum.SUCCESS
             raise e
+        # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
-            self._fill_deployment_log_at_end(self.log, StateEnum.FAILURE)
+            self.log.end_time = datetime.utcnow()
+            self.log.state = StateEnum.FAILURE
             raise e
-
-    def _fill_deployment_log_at_end(self, deployment_log, state=None):
-        deployment_log.end_time = datetime.utcnow()
-        if state is not None:
-            deployment_log.state = state
-        elif len(deployment_log.operations) > 0:
-            deployment_log.state = deployment_log.operations[-1].state
-        else:
-            # case deployment is finised with only noop performed
-            deployment_log.state = StateEnum.SUCCESS
-        # TODO: when fixing #203, we should complete the list during the deployment
-        deployment_log.services.extend(self._service_logs.values())

@@ -35,4 +35,6 @@ class DeploymentLog(Base):
     operations = relationship(
         "OperationLog", back_populates="deployment", order_by="OperationLog.start_time"
     )
-    services = relationship("ServiceLog", back_populates="deployment")
+    service_components = relationship(
+        "ServiceComponentLog", back_populates="deployment"
+    )
