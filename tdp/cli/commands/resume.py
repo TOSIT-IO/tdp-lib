@@ -51,7 +51,7 @@ from tdp.core.variables import ClusterVariables
     help="Path to the tdp vars",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
-@click.argument("id", nargs=1, required=False, default=-1)
+@click.argument("id", required=False)
 def resume(
     database_dsn,
     collections,
@@ -77,7 +77,7 @@ def resume(
         deployment_runner = DeploymentRunner(
             collections, ansible_executor, cluster_variables
         )
-        if id == -1:
+        if id == None:
             resumed_deployment_log = get_last_deployment(session_class)
             click.echo(f"Resuming latest deployment")
         else:
