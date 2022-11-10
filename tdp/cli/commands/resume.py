@@ -77,7 +77,7 @@ def resume(
         deployment_runner = DeploymentRunner(
             collections, ansible_executor, cluster_variables
         )
-        if id == None:
+        if id is None:
             resumed_deployment_log = get_last_deployment(session_class)
             click.echo(f"Resuming latest deployment")
         else:
