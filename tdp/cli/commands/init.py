@@ -41,6 +41,7 @@ from tdp.core.variables import ClusterVariables
 )
 @click.option(
     "--overrides",
+    envvar="TDP_OVERRIDES",
     required=False,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
     help="Path to tdp vars overrides",
