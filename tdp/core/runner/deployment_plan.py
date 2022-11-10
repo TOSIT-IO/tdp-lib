@@ -58,7 +58,22 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_resume(deployment_plan_to_resume, resumed_deployment_log):
+    def from_failed_deployment(resumed_deployment_log, dag):
+
+        if resumed_deployment_log.deployment_type == DeploymentTypeEnum.DAG:
+            deployment_plan_to_resume = DeploymentPlan.from_dag(
+                dag,
+                resumed_deployment_log.targets,
+                resumed_deployment_log.sources,
+                resumed_deployment_log.filter_expression,
+            )
+        elif resumed_deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS:
+            raise Exception(
+                f"Resuming from an Operations deployment is not yet supported"
+            )
+        elif resumed_deployment_log.deployment_type == DeploymentTypeEnum.RESUME:
+            raise Exception(f"Resuming from an Resume deployment is not yet supported")
+
         if resumed_deployment_log.state == StateEnum.SUCCESS:
             raise Exception(f"Nothing to resume, deployment #{id} was successful")
 

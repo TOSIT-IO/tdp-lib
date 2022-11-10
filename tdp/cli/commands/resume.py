@@ -51,13 +51,7 @@ from tdp.core.variables import ClusterVariables
     help="Path to the tdp vars",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
-@click.option(
-    "--id",
-    type=int,
-    metavar="dep_id",
-    default=-1,
-    help="Deployment id to resume, defaults to the latest deployment id",
-)
+@click.argument("id", nargs=1, required=False, default=-1)
 def resume(
     database_dsn,
     collections,
@@ -89,19 +83,9 @@ def resume(
         else:
             resumed_deployment_log = get_deployment(session_class, id)
             click.echo(f"Resuming deployment #{id}")
-        targets, sources, filter = ("",) * 3
-        if resumed_deployment_log.targets is not None:
-            targets = resumed_deployment_log.targets
-        if resumed_deployment_log.sources is not None:
-            sources = resumed_deployment_log.sources
-        if resumed_deployment_log.filter_expression is not None:
-            filter = resumed_deployment_log.filter_expression
         try:
-            deployment_plan_to_resume = DeploymentPlan.from_dag(
-                dag, targets, sources, filter
-            )
-            deployment_plan = DeploymentPlan.from_resume(
-                deployment_plan_to_resume, resumed_deployment_log
+            deployment_plan = DeploymentPlan.from_failed_deployment(
+                resumed_deployment_log, dag
             )
         except Exception as e:
             raise click.ClickException(str(e)) from e
