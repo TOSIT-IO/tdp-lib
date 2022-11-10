@@ -85,7 +85,7 @@ def resume(
             click.echo(f"Resuming deployment #{id}")
         try:
             deployment_plan = DeploymentPlan.from_failed_deployment(
-                resumed_deployment_log, dag
+                dag, resumed_deployment_log
             )
         except Exception as e:
             raise click.ClickException(str(e)) from e

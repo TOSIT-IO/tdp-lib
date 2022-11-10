@@ -58,7 +58,7 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_failed_deployment(resumed_deployment_log, dag):
+    def from_failed_deployment(dag, resumed_deployment_log):
 
         if resumed_deployment_log.deployment_type == DeploymentTypeEnum.DAG:
             deployment_plan_to_resume = DeploymentPlan.from_dag(
