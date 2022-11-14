@@ -58,23 +58,23 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_failed_deployment(dag, resumed_deployment_log):
+    def from_failed_deployment(dag, deployment_log_to_resume):
 
-        if resumed_deployment_log.deployment_type == DeploymentTypeEnum.DAG:
+        if deployment_log_to_resume.deployment_type == DeploymentTypeEnum.DAG:
             deployment_plan_to_resume = DeploymentPlan.from_dag(
                 dag,
-                resumed_deployment_log.targets,
-                resumed_deployment_log.sources,
-                resumed_deployment_log.filter_expression,
+                deployment_log_to_resume.targets,
+                deployment_log_to_resume.sources,
+                deployment_log_to_resume.filter_expression,
             )
-        elif resumed_deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS:
+        elif deployment_log_to_resume.deployment_type == DeploymentTypeEnum.OPERATIONS:
             raise Exception(
                 f"Resuming from an Operations deployment is not yet supported"
             )
-        elif resumed_deployment_log.deployment_type == DeploymentTypeEnum.RESUME:
+        elif deployment_log_to_resume.deployment_type == DeploymentTypeEnum.RESUME:
             raise Exception(f"Resuming from an Resume deployment is not yet supported")
 
-        if resumed_deployment_log.state == StateEnum.SUCCESS:
+        if deployment_log_to_resume.state == StateEnum.SUCCESS:
             raise Exception(f"Nothing to resume, deployment #{id} was successful")
 
         original_operations = [
@@ -82,7 +82,7 @@ class DeploymentPlan:
         ]
         succeeded_operations = [
             operation.operation
-            for operation in resumed_deployment_log.operations
+            for operation in deployment_log_to_resume.operations
             if operation.state == StateEnum.SUCCESS
         ]
         remaining_operations_list = list(

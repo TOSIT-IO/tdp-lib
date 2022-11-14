@@ -78,14 +78,14 @@ def resume(
             collections, ansible_executor, cluster_variables
         )
         if id is None:
-            resumed_deployment_log = get_last_deployment(session_class)
+            deployment_log_to_resume = get_last_deployment(session_class)
             click.echo(f"Resuming latest deployment")
         else:
-            resumed_deployment_log = get_deployment(session_class, id)
+            deployment_log_to_resume = get_deployment(session_class, id)
             click.echo(f"Resuming deployment #{id}")
         try:
             deployment_plan = DeploymentPlan.from_failed_deployment(
-                dag, resumed_deployment_log
+                dag, deployment_log_to_resume
             )
         except Exception as e:
             raise click.ClickException(str(e)) from e
