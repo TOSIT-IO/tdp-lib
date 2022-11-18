@@ -10,6 +10,7 @@ from tdp.core.models.base import Base
 from tdp.core.operation import NODE_NAME_MAX_LENGTH
 
 from .state_enum import StateEnum
+from .deployment_type_enum import DeploymentTypeEnum
 
 
 class FilterTypeEnum(str, enum.Enum):
@@ -28,7 +29,7 @@ class DeploymentLog(Base):
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
     state: Column = Column(Enum(StateEnum))
-    using_dag = Column(Boolean, default=True)
+    deployment_type: Column = Column(Enum(DeploymentTypeEnum))
     restart = Column(Boolean, default=False)
 
     operations = relationship(
