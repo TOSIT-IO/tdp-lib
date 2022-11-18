@@ -10,6 +10,10 @@ class EmptyDeploymentPlanError(Exception):
     pass
 
 
+class NothingToResumeError(Exception):
+    pass
+
+
 class DeploymentPlan:
     def __init__(self, operations, deployment_args):
         self.operations = operations
@@ -75,7 +79,9 @@ class DeploymentPlan:
             raise Exception(f"Resuming from an Resume deployment is not yet supported")
 
         if deployment_log_to_resume.state == StateEnum.SUCCESS:
-            raise Exception(f"Nothing to resume, deployment #{id} was successful")
+            raise NothingToResumeError(
+                f"Nothing to resume, deployment #{deployment_log_to_resume.id} was successful"
+            )
 
         original_operations = [
             operation.name for operation in deployment_plan_to_resume.operations
