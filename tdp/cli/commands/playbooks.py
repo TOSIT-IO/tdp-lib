@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+from itertools import filterfalse
 from pathlib import Path
 
 import click
@@ -80,8 +81,12 @@ def playbooks(services, collections, output_dir):
     with Path(meta_dir, "all_per_service.yml").open("w") as all_per_service_fd:
         write_copyright_licence_headers(all_per_service_fd)
         all_per_service_fd.write("---\n")
+        is_noop = lambda op: op.noop
         for service in services:
-            all_per_service_fd.write(f"- import_playbook: {service}.yml\n")
+            if any(filterfalse(is_noop, dag_service_operations[service])):
+                all_per_service_fd.write(f"- import_playbook: {service}.yml\n")
+            else:
+                all_per_service_fd.write(f"# {service}\n")
             with Path(meta_dir, f"{service}.yml").open("w") as service_fd:
                 write_copyright_licence_headers(service_fd)
                 service_fd.write("---\n")
