@@ -6,9 +6,9 @@ from pathlib import Path
 
 import click
 
+from tdp.cli.commands.queries import get_deployment, get_last_deployment
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
-from tdp.cli.commands.queries import get_deployment, get_last_deployment
 from tdp.core.dag import Dag
 from tdp.core.models.state_enum import StateEnum
 from tdp.core.runner import AnsibleExecutor, DeploymentPlan, DeploymentRunner
@@ -103,3 +103,10 @@ def resume(
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)
             session.commit()
+        if deployment_iterator.log.state != StateEnum.SUCCESS:
+            raise click.ClickException(
+                (
+                    "Deployment didn't finish with success: "
+                    f"final state {deployment_iterator.log.state}"
+                )
+            )
