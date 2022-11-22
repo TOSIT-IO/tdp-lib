@@ -11,6 +11,7 @@ from tdp.cli.commands.queries import get_latest_success_service_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
+from tdp.core.models import StateEnum
 from tdp.core.runner import (
     AnsibleExecutor,
     DeploymentPlan,
@@ -125,3 +126,10 @@ def restart_required(
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)
             session.commit()
+        if deployment_iterator.log.state != StateEnum.SUCCESS:
+            raise click.ClickException(
+                (
+                    "Deployment didn't finish with success: "
+                    f"final state {deployment_iterator.log.state}"
+                )
+            )
