@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
-import re
 from pathlib import Path
 
 import click
@@ -11,7 +10,7 @@ from tdp.cli.commands.queries import get_latest_success_service_component_versio
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
-from tdp.core.models import StateEnum
+from tdp.core.models import FilterTypeEnum, StateEnum
 from tdp.core.runner import (
     AnsibleExecutor,
     DeploymentPlan,
@@ -111,7 +110,8 @@ def restart_required(
                 dag,
                 sources=list(components_modified),
                 restart=True,
-                filter_expression=re.compile(r".+_(config|(re|)start)"),
+                filter_expression=r".+_(config|(re|)start)",
+                filter_type=FilterTypeEnum.REGEX,
             )
         except EmptyDeploymentPlanError:
             raise click.ClickException(
