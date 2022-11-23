@@ -21,22 +21,25 @@ class DeploymentPlan:
 
     @staticmethod
     def from_dag(
-        dag, targets=None, sources=None, filter_expression=None, restart=False
+        dag,
+        targets=None,
+        sources=None,
+        filter_expression=None,
+        filter_type=None,
+        restart=False,
     ):
         operations = dag.get_operations(
             sources=sources, targets=targets, restart=restart
         )
-        if filter_expression and hasattr(filter_expression, "search"):
-            operations = dag.filter_operations_regex(operations, filter_expression)
-            str_filter = filter_expression.pattern
-            filter_type = FilterTypeEnum.REGEX
-        elif filter_expression:
-            operations = dag.filter_operations_glob(operations, filter_expression)
-            str_filter = filter_expression
-            filter_type = FilterTypeEnum.GLOB
-        else:
-            str_filter = None
-            filter_type = None
+
+        if filter_expression is not None:
+            if filter_type == FilterTypeEnum.REGEX:
+                operations = dag.filter_operations_regex(operations, filter_expression)
+            else:
+                operations = dag.filter_operations_glob(operations, filter_expression)
+                # default behavior is glob
+                filter_type = FilterTypeEnum.GLOB
+
         if len(operations) == 0:
             raise EmptyDeploymentPlanError(
                 "Combination of parameters resulted into an empty list of Operations (noop included)"
@@ -46,7 +49,7 @@ class DeploymentPlan:
             deployment_type=DeploymentTypeEnum.DAG,
             targets=targets,
             sources=sources,
-            filter_expression=str_filter,
+            filter_expression=filter_expression,
             filter_type=filter_type,
             restart=restart,
         )
@@ -70,6 +73,7 @@ class DeploymentPlan:
                 deployment_log_to_resume.targets,
                 deployment_log_to_resume.sources,
                 deployment_log_to_resume.filter_expression,
+                deployment_log_to_resume.filter_type,
             )
         elif deployment_log_to_resume.deployment_type == DeploymentTypeEnum.OPERATIONS:
             raise Exception(
