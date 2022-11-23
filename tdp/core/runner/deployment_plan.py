@@ -14,6 +14,16 @@ class NothingToResumeError(Exception):
     pass
 
 
+class UnsupportedDeploymentTypeError(Exception):
+    pass
+
+
+class GeneratedDeploymentPlanMissesOperationError(Exception):
+    def __init__(self, message, reconstructed_operations) -> None:
+        super(Exception).__init__(message)
+        self.reconstructed_operations = reconstructed_operations
+
+
 class DeploymentPlan:
     def __init__(self, operations, deployment_args):
         self.operations = operations
@@ -65,47 +75,54 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_failed_deployment(dag, deployment_log_to_resume):
-
-        if deployment_log_to_resume.deployment_type == DeploymentTypeEnum.DAG:
-            deployment_plan_to_resume = DeploymentPlan.from_dag(
-                dag,
-                deployment_log_to_resume.targets,
-                deployment_log_to_resume.sources,
-                deployment_log_to_resume.filter_expression,
-                deployment_log_to_resume.filter_type,
-            )
-        elif deployment_log_to_resume.deployment_type == DeploymentTypeEnum.OPERATIONS:
-            raise Exception(
-                f"Resuming from an Operations deployment is not yet supported"
-            )
-        elif deployment_log_to_resume.deployment_type == DeploymentTypeEnum.RESUME:
-            raise Exception(f"Resuming from an Resume deployment is not yet supported")
-
-        if deployment_log_to_resume.state == StateEnum.SUCCESS:
+    def from_failed_deployment(dag, deployment_log):
+        if deployment_log.state == StateEnum.SUCCESS:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{deployment_log_to_resume.id} was successful"
+                f"Nothing to resume, deployment #{deployment_log.id} was successful"
             )
 
-        original_operations = [
-            operation.name for operation in deployment_plan_to_resume.operations
-        ]
-        succeeded_operations = [
-            operation.operation
-            for operation in deployment_log_to_resume.operations
-            if operation.state == StateEnum.SUCCESS
-        ]
-        remaining_operations_list = list(
-            set(original_operations) - set(succeeded_operations)
-        )
-        remaining_operations = [
-            operation
-            for operation in deployment_plan_to_resume.operations
-            if operation.name in remaining_operations_list
-        ]
+        if deployment_log.deployment_type == DeploymentTypeEnum.DAG:
+            original_operations = DeploymentPlan.from_dag(
+                dag,
+                deployment_log.targets,
+                deployment_log.sources,
+                deployment_log.filter_expression,
+                deployment_log.filter_type,
+                deployment_log.restart,
+            ).operations
+            original_operation_names = [
+                operation.name for operation in original_operations
+            ]
+        elif deployment_log.deployment_type in (
+            DeploymentTypeEnum.OPERATIONS,
+            DeploymentTypeEnum.RESUME,
+        ):
+            original_operation_names = deployment_log.targets
+            original_operations = [
+                dag.collections.operations[name] for name in original_operation_names
+            ]
+        else:
+            raise UnsupportedDeploymentTypeError(
+                f"Resuming from a {deployment_log.deployment_type} is not supported"
+            )
+
+        if len(deployment_log.operations) > 0:
+            last_operation_log = deployment_log.operations[-1]
+            try:
+                index = original_operation_names.index(last_operation_log.operation)
+            except ValueError as e:
+                raise GeneratedDeploymentPlanMissesOperationError(
+                    f"'{last_operation_log}' is not in the reconstructed operation list from database parameters",
+                    original_operation_names,
+                ) from e
+            remaining_operations = original_operations[index:]
+            remaining_operation_names = original_operation_names[index:]
+        else:
+            remaining_operations = original_operations
+            remaining_operation_names = original_operation_names
 
         deployment_args = dict(
-            targets=[operation.name for operation in remaining_operations],
+            targets=remaining_operation_names,
             deployment_type=DeploymentTypeEnum.RESUME,
         )
         return DeploymentPlan(remaining_operations, deployment_args)
