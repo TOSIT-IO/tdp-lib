@@ -88,7 +88,6 @@ def test_failed_operation_stops(dag, failing_deployment_runner):
 
     for _ in deployment_iterator:
         pass
-    print(deployment_iterator.log)
     assert deployment_iterator.log.state == StateEnum.FAILURE
     assert len(deployment_iterator.log.operations) == 2
 
@@ -194,3 +193,24 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
 
     assert deployment_iterator.log.state == StateEnum.SUCCESS
     assert len(deployment_iterator.log.service_components) == 1
+
+
+def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner):
+    deployment_plan = DeploymentPlan.from_dag(dag, targets=["mock_init"])
+    deployment_iterator = failing_deployment_runner.run(deployment_plan)
+
+    for _ in deployment_iterator:
+        pass
+
+    assert deployment_iterator.log.state == StateEnum.FAILURE
+
+    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_iterator.log)
+    resume_deployment_iterator = deployment_runner.run(resume_plan)
+
+    for _ in resume_deployment_iterator:
+        pass
+    assert resume_deployment_iterator.log.state == StateEnum.SUCCESS
+    assert (
+        deployment_iterator.log.operations[-1].operation
+        == resume_deployment_iterator.log.operations[0].operation
+    )
