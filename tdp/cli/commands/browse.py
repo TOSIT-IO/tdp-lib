@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from datetime import datetime, timezone
+from enum import Enum
 
 import click
 from sqlalchemy import select
@@ -210,6 +211,8 @@ def format_deployment_log(deployment_log, headers):
             )
         elif isinstance(value, datetime):
             return translate_timezone(value)
+        elif isinstance(value, Enum):
+            return value.name
         else:
             return str(value)
 
@@ -222,6 +225,8 @@ def format_operation_log(operation_log, headers):
             return str(value[:40])
         elif isinstance(value, datetime):
             return translate_timezone(value)
+        elif isinstance(value, Enum):
+            return value.name
         else:
             return str(value)
 
