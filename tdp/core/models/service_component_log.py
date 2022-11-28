@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from tdp.core.models.base import Base
@@ -12,13 +12,12 @@ from tdp.core.repository.repository import VERSION_MAX_LENGTH
 class ServiceComponentLog(Base):
     __tablename__ = "service_component_log"
 
-    deployment_id = Column(Integer, ForeignKey("deployment_log.id"), primary_key=True)
-    service = Column(
-        String(length=SERVICE_NAME_MAX_LENGTH), primary_key=True, nullable=False
-    )
-    component = Column(
-        String(length=COMPONENT_NAME_MAX_LENGTH), primary_key=True, nullable=True
-    )
+    id = Column(Integer, primary_key=True)
+    deployment_id = Column(Integer, ForeignKey("deployment_log.id"), nullable=False)
+    service = Column(String(length=SERVICE_NAME_MAX_LENGTH), nullable=False)
+    component = Column(String(length=COMPONENT_NAME_MAX_LENGTH), nullable=True)
     version = Column(String(length=VERSION_MAX_LENGTH), nullable=False)
 
     deployment = relationship("DeploymentLog", back_populates="service_components")
+
+    __table_args__ = (UniqueConstraint("deployment_id", "service", "component"),)
