@@ -9,9 +9,15 @@ import click
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
-from tdp.core.models import StateEnum
+from tdp.core.models import FilterTypeEnum, StateEnum
 from tdp.core.runner import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.variables import ClusterVariables
+
+
+def validate_filtertype(ctx, param, value):
+    if value is not None:
+        return FilterTypeEnum[value]
+    return value
 
 
 @click.command(short_help="Deploy TDP")
@@ -27,6 +33,31 @@ from tdp.core.variables import ClusterVariables
     metavar="t1,t2,...",
     help="Nodes where the run stop (separate with comma)",
 )
+@click.option("--filter", type=str, help="Match filter expression on dag result")
+@click.option(
+    "--glob",
+    "-g",
+    "filter_type",
+    callback=validate_filtertype,
+    flag_value=FilterTypeEnum.REGEX.name,
+    help="Filter expression matched as a glob",
+)
+@click.option(
+    "--regex",
+    "-r",
+    "filter_type",
+    callback=validate_filtertype,
+    flag_value=FilterTypeEnum.REGEX.name,
+    help="Filter epxression matched as a regex",
+)
+@click.option(
+    "--restart",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Whether start operations should be replaced by restart operations.",
+)
+@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
 @click.option(
     "--database-dsn",
     envvar="TDP_DATABASE_DSN",
@@ -61,17 +92,17 @@ from tdp.core.variables import ClusterVariables
     type=click.Path(resolve_path=True, path_type=Path),
     help="Path to the tdp vars",
 )
-@click.option("--filter", type=str, help="Glob on list name")
-@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
 def deploy(
     sources,
     targets,
+    filter,
+    filter_type,
+    restart,
+    dry,
     database_dsn,
     collections,
     run_directory,
     vars,
-    filter,
-    dry,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
@@ -108,7 +139,12 @@ def deploy(
             click.echo(f"Deploying TDP")
         try:
             deployment_plan = DeploymentPlan.from_dag(
-                dag, sources=sources, targets=targets, filter_expression=filter
+                dag,
+                sources=sources,
+                targets=targets,
+                filter_expression=filter,
+                filter_type=filter_type,
+                restart=restart,
             )
         except Exception as e:
             raise click.ClickException(str(e)) from e
