@@ -48,7 +48,7 @@ def validate_filtertype(ctx, param, value):
     "filter_type",
     callback=validate_filtertype,
     flag_value=FilterTypeEnum.REGEX.name,
-    help="Filter epxression matched as a regex",
+    help="Filter expression matched as a regex",
 )
 @click.option(
     "--restart",
