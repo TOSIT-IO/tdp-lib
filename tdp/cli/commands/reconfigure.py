@@ -10,12 +10,13 @@ from tdp.cli.commands.queries import get_latest_success_service_component_versio
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
-from tdp.core.models import FilterTypeEnum, StateEnum
+from tdp.core.models import StateEnum
 from tdp.core.runner import (
     AnsibleExecutor,
     DeploymentPlan,
     DeploymentRunner,
     EmptyDeploymentPlanError,
+    NothingToRestartError,
 )
 from tdp.core.variables import ClusterVariables
 
@@ -56,7 +57,7 @@ from tdp.core.variables import ClusterVariables
     help="Path to the tdp vars",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any action")
-def restart_required(
+def reconfigure(
     database_dsn,
     collections,
     run_directory,
@@ -78,44 +79,25 @@ def restart_required(
         latest_success_service_component_version = session.execute(
             get_latest_success_service_component_version_query()
         ).all()
-
+        service_component_deployed_version = map(
+            lambda result: result[1:], latest_success_service_component_version
+        )
         cluster_variables = ClusterVariables.get_cluster_variables(vars)
         check_services_cleanliness(cluster_variables)
-
-        components_modified = set()
-        for (
-            _deployment_id,
-            service,
-            _component,
-            version,
-        ) in latest_success_service_component_version:
-            if service not in cluster_variables:
-                raise RuntimeError(
-                    f"Service '{service}' is deployed but the repository is missing."
-                )
-            for component_modified in cluster_variables[service].components_modified(
-                dag, version
-            ):
-                components_modified.add(component_modified.name)
-
-        if len(components_modified) == 0:
-            click.echo("Nothing needs to be restarted")
-            return
 
         deployment_runner = DeploymentRunner(
             collections, ansible_executor, cluster_variables
         )
         try:
-            deployment_plan = DeploymentPlan.from_dag(
-                dag,
-                sources=list(components_modified),
-                restart=True,
-                filter_expression=r".+_(config|(re|)start)",
-                filter_type=FilterTypeEnum.REGEX,
+            deployment_plan = DeploymentPlan.from_reconfigure(
+                dag, cluster_variables, service_component_deployed_version
             )
+        except NothingToRestartError:
+            click.echo("Nothing needs to be restarted")
+            return
         except EmptyDeploymentPlanError:
             raise click.ClickException(
-                f"Component(s) [{', '.join(components_modified)}] don't have any operation associated to restart (excluding noop). Nothing to restart."
+                f"Component(s) don't have any operation associated to restart (excluding noop). Nothing to restart."
             )
         deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:

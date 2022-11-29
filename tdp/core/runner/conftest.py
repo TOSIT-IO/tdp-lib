@@ -72,6 +72,26 @@ def cluster_variables(tmp_path_factory: pytest.TempPathFactory, minimal_collecti
     return cluster_variables
 
 
+@pytest.fixture(scope="function")
+def reconfigurable_cluster_variables(
+    tmp_path_factory: pytest.TempPathFactory, minimal_collections
+):
+    tdp_vars = tmp_path_factory.mktemp("tdp_vars")
+    cluster_variables = ClusterVariables.initialize_cluster_variables(
+        minimal_collections, tdp_vars
+    )
+    service_component_deployed_version = [
+        ("mock", None, cluster_variables["mock"].version),
+        ("mock", "node", cluster_variables["mock"].version),
+    ]
+
+    with cluster_variables["mock"].open_var_files(
+        "update service configuration", ["mock.yml"]
+    ) as configuration:
+        configuration["mock.yml"].merge({"test": 1})
+    return (cluster_variables, service_component_deployed_version)
+
+
 @pytest.fixture(scope="session")
 def dag(minimal_collections):
     return Dag(minimal_collections)

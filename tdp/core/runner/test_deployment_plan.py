@@ -5,8 +5,9 @@ import pytest
 
 from tdp.core.models import DeploymentLog, DeploymentTypeEnum, OperationLog, StateEnum
 from tdp.core.operation import Operation
+from tdp.core.variables import ClusterVariables
 
-from .deployment_plan import DeploymentPlan, NothingToResumeError
+from .deployment_plan import DeploymentPlan, NothingToRestartError, NothingToResumeError
 
 
 def test_deployment_plan_from_operations():
@@ -150,3 +151,28 @@ def test_deployment_plan_resume_with_success_deployment(dag):
     deployment_log = success_deployment_log(deployment_plan)
     with pytest.raises(NothingToResumeError):
         DeploymentPlan.from_failed_deployment(dag, deployment_log)
+
+
+def test_deployment_plan_reconfigure_nothing_to_restart(dag, cluster_variables):
+    with pytest.raises(NothingToRestartError):
+        _deployment_plan = DeploymentPlan.from_reconfigure(
+            dag,
+            cluster_variables,
+            [("mock", "node", cluster_variables["mock"].version)],
+        )
+
+
+def test_deployment_plan_reconfigure(dag, reconfigurable_cluster_variables):
+    (
+        cluster_variables,
+        service_component_deployed_version,
+    ) = reconfigurable_cluster_variables
+    deployment_plan = DeploymentPlan.from_reconfigure(
+        dag, cluster_variables, service_component_deployed_version
+    )
+
+    assert len(deployment_plan.operations) == 4
+    assert (
+        deployment_plan.deployment_args["deployment_type"]
+        == DeploymentTypeEnum.RECONFIGURE
+    )
