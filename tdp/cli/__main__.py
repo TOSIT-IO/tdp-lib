@@ -13,7 +13,7 @@ from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.init import init
 from tdp.cli.commands.nodes import nodes
 from tdp.cli.commands.playbooks import playbooks
-from tdp.cli.commands.restart_required import restart_required
+from tdp.cli.commands.reconfigure import reconfigure
 from tdp.cli.commands.resume import resume
 from tdp.cli.commands.run import run
 from tdp.cli.commands.service_versions import service_versions
@@ -36,7 +36,7 @@ tdp.add_command(deploy)
 tdp.add_command(init)
 tdp.add_command(nodes)
 tdp.add_command(playbooks)
-tdp.add_command(restart_required)
+tdp.add_command(reconfigure)
 tdp.add_command(resume)
 tdp.add_command(run)
 tdp.add_command(service_versions)

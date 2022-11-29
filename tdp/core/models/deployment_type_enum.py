@@ -8,6 +8,7 @@ class DeploymentTypeEnum(Enum):
     DAG = "Dag"
     OPERATIONS = "Operations"
     RESUME = "Resume"
+    RECONFIGURE = "Reconfigure"
 
     @classmethod
     def has_value(cls, value):

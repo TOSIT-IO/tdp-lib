@@ -14,6 +14,10 @@ class NothingToResumeError(Exception):
     pass
 
 
+class NothingToRestartError(Exception):
+    pass
+
+
 class UnsupportedDeploymentTypeError(Exception):
     pass
 
@@ -75,13 +79,54 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
+    def from_reconfigure(dag, cluster_variables, service_component_deployed_version):
+        components_modified = set()
+        for (
+            service,
+            _component,
+            version,
+        ) in service_component_deployed_version:
+            if service not in cluster_variables:
+                raise RuntimeError(
+                    f"Service '{service}' is deployed but the repository is missing."
+                )
+            for component_modified in cluster_variables[service].components_modified(
+                dag, version
+            ):
+                components_modified.add(component_modified.name)
+
+        if len(components_modified) == 0:
+            raise NothingToRestartError()
+        deployment_plan = DeploymentPlan.from_dag(
+            dag,
+            sources=list(components_modified),
+            restart=True,
+            filter_expression=r".+_(config|(re|)start)",
+            filter_type=FilterTypeEnum.REGEX,
+        )
+        deployment_plan.deployment_args[
+            "deployment_type"
+        ] = DeploymentTypeEnum.RECONFIGURE
+
+        return DeploymentPlan(
+            deployment_plan.operations,
+            {
+                **deployment_plan.deployment_args,
+                "deployment_type": DeploymentTypeEnum.RECONFIGURE,
+            },
+        )
+
+    @staticmethod
     def from_failed_deployment(dag, deployment_log):
         if deployment_log.state == StateEnum.SUCCESS:
             raise NothingToResumeError(
                 f"Nothing to resume, deployment #{deployment_log.id} was successful"
             )
 
-        if deployment_log.deployment_type == DeploymentTypeEnum.DAG:
+        if deployment_log.deployment_type in (
+            DeploymentTypeEnum.DAG,
+            DeploymentTypeEnum.RECONFIGURE,
+        ):
             original_operations = DeploymentPlan.from_dag(
                 dag,
                 deployment_log.targets,

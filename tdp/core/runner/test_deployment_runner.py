@@ -5,7 +5,7 @@ import logging
 
 import pytest
 
-from tdp.core.models import StateEnum
+from tdp.core.models import DeploymentTypeEnum, StateEnum
 
 from .deployment_plan import DeploymentPlan
 from .deployment_runner import DeploymentRunner
@@ -209,6 +209,58 @@ def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner
 
     for _ in resume_deployment_iterator:
         pass
+    assert deployment_iterator.log.deployment_type == DeploymentTypeEnum.DAG
+    assert resume_deployment_iterator.log.deployment_type == DeploymentTypeEnum.RESUME
+    assert resume_deployment_iterator.log.state == StateEnum.SUCCESS
+    assert (
+        deployment_iterator.log.operations[-1].operation
+        == resume_deployment_iterator.log.operations[0].operation
+    )
+
+
+def test_deployment_is_reconfigured(
+    dag, reconfigurable_cluster_variables, deployment_runner
+):
+    (
+        cluster_variables,
+        service_component_deployed_version,
+    ) = reconfigurable_cluster_variables
+
+    deployment_plan = DeploymentPlan.from_reconfigure(
+        dag, cluster_variables, service_component_deployed_version
+    )
+    deployment_iterator = deployment_runner.run(deployment_plan)
+    for _ in deployment_iterator:
+        pass
+    assert deployment_iterator.log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+    assert len(deployment_iterator.log.operations) == 2
+
+
+def test_deployment_reconfigure_is_resumed(
+    dag, reconfigurable_cluster_variables, failing_deployment_runner, deployment_runner
+):
+    (
+        cluster_variables,
+        service_component_deployed_version,
+    ) = reconfigurable_cluster_variables
+
+    deployment_plan = DeploymentPlan.from_reconfigure(
+        dag, cluster_variables, service_component_deployed_version
+    )
+    deployment_iterator = failing_deployment_runner.run(deployment_plan)
+
+    for _ in deployment_iterator:
+        pass
+
+    assert deployment_iterator.log.state == StateEnum.FAILURE
+
+    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_iterator.log)
+    resume_deployment_iterator = deployment_runner.run(resume_plan)
+
+    for _ in resume_deployment_iterator:
+        pass
+    assert deployment_iterator.log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+    assert resume_deployment_iterator.log.deployment_type == DeploymentTypeEnum.RESUME
     assert resume_deployment_iterator.log.state == StateEnum.SUCCESS
     assert (
         deployment_iterator.log.operations[-1].operation

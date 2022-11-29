@@ -10,15 +10,11 @@ from tdp.core.models import DeploymentLog, ServiceComponentLog
 def get_latest_success_service_component_version_query():
     max_depid_label = f"max_{ServiceComponentLog.deployment_id.name}"
 
-    latest_success_for_each_service = (
-        select(
-            func.max(ServiceComponentLog.deployment_id).label(max_depid_label),
-            ServiceComponentLog.service,
-            ServiceComponentLog.component,
-        )
-        .group_by(ServiceComponentLog.service, ServiceComponentLog.component)
-        .subquery()
-    )
+    latest_success_for_each_service = select(
+        func.max(ServiceComponentLog.deployment_id).label(max_depid_label),
+        ServiceComponentLog.service,
+        ServiceComponentLog.component,
+    ).group_by(ServiceComponentLog.service, ServiceComponentLog.component)
     # Request with or_ because querying with a tuple of 3 attributes using in_ operator
     # does not work when the value can be null (because NULL in_ NULL is translated to `NULL = NULL` which returns NULL)
     return (

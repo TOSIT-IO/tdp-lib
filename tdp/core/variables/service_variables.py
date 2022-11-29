@@ -116,7 +116,6 @@ class ServiceVariables:
             stack.close()
             self.repository.add_for_validation(paths)
 
-    # TODO: move this function outside of this class, or move the dag part
     def components_modified(self, dag, version):
         """get a list of operations that modified components since version
 
@@ -134,7 +133,10 @@ class ServiceVariables:
             if operation.is_service():
                 service_operations = dag.services_operations[operation.service]
                 components_modified.update(
-                    (c for c in service_operations if c.action == "config")
+                    filter(
+                        lambda operation: operation.action == "config",
+                        service_operations,
+                    )
                 )
             else:
                 components_modified.add(operation)
