@@ -157,19 +157,21 @@ class Dag:
             except KeyError as e:
                 raise MissingOperationError(f"{node} is missing an operation") from e
             if restart:
-                node_replaced = node.replace("_start", "_restart")
-                if operation.noop:
-                    # if start operation is a noop, outputs a noop restart operation
-                    return Operation(
-                        name=node_replaced,
-                        collection_name="replace_restart_noop",
-                        noop=True,
-                    )
+                if node.endswith("_start"):
+                    node = node.replace("_start", "_restart")
+                    if operation.noop:
+                        # if start operation is a noop, outputs a noop restart operation
+                        return Operation(
+                            name=node,
+                            collection_name="replace_restart_noop",
+                            noop=True,
+                            depends_on=operation.depends_on,
+                        )
                 try:
-                    return self.collections.operations[node_replaced]
+                    return self.collections.operations[node]
                 except KeyError as e:
                     raise MissingOperationError(
-                        f"{node_replaced} is missing an operation"
+                        f"{node} is missing an operation"
                     ) from e
             return operation
 
