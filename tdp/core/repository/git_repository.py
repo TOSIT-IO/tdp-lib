@@ -70,7 +70,7 @@ class GitRepository(Repository):
             raise NoVersionYet from e
 
     def is_clean(self):
-        return not self._repo.is_dirty()
+        return not self._repo.is_dirty(untracked_files=True)
 
     def files_modified(self, commit):
         with self._lock:
