@@ -56,11 +56,13 @@ class DeploymentIterator(Iterator):
 
                     service_component.started = True
 
+                operation_log = None
                 if operation.noop == False:
                     operation_log = self._run_operation(operation)
                     operation_log.deployment = self.log
                     self._failed = operation_log.state == StateEnum.FAILURE
-                    return operation_log, service_component_log
+
+                return operation_log, service_component_log
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.log.end_time = datetime.utcnow()
