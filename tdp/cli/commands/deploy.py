@@ -157,7 +157,8 @@ def deploy(
             # insert pending deployment log
             session.commit()
             for operation_log, service_component_log in deployment_iterator:
-                session.add(operation_log)
+                if operation_log is not None:
+                    session.add(operation_log)
                 if service_component_log is not None:
                     session.add(service_component_log)
                 session.commit()

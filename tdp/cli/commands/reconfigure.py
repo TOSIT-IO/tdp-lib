@@ -99,6 +99,7 @@ def reconfigure(
             raise click.ClickException(
                 f"Component(s) don't have any operation associated to restart (excluding noop). Nothing to restart."
             )
+
         deployment_iterator = deployment_runner.run(deployment_plan)
         if dry:
             for _ in deployment_iterator:
@@ -108,7 +109,8 @@ def reconfigure(
             # insert pending deployment log
             session.commit()
             for operation_log, service_component_log in deployment_iterator:
-                session.add(operation_log)
+                if operation_log is not None:
+                    session.add(operation_log)
                 if service_component_log is not None:
                     session.add(service_component_log)
                 session.commit()
