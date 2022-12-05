@@ -41,6 +41,10 @@ class MissingOperationError(Exception):
     pass
 
 
+class IllegalNodeError(Exception):
+    pass
+
+
 class Dag:
     """Generate DAG with operations' dependencies"""
 
@@ -192,12 +196,16 @@ class Dag:
     def get_operations_to_nodes(self, nodes, restart=False):
         nodes_set = set(nodes)
         for node in nodes:
+            if not self.graph.has_node(node):
+                raise IllegalNodeError(f"{node} does not exists in the dag")
             nodes_set.update(nx.ancestors(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
     def get_operations_from_nodes(self, nodes, restart=False):
         nodes_set = set(nodes)
         for node in nodes:
+            if not self.graph.has_node(node):
+                raise IllegalNodeError(f"{node} does not exists in the dag")
             nodes_set.update(nx.descendants(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
