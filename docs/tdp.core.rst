@@ -12,9 +12,9 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   tdp.core.deployment
    tdp.core.models
    tdp.core.repository
-   tdp.core.runner
    tdp.core.variables
 
 Submodules

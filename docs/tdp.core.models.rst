@@ -25,6 +25,14 @@ tdp.core.models.deployment\_log module
    :undoc-members:
    :show-inheritance:
 
+tdp.core.models.deployment\_type\_enum module
+---------------------------------------------
+
+.. automodule:: tdp.core.models.deployment_type_enum
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tdp.core.models.operation\_log module
 -------------------------------------
 
