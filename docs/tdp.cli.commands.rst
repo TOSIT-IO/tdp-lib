@@ -73,10 +73,18 @@ tdp.cli.commands.queries module
    :undoc-members:
    :show-inheritance:
 
-tdp.cli.commands.restart\_required module
------------------------------------------
+tdp.cli.commands.reconfigure module
+-----------------------------------
 
-.. automodule:: tdp.cli.commands.restart_required
+.. automodule:: tdp.cli.commands.reconfigure
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.cli.commands.resume module
+------------------------------
+
+.. automodule:: tdp.cli.commands.resume
    :members:
    :undoc-members:
    :show-inheritance:
