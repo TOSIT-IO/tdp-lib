@@ -9,8 +9,8 @@ import click
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
 from tdp.core.dag import Dag
+from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.models import FilterTypeEnum, StateEnum
-from tdp.core.runner import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.variables import ClusterVariables
 
 
