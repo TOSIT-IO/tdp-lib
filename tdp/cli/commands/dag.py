@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import fnmatch
-import os
 import re
 
 import click
 import networkx as nx
 
-from tdp.cli.utils import collection_paths_to_collections
+from tdp.cli.utils import collections
 from tdp.core.dag import Dag
 
 SHORT_DAG_SUMMARY = "Compute and display a graph."
@@ -18,14 +17,6 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
 
 @click.command(help=DAG_SUMMARY, short_help=SHORT_DAG_SUMMARY)
 @click.argument("nodes", nargs=-1)
-@click.option(
-    "--collection-path",
-    "collections",
-    envvar="TDP_COLLECTION_PATH",
-    required=True,
-    callback=collection_paths_to_collections,  # transforms into Collections object
-    help=f"List of paths separated by your os' path separator ({os.pathsep})",
-)
 @click.option(
     "-t",
     "--transitive-reduction",
@@ -63,14 +54,15 @@ DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the node
     is_flag=True,
     help="Group node into cluster inside each service",
 )
+@collections
 def dag(
-    collections,
     nodes,
     transitive_reduction,
     pattern_format,
     color_to,
     color_from,
     cluster,
+    collections,
 ):
     show = import_show()
     dag = Dag(collections)

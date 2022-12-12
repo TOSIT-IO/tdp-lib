@@ -11,6 +11,7 @@ from tabulate import tabulate
 
 from tdp.cli.commands.queries import get_deployment
 from tdp.cli.session import get_session_class
+from tdp.cli.utils import database_dsn
 from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
 from tdp.core.models.base import keyvalgen
 
@@ -20,18 +21,6 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 @click.command(short_help="Browse deployment logs")
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
-@click.option(
-    "--database-dsn",
-    envvar="TDP_DATABASE_DSN",
-    required=True,
-    type=str,
-    help=(
-        "Database Data Source Name, in sqlalchemy driver form "
-        "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
-        "You might need to install the relevant driver to your installation (such "
-        "as psycopg2 for postgresql)"
-    ),
-)
 @click.option(
     "--limit",
     envvar="TDP_LIMIT",
@@ -46,7 +35,8 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
     default=0,
     help="At which offset should the database query should start",
 )
-def browse(deployment_id, operation, database_dsn, limit, offset):
+@database_dsn
+def browse(deployment_id, operation, limit, offset, database_dsn):
     session_class = get_session_class(database_dsn)
     try:
         if not deployment_id:

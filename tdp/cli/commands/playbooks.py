@@ -1,13 +1,12 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import os
 from pathlib import Path
 
 import click
 import networkx as nx
 
-from tdp.cli.utils import collection_paths_to_collections
+from tdp.cli.utils import collections
 from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
 from tdp.core.operation import Operation
 
@@ -17,21 +16,14 @@ from tdp.core.operation import Operation
 )
 @click.argument("services", required=False, nargs=-1)
 @click.option(
-    "--collection-path",
-    "collections",
-    envvar="TDP_COLLECTION_PATH",
-    required=True,
-    callback=collection_paths_to_collections,  # transforms into Collections object
-    help=f"List of paths separated by your os' path separator ({os.pathsep})",
-)
-@click.option(
     "--output-dir",
     type=Path,
     help="Output dir where playbooks will be written",
     required=False,
     default=".",
 )
-def playbooks(services, collections, output_dir):
+@collections
+def playbooks(services, output_dir, collections):
     dag = Dag(collections)
     # services DAG
     dag_services = nx.DiGraph()

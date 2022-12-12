@@ -2,35 +2,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import difflib
-import os
 import pprint
 from collections import OrderedDict
-from pathlib import Path
 
 import click
 
-from tdp.cli.utils import collection_paths_to_collections
+from tdp.cli.utils import collections, vars
 from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 
 @click.command(short_help="Difference between tdp_vars and defaults")
 @click.argument("service", required=False)
-@click.option(
-    "--collection-path",
-    "collections",
-    envvar="TDP_COLLECTION_PATH",
-    required=True,
-    callback=collection_paths_to_collections,  # transforms into Collections object
-    help=f"List of paths separated by your os' path separator ({os.pathsep})",
-)
-@click.option(
-    "--vars",
-    envvar="TDP_VARS",
-    required=True,
-    type=click.Path(resolve_path=True, path_type=Path),
-    help="Path to the tdp vars",
-)
+@collections
+@vars
 def default_diff(service, collections, vars):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
