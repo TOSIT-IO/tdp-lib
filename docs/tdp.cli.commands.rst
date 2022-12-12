@@ -65,14 +65,6 @@ tdp.cli.commands.playbooks module
    :undoc-members:
    :show-inheritance:
 
-tdp.cli.commands.queries module
--------------------------------
-
-.. automodule:: tdp.cli.commands.queries
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tdp.cli.commands.reconfigure module
 -----------------------------------
 

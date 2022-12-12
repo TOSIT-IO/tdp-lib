@@ -17,6 +17,14 @@ Subpackages
 Submodules
 ----------
 
+tdp.cli.queries module
+----------------------
+
+.. automodule:: tdp.cli.queries
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 tdp.cli.session module
 ----------------------
 
