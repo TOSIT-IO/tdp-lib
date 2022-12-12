@@ -1,13 +1,17 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-from pathlib import Path
 
 import click
 
 from tdp.cli.session import get_session_class
-from tdp.cli.utils import check_services_cleanliness, collection_paths_to_collections
+from tdp.cli.utils import (
+    check_services_cleanliness,
+    collections,
+    database_dsn,
+    run_directory,
+    vars,
+)
 from tdp.core.dag import Dag
 from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.models import FilterTypeEnum, StateEnum
@@ -58,40 +62,10 @@ def validate_filtertype(ctx, param, value):
     help="Whether start operations should be replaced by restart operations.",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any operation")
-@click.option(
-    "--database-dsn",
-    envvar="TDP_DATABASE_DSN",
-    required=True,
-    type=str,
-    help=(
-        "Database Data Source Name, in sqlalchemy driver form "
-        "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
-        "You might need to install the relevant driver to your installation (such "
-        "as psycopg2 for postgresql)"
-    ),
-)
-@click.option(
-    "--collection-path",
-    "collections",
-    envvar="TDP_COLLECTION_PATH",
-    required=True,
-    callback=collection_paths_to_collections,  # transforms into Collections object
-    help=f"List of paths separated by your os' path separator ({os.pathsep})",
-)
-@click.option(
-    "--run-directory",
-    envvar="TDP_RUN_DIRECTORY",
-    type=Path,
-    help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
-    required=True,
-)
-@click.option(
-    "--vars",
-    envvar="TDP_VARS",
-    required=True,
-    type=click.Path(resolve_path=True, path_type=Path),
-    help="Path to the tdp vars",
-)
+@collections
+@database_dsn
+@run_directory
+@vars
 def deploy(
     sources,
     targets,
@@ -99,8 +73,8 @@ def deploy(
     filter_type,
     restart,
     dry,
-    database_dsn,
     collections,
+    database_dsn,
     run_directory,
     vars,
 ):
