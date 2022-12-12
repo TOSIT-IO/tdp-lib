@@ -10,6 +10,7 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
+    dry,
     run_directory,
     vars,
 )
@@ -21,7 +22,7 @@ from tdp.core.variables import ClusterVariables
 
 @click.command(short_help="Resume a TDP deployment")
 @click.argument("id", required=False)
-@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
+@dry
 @collections
 @database_dsn
 @run_directory

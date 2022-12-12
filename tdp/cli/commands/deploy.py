@@ -9,6 +9,7 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
+    dry,
     run_directory,
     vars,
 )
@@ -61,7 +62,7 @@ def validate_filtertype(ctx, param, value):
     default=False,
     help="Whether start operations should be replaced by restart operations.",
 )
-@click.option("--dry", is_flag=True, help="Execute dag without running any operation")
+@dry
 @collections
 @database_dsn
 @run_directory

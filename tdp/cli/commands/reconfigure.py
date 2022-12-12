@@ -9,6 +9,7 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
+    dry,
     run_directory,
     vars,
 )
@@ -25,7 +26,7 @@ from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Restart required TDP services")
-@click.option("--dry", is_flag=True, help="Execute dag without running any action")
+@dry
 @collections
 @database_dsn
 @run_directory
