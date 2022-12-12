@@ -4,7 +4,7 @@
 
 import click
 
-from tdp.cli.commands.queries import get_deployment, get_last_deployment
+from tdp.cli.queries import get_deployment, get_last_deployment
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,

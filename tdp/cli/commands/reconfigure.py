@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.commands.queries import get_latest_success_service_component_version_query
+from tdp.cli.queries import get_latest_success_service_component_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,

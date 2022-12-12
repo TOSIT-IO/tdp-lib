@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from tabulate import tabulate
 
-from tdp.cli.commands.queries import get_deployment
+from tdp.cli.queries import get_deployment
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
