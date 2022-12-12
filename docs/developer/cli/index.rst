@@ -15,6 +15,7 @@ Usage
   Usage: tdp [OPTIONS] COMMAND [ARGS]...
 
   Options:
+    --env PATH  Path to environment configuration file
     -h, --help  Show this message and exit.
 
   Commands:
@@ -26,7 +27,8 @@ Usage
     nodes             List nodes from operations DAG
     playbooks         Generate meta playbooks in order to use tdp-collection
                       without tdp-lib
-    restart-required  Restart required TDP services
+    reconfigure       Restart required TDP services
+    resume            Resume a TDP deployment
     run               Run single TDP operation
     service-versions  Get the version of deployed services.(If a service has
                       never been deployed, does not show it)
