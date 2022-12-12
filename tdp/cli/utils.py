@@ -66,6 +66,12 @@ def database_dsn(func: FC) -> FC:
     )(func)
 
 
+def dry(func: FC) -> FC:
+    return click.option(
+        "--dry", is_flag=True, help="Execute dag without running any action"
+    )(func)
+
+
 def run_directory(func: FC) -> FC:
 
     return click.option(

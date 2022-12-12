@@ -8,6 +8,7 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
+    dry,
     run_directory,
     vars,
 )
@@ -19,7 +20,7 @@ from tdp.core.variables import ClusterVariables
 
 @click.command(short_help="Run single TDP operation")
 @click.argument("operation_names", nargs=-1, required=True)
-@click.option("--dry", is_flag=True, help="Execute without running any operation")
+@dry
 @collections
 @database_dsn
 @run_directory
