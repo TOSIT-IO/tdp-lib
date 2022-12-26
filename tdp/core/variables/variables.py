@@ -6,6 +6,7 @@ import os
 from collections.abc import MutableMapping
 from weakref import proxy
 
+import jsonschema
 import yaml
 from ansible.utils.vars import merge_hash as _merge_hash
 
@@ -30,6 +31,12 @@ Dumper.add_representer(str, str_presenter)
 
 def merge_hash(dict_a, dict_b):
     return _merge_hash(dict_a, dict_b)
+
+
+def is_object(checker, instance):
+    return jsonschema.Draft7Validator.TYPE_CHECKER.is_type(
+        instance, "object"
+    ) or isinstance(instance, (VariablesDict, _VariablesIOWrapper))
 
 
 class Variables:
@@ -57,12 +64,17 @@ class VariablesDict(MutableMapping):
         del variables["key1"] # deletes value at key `key1`
     """
 
-    def __init__(self, content):
+    def __init__(self, content, name=None):
         """
         Args:
             content ([Dict]): Content of a var file
         """
         self._content = content
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
 
     def copy(self):
         return self._content.copy()
@@ -91,6 +103,7 @@ class _VariablesIOWrapper(VariablesDict):
         self._file_path = path
         self._file_descriptor = open(self._file_path, mode or "r+")
         self._content = yaml.load(self._file_descriptor, Loader=Loader) or {}
+        self._name = path.name
 
     def __enter__(self):
         return proxy(self)

@@ -17,6 +17,7 @@ from tdp.cli.commands.reconfigure import reconfigure
 from tdp.cli.commands.resume import resume
 from tdp.cli.commands.run import run
 from tdp.cli.commands.service_versions import service_versions
+from tdp.cli.commands.validate import validate
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -44,3 +45,4 @@ tdp.add_command(reconfigure)
 tdp.add_command(resume)
 tdp.add_command(run)
 tdp.add_command(service_versions)
+tdp.add_command(validate)

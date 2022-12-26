@@ -3,10 +3,14 @@
 
 from pathlib import Path
 
+from networkx.readwrite.json_graph.jit import json
+
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
 OPERATION_DIRECTORY_NAME = "playbooks"
 DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
+SCHEMA_VARS_DIRECTORY_NAME = "tdp_vars_schema"
 
+JSON_EXTENSION = ".json"
 YML_EXTENSION = ".yml"
 
 MANDATORY_DIRECTORIES = [
@@ -58,6 +62,10 @@ class Collection:
         return self._path / OPERATION_DIRECTORY_NAME
 
     @property
+    def schema_directory(self):
+        return self._path / SCHEMA_VARS_DIRECTORY_NAME
+
+    @property
     def dag_yamls(self):
         if not self._dag_yamls:
             self._dag_yamls = list(self.dag_directory.glob("*" + YML_EXTENSION))
@@ -77,3 +85,10 @@ class Collection:
         if not service_path.exists():
             return []
         return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
+
+    def get_service_schema(self, name):
+        schema_path = self.schema_directory / (name + JSON_EXTENSION)
+        if not schema_path.exists():
+            return {}
+        with schema_path.open() as fd:
+            return json.load(fd)

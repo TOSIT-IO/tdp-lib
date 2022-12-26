@@ -6,19 +6,44 @@ from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
+import jsonschema
+from jsonschema import exceptions, validators
+
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH, Operation
-from tdp.core.variables.variables import Variables
+
+from .variables import Variables, VariablesDict, is_object
 
 logger = logging.getLogger("tdp").getChild("service_variables")
 
 
+class InvalidSchema(Exception):
+    def __init__(self, msg, filename, *args):
+        self.msg = msg
+        self.filename = filename
+        super().__init__(msg, filename, *args)
+
+    def __str__(self):
+        return f"{self.msg}: {self.filename}"
+
+    def __repr__(self):
+        return f"{self.msg}: {self.filename}"
+
+
+type_checker = jsonschema.Draft7Validator.TYPE_CHECKER.redefine("object", is_object)
+
+CustomValidator = validators.extend(
+    jsonschema.Draft7Validator, type_checker=type_checker
+)
+
+
 class ServiceVariables:
-    def __init__(self, service_name, repository):
+    def __init__(self, service_name, repository, schemas):
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
         self._repo = repository
+        self._schemas = schemas
 
     @property
     def name(self):
@@ -27,6 +52,10 @@ class ServiceVariables:
     @property
     def repository(self):
         return self._repo
+
+    @property
+    def schemas(self):
+        return self._schemas
 
     @property
     def version(self):
@@ -141,3 +170,28 @@ class ServiceVariables:
             else:
                 components_modified.add(operation)
         return list(components_modified)
+
+    def validate_schema(self, variables, schema):
+        try:
+            jsonschema.validate(variables, schema, CustomValidator)
+        except exceptions.ValidationError as e:
+            raise InvalidSchema("Schema is invalid", variables.name) from e
+
+    def validate(self):
+        service_variables = VariablesDict({})
+        for path in self.path.glob("*" + YML_EXTENSION):
+            with Variables(path).open("r") as variables:
+                if path.stem == self.name:
+                    # create a copy of the dict (not to outlive the context manager)
+                    service_variables = VariablesDict(variables.copy(), variables.name)
+                    test_variables = service_variables
+                else:
+                    # merge on a copy of service_vars because merge is inplace
+                    test_variables = VariablesDict(
+                        service_variables.copy(), variables.name
+                    )
+                    test_variables.merge(variables)
+                for schema in self._schemas:
+                    self.validate_schema(test_variables, schema)
+            logger.debug(f"{path.stem} is valid")
+        logger.debug(f"Service {self.name} is valid")
