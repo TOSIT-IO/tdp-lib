@@ -117,3 +117,15 @@ class Collections(Mapping):
                     name=operation_name,
                     collection_name=collection_name,
                 )
+
+    def get_service_schemas(self, name):
+        """return list of schema"""
+        return list(
+            filter(
+                bool,
+                (
+                    collection.get_service_schema(name)
+                    for collection in self._collections.values()
+                ),
+            )
+        )

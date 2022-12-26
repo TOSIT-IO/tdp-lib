@@ -18,13 +18,18 @@ from tdp.core.variables import ClusterVariables
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
     help="Path to tdp vars overrides",
 )
+@click.option(
+    "--validate/--no-validate",
+    default=True,
+    help="Should the command validate service variables against defined JSON schemas",
+)
 @collections
 @database_dsn
 @vars
-def init(overrides, collections, database_dsn, vars):
+def init(overrides, validate, collections, database_dsn, vars):
     init_db(database_dsn)
     cluster_variables = ClusterVariables.initialize_cluster_variables(
-        collections, vars, overrides
+        collections, vars, overrides, validate=validate
     )
     for name, service_manager in cluster_variables.items():
         click.echo(f"{name}: {service_manager.version}")

@@ -7,7 +7,8 @@ from pathlib import Path
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import NoVersionYet
-from tdp.core.variables.service_variables import ServiceVariables
+
+from .service_variables import ServiceVariables
 
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 
@@ -27,7 +28,11 @@ class ClusterVariables(Mapping):
 
     @staticmethod
     def initialize_cluster_variables(
-        collections, tdp_vars, override_folder=None, repository_class=GitRepository
+        collections,
+        tdp_vars,
+        override_folder=None,
+        repository_class=GitRepository,
+        validate=False,
     ):
         """get an instance of ClusterVariables, initialize all services if needed
 
@@ -74,7 +79,8 @@ class ClusterVariables(Mapping):
                     service_variables = cluster_variables[service]
                 else:
                     repo = repository_class.init(service_tdp_vars)
-                    service_variables = ServiceVariables(service, repo)
+                    schemas = collections.get_service_schemas(service)
+                    service_variables = ServiceVariables(service, repo, schemas)
                     cluster_variables[service] = service_variables
 
                 try:
@@ -89,26 +95,43 @@ class ClusterVariables(Mapping):
                         "add variables from " + collection_name, path
                     )
 
-        return ClusterVariables(cluster_variables)
+        cluster_variables = ClusterVariables(cluster_variables)
+        if validate:
+            cluster_variables.validate()
+
+        return cluster_variables
 
     @staticmethod
-    def get_cluster_variables(tdp_vars, repository_class=GitRepository):
+    def get_cluster_variables(
+        collections, tdp_vars, repository_class=GitRepository, validate=False
+    ):
         """get an instance of ClusterVariables
 
         Args:
+            collections (Collections): instance of collections
             tdp_vars (PathLike): path of the tdp vars
 
         Returns:
             ClusterVariables: mapping of service with their ServiceVariables instance
         """
-        tdp_vars = Path(tdp_vars)
-
         cluster_variables = {}
 
         tdp_vars = Path(tdp_vars)
         for path in tdp_vars.iterdir():
             if path.is_dir():
                 repo = repository_class(tdp_vars / path.name)
-                cluster_variables[path.name] = ServiceVariables(path.name, repo)
+                schemas = collections.get_service_schemas(path.stem)
+                cluster_variables[path.name] = ServiceVariables(
+                    path.name, repo, schemas
+                )
 
-        return ClusterVariables(cluster_variables)
+        cluster_variables = ClusterVariables(cluster_variables)
+
+        if validate:
+            cluster_variables.validate()
+
+        return cluster_variables
+
+    def validate(self):
+        for service in self.values():
+            service.validate()
