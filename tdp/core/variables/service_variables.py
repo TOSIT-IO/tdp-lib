@@ -38,12 +38,12 @@ CustomValidator = validators.extend(
 
 
 class ServiceVariables:
-    def __init__(self, service_name, repository, schemas):
+    def __init__(self, service_name, repository, schema):
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
         self._repo = repository
-        self._schemas = schemas
+        self._schema = schema
 
     @property
     def name(self):
@@ -54,8 +54,8 @@ class ServiceVariables:
         return self._repo
 
     @property
-    def schemas(self):
-        return self._schemas
+    def schema(self):
+        return self._schema
 
     @property
     def version(self):
@@ -191,7 +191,6 @@ class ServiceVariables:
                         service_variables.copy(), variables.name
                     )
                     test_variables.merge(variables)
-                for schema in self._schemas:
-                    self.validate_schema(test_variables, schema)
+            self.validate_schema(test_variables, self.schema)
             logger.debug(f"{path.stem} is valid")
         logger.debug(f"Service {self.name} is valid")

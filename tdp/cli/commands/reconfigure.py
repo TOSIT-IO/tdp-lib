@@ -56,7 +56,7 @@ def reconfigure(
         service_component_deployed_version = map(
             lambda result: result[1:], latest_success_service_component_version
         )
-        cluster_variables = ClusterVariables.get_cluster_variables(vars)
+        cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
         check_services_cleanliness(cluster_variables)
 
         deployment_runner = DeploymentRunner(

@@ -118,9 +118,9 @@ class Collections(Mapping):
                     collection_name=collection_name,
                 )
 
-    def get_service_schemas(self, name):
-        """return list of schema"""
-        return list(
+    def get_service_schema(self, name):
+        """returns dict of jsonSchemas"""
+        schemas = list(
             filter(
                 bool,
                 (
@@ -129,3 +129,4 @@ class Collections(Mapping):
                 ),
             )
         )
+        return dict(allOf=schemas) if schemas else {}
