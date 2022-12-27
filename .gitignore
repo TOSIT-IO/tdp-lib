@@ -1,6 +1,9 @@
 # VSCode
 .vscode/
 
+# LSP settings
+.nlsp-settings/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
