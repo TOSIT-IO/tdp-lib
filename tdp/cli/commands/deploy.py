@@ -100,7 +100,7 @@ def deploy(
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        cluster_variables = ClusterVariables.get_cluster_variables(vars)
+        cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
         check_services_cleanliness(cluster_variables)
 
         deployment_runner = DeploymentRunner(

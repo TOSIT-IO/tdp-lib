@@ -79,7 +79,7 @@ class ClusterVariables(Mapping):
                     service_variables = cluster_variables[service]
                 else:
                     repo = repository_class.init(service_tdp_vars)
-                    schemas = collections.get_service_schemas(service)
+                    schemas = collections.get_service_schema(service)
                     service_variables = ServiceVariables(service, repo, schemas)
                     cluster_variables[service] = service_variables
 
@@ -120,7 +120,7 @@ class ClusterVariables(Mapping):
         for path in tdp_vars.iterdir():
             if path.is_dir():
                 repo = repository_class(tdp_vars / path.name)
-                schemas = collections.get_service_schemas(path.stem)
+                schemas = collections.get_service_schema(path.stem)
                 cluster_variables[path.name] = ServiceVariables(
                     path.name, repo, schemas
                 )

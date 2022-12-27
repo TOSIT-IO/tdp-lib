@@ -1,9 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import json
 from pathlib import Path
-
-from networkx.readwrite.json_graph.jit import json
 
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
 OPERATION_DIRECTORY_NAME = "playbooks"
