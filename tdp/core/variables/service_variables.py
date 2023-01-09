@@ -179,7 +179,8 @@ class ServiceVariables:
 
     def validate(self):
         service_variables = VariablesDict({})
-        for path in self.path.glob("*" + YML_EXTENSION):
+        sorted_paths = sorted(self.path.glob("*" + YML_EXTENSION))
+        for path in sorted_paths:
             with Variables(path).open("r") as variables:
                 if path.stem == self.name:
                     # create a copy of the dict (not to outlive the context manager)
