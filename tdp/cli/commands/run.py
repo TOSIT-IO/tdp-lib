@@ -10,6 +10,7 @@ from tdp.cli.utils import (
     database_dsn,
     dry,
     run_directory,
+    validate,
     vars,
 )
 from tdp.core.dag import Dag
@@ -24,6 +25,7 @@ from tdp.core.variables import ClusterVariables
 @collections
 @database_dsn
 @run_directory
+@validate
 @vars
 def run(
     operation_names,
@@ -31,6 +33,7 @@ def run(
     collections,
     database_dsn,
     run_directory,
+    validate,
     vars,
 ):
     if not vars.exists():
@@ -58,7 +61,9 @@ def run(
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
+        cluster_variables = ClusterVariables.get_cluster_variables(
+            collections, vars, validate=validate
+        )
         check_services_cleanliness(cluster_variables)
 
         deployment_runner = DeploymentRunner(
