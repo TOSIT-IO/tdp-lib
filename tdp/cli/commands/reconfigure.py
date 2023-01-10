@@ -11,6 +11,7 @@ from tdp.cli.utils import (
     database_dsn,
     dry,
     run_directory,
+    validate,
     vars,
 )
 from tdp.core.dag import Dag
@@ -30,12 +31,14 @@ from tdp.core.variables import ClusterVariables
 @collections
 @database_dsn
 @run_directory
+@validate
 @vars
 def reconfigure(
     dry,
     collections,
     database_dsn,
     run_directory,
+    validate,
     vars,
 ):
     if not vars.exists():
@@ -56,7 +59,9 @@ def reconfigure(
         service_component_deployed_version = map(
             lambda result: result[1:], latest_success_service_component_version
         )
-        cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
+        cluster_variables = ClusterVariables.get_cluster_variables(
+            collections, vars, validate=validate
+        )
         check_services_cleanliness(cluster_variables)
 
         deployment_runner = DeploymentRunner(

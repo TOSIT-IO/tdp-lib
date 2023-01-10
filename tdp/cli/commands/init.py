@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from tdp.cli.session import init_db
-from tdp.cli.utils import collections, database_dsn, vars
+from tdp.cli.utils import collections, database_dsn, validate, vars
 from tdp.core.variables import ClusterVariables
 
 
@@ -18,15 +18,11 @@ from tdp.core.variables import ClusterVariables
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
     help="Path to tdp vars overrides",
 )
-@click.option(
-    "--validate/--no-validate",
-    default=True,
-    help="Should the command validate service variables against defined JSON schemas",
-)
 @collections
 @database_dsn
+@validate
 @vars
-def init(overrides, validate, collections, database_dsn, vars):
+def init(overrides, collections, database_dsn, validate, vars):
     init_db(database_dsn)
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         collections, vars, overrides, validate=validate

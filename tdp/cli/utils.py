@@ -83,6 +83,14 @@ def run_directory(func: FC) -> FC:
     )(func)
 
 
+def validate(func: FC) -> FC:
+    return click.option(
+        "--validate/--no-validate",
+        default=True,
+        help="Should the command validate service variables against defined JSON schemas",
+    )(func)
+
+
 def vars(func: FC) -> FC:
     return click.option(
         "--vars",

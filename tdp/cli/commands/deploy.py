@@ -11,6 +11,7 @@ from tdp.cli.utils import (
     database_dsn,
     dry,
     run_directory,
+    validate,
     vars,
 )
 from tdp.core.dag import Dag
@@ -66,6 +67,7 @@ def validate_filtertype(ctx, param, value):
 @collections
 @database_dsn
 @run_directory
+@validate
 @vars
 def deploy(
     sources,
@@ -77,6 +79,7 @@ def deploy(
     collections,
     database_dsn,
     run_directory,
+    validate,
     vars,
 ):
     if not vars.exists():
@@ -100,7 +103,9 @@ def deploy(
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
+        cluster_variables = ClusterVariables.get_cluster_variables(
+            collections, vars, validate=validate
+        )
         check_services_cleanliness(cluster_variables)
 
         deployment_runner = DeploymentRunner(
