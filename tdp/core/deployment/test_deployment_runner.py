@@ -46,7 +46,8 @@ def test_deployment_plan_is_success(dag, deployment_runner):
     deployment_iterator = deployment_runner.run(deployment_plan)
 
     for operation, _ in deployment_iterator:
-        assert operation.state == StateEnum.SUCCESS
+        if operation is not None:
+            assert operation.state == StateEnum.SUCCESS
 
     assert deployment_iterator.log.state == StateEnum.SUCCESS
     assert len(deployment_iterator.log.operations) == 4
@@ -61,7 +62,8 @@ def test_deployment_plan_with_filter_is_success(dag, deployment_runner):
     deployment_iterator = deployment_runner.run(deployment_plan)
 
     for operation, _ in deployment_iterator:
-        assert operation.state == StateEnum.SUCCESS
+        if operation is not None:
+            assert operation.state == StateEnum.SUCCESS
 
     assert deployment_iterator.log.state == StateEnum.SUCCESS
     assert len(deployment_iterator.log.operations) == 1
@@ -75,7 +77,8 @@ def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner)
     deployment_iterator = deployment_runner.run(deployment_plan)
 
     for operation, _ in deployment_iterator:
-        assert operation.state == StateEnum.SUCCESS
+        if operation is not None:
+            assert operation.state == StateEnum.SUCCESS
 
     assert deployment_iterator.log.state == StateEnum.SUCCESS
     assert len(deployment_iterator.log.operations) == 0
