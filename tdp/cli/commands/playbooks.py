@@ -12,7 +12,7 @@ from tdp.core.operation import Operation
 
 
 @click.command(
-    short_help="Generate meta playbooks in order to use tdp-collection without tdp-lib"
+    short_help="Generate meta playbooks in order to use a TDP like collection without tdp-lib"
 )
 @click.argument("services", required=False, nargs=-1)
 @click.option(
@@ -22,8 +22,15 @@ from tdp.core.operation import Operation
     required=False,
     default=".",
 )
+@click.option(
+    "--for-collection",
+    type=str,
+    help="Only write operation from this collection",
+    required=False,
+    multiple=True,
+)
 @collections
-def playbooks(services, output_dir, collections):
+def playbooks(services, output_dir, for_collection, collections):
     dag = Dag(collections)
     # services DAG
     dag_services = nx.DiGraph()
@@ -73,7 +80,12 @@ def playbooks(services, output_dir, collections):
         write_copyright_licence_headers(all_per_service_fd)
         all_per_service_fd.write("---\n")
         is_noop = lambda op: op.noop
+        is_in_collection = lambda op: op.collection_name in for_collection
         for service in services:
+            if for_collection and not any(
+                map(is_in_collection, dag_service_operations[service])
+            ):
+                continue
             if all(map(is_noop, dag_service_operations[service])):
                 all_per_service_fd.write(f"# {service}\n")
                 continue
@@ -82,6 +94,11 @@ def playbooks(services, output_dir, collections):
                 write_copyright_licence_headers(service_fd)
                 service_fd.write("---\n")
                 for operation in dag_service_operations[service]:
+                    if (
+                        for_collection
+                        and operation.collection_name not in for_collection
+                    ):
+                        continue
                     if not operation.noop:
                         service_fd.write(
                             f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
@@ -93,6 +110,8 @@ def playbooks(services, output_dir, collections):
         write_copyright_licence_headers(all_fd)
         all_fd.write("---\n")
         for operation in dag.get_all_operations():
+            if for_collection and operation.collection_name not in for_collection:
+                continue
             if not operation.noop:
                 all_fd.write(
                     f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
