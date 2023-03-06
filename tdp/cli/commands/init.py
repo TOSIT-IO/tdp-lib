@@ -16,7 +16,8 @@ from tdp.core.variables import ClusterVariables
     envvar="TDP_OVERRIDES",
     required=False,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
-    help="Path to tdp vars overrides",
+    multiple=True,
+    help="Path to tdp vars overrides. Can be used multiple times. Last one takes precedence.",
 )
 @collections
 @database_dsn
