@@ -30,7 +30,7 @@ class ClusterVariables(Mapping):
     def initialize_cluster_variables(
         collections,
         tdp_vars,
-        override_folder=None,
+        override_folders=None,
         repository_class=GitRepository,
         validate=False,
     ):
@@ -39,11 +39,14 @@ class ClusterVariables(Mapping):
         Args:
             collections (Collections): instance of collections
             tdp_vars (Union[str, Path]): path to the tdp vars
-            override_folder (Optional[str | Path]): path of tdp vars overrides
+            override_folders (Iterable[str | Path]): list of path(s) of tdp vars overrides
 
         Returns:
             ClusterVariables: mapping of service with their ServiceVariables instance
         """
+        if override_folders is None:
+            override_folders = []
+        
         tdp_vars = Path(tdp_vars)
 
         cluster_variables = {}
@@ -52,9 +55,12 @@ class ClusterVariables(Mapping):
             (collection_name, collection.default_vars_directory.iterdir())
             for collection_name, collection in collections.items()
         ]
-        if override_folder:
+
+        for i, override_folder in enumerate(override_folders):
             override_folder = Path(override_folder)
-            collections_and_overrides.append(("overrides", override_folder.iterdir()))
+            collections_and_overrides.append(
+                (f"overrides_path_{i}", override_folder.iterdir())
+            )
 
         # If the service was already initialized, we do not touch it
         services_initialized_by_this_function = set()
