@@ -19,6 +19,18 @@ MANDATORY_DIRECTORIES = [
 ]
 
 
+class PathDoesNotExistsError(Exception):
+    pass
+
+
+class PathIsNotADirectoryError(Exception):
+    pass
+
+
+class MissingMandatoryDirectoryError(Exception):
+    pass
+
+
 class Collection:
     def __init__(self, path):
         self._path = Path(path)
@@ -29,13 +41,13 @@ class Collection:
     def from_path(path):
         path = Path(path).expanduser().resolve()
         if not path.exists():
-            raise ValueError(f"{path} does not exists")
+            raise PathDoesNotExistsError(f"{path} does not exists")
         if not path.is_dir():
-            raise ValueError(f"{path} is not a directory")
+            raise PathIsNotADirectoryError(f"{path} is not a directory")
         for mandatory_directory in MANDATORY_DIRECTORIES:
             mandatory_path = path / mandatory_directory
             if not mandatory_path.exists() or not mandatory_path.is_dir():
-                raise ValueError(
+                raise MissingMandatoryDirectoryError(
                     f"{path} does not contain the mandatory directory {mandatory_directory}",
                 )
         return Collection(path)
