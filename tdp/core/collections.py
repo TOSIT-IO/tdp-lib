@@ -91,15 +91,16 @@ class Collections(Mapping):
                 for operation in operations_list:
                     name = operation["name"]
                     if name in self._dag_operations:
-                        logger.info(
+                        logger.debug(
                             f"DAG Operation '{name}' defined in collection "
                             f"'{self._dag_operations[name].collection_name}' "
-                            f"is overridden by collection '{collection_name}'"
+                            f"is merged with collection '{collection_name}'"
                         )
-
-                    self._dag_operations[name] = Operation(
-                        collection_name=collection_name, **operation
-                    )
+                        self._dag_operations[name].depends_on.extend(operation['depends_on'])
+                    else:
+                        self._dag_operations[name] = Operation(
+                            collection_name=collection_name, **operation
+                        )
 
         # Init Operations not in the DAG
         for collection_name, collection in self._collections.items():

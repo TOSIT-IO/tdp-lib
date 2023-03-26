@@ -53,7 +53,7 @@ def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFacto
     assert "service2_config" in collections.dag_operations
 
     assert [] == collections.dag_operations["service1_install"].depends_on
-    assert ["service2_install"] == collections.dag_operations[
+    assert ["service1_install", "service2_install"] == collections.dag_operations[
         "service1_config"
     ].depends_on
     assert [] == collections.dag_operations["service2_install"].depends_on
