@@ -1,9 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from tdp.core.models import FilterTypeEnum
-from tdp.core.models.deployment_type_enum import DeploymentTypeEnum
-from tdp.core.models.state_enum import StateEnum
+from tdp.core.models import DeploymentTypeEnum, FilterTypeEnum, StateEnum
 
 
 class EmptyDeploymentPlanError(Exception):

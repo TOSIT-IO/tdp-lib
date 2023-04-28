@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .base import Base
-from .deployment_log import DeploymentLog, FilterTypeEnum
-from .deployment_type_enum import DeploymentTypeEnum
+from .deployment_log import DeploymentLog, DeploymentTypeEnum, FilterTypeEnum
 from .operation_log import OperationLog
 from .service_component_log import ServiceComponentLog
 from .state_enum import StateEnum

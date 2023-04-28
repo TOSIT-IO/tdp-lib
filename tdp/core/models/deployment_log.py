@@ -10,15 +10,52 @@ from tdp.core.models.base import Base
 from tdp.core.operation import NODE_NAME_MAX_LENGTH
 
 from .state_enum import StateEnum
-from .deployment_type_enum import DeploymentTypeEnum
+
+
+class DeploymentTypeEnum(str, enum.Enum):
+    """Deployment type enum.
+
+    Attributes:
+        DAG (str): Dag deployment type.
+        OPERATIONS (str): Operations deployment type.
+        RESUME (str): Resume deployment type.
+        RECONFIGURE (str): Reconfigure deployment type.
+    """
+
+    DAG = "Dag"
+    OPERATIONS = "Operations"
+    RESUME = "Resume"
+    RECONFIGURE = "Reconfigure"
 
 
 class FilterTypeEnum(str, enum.Enum):
+    """Filter type enum.
+
+    Attributes:
+        REGEX (str): Regex filter type.
+        GLOB (str): Glob filter type.
+    """
+
     REGEX = "regex"
     GLOB = "glob"
 
 
 class DeploymentLog(Base):
+    """Deployment log model.
+
+    Attributes:
+        id (int): Deployment log id.
+        sources (list): List of source nodes, in the case of Dag deployment type.
+        targets (list): List of target nodes, in the case of Dag deployment type.
+        filter_expression (str): Filter expression.
+        filter_type (enum): Filter type (regex or glob).
+        start_time (datetime): Deployment start time.
+        end_time (datetime): Deployment end time.
+        state (enum): Deployment state (Success, Failure or Pending).
+        deployment_type (str): Deployment type (Dag, Operations, Resume or Reconfigure).
+        restart (bool): Restart flag.
+    """
+
     __tablename__ = "deployment_log"
 
     id = Column(Integer, primary_key=True)
