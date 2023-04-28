@@ -10,6 +10,16 @@ from tdp.core.repository.repository import VERSION_MAX_LENGTH
 
 
 class ServiceComponentLog(Base):
+    """Component log model.
+
+    Attributes:
+        id (int): Service component log id.
+        deployment_id (int): Deployment log id.
+        service (str): Service name.
+        component (str): Component name.
+        version (str): Component version.
+    """
+
     __tablename__ = "service_component_log"
 
     id = Column(Integer, primary_key=True)

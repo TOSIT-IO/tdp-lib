@@ -4,8 +4,7 @@
 import logging
 from datetime import datetime
 
-from tdp.core.models import OperationLog, StateEnum
-from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models import DeploymentLog, OperationLog, StateEnum
 
 from .deployment_iterator import DeploymentIterator
 
