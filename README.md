@@ -21,7 +21,7 @@ TDP lib requires:
 Optionally, you can install the following dependencies for DAG visualization:
 
 - [graphviz](https://graphviz.org/)
-- Pyhthon `visualization` dependency (`poetry install -E visualization`)
+- Python `visualization` dependency (`poetry install -E visualization`)
 
 And to build the documentation:
 
