@@ -11,6 +11,7 @@ from tdp.cli.utils import (
     collections,
     database_dsn,
     dry,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -24,6 +25,7 @@ from tdp.core.variables import ClusterVariables
 @click.command(short_help="Resume a TDP deployment")
 @click.argument("id", required=False)
 @dry
+@mock_deploy
 @collections
 @database_dsn
 @run_directory
@@ -34,6 +36,7 @@ def resume(
     dry,
     collections,
     database_dsn,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -45,7 +48,7 @@ def resume(
 
     ansible_executor = AnsibleExecutor(
         run_directory=run_directory,
-        dry=dry,
+        dry=dry or mock_deploy,
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
