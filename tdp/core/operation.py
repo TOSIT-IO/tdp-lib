@@ -1,14 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 import re
 
-logger = logging.getLogger("tdp").getChild("component")
-
-# service: <service>_<action>
+# service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
-# operation: <service>_<component>_<action>
+# component operation: <service>_<component>_<action>
 RE_GET_SERVICE = re.compile("^([^_]+)_.*")
 RE_GET_COMPONENT = re.compile("^[^_]+_(.*)_[^_]+$")
 RE_GET_ACTION = re.compile(".*_([^_]+)$")
@@ -18,7 +15,7 @@ SERVICE_NAME_MAX_LENGTH = 20
 COMPONENT_NAME_MAX_LENGTH = 30
 ACTION_NAME_MAX_LENGTH = 20
 
-NODE_NAME_MAX_LENGTH = (
+OPERATION_NAME_MAX_LENGTH = (
     SERVICE_NAME_MAX_LENGTH + COMPONENT_NAME_MAX_LENGTH + ACTION_NAME_MAX_LENGTH
 )
 
@@ -30,43 +27,43 @@ class Operation:
         self.depends_on = depends_on or []
         self.noop = noop
 
-        if len(name) > NODE_NAME_MAX_LENGTH:
-            raise ValueError(f"{name} is longer than {NODE_NAME_MAX_LENGTH}")
+        if len(name) > OPERATION_NAME_MAX_LENGTH:
+            raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}")
 
         match = RE_GET_SERVICE.search(self.name)
         if not match:
-            raise ValueError(f"Fail to parse service name for component '{self.name}'")
-        self.service = match.group(1)
+            raise ValueError(f"Fail to parse service name from '{self.name}'")
+        self.service_name = match.group(1)
 
-        if len(self.service) > SERVICE_NAME_MAX_LENGTH:
+        if len(self.service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(
-                f"service {self.service} is longer than {SERVICE_NAME_MAX_LENGTH}"
+                f"service {self.service_name} is longer than {SERVICE_NAME_MAX_LENGTH}"
             )
 
         match = RE_GET_ACTION.search(self.name)
         if not match:
-            raise ValueError(f"Fail to parse action name for component '{self.name}'")
-        self.action = match.group(1)
+            raise ValueError(f"Fail to parse action name from '{self.name}'")
+        self.action_name = match.group(1)
 
-        if len(self.action) > ACTION_NAME_MAX_LENGTH:
+        if len(self.action_name) > ACTION_NAME_MAX_LENGTH:
             raise ValueError(
-                f"action {self.service} is longer than {ACTION_NAME_MAX_LENGTH}"
+                f"action {self.service_name} is longer than {ACTION_NAME_MAX_LENGTH}"
             )
 
         match = RE_GET_COMPONENT.search(self.name)
         if not match:
-            self.component = None
+            self.component_name = None
         else:
-            self.component = match.group(1)
+            self.component_name = match.group(1)
         if (
-            self.component is not None
-            and len(self.component) > COMPONENT_NAME_MAX_LENGTH
+            self.component_name is not None
+            and len(self.component_name) > COMPONENT_NAME_MAX_LENGTH
         ):
             raise ValueError(
-                f"component {self.component} is longer than {COMPONENT_NAME_MAX_LENGTH}"
+                f"component {self.component_name} is longer than {COMPONENT_NAME_MAX_LENGTH}"
             )
 
-    def is_service(self):
+    def is_service_operation(self) -> bool:
         """Return True if the operation is about a service, False otherwise"""
         return bool(RE_IS_SERVICE.search(self.name))
 

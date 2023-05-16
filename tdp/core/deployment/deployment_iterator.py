@@ -35,22 +35,22 @@ class DeploymentIterator(Iterator):
                     raise StopIteration()
                 operation = next(self._iter)
                 service_component = self._service_component_logs[
-                    (operation.service, operation.component)
+                    (operation.service_name, operation.component_name)
                 ]
 
                 service_component_log = None
-                if operation.action == "config":
+                if operation.action_name == "config":
                     service_component.configured = True
 
                 if (
-                    operation.action in ("start", "restart")
+                    operation.action_name in ("start", "restart")
                     and service_component.configured == True
                     and service_component.started == False
                 ):
                     service_component_log = ServiceComponentLog(
-                        service=operation.service,
-                        component=operation.component,
-                        version=self._cluster_variables[operation.service].version,
+                        service=operation.service_name,
+                        component=operation.component_name,
+                        version=self._cluster_variables[operation.service_name].version,
                     )
                     service_component_log.deployment = self.log
 
