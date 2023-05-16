@@ -81,13 +81,13 @@ class ServiceVariables:
     def get_component_name(self, dag, component):
         operations_filtered = list(
             filter(
-                lambda operation: operation.component == component,
+                lambda operation: operation.component_name == component,
                 dag.services_operations[self.name],
             )
         )
         if operations_filtered:
             operation = operations_filtered[0]
-            return self.name + "_" + operation.component
+            return self.name + "_" + operation.component_name
         raise ValueError(f"Service {self.name} does not have a component {component}")
 
     def update_from_variables_folder(self, message, tdp_vars_overrides):
@@ -159,11 +159,11 @@ class ServiceVariables:
         for file_modified in files_modified:
             operation = Operation(Path(file_modified).stem + "_config")
             # If operation is about a service, all components inside this service have to be returned
-            if operation.is_service():
-                service_operations = dag.services_operations[operation.service]
+            if operation.is_service_operation():
+                service_operations = dag.services_operations[operation.service_name]
                 components_modified.update(
                     filter(
-                        lambda operation: operation.action == "config",
+                        lambda operation: operation.action_name == "config",
                         service_operations,
                     )
                 )

@@ -94,7 +94,7 @@ class Dag:
         if self._services_operations is None:
             self._services_operations = {}
             for operation in self.operations.values():
-                self._services_operations.setdefault(operation.service, []).append(
+                self._services_operations.setdefault(operation.service_name, []).append(
                     operation
                 )
         return self._services_operations
@@ -151,7 +151,7 @@ class Dag:
         def custom_key(node):
             operation = self.operations[node]
             operation_priority = SERVICE_PRIORITY.get(
-                operation.service, DEFAULT_SERVICE_PRIORITY
+                operation.service_name, DEFAULT_SERVICE_PRIORITY
             )
             return f"{operation_priority:02d}_{node}"
 
@@ -243,13 +243,13 @@ class Dag:
             c_warning = functools.partial(warning, operation.collection_name)
             for dependency in operation.depends_on:
                 # *_start operations can only be required from within its own service
-                dependency_service = self.operations[dependency].service
+                dependency_service = self.operations[dependency].service_name
                 if (
                     dependency.endswith("_start")
-                    and dependency_service != operation.service
+                    and dependency_service != operation.service_name
                 ):
                     c_warning(
-                        f"Operation '{operation_name}' is in service '{operation.service}', depends on "
+                        f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
                         f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                         f"only depends on start action within its own service"
                     )
@@ -266,22 +266,24 @@ class Dag:
             # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
             # even if they are "empty" (tagged with noop)
             # Part 1
-            service_actions = services_actions.setdefault(operation.service, set())
-            if operation.is_service():
-                service_actions.add(operation.action)
+            service_actions = services_actions.setdefault(operation.service_name, set())
+            if operation.is_service_operation():
+                service_actions.add(operation.action_name)
 
                 # Each service action (config, start, init) except the first (install) must have an explicit
                 # dependency with the previous service action within the same service
                 actions_order = ["install", "config", "start", "init"]
                 # Check only if the action is in actions_order and is not the first
                 if (
-                    operation.action in actions_order
-                    and operation.action != actions_order[0]
+                    operation.action_name in actions_order
+                    and operation.action_name != actions_order[0]
                 ):
                     previous_action = actions_order[
-                        actions_order.index(operation.action) - 1
+                        actions_order.index(operation.action_name) - 1
                     ]
-                    previous_service_action = f"{operation.service}_{previous_action}"
+                    previous_service_action = (
+                        f"{operation.service_name}_{previous_action}"
+                    )
                     previous_service_action_found = False
                     # Loop over dependency and check if the service previous action is found
                     for dependency in operation.depends_on:
@@ -290,7 +292,7 @@ class Dag:
                     if not previous_service_action_found:
                         c_warning(
                             f"Operation '{operation_name}' is a service action and has to depend on "
-                            f"'{operation.service}_{previous_action}'"
+                            f"'{operation.service_name}_{previous_action}'"
                         )
 
             # Operations tagged with the noop flag should not have a playbook defined in the collection

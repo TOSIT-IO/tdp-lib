@@ -44,9 +44,11 @@ def to_pydot(graph, nodes_to_color=None, cluster_service=False):
             operation_name = dot_node.get_name().strip('"')
             operation = Operation(operation_name)
             subgraphs.setdefault(
-                operation.service,
+                operation.service_name,
                 pydot.Cluster(
-                    operation.service, label=operation.service, fontname="Roboto"
+                    operation.service_name,
+                    label=operation.service_name,
+                    fontname="Roboto",
                 ),
             ).add_node(pydot.Node(operation_name))
 

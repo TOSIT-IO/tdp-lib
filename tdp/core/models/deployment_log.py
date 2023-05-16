@@ -7,7 +7,7 @@ from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
 
 from tdp.core.models.base import Base
-from tdp.core.operation import NODE_NAME_MAX_LENGTH
+from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
 
 from .state_enum import StateEnum
 
@@ -61,7 +61,7 @@ class DeploymentLog(Base):
     id = Column(Integer, primary_key=True)
     sources = Column(JSON)
     targets = Column(JSON)
-    filter_expression = Column(String(length=NODE_NAME_MAX_LENGTH * 5))
+    filter_expression = Column(String(length=OPERATION_NAME_MAX_LENGTH * 5))
     filter_type = Column(Enum(FilterTypeEnum))
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
