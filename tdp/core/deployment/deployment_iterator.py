@@ -3,8 +3,8 @@
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterator
 from datetime import datetime
-from typing import Iterator
 
 from tdp.core.models import ServiceComponentLog, StateEnum
 
