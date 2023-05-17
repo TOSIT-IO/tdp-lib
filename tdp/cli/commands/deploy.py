@@ -10,6 +10,7 @@ from tdp.cli.utils import (
     collections,
     database_dsn,
     dry,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -66,6 +67,7 @@ def validate_filtertype(ctx, param, value):
 @dry
 @collections
 @database_dsn
+@mock_deploy
 @run_directory
 @validate
 @vars
@@ -78,6 +80,7 @@ def deploy(
     dry,
     collections,
     database_dsn,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -99,7 +102,7 @@ def deploy(
 
     ansible_executor = AnsibleExecutor(
         run_directory=run_directory,
-        dry=dry,
+        dry=dry or mock_deploy,
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:

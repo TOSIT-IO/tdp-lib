@@ -9,6 +9,7 @@ from tdp.cli.utils import (
     collections,
     database_dsn,
     dry,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -24,6 +25,7 @@ from tdp.core.variables import ClusterVariables
 @dry
 @collections
 @database_dsn
+@mock_deploy
 @run_directory
 @validate
 @vars
@@ -32,6 +34,7 @@ def run(
     dry,
     collections,
     database_dsn,
+    mock_deploy,
     run_directory,
     validate,
     vars,
@@ -57,7 +60,7 @@ def run(
 
     ansible_executor = AnsibleExecutor(
         run_directory=run_directory,
-        dry=dry,
+        dry=dry or mock_deploy,
     )
     session_class = get_session_class(database_dsn)
     with session_class() as session:
