@@ -4,7 +4,7 @@
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from weakref import proxy
 
 import jsonschema
@@ -82,13 +82,13 @@ class Variables:
             del variables["key1"] # deletes value at key `key1`
     """
 
-    def __init__(self, file_path: os.PathLike):
+    def __init__(self, file_path: Union[str, os.PathLike]):
         """Initializes a Variables instance.
 
         Args:
             file_path: Path to the file.
         """
-        self._file_path = file_path
+        self._file_path = Path(file_path)
 
     def open(self, mode: Optional[str] = None) -> "_VariablesIOWrapper":
         """Opens the file in the given mode.
