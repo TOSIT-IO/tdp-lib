@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from tdp.core.models import DeploymentTypeEnum, FilterTypeEnum, StateEnum
+from tdp.core.models import DeploymentStateEnum, DeploymentTypeEnum, FilterTypeEnum
 
 
 class EmptyDeploymentPlanError(Exception):
@@ -116,7 +116,7 @@ class DeploymentPlan:
 
     @staticmethod
     def from_failed_deployment(dag, deployment_log):
-        if deployment_log.state == StateEnum.SUCCESS:
+        if deployment_log.state == DeploymentStateEnum.SUCCESS:
             raise NothingToResumeError(
                 f"Nothing to resume, deployment #{deployment_log.id} was successful"
             )

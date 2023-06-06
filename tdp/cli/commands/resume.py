@@ -18,7 +18,7 @@ from tdp.cli.utils import (
 )
 from tdp.core.dag import Dag
 from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
-from tdp.core.models.state_enum import StateEnum
+from tdp.core.models.state_enum import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
 
@@ -89,7 +89,7 @@ def resume(
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)
             session.commit()
-        if deployment_iterator.log.state != StateEnum.SUCCESS:
+        if deployment_iterator.log.state != DeploymentStateEnum.SUCCESS:
             raise click.ClickException(
                 (
                     "Deployment didn't finish with success: "

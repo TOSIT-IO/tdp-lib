@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 from tdp.core.models.base import Base
 from tdp.core.operation import NODE_NAME_MAX_LENGTH
 
-from .state_enum import StateEnum
+from .state_enum import DeploymentStateEnum
 
 
 class DeploymentTypeEnum(str, enum.Enum):
@@ -65,7 +65,7 @@ class DeploymentLog(Base):
     filter_type = Column(Enum(FilterTypeEnum))
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
-    state: Column = Column(Enum(StateEnum))
+    state: Column = Column(Enum(DeploymentStateEnum))
     deployment_type: Column = Column(Enum(DeploymentTypeEnum))
     restart = Column(Boolean, default=False)
 

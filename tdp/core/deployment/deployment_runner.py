@@ -4,7 +4,12 @@
 import logging
 from datetime import datetime
 
-from tdp.core.models import DeploymentLog, OperationLog, StateEnum
+from tdp.core.models import (
+    DeploymentLog,
+    DeploymentStateEnum,
+    OperationLog,
+    OperationStateEnum,
+)
 
 from .deployment_iterator import DeploymentIterator
 
@@ -28,13 +33,13 @@ class DeploymentRunner:
         state, logs = self._executor.execute(operation_file)
         end = datetime.utcnow()
 
-        if not StateEnum.has_value(state):
+        if not OperationStateEnum.has_value(state):
             logger.error(
                 f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{operation_file}'))"
             )
-            state = StateEnum.FAILURE
-        elif not isinstance(state, StateEnum):
-            state = StateEnum(state)
+            state = OperationStateEnum.FAILURE
+        elif not isinstance(state, OperationStateEnum):
+            state = OperationStateEnum(state)
 
         return OperationLog(
             operation=operation.name,
@@ -46,7 +51,7 @@ class DeploymentRunner:
 
     def run(self, deployment_plan):
         deployment_log = DeploymentLog(
-            state=StateEnum.PENDING,
+            state=DeploymentStateEnum.PENDING,
             **deployment_plan.deployment_args,
         )
         return DeploymentIterator(

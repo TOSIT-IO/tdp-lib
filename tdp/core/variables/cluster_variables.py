@@ -46,7 +46,7 @@ class ClusterVariables(Mapping):
         """
         if override_folders is None:
             override_folders = []
-        
+
         tdp_vars = Path(tdp_vars)
 
         cluster_variables = {}

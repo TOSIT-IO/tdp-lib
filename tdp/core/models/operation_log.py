@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from tdp.core.models.base import Base
 from tdp.core.operation import NODE_NAME_MAX_LENGTH
 
-from .state_enum import StateEnum
+from .state_enum import OperationStateEnum
 
 
 class OperationLog(Base):
@@ -28,7 +28,7 @@ class OperationLog(Base):
     operation = Column(String(length=NODE_NAME_MAX_LENGTH), primary_key=True)
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
-    state = Column(Enum(StateEnum))
+    state = Column(Enum(OperationStateEnum))
     logs = Column(LargeBinary)
 
     deployment = relationship("DeploymentLog", back_populates="operations")

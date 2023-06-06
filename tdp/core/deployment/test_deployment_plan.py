@@ -3,7 +3,13 @@
 
 import pytest
 
-from tdp.core.models import DeploymentLog, DeploymentTypeEnum, OperationLog, StateEnum
+from tdp.core.models import (
+    DeploymentLog,
+    DeploymentStateEnum,
+    DeploymentTypeEnum,
+    OperationLog,
+    OperationStateEnum,
+)
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
 
@@ -68,7 +74,7 @@ def test_deployment_plan_restart(dag):
 def failed_deployment_log(deployment_plan, index_to_fail):
 
     deployment_log = DeploymentLog(
-        id=1, state=StateEnum.FAILURE, **deployment_plan.deployment_args
+        id=1, state=DeploymentStateEnum.FAILURE, **deployment_plan.deployment_args
     )
     deployment_log.operations = [
         OperationLog(
@@ -76,7 +82,7 @@ def failed_deployment_log(deployment_plan, index_to_fail):
             operation=operation.name,
             start_time=-1,
             end_time=-1,
-            state=StateEnum.SUCCESS,
+            state=OperationStateEnum.SUCCESS,
             logs=b"",
         )
         for operation in deployment_plan.operations[:index_to_fail]
@@ -87,7 +93,7 @@ def failed_deployment_log(deployment_plan, index_to_fail):
             operation=deployment_plan.operations[index_to_fail].name,
             start_time=-1,
             end_time=-1,
-            state=StateEnum.FAILURE,
+            state=OperationStateEnum.FAILURE,
             logs=b"",
         )
     )
@@ -96,7 +102,7 @@ def failed_deployment_log(deployment_plan, index_to_fail):
 
 def success_deployment_log(deployment_plan):
     deployment_log = DeploymentLog(
-        id=1, state=StateEnum.SUCCESS, **deployment_plan.deployment_args
+        id=1, state=DeploymentStateEnum.SUCCESS, **deployment_plan.deployment_args
     )
     deployment_log.operations = [
         OperationLog(
@@ -104,7 +110,7 @@ def success_deployment_log(deployment_plan):
             operation=operation.name,
             start_time=-1,
             end_time=-1,
-            state=StateEnum.SUCCESS,
+            state=OperationStateEnum.SUCCESS,
             logs=b"",
         )
         for operation in deployment_plan.operations

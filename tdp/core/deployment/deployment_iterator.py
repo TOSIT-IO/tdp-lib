@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
 
-from tdp.core.models import ServiceComponentLog, StateEnum
+from tdp.core.models import DeploymentStateEnum, OperationStateEnum, ServiceComponentLog
 
 logger = logging.getLogger("tdp").getChild("deployment_iterator")
 
@@ -60,7 +60,7 @@ class DeploymentIterator(Iterator):
                 if operation.noop == False:
                     operation_log = self._run_operation(operation)
                     operation_log.deployment = self.log
-                    self._failed = operation_log.state == StateEnum.FAILURE
+                    self._failed = operation_log.state == OperationStateEnum.FAILURE
 
                 return operation_log, service_component_log
         # StopIteration is a "normal" exception raised when the iteration has stopped
@@ -70,10 +70,10 @@ class DeploymentIterator(Iterator):
                 self.log.state = self.log.operations[-1].state
             else:
                 # case deployment is finised with only noop performed
-                self.log.state = StateEnum.SUCCESS
+                self.log.state = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
             self.log.end_time = datetime.utcnow()
-            self.log.state = StateEnum.FAILURE
+            self.log.state = DeploymentStateEnum.FAILURE
             raise e

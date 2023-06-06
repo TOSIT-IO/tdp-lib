@@ -2,23 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from enum import Enum
+from typing import Union
+
+_PLANNED_STATE = "Planned"
+_RUNNING_STATE = "Running"
+_PENDING_STATE = "Pending"
+_SUCCESS_STATE = "Success"
+_FAILURE_STATE = "Failure"
+_HELD_STATE = "Held"
 
 
-class StateEnum(str, Enum):
-    """State enum.
-
-    Attributes:
-        SUCCESS (str): Success state.
-        FAILURE (str): Failure state.
-        PENDING (str): Pending state.
-    """
-
-    SUCCESS = "Success"
-    FAILURE = "Failure"
-    PENDING = "Pending"
-
+class _StateEnum(str, Enum):
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls: Union["OperationStateEnum", "DeploymentStateEnum"], value: str):
         """Check if value is a valid StateEnum value.
 
         Args:
@@ -27,6 +23,23 @@ class StateEnum(str, Enum):
         Returns:
             bool: True if value is a valid StateEnum value, False otherwise.
         """
-        return isinstance(value, StateEnum) or value in (
+        return isinstance(value, _StateEnum) or value in (
             v.value for v in cls.__members__.values()
         )
+
+
+class OperationStateEnum(_StateEnum):
+    PLANNED = _PLANNED_STATE
+    RUNNING = _RUNNING_STATE
+    PENDING = _PENDING_STATE
+    SUCCESS = _SUCCESS_STATE
+    FAILURE = _FAILURE_STATE
+    HELD = _HELD_STATE
+
+
+class DeploymentStateEnum(_StateEnum):
+    PLANNED = _PLANNED_STATE
+    RUNNING = _RUNNING_STATE
+    SUCCESS = _SUCCESS_STATE
+    FAILURE = _FAILURE_STATE
+    PENDING = _PENDING_STATE  # TODO: remove this state (should be replaced by RUNNING)
