@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import NoVersionYet
+from tdp.core.repository.repository import NoVersionYet, EmptyCommit
 
 from .service_variables import ServiceVariables
 
@@ -97,9 +97,14 @@ class ClusterVariables(Mapping):
                     services_initialized_by_this_function.add(service)
 
                 if service in services_initialized_by_this_function:
-                    service_variables.update_from_variables_folder(
-                        "add variables from " + collection_name, path
-                    )
+                    try:
+                        service_variables.update_from_variables_folder(
+                            "add variables from " + collection_name, path
+                        )
+                    except EmptyCommit:
+                        logger.warning(
+                            f"override file {service_tdp_vars.absolute()} will not cause any change, no commit has been made"
+                        )
 
         cluster_variables = ClusterVariables(cluster_variables)
         if validate:
