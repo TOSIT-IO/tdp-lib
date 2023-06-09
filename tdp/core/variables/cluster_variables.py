@@ -103,7 +103,7 @@ class ClusterVariables(Mapping):
                         )
                     except EmptyCommit:
                         logger.warning(
-                            f"override file {service_tdp_vars.absolute()} is empty, no commit has been made"
+                            f"override file {service_tdp_vars.absolute()} will not cause any change, no commit has been made"
                         )
 
         cluster_variables = ClusterVariables(cluster_variables)
