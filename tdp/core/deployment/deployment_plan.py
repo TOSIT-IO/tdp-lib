@@ -1,7 +1,18 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from tdp.core.models import DeploymentTypeEnum, FilterTypeEnum, StateEnum
+from typing import List
+
+from tdp.core.dag import Dag
+from tdp.core.models import (
+    DeploymentLog,
+    DeploymentTypeEnum,
+    FilterTypeEnum,
+    ServiceComponentLog,
+    StateEnum,
+)
+from tdp.core.operation import Operation
+from tdp.core.variables import ClusterVariables
 
 
 class EmptyDeploymentPlanError(Exception):
@@ -21,25 +32,42 @@ class UnsupportedDeploymentTypeError(Exception):
 
 
 class GeneratedDeploymentPlanMissesOperationError(Exception):
-    def __init__(self, message, reconstructed_operations) -> None:
+    def __init__(self, message: str, reconstructed_operations: List[str]):
         super(Exception).__init__(message)
         self.reconstructed_operations = reconstructed_operations
 
 
 class DeploymentPlan:
-    def __init__(self, operations, deployment_args):
+    """Deployment plan giving the operations to perform.
+
+    Attributes:
+        operations: List of operations to perform.
+        deployment_args: Deployment arguments.
+    """
+
+    def __init__(self, operations: List[Operation], deployment_args: dict):
         self.operations = operations
         self.deployment_args = deployment_args
 
     @staticmethod
     def from_dag(
-        dag,
-        targets=None,
-        sources=None,
-        filter_expression=None,
-        filter_type=None,
-        restart=False,
-    ):
+        dag: Dag,
+        targets: List[str] = None,
+        sources: List[str] = None,
+        filter_expression: str = None,
+        filter_type: DeploymentTypeEnum = None,
+        restart: bool = False,
+    ) -> "DeploymentPlan":
+        """Generate a deployment plan from a DAG.
+
+        Args:
+            dag: DAG to generate the deployment plan from.
+            targets: List of targets to which to deploy.
+            sources: List of sources from which to deploy.
+            filter_expression: Filter expression to apply on the DAG.
+            filter_type: Filter type to apply on the DAG.
+            restart: Whether or not to transform start operations to restart.
+        """
         operations = dag.get_operations(
             sources=sources, targets=targets, restart=restart
         )
@@ -69,7 +97,12 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_operations(operations):
+    def from_operations(operations: List[Operation]) -> "DeploymentPlan":
+        """Generate a deployment plan from a list of operations.
+
+        Args:
+            operations: List of operations to perform.
+        """
         deployment_args = dict(
             targets=[operation.name for operation in operations],
             deployment_type=DeploymentTypeEnum.OPERATIONS,
@@ -77,7 +110,24 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_args)
 
     @staticmethod
-    def from_reconfigure(dag, cluster_variables, service_component_deployed_version):
+    def from_reconfigure(
+        dag: Dag,
+        cluster_variables: ClusterVariables,
+        service_component_deployed_version: ServiceComponentLog,
+    ) -> "DeploymentPlan":
+        """Generate a deployment plan from a list of service component deployed version.
+
+        Args:
+            dag: DAG to generate the deployment plan from.
+            cluster_variables: Cluster variables.
+            service_component_deployed_version: List of deployed versions.
+
+        Raises:
+            RuntimeError: If a service is deployed but the repository is missing.
+
+        Returns:
+            Deployment plan.
+        """
         components_modified = set()
         for (
             service,
@@ -115,7 +165,22 @@ class DeploymentPlan:
         )
 
     @staticmethod
-    def from_failed_deployment(dag, deployment_log):
+    def from_failed_deployment(
+        dag: Dag, deployment_log: DeploymentLog
+    ) -> "DeploymentPlan":
+        """Generate a deployment plan from a failed deployment.
+
+        Args:
+            dag: DAG to generate the deployment plan from.
+            deployment_log: Deployment log.
+
+        Raises:
+            NothingToResumeError: If the deployment was successful.
+            UnsupportedDeploymentTypeError: If the deployment type is not supported.
+
+        Returns:
+            Deployment plan.
+        """
         if deployment_log.state == StateEnum.SUCCESS:
             raise NothingToResumeError(
                 f"Nothing to resume, deployment #{deployment_log.id} was successful"

@@ -9,9 +9,25 @@ from click.decorators import FC
 
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
+from tdp.core.variables.cluster_variables import ClusterVariables
 
 
-def collection_paths_to_collections(ctx, param, value):
+def collection_paths_to_collections(
+    ctx: click.Context, param: click.Parameter, value: str
+) -> Collections:
+    """Transforms a list of paths into a Collections object.
+
+    Args:
+        ctx: Click context.
+        param: Click parameter.
+        value: List of collections path separated by os.pathsep.
+
+    Returns:
+        Collections object from the paths.
+
+    Raises:
+        click.BadParameter: If the value is empty.
+    """
     if not value:
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
@@ -23,7 +39,15 @@ def collection_paths_to_collections(ctx, param, value):
     return collections
 
 
-def check_services_cleanliness(cluster_variables):
+def check_services_cleanliness(cluster_variables: ClusterVariables) -> None:
+    """Check that all services are in a clean state.
+
+    Args:
+        cluster_variables: Instance of ClusterVariables.
+
+    Raises:
+        click.ClickException: If some services are in a dirty state.
+    """
     unclean_services = [
         service_variables.name
         for service_variables in cluster_variables.values()
@@ -82,7 +106,6 @@ def mock_deploy(fun: FC) -> FC:
 
 
 def run_directory(func: FC) -> FC:
-
     return click.option(
         "--run-directory",
         envvar="TDP_RUN_DIRECTORY",

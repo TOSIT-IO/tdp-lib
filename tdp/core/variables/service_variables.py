@@ -2,15 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
+from typing import Dict, Iterator, List, Union
 
 import jsonschema
 from jsonschema import exceptions, validators
 
 from tdp.core.collection import YML_EXTENSION
+from tdp.core.dag import Dag
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH, Operation
+from tdp.core.repository.repository import Repository
 
 from .variables import Variables, VariablesDict, is_object
 
@@ -18,6 +22,8 @@ logger = logging.getLogger("tdp").getChild("service_variables")
 
 
 class InvalidSchema(Exception):
+    """Schema is invalid."""
+
     def __init__(self, msg, filename, *args):
         self.msg = msg
         self.filename = filename
@@ -38,7 +44,25 @@ CustomValidator = validators.extend(
 
 
 class ServiceVariables:
-    def __init__(self, service_name, repository, schema):
+    """Variables of a service.
+
+    Attributes:
+        name: Service name.
+        repository: Repository of the service.
+        schema: Schema for the service.
+    """
+
+    def __init__(self, service_name: str, repository: Repository, schema: dict):
+        """Initialize a ServiceVariables object.
+
+        Args:
+            service_name: Service name.
+            repository: Repository of the service.
+            schema: Schema for the service.
+
+        Raises:
+            ValueError: If the service name is longer than SERVICE_NAME_MAX_LENGTH.
+        """
         if len(service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
@@ -46,52 +70,88 @@ class ServiceVariables:
         self._schema = schema
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """Name of the service."""
         return self._name
 
     @property
-    def repository(self):
+    def repository(self) -> Repository:
+        """Repository of the service."""
         return self._repo
 
     @property
-    def schema(self):
+    def schema(self) -> dict:
+        """Schema of the service."""
         return self._schema
 
     @property
-    def version(self):
+    def version(self) -> str:
+        """Version of the service configuration."""
         return self.repository.current_version()
 
     @property
-    def clean(self):
+    def clean(self) -> bool:
+        """Whether the service repository is clean."""
         return self.repository.is_clean()
 
     @property
-    def path(self):
+    def path(self) -> Path:
+        """Path of the service repository."""
         return self.repository.path
 
-    def get_variables(self, component):
-        """Return copy of the variables"""
-        component_path = self._repo.path / (component + YML_EXTENSION)
+    # TODO: rename to `get_component_variables`
+    def get_variables(self, component_name: str) -> Dict:
+        """Get the variables for a component.
+
+        Args:
+            component_name: Name of the component.
+
+        Returns:
+            Copy of the variables of the component.
+        """
+        component_path = self._repo.path / (component_name + YML_EXTENSION)
         if not component_path.exists():
             return None
         with Variables(component_path).open("r") as variables:
             return variables.copy()
 
     # TODO: move this function outside of this class, or move the dag part
-    def get_component_name(self, dag, component):
+    def get_component_name(self, dag: Dag, component_name: str) -> str:
+        """Get the full component name.
+
+        Args:
+            dag: Dag instance.
+            component_name: Name of the component.
+
+        Returns:
+            <service_name>_<component_name>
+
+        Raises:
+            ValueError: If component does not exist.
+        """
         operations_filtered = list(
             filter(
-                lambda operation: operation.component_name == component,
+                lambda operation: operation.component == component_name,
                 dag.services_operations[self.name],
             )
         )
         if operations_filtered:
             operation = operations_filtered[0]
-            return self.name + "_" + operation.component_name
-        raise ValueError(f"Service {self.name} does not have a component {component}")
+            return self.name + "_" + operation.component
+        raise ValueError(
+            f"Service {self.name} does not have a component {component_name}"
+        )
 
-    def update_from_variables_folder(self, message, tdp_vars_overrides):
-        override_files = list(tdp_vars_overrides.glob("*" + YML_EXTENSION))
+    def update_from_variables_folder(
+        self, message: str, tdp_vars_overrides: Union[str, os.PathLike]
+    ) -> None:
+        """Update the variables repository from an overrides file.
+
+        Args:
+            message: Validation message.
+            tdp_vars_overrides: Overrides file path.
+        """
+        override_files = list(Path(tdp_vars_overrides).glob("*" + YML_EXTENSION))
         service_files_to_open = [override_file.name for override_file in override_files]
         with self.open_var_files(f"{message}", service_files_to_open) as configurations:
             for file in override_files:
@@ -100,16 +160,23 @@ class ServiceVariables:
                     configurations[file.name].merge(variables)
 
     @contextmanager
-    def _open_var_file(self, path, fail_if_does_not_exist=False):
-        """Returns a Variables object managed, simplyfing use.
+    def _open_var_file(
+        self, path: Union[str, os.PathLike], fail_if_does_not_exist: bool = False
+    ) -> Variables:
+        """Context manager to facilitate the opening a variables file.
 
-        Returns a Variables object automatically closed when parent context manager closes it.
+        Provides a Variables object automatically closed when parent context manager closes it.
+
         Args:
-            path ([PathLike]): Path to open as a Variables file.
-            fail_if_does_not_exist ([bool]): Whether or not the function should raise an error when file does not exist
+            path: Path of the variables file to open.
+            fail_if_does_not_exist: Whether or not the function should raise an error when file does not exist.
+
         Yields:
-            [Proxy[Variables]]: A weakref of the Variables object, to prevent the creation of strong references
-                outside the caller's context
+            A weakref of the Variables object, to prevent the creation of strong references
+                outside the caller's context.
+
+        Raises:
+            ValueError: If the file does not exist and fail_if_does_not_exist is True.
         """
         path = self.path / path
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -121,16 +188,21 @@ class ServiceVariables:
             yield variables
 
     @contextmanager
-    def open_var_files(self, message, paths, fail_if_does_not_exist=False):
-        """Returns an OrderedDict of dict[path] = Variables object
+    def open_var_files(
+        self, message: str, paths: List[str], fail_if_does_not_exist: bool = False
+    ) -> Iterator[
+        Dict[str, Variables]
+    ]:  # TODO: Transform Dict to OrderedDict with python>3.6
+        """Open variables files.
 
         Adds the underlying files for validation.
+
         Args:
-            paths ([List[PathLike]]): List of paths to open
+            message: Validation message.
+            paths: List of paths to open.
 
         Yields:
-            [OrderedDict[PathLike, Variables]]: Returns an OrderedDict where keys
-                are sorted by the order of the input paths
+            Variables as an OrderedDict where keys are sorted by the order of the input paths.
         """
         with self.repository.validate(message), ExitStack() as stack:
             yield OrderedDict(
@@ -145,14 +217,14 @@ class ServiceVariables:
             stack.close()
             self.repository.add_for_validation(paths)
 
-    def components_modified(self, dag, version):
-        """get a list of operations that modified components since version
+    def components_modified(self, dag: Dag, version: str) -> List[Operation]:
+        """Get a list of operations that modified components since the given version.
 
         Args:
-            version (str): how far to look
+            version: How far to look.
 
         Returns:
-            List[Operation]: operations that modified components
+            Operations that modified components.
         """
         files_modified = self._repo.files_modified(version)
         components_modified = set()
@@ -171,13 +243,27 @@ class ServiceVariables:
                 components_modified.add(operation)
         return list(components_modified)
 
-    def validate_schema(self, variables, schema):
+    def validate_schema(self, variables: Variables, schema: dict) -> None:
+        """Validate variables against a schema.
+
+        Args:
+            variables: Variables to validate.
+            schema: Schema to validate against.
+
+        Raises:
+            InvalidSchema: If the schema is invalid.
+        """
         try:
             jsonschema.validate(variables, schema, CustomValidator)
         except exceptions.ValidationError as e:
             raise InvalidSchema("Schema is invalid", variables.name) from e
 
-    def validate(self):
+    def validate(self) -> None:
+        """Validates the service schema.
+
+        Raises:
+            InvalidSchema: If the schema is invalid.
+        """
         service_variables = VariablesDict({})
         sorted_paths = sorted(self.path.glob("*" + YML_EXTENSION))
         for path in sorted_paths:

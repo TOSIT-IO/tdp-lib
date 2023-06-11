@@ -2,19 +2,31 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+import os
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Dict, Iterable
+from typing import Mapping as MappingType
+from typing import Optional, Union
 
+from tdp.core.collections import Collections
 from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import NoVersionYet, EmptyCommit
+from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
 
 from .service_variables import ServiceVariables
 
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 
 
-class ClusterVariables(Mapping):
-    def __init__(self, service_variables_dict):
+class ClusterVariables(MappingType[str, ServiceVariables]):
+    """Mapping of service names with their ServiceVariables instance."""
+
+    def __init__(self, service_variables_dict: Dict[str, ServiceVariables]):
+        """Initialize a ClusterVariables object.
+
+        Args:
+            service_variables_dict: Dictionary of service name to ServiceVariables instance.
+        """
         self._service_variables_dict = service_variables_dict
 
     def __getitem__(self, key):
@@ -28,25 +40,27 @@ class ClusterVariables(Mapping):
 
     @staticmethod
     def initialize_cluster_variables(
-        collections,
-        tdp_vars,
-        override_folders=None,
-        repository_class=GitRepository,
-        validate=False,
-    ):
-        """get an instance of ClusterVariables, initialize all services if needed
+        collections: "Collections",
+        tdp_vars: Union[str, os.PathLike],
+        override_folders: Iterable[Optional[Union[str, os.PathLike]]] = None,
+        repository_class: "Repository" = GitRepository,
+        validate: bool = False,
+    ) -> "ClusterVariables":
+        """Get an instance of ClusterVariables, initialize services repositories if needed.
 
         Args:
-            collections (Collections): instance of collections
-            tdp_vars (Union[str, Path]): path to the tdp vars
-            override_folders (Iterable[str | Path]): list of path(s) of tdp vars overrides
+            collections: instance of Collections.
+            tdp_vars: Path to the tdp_vars directory.
+            override_folders: list of path(s) of tdp vars overrides.
+            repository_class: instance of the type of Repository used.
+            validate: Whether or not to validate the services schemas.
 
         Returns:
-            ClusterVariables: mapping of service with their ServiceVariables instance
+            Mapping of service names with their ServiceVariables instance.
         """
         if override_folders is None:
             override_folders = []
-        
+
         tdp_vars = Path(tdp_vars)
 
         cluster_variables = {}
@@ -108,22 +122,27 @@ class ClusterVariables(Mapping):
 
         cluster_variables = ClusterVariables(cluster_variables)
         if validate:
-            cluster_variables.validate()
+            cluster_variables._validate_services_schemas()
 
         return cluster_variables
 
     @staticmethod
     def get_cluster_variables(
-        collections, tdp_vars, repository_class=GitRepository, validate=False
+        collections: "Collections",
+        tdp_vars: Union[str, os.PathLike],
+        repository_class: "Repository" = GitRepository,
+        validate: bool = False,
     ):
-        """get an instance of ClusterVariables
+        """Get an instance of ClusterVariables.
 
         Args:
-            collections (Collections): instance of collections
-            tdp_vars (PathLike): path of the tdp vars
+            collections: Instance of Collections.
+            tdp_vars: Path to the tdp_vars directory.
+            repository_class: Instance of the type of repositories used.
+            validate: Whether or not to validate the services schemas.
 
         Returns:
-            ClusterVariables: mapping of service with their ServiceVariables instance
+            Mapping of service names with their ServiceVariables instance.
         """
         cluster_variables = {}
 
@@ -139,10 +158,11 @@ class ClusterVariables(Mapping):
         cluster_variables = ClusterVariables(cluster_variables)
 
         if validate:
-            cluster_variables.validate()
+            cluster_variables._validate_services_schemas()
 
         return cluster_variables
 
-    def validate(self):
+    def _validate_services_schemas(self):
+        """Validate all services schemas."""
         for service in self.values():
             service.validate()

@@ -4,7 +4,12 @@
 import logging
 from datetime import datetime
 
+from tdp.core.collections import Collections
+from tdp.core.deployment import DeploymentPlan
+from tdp.core.deployment.executor import Executor
 from tdp.core.models import DeploymentLog, OperationLog, StateEnum
+from tdp.core.operation import Operation
+from tdp.core.variables import ClusterVariables
 
 from .deployment_iterator import DeploymentIterator
 
@@ -12,12 +17,34 @@ logger = logging.getLogger("tdp").getChild("deployment_runner")
 
 
 class DeploymentRunner:
-    def __init__(self, collections, executor, cluster_variables):
+    """Allows to get an iterator from a deployment plan."""
+
+    def __init__(
+        self,
+        collections: Collections,
+        executor: Executor,
+        cluster_variables: ClusterVariables,
+    ):
+        """Deployment runner.
+
+        Args:
+            collections: Collections object.
+            executor: Executor object.
+            cluster_variables: ClusterVariables object.
+        """
         self._collections = collections
         self._executor = executor
         self._cluster_variables = cluster_variables
 
-    def _run_operation(self, operation):
+    def _run_operation(self, operation: Operation) -> OperationLog:
+        """Run operation.
+
+        Args:
+            operation: Operation to be run.
+
+        Returns:
+            OperationLog object with the operation's logs.
+        """
         logger.debug(f"Running operation {operation.name}")
 
         start = datetime.utcnow()
@@ -44,7 +71,15 @@ class DeploymentRunner:
             logs=logs,
         )
 
-    def run(self, deployment_plan):
+    def run(self, deployment_plan: DeploymentPlan) -> DeploymentIterator:
+        """Provides an iterator to run a deployment plan.
+
+        Args:
+            deployment_plan: Deployment plan to be run.
+
+        Returns:
+            DeploymentIterator object.
+        """
         deployment_log = DeploymentLog(
             state=StateEnum.PENDING,
             **deployment_plan.deployment_args,

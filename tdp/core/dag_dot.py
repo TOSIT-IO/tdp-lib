@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import List
+
 import networkx as nx
 
 from tdp.core.operation import Operation
@@ -8,7 +10,19 @@ from tdp.core.operation import Operation
 
 # Needed :
 #   pip install pydot
-def to_pydot(graph, nodes_to_color=None, cluster_service=False):
+def to_pydot(
+    graph: nx.DiGraph, nodes_to_color: List[str] = None, cluster_service: bool = False
+):
+    """Convert a graph to a pydot graph.
+
+    Args:
+        graph: Graph to convert.
+        nodes_to_color: List of nodes to color.
+        cluster_service: Whether or not to cluster service nodes.
+
+    Returns:
+        Pydot graph.
+    """
     if not nodes_to_color:
         nodes_to_color = []
     pydot_graph = nx.nx_pydot.to_pydot(graph)
@@ -61,7 +75,12 @@ def to_pydot(graph, nodes_to_color=None, cluster_service=False):
 # Needed :
 #   pip install matplotlib
 #   apt install graphviz
-def show(graph, *args, **kwargs):
+def show(graph: nx.DiGraph, *args, **kwargs):
+    """Show a graph.
+
+    Args:
+        graph: Graph to show.
+    """
     if isinstance(graph, nx.classes.Graph):
         graph = to_pydot(graph, *args, **kwargs)
 

@@ -14,9 +14,11 @@ import fnmatch
 import functools
 import logging
 import re
+from typing import Dict, List
 
 import networkx as nx
 
+from tdp.core.collections import Collections
 from tdp.core.operation import Operation
 
 logger = logging.getLogger("tdp").getChild("dag")
@@ -48,10 +50,11 @@ class IllegalNodeError(Exception):
 class Dag:
     """Generate DAG with operations' dependencies"""
 
-    def __init__(self, collections):
-        """
-        :param collections: Collections object
-        :type collections: Collections
+    def __init__(self, collections: Collections):
+        """Initialize a DAG instance from a Collections.
+
+        Args:
+            collections: Collections instance.
         """
         self._collections = collections
         self._operations = None
@@ -61,16 +64,18 @@ class Dag:
         self._services_operations = None
 
     @property
-    def collections(self):
+    def collections(self) -> Collections:
+        """Collections instance."""
         return self._collections
 
     @collections.setter
-    def collections(self, collections):
+    def collections(self, collections: Collections) -> None:
         self._collections = collections
         del self.operations
 
     @property
-    def operations(self):
+    def operations(self) -> Dict[str, Operation]:
+        """DAG operations dictionary."""
         if self._operations is not None:
             return self._operations
 
@@ -79,18 +84,20 @@ class Dag:
         return self._operations
 
     @operations.setter
-    def operations(self, value):
+    def operations(self, value: Dict[str, Operation]) -> None:
+        """Set operations and reset graph, services_operations and services."""
         self._operations = value
         del self.graph
         del self.services_operations
         del self.services
 
     @operations.deleter
-    def operations(self):
+    def operations(self) -> None:
         self.operations = None
 
     @property
-    def services_operations(self):
+    def services_operations(self) -> Dict[str, Operation]:
+        """DAG operations dictionary grouped by service."""
         if self._services_operations is None:
             self._services_operations = {}
             for operation in self.operations.values():
@@ -100,22 +107,24 @@ class Dag:
         return self._services_operations
 
     @services_operations.deleter
-    def services_operations(self):
+    def services_operations(self) -> None:
         self._services_operations = None
         del self.services
 
     @property
-    def services(self):
+    def services(self) -> List[str]:
+        """List of services in the DAG."""
         if self._services is None:
             self._services = list(self.services_operations.keys())
         return self._services
 
     @services.deleter
-    def services(self):
+    def services(self) -> None:
         self._services = None
 
     @property
-    def graph(self):
+    def graph(self) -> nx.DiGraph:
+        """DAG graph."""
         if self._graph is not None:
             return self._graph
 
@@ -136,26 +145,37 @@ class Dag:
             raise ValueError("Not a DAG")
 
     @graph.setter
-    def graph(self, value):
+    def graph(self, value: nx.DiGraph) -> None:
         self._graph = value
 
     @graph.deleter
-    def graph(self):
+    def graph(self) -> None:
         self.graph = None
 
-    def topological_sort(self, nodes=None, restart=False):
+    def topological_sort(
+        self, nodes: List[str] = None, restart: bool = False
+    ) -> List[str]:
+        """Perform a topological sort on the DAG.
+
+        Args:
+            nodes: List of nodes to sort.
+            restart: If True, restart operations are returned instead of start operations.
+
+        Returns:
+            List of operations sorted topologically.
+        """
         graph = self.graph
         if nodes:
             graph = self.graph.subgraph(nodes)
 
-        def custom_key(node):
+        def custom_key(node: str) -> str:
             operation = self.operations[node]
             operation_priority = SERVICE_PRIORITY.get(
                 operation.service_name, DEFAULT_SERVICE_PRIORITY
             )
             return f"{operation_priority:02d}_{node}"
 
-        def to_operation(node):
+        def to_operation(node: str) -> Operation:
             try:
                 operation = self.collections.operations[node]
             except KeyError as e:
@@ -186,14 +206,21 @@ class Dag:
             )
         )
 
-    def get_operations(self, sources=None, targets=None, restart=False):
+    def get_operations(
+        self,
+        sources: List[str] = None,
+        targets: List[str] = None,
+        restart: bool = False,
+    ) -> List[Operation]:
         if sources:
             return self.get_operations_from_nodes(sources, restart)
         elif targets:
             return self.get_operations_to_nodes(targets, restart)
         return self.get_all_operations(restart)
 
-    def get_operations_to_nodes(self, nodes, restart=False):
+    def get_operations_to_nodes(
+        self, nodes: List[str], restart: bool = False
+    ) -> List[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -201,7 +228,9 @@ class Dag:
             nodes_set.update(nx.ancestors(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
-    def get_operations_from_nodes(self, nodes, restart=False):
+    def get_operations_from_nodes(
+        self, nodes: List[str], restart: bool = False
+    ) -> List[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -209,7 +238,7 @@ class Dag:
             nodes_set.update(nx.descendants(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
-    def get_all_operations(self, restart=False):
+    def get_all_operations(self, restart: bool = False) -> List[Operation]:
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
@@ -217,14 +246,18 @@ class Dag:
         """
         return self.topological_sort(self.graph, restart)
 
-    def filter_operations_glob(self, operations, glob):
+    def filter_operations_glob(
+        self, operations: List[Operation], glob: str
+    ) -> List[Operation]:
         return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
 
-    def filter_operations_regex(self, operations, regex):
+    def filter_operations_regex(
+        self, operations: List[Operation], regex: str
+    ) -> List[Operation]:
         compiled_regex = re.compile(regex)
         return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
 
-    def validate(self):
+    def validate(self) -> None:
         r"""Validation rules :
         - \*_start operations can only be required from within its own service
         - \*_install operations should only depend on other \*_install operations
@@ -236,7 +269,7 @@ class Dag:
         # value: set of available actions for the service
         services_actions = {}
 
-        def warning(collection_name, message):
+        def warning(collection_name: str, message: str) -> None:
             logger.warning(message + f", collection: {collection_name}")
 
         for operation_name, operation in self.operations.items():

@@ -9,7 +9,7 @@ from ansible.vars.manager import VariableManager
 from tdp.core.variables import Variables
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def dummy_inventory(tmp_path):
     group_vars = tmp_path / "group_vars"
     hdfs_vars = group_vars / "hdfs.yml"

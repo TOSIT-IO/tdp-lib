@@ -21,7 +21,7 @@ from tdp.core.models import FilterTypeEnum, StateEnum
 from tdp.core.variables import ClusterVariables
 
 
-def validate_filtertype(ctx, param, value):
+def validate_filtertype(ctx: click.Context, param: click.Parameter, value: str):
     if value is not None:
         return FilterTypeEnum[value]
     return value

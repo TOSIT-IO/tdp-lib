@@ -11,7 +11,6 @@ from tdp.cli.utils import collections
 from tdp.core.dag import Dag
 
 SHORT_DAG_SUMMARY = "Compute and display a graph."
-
 DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the nodes."
 
 

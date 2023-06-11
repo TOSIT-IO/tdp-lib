@@ -16,10 +16,10 @@ class DeploymentTypeEnum(str, enum.Enum):
     """Deployment type enum.
 
     Attributes:
-        DAG (str): Dag deployment type.
-        OPERATIONS (str): Operations deployment type.
-        RESUME (str): Resume deployment type.
-        RECONFIGURE (str): Reconfigure deployment type.
+        DAG: Dag deployment type.
+        OPERATIONS: Operations deployment type.
+        RESUME: Resume deployment type.
+        RECONFIGURE: Reconfigure deployment type.
     """
 
     DAG = "Dag"
@@ -32,8 +32,8 @@ class FilterTypeEnum(str, enum.Enum):
     """Filter type enum.
 
     Attributes:
-        REGEX (str): Regex filter type.
-        GLOB (str): Glob filter type.
+        REGEX: Regex filter type.
+        GLOB: Glob filter type.
     """
 
     REGEX = "regex"
@@ -43,16 +43,18 @@ class FilterTypeEnum(str, enum.Enum):
 class DeploymentLog(Base):
     """Deployment log model.
 
+    Hold past and current deployment information.
+
     Attributes:
         id (int): Deployment log id.
-        sources (list): List of source nodes, in the case of Dag deployment type.
-        targets (list): List of target nodes, in the case of Dag deployment type.
+        sources (List[str]): List of source nodes, in the case of Dag deployment type.
+        targets (List[str]): List of target nodes, in the case of Dag deployment type. List of operations, in the case of Run deployment type.
         filter_expression (str): Filter expression.
-        filter_type (enum): Filter type (regex or glob).
+        filter_type (FilterTypeEnum): Filter type.
         start_time (datetime): Deployment start time.
         end_time (datetime): Deployment end time.
-        state (enum): Deployment state (Success, Failure or Pending).
-        deployment_type (str): Deployment type (Dag, Operations, Resume or Reconfigure).
+        state (StateEnum): Deployment state.
+        deployment_type (DeploymentTypeEnum): Deployment type.
         restart (bool): Restart flag.
     """
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
+from typing import List
 
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
@@ -21,7 +22,36 @@ OPERATION_NAME_MAX_LENGTH = (
 
 
 class Operation:
-    def __init__(self, name, collection_name=None, depends_on=None, noop=False):
+    """A task that can be executed by Ansible.
+
+    The name of the operation is composed of the service name, the component name and
+    the action name (<service>_<component>_<action>). The component name is optional.
+
+    Args:
+        action: Name of the action.
+        name: Name of the operation.
+        collection_name: Name of the collection where the operation is defined.
+        component: Name of the component.
+        depends_on: List of operations that must be executed before this one.
+        noop: If True, the operation will not be executed.
+        service: Name of the service.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        collection_name: str = None,
+        depends_on: List[str] = None,
+        noop: bool = False,
+    ):
+        """Create a new Operation.
+
+        Args:
+            name: Name of the operation.
+            collection_name: Name of the collection where the operation is defined.
+            depends_on: List of operations that must be executed before this one.
+            noop: If True, the operation will not be executed.
+        """
         self.name = name
         self.collection_name = collection_name
         self.depends_on = depends_on or []
@@ -47,7 +77,7 @@ class Operation:
 
         if len(self.action_name) > ACTION_NAME_MAX_LENGTH:
             raise ValueError(
-                f"action {self.service_name} is longer than {ACTION_NAME_MAX_LENGTH}"
+                f"action {self.action_name} is longer than {ACTION_NAME_MAX_LENGTH}"
             )
 
         match = RE_GET_COMPONENT.search(self.name)

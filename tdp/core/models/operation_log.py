@@ -13,12 +13,14 @@ from .state_enum import StateEnum
 class OperationLog(Base):
     """Operation log model.
 
+    Hold past and current operation information linked to a deployment.
+
     Attributes:
         deployment_id (int): Deployment log id.
         operation (str): Operation name.
         start_time (datetime): Operation start time.
         end_time (datetime): Operation end time.
-        state (enum): Operation state (Success, Failure or Pending).
+        state (StateEnum): Operation state.
         logs (bytes): Operation logs.
     """
 

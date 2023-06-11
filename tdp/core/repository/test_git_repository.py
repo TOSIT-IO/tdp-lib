@@ -13,27 +13,29 @@ from tdp.core.repository.git_repository import (
 )
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def git_repository(tmp_path):
+    """Return a GitRepository instance."""
     git_repository = GitRepository.init(tmp_path)
 
     return git_repository
 
 
 # https://stackoverflow.com/a/40884093
-@pytest.fixture(scope="function")
+@pytest.fixture
 def git_commit_empty_tree():
+    """Return the hash of an empty tree commit."""
     return "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
 
-def test_git_repository_fails_if_path_is_not_a_git_repo(tmp_path):
+def test_git_repository_fails_if_path_is_not_a_git_repo(tmp_path: Path):
     with pytest.raises(NotARepository):
         git_repository = GitRepository(tmp_path)
         with git_repository.validate("test commit"):
             pass
 
 
-def test_git_repository_is_validated(git_repository):
+def test_git_repository_is_validated(git_repository: GitRepository):
     commit_message = "hive: update nb cores"
     group_vars = git_repository.path / "group_vars"
     hive_yml = "group_vars/hive.yml"
@@ -50,7 +52,7 @@ def test_git_repository_is_validated(git_repository):
         assert hive_yml in last_commit.stats.files
 
 
-def test_git_repository_multiple_validations(git_repository):
+def test_git_repository_multiple_validations(git_repository: GitRepository):
     group_vars = git_repository.path / "group_vars"
     group_vars.mkdir()
     file_list = [
@@ -77,7 +79,9 @@ def test_git_repository_multiple_validations(git_repository):
         assert set(file_list) == set(last_commit.stats.files)
 
 
-def test_git_repository_files_added(git_repository, git_commit_empty_tree):
+def test_git_repository_files_added(
+    git_repository: GitRepository, git_commit_empty_tree
+):
     file_list = [
         "foo",
         "bar",
@@ -96,7 +100,9 @@ def test_git_repository_files_added(git_repository, git_commit_empty_tree):
     )
 
 
-def test_git_repository_files_added_and_removed(git_repository, git_commit_empty_tree):
+def test_git_repository_files_added_and_removed(
+    git_repository: GitRepository, git_commit_empty_tree
+):
     file_list = [
         "foo",
         "bar",
@@ -117,7 +123,7 @@ def test_git_repository_files_added_and_removed(git_repository, git_commit_empty
     )
 
 
-def test_git_repository_file_updated(git_repository):
+def test_git_repository_file_updated(git_repository: GitRepository):
     file_list = [
         "foo",
         "bar",
@@ -144,7 +150,7 @@ def test_git_repository_file_updated(git_repository):
     )
 
 
-def test_git_repository_no_validation(git_repository):
+def test_git_repository_no_validation(git_repository: GitRepository):
     # first commit sets the value
     commit_message = "[HIVE] set nb cores"
     group_vars = git_repository.path / "group_vars"

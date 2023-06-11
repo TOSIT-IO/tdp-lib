@@ -1,14 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
+from typing import Iterator, List
 
-from tdp.core.models import ServiceComponentLog, StateEnum
-
-logger = logging.getLogger("tdp").getChild("deployment_iterator")
+from tdp.core.models import DeploymentLog, ServiceComponentLog, StateEnum
+from tdp.core.operation import Operation
+from tdp.core.variables import ClusterVariables
 
 
 class _Flags:
@@ -18,7 +18,30 @@ class _Flags:
 
 
 class DeploymentIterator(Iterator):
-    def __init__(self, log, operations, run_method, cluster_variables):
+    """Iterator that runs an operation at each iteration.
+
+    Attributes:
+        log: DeploymentLog object to update.
+        operations: List of operations to run.
+        run_method: Method to run the operation.
+        cluster_variables: ClusterVariables object.
+    """
+
+    def __init__(
+        self,
+        log: DeploymentLog,
+        operations: List[Operation],
+        run_method: callable,
+        cluster_variables: ClusterVariables,
+    ):
+        """Initialize the iterator.
+
+        Args:
+            log: DeploymentLog object to update.
+            operations: List of operations to run.
+            run_method: Method to run the operation.
+            cluster_variables: ClusterVariables object.
+        """
         self.log = log
         self._operations = operations
         self._run_operation = run_method
