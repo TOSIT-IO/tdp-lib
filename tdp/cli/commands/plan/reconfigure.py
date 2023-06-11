@@ -9,50 +9,33 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
-    dry,
-    mock_deploy,
-    run_directory,
     validate,
     vars,
 )
 from tdp.core.dag import Dag
 from tdp.core.deployment import (
-    AnsibleExecutor,
     DeploymentPlan,
-    DeploymentRunner,
     EmptyDeploymentPlanError,
     NothingToRestartError,
 )
-from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
+from tdp.core.models import DeploymentStateEnum, OperationLog, OperationStateEnum
 
 
 @click.command(short_help="Restart required TDP services")
-@dry
 @collections
 @database_dsn
-@mock_deploy
-@run_directory
 @validate
 @vars
 def reconfigure(
-    dry,
     collections,
     database_dsn,
-    mock_deploy,
-    run_directory,
     validate,
     vars,
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist")
     dag = Dag(collections)
-    run_directory = run_directory.absolute() if run_directory else None
-
-    ansible_executor = AnsibleExecutor(
-        run_directory=run_directory,
-        dry=dry or mock_deploy,
-    )
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
@@ -67,9 +50,6 @@ def reconfigure(
         )
         check_services_cleanliness(cluster_variables)
 
-        deployment_runner = DeploymentRunner(
-            collections, ansible_executor, cluster_variables
-        )
         try:
             deployment_plan = DeploymentPlan.from_reconfigure(
                 dag, cluster_variables, service_component_deployed_version
@@ -82,30 +62,6 @@ def reconfigure(
                 f"Component(s) don't have any operation associated to restart (excluding noop). Nothing to restart."
             )
 
-        deployment_iterator = deployment_runner.run(deployment_plan)
-        if dry:
-            for _ in deployment_iterator:
-                pass
-        else:
-            session.add(deployment_iterator.log)
-            # insert pending deployment log
-            session.commit()
-            for index, (operation_log, service_component_log) in enumerate(
-                deployment_iterator
-            ):
-                if operation_log is not None:
-                    operation_log.order = index
-                    session.add(operation_log)
-                if service_component_log is not None:
-                    session.add(service_component_log)
-                session.commit()
-            # notify sqlalchemy deployment log has been updated
-            session.merge(deployment_iterator.log)
-            session.commit()
-        if deployment_iterator.log.state != DeploymentStateEnum.SUCCESS:
-            raise click.ClickException(
-                (
-                    "Deployment didn't finish with success: "
-                    f"final state {deployment_iterator.log.state}"
-                )
-            )
+        deployment_log = deployment_plan.getDeploymentLog()
+        session.add(deployment_log)
+        session.commit()

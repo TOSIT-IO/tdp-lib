@@ -42,6 +42,7 @@ class DeploymentRunner:
             state = OperationStateEnum(state)
 
         return OperationLog(
+            order=1,
             operation=operation.name,
             start_time=start,
             end_time=end,
@@ -49,6 +50,7 @@ class DeploymentRunner:
             logs=logs,
         )
 
+    # TODO run doit prendre OperationLog en paramettre pour le mettre à jour. Et l'appelant doit enregistrer le résultat en base de données.
     def run(self, deployment_plan):
         deployment_log = DeploymentLog(
             state=DeploymentStateEnum.PENDING,

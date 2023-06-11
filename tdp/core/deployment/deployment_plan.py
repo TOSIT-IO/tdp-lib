@@ -1,7 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from tdp.core.models import DeploymentStateEnum, DeploymentTypeEnum, FilterTypeEnum
+from tdp.core.models import (
+    DeploymentStateEnum,
+    DeploymentTypeEnum,
+    FilterTypeEnum,
+    DeploymentLog,
+    OperationLog,
+    OperationStateEnum,
+)
 
 
 class EmptyDeploymentPlanError(Exception):
@@ -30,6 +37,15 @@ class DeploymentPlan:
     def __init__(self, operations, deployment_args):
         self.operations = operations
         self.deployment_args = deployment_args
+
+    def getDeploymentLog(self):
+        deployment_log = DeploymentLog(state=DeploymentStateEnum.PLANNED, **self.deployment_args)
+        for count, operation in enumerate(self.operations):
+            operation_log = OperationLog(
+                state=OperationStateEnum.PLANNED, operation=operation.name, order=count
+            )
+            deployment_log.operations.append(operation_log)
+        return deployment_log
 
     @staticmethod
     def from_dag(

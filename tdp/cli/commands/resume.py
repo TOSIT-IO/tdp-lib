@@ -80,8 +80,11 @@ def resume(
             session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation_log, service_component_log in deployment_iterator:
+            for index, (operation_log, service_component_log) in enumerate(
+                deployment_iterator
+            ):
                 if operation_log is not None:
+                    operation_log.index = index
                     session.add(operation_log)
                 if service_component_log is not None:
                     session.add(service_component_log)

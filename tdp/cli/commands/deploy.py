@@ -17,7 +17,7 @@ from tdp.cli.utils import (
 )
 from tdp.core.dag import Dag
 from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
-from tdp.core.models import DeploymentStateEnum, FilterTypeEnum
+from tdp.core.models import DeploymentStateEnum, FilterTypeEnum, OperationLog
 from tdp.core.variables import ClusterVariables
 
 
@@ -139,8 +139,11 @@ def deploy(
             session.add(deployment_iterator.log)
             # insert pending deployment log
             session.commit()
-            for operation_log, service_component_log in deployment_iterator:
+            for index, (operation_log, service_component_log) in enumerate(
+                deployment_iterator
+            ):
                 if operation_log is not None:
+                    operation_log.order = index
                     session.add(operation_log)
                 if service_component_log is not None:
                     session.add(service_component_log)

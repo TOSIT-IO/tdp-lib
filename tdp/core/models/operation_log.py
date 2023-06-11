@@ -25,7 +25,8 @@ class OperationLog(Base):
     __tablename__ = "operation_log"
 
     deployment_id = Column(Integer, ForeignKey("deployment_log.id"), primary_key=True)
-    operation = Column(String(length=NODE_NAME_MAX_LENGTH), primary_key=True)
+    order = Column(Integer, primary_key=True)
+    operation = Column(String(length=NODE_NAME_MAX_LENGTH))
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
     state = Column(Enum(OperationStateEnum))
