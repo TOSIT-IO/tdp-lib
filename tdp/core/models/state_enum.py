@@ -8,9 +8,9 @@ class StateEnum(str, Enum):
     """State enum.
 
     Attributes:
-        SUCCESS (str): Success state.
-        FAILURE (str): Failure state.
-        PENDING (str): Pending state.
+        SUCCESS: Success state.
+        FAILURE: Failure state.
+        PENDING: Pending state.
     """
 
     SUCCESS = "Success"
@@ -18,14 +18,14 @@ class StateEnum(str, Enum):
     PENDING = "Pending"
 
     @classmethod
-    def has_value(cls, value):
+    def has_value(cls, value: str) -> bool:
         """Check if value is a valid StateEnum value.
 
         Args:
-            value (str): Value to check.
+            value: Value to check.
 
         Returns:
-            bool: True if value is a valid StateEnum value, False otherwise.
+            True if value is a valid StateEnum value, False otherwise.
         """
         return isinstance(value, StateEnum) or value in (
             v.value for v in cls.__members__.values()

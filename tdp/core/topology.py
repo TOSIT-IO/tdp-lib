@@ -1,17 +1,21 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
+import os
+from typing import List, Union
 
 import ansible.constants as C
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 
-logger = logging.getLogger("tdp").getChild("topology")
-
 
 class AnsibleTopologyReader:
-    def __init__(self, hosts_files=None):
+    def __init__(self, hosts_files: List[Union[str, os.PathLike]] = None):
+        """Ansible topology reader.
+
+        Args:
+            hosts_files: List of hosts files to read.
+        """
         self._hosts_files = hosts_files
         self._loader = DataLoader()
 
@@ -27,10 +31,12 @@ class AnsibleTopologyReader:
                 loader=self._loader, sources=C.DEFAULT_HOST_LIST
             )
 
-    def get_hosts(self):
+    def get_hosts(self) -> List[str]:
+        """Get hosts from inventory."""
         return self._inventory.get_hosts()
 
-    def get_topology(self):
+    def get_topology(self) -> dict:
+        """Get topology from inventory."""
         return {
             group: self._inventory.get_groups_dict()[group]
             for group in DEFAULT_GROUPS_WHITELIST

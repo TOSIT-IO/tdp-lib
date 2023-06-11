@@ -1,8 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
-
 import pytest
 
 from tdp.core.models import DeploymentTypeEnum, StateEnum
@@ -10,8 +8,6 @@ from tdp.core.models import DeploymentTypeEnum, StateEnum
 from .deployment_plan import DeploymentPlan
 from .deployment_runner import DeploymentRunner
 from .executor import Executor
-
-logger = logging.getLogger("tdp").getChild("test_deployment_runner")
 
 
 class MockExecutor(Executor):

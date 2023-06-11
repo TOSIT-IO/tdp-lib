@@ -2,19 +2,22 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from abc import ABC, abstractmethod
+from typing import Tuple
+
+from tdp.core.models import StateEnum
 
 
 class Executor(ABC):
-    """An Executor is an object able to run an operation."""
+    """An Executor is an object able to run operations."""
 
     @abstractmethod
-    def execute(self, operation):
-        """Executes an operation
+    def execute(self, operation: str) -> Tuple[StateEnum, bytes]:
+        """Executes an operation.
 
         Args:
-            operation (str): Operation name
+            operation: Operation name.
 
         Returns:
-            Tuple[StateEnum, bytes]: Whether an operation is a success as well as its logs in UTF-8 bytes.
+            Whether an operation is a success as well as its logs in UTF-8 bytes.
         """
         pass

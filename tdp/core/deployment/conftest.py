@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pytest
-import yaml
 
 from tdp.conftest import generate_collection
 from tdp.core.collection import Collection
