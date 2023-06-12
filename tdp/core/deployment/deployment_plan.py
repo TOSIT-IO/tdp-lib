@@ -39,7 +39,9 @@ class DeploymentPlan:
         self.deployment_args = deployment_args
 
     def getDeploymentLog(self):
-        deployment_log = DeploymentLog(state=DeploymentStateEnum.PLANNED, **self.deployment_args)
+        deployment_log = DeploymentLog(
+            state=DeploymentStateEnum.PLANNED, **self.deployment_args
+        )
         for count, operation in enumerate(self.operations):
             operation_log = OperationLog(
                 state=OperationStateEnum.PLANNED, operation=operation.name, order=count

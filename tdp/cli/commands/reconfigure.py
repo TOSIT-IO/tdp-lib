@@ -3,7 +3,6 @@
 
 import click
 
-from tdp.cli.queries import get_latest_success_service_component_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -25,6 +24,8 @@ from tdp.core.deployment import (
 )
 from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
+
+from .utils import execute_get_latest_success_service_component_version_query
 
 
 @click.command(short_help="Restart required TDP services")
@@ -56,9 +57,9 @@ def reconfigure(
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        latest_success_service_component_version = session.execute(
-            get_latest_success_service_component_version_query()
-        ).all()
+        latest_success_service_component_version = (
+            execute_get_latest_success_service_component_version_query(session)
+        )
         service_component_deployed_version = map(
             lambda result: result[1:], latest_success_service_component_version
         )

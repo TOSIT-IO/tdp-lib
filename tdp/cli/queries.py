@@ -3,11 +3,12 @@
 
 from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.expression import Executable
+from tdp.core.models import DeploymentLog, ServiceComponentLog, OperationLog
 
-from tdp.core.models import DeploymentLog, ServiceComponentLog
 
-
-def get_latest_success_service_component_version_query():
+def get_latest_success_service_component_version_query() -> Executable:
+    """Returns a query that returns the latest successful deployment id for each service and component."""
     max_depid_label = f"max_{ServiceComponentLog.deployment_id.name}"
 
     latest_success_for_each_service = select(
@@ -53,8 +54,16 @@ def get_latest_success_service_component_version_query():
     )
 
 
-def get_deployment(session_class, deployment_id):
-    query = (
+def get_deployment_query(deployment_id: int) -> Executable:
+    """Get a deployment by its id.
+
+    Args:
+        deployment_id: The id of the deployment to get.
+
+    Returns:
+        The query to get the deployment.
+    """
+    return (
         select(DeploymentLog)
         .options(
             joinedload(DeploymentLog.service_components),
@@ -64,15 +73,33 @@ def get_deployment(session_class, deployment_id):
         .order_by(DeploymentLog.id)
     )
 
-    with session_class() as session:
-        deployment_log = session.execute(query).unique().scalar_one_or_none()
-        if deployment_log is None:
-            raise Exception(f"Deployment id {deployment_id} does not exist")
-        return deployment_log
+
+def get_deployments_query(limit: int, offset: int) -> Executable:
+    """Get a list of deployments.
+
+    Args:
+        limit: The maximum number of deployments to return.
+        offset: The offset at which to start the query.
+
+    Returns:
+        The query to get the deployments.
+    """
+    return (
+        select(DeploymentLog)
+        .options(joinedload(DeploymentLog.service_components))
+        .order_by(DeploymentLog.id)
+        .limit(limit)
+        .offset(offset)
+    )
 
 
-def get_last_deployment(session_class):
-    query = (
+def get_last_deployment_query() -> Executable:
+    """Get the last deployment.
+
+    Returns:
+        The query to get the last deployment.
+    """
+    return (
         select(DeploymentLog)
         .options(
             joinedload(DeploymentLog.service_components),
@@ -82,8 +109,28 @@ def get_last_deployment(session_class):
         .limit(1)
     )
 
-    with session_class() as session:
-        deployment_log = session.execute(query).unique().scalar_one_or_none()
-        if deployment_log is None:
-            raise Exception(f"No deployments")
-        return deployment_log
+
+def get_operation_log_query(deployment_id: int, operation_name: str) -> Executable:
+    """Get an operation log by its deployment id and operation name.
+
+    Args:
+        deployment_id: The id of the deployment.
+        operation_name: The name of the operation.
+
+    Returns:
+        The query to get the operation log.
+    """
+    return (
+        select(OperationLog)
+        .options(
+            joinedload(OperationLog.deployment),
+            joinedload("deployment.service_components"),
+        )
+        .where(
+            and_(
+                OperationLog.deployment_id == deployment_id,
+                OperationLog.operation == operation_name,
+            )
+        )
+        .order_by(OperationLog.start_time)
+    )

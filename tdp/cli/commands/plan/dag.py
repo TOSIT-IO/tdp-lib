@@ -12,7 +12,7 @@ from tdp.cli.utils import (
 )
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentPlan
-from tdp.core.models import DeploymentStateEnum, FilterTypeEnum, OperationLog
+from tdp.core.models import FilterTypeEnum
 
 
 def validate_filtertype(ctx, param, value):
@@ -71,9 +71,9 @@ def dag(
     database_dsn,
     vars,
 ):
-    # Check parameters
+
     if not vars.exists():
-        raise click.BadParameter(f"{vars} does not exist")
+        raise click.BadParameter(f"{vars} does not exist.")
     dag = Dag(collections)
     set_nodes = set()
     if sources:
@@ -82,17 +82,18 @@ def dag(
     if targets:
         targets = targets.split(",")
         set_nodes.update(targets)
+
     set_difference = set_nodes.difference(dag.operations)
     if set_difference:
-        raise click.BadParameter(f"{set_difference} are not valid nodes")
+        raise click.BadParameter(f"{set_difference} are not valid nodes.")
 
-    # Generate DeploymentLog from a DeploymentPlan
     if sources:
-        click.echo(f"Deploying from {sources}")
+        click.echo(f"Generate plan from {sources}.")
     elif targets:
-        click.echo(f"Deploying to {targets}")
+        click.echo(f"Generate plan to {targets}.")
     else:
-        click.echo(f"Deploying TDP")
+        click.echo(f"Generate plan for the whole DAG.")
+
     try:
         deployment_plan = DeploymentPlan.from_dag(
             dag,
@@ -106,7 +107,6 @@ def dag(
         raise click.ClickException(str(e)) from e
     deployment_log = deployment_plan.getDeploymentLog()
 
-    # Persist the deployment_log in the database
     session_class = get_session_class(database_dsn)
     with session_class() as session:
         session.add(deployment_log)

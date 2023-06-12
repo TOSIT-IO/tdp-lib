@@ -3,13 +3,16 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+from typing import List
 
 import click
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 from tabulate import tabulate
 
-from tdp.cli.queries import get_deployment
+from .utils import (
+    execute_get_deployment_query,
+    execute_get_deployments_query,
+    execute_get_operation_log_query,
+)
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
@@ -38,53 +41,37 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 @database_dsn
 def browse(deployment_id, operation, limit, offset, database_dsn):
     session_class = get_session_class(database_dsn)
-    try:
-        if not deployment_id:
-            print_formatted_deployments(get_deployments(session_class, limit, offset))
-        else:
-            if not operation:
-                print_formatted_deployment(get_deployment(session_class, deployment_id))
+    with session_class() as session:
+        try:
+            if not deployment_id:
+                deployments = execute_get_deployments_query(session, limit, offset)
+                print_formatted_deployments(deployments)
             else:
-                print_formatted_operation_log(
-                    get_operation_log(session_class, deployment_id, operation)
-                )
-    except Exception as e:
-        raise click.ClickException(str(e)) from e
+                if not operation:
+                    deployment = execute_get_deployment_query(session, deployment_id)
+                    print_formatted_deployment(deployment)
+                else:
+                    operation_log = execute_get_operation_log_query(
+                        session, deployment_id, operation
+                    )
+                    print_formatted_operation_log(operation_log)
+        except Exception as e:
+            raise click.ClickException(str(e)) from e
 
 
-def get_deployments(session_class, limit, offset):
-    query = (
-        select(DeploymentLog)
-        .options(joinedload(DeploymentLog.service_components))
-        .order_by(DeploymentLog.id)
-        .limit(limit)
-        .offset(offset)
-    )
-    with session_class() as session:
-        return session.execute(query).unique().scalars().fetchall()
+def print_formatted_deployments(deployments: List[DeploymentLog]) -> None:
+    """Prints a list of deployments in a formatted table.
 
+    Args:
+        deployments: List of deployments to print.
 
-def get_operation_log(session_class, deployment_id, operation):
-    query = (
-        select(OperationLog)
-        .options(
-            joinedload(OperationLog.deployment),
-            joinedload("deployment.service_components"),
-        )
-        .where(OperationLog.deployment_id == deployment_id)
-        .where(OperationLog.operation == operation)
-        .order_by(OperationLog.start_time)
-    )
-    with session_class() as session:
-        operation_log = session.execute(query).unique().scalar_one_or_none()
-        if operation_log is None:
-            raise ValueError(
-                f"Operation {operation} does exist in deployment {deployment_id}"
-            )
-        return operation_log
-
-
-def print_formatted_deployments(deployments):
+    Examples:
+        >>> print_formatted_deployments([DeploymentLog(...)])
+        Deployments:
+        id  state  created_at  updated_at  sources  targets  service_components
+        --  -----  ----------  ----------  -------  -------  -------------------
+        1   FAILED  2021-01-01  2021-01-01  None     None     None
+    """
     headers = DeploymentLog.__table__.columns.keys() + [
         str(DeploymentLog.service_components).split(".")[1]
     ]
@@ -100,7 +87,19 @@ def print_formatted_deployments(deployments):
     )
 
 
-def print_formatted_deployment(deployment_log):
+def print_formatted_deployment(deployment_log: DeploymentLog) -> None:
+    """Prints a deployment in a formatted table.
+
+    Args:
+        deployment_log: Deployment to print.
+
+    Examples:
+        >>> print_formatted_deployment(DeploymentLog(...))
+        Deployment:
+        id  state  created_at  updated_at  sources  targets  service_components
+        --  -----  ----------  ----------  -------  -------  -------------------
+        1   FAILED  2021-01-01  2021-01-01  None     None     None
+    """
     deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
     operation_headers = OperationLog.__table__.columns.keys()
     service_headers = ServiceComponentLog.__table__.columns.keys()
@@ -138,7 +137,23 @@ def print_formatted_deployment(deployment_log):
     )
 
 
-def print_formatted_operation_log(operation_log):
+def print_formatted_operation_log(operation_log: OperationLog) -> None:
+    """Prints an operation log in a formatted table.
+
+    Args:
+        operation_log: Operation log to print.
+
+    Examples:
+        >>> print_formatted_operation_log(OperationLog(...))
+        Service:
+        id  service  component  version  created_at  updated_at
+        --  -------  ---------  -------  ----------  ----------
+        1   service  component  1.0.0    2021-01-01  2021-01-01
+        Operation:
+        id  deployment_id  operation  state  created_at  updated_at  logs
+        --  -------------  ---------  -----  ----------  ----------  ----
+        1   1              operation  FAILED  2021-01-01  2021-01-01  None
+    """
     headers = OperationLog.__table__.columns.keys()
     service_headers = ServiceComponentLog.__table__.columns.keys()
     # TODO: this outputs Service and ServiceComponent version when it should
@@ -168,17 +183,51 @@ def print_formatted_operation_log(operation_log):
         )
 
 
-def translate_timezone(timestamp):
+def translate_timezone(timestamp: datetime) -> datetime:
+    """Translates a timestamp from UTC to the local timezone.
+
+    Args:
+        timestamp: Timestamp to translate.
+
+    Returns:
+        Translated timestamp.
+    """
     return timestamp.replace(tzinfo=timezone.utc).astimezone(LOCAL_TIMEZONE)
 
 
-def format_service_component(service_component_log):
+def format_service_component(service_component_log: ServiceComponentLog) -> str:
+    """Formats a service component log into a string.
+
+    Args:
+        service_component_log: Service component log to format.
+
+    Returns:
+        Formatted service component log.
+
+    Examples:
+        >>> format_service_component(ServiceComponentLog(...))
+        "service_component"
+    """
     if service_component_log.component is None:
         return service_component_log.service
     return f"{service_component_log.service}_{service_component_log.component}"
 
 
-def format_deployment_log(deployment_log, headers):
+def format_deployment_log(deployment_log: DeploymentLog, headers: List[str]) -> dict:
+    """Formats a deployment log into a dictionary.
+
+    Args:
+        deployment_log: Deployment log to format.
+        headers: Headers to include in the formatted deployment log.
+
+    Returns:
+        Formatted deployment log.
+
+    Examples:
+        >>> format_deployment_log(DeploymentLog(...), ["id", "state"])
+        {"id": 1, "state": "FAILED"}
+    """
+
     def custom_format(key, value):
         if key in ["sources", "targets"] and value is not None:
             if len(value) > 2:
@@ -209,7 +258,21 @@ def format_deployment_log(deployment_log, headers):
     return {key: custom_format(key, getattr(deployment_log, key)) for key in headers}
 
 
-def format_operation_log(operation_log, headers):
+def format_operation_log(operation_log: OperationLog, headers: List[str]) -> dict:
+    """Formats an operation log into a dictionary.
+
+    Args:
+        operation_log: Operation log to format.
+        headers: Headers to include in the formatted operation log.
+
+    Returns:
+        Formatted operation log.
+
+    Examples:
+        >>> format_operation_log(OperationLog(...), ["id", "operation"])
+        {"id": 1, "operation": "operation"}
+    """
+
     def custom_format(key, value):
         if key == "logs":
             return str(value[:40])
@@ -223,7 +286,23 @@ def format_operation_log(operation_log, headers):
     return {key: custom_format(key, getattr(operation_log, key)) for key in headers}
 
 
-def format_service_component_log(service_component_log, headers):
+def format_service_component_log(
+    service_component_log: ServiceComponentLog, headers: List[str]
+) -> dict:
+    """Formats a service component log into a dictionary.
+
+    Args:
+        service_component_log: Service component log to format.
+        headers: Headers to include in the formatted service component log.
+
+    Returns:
+        Formatted service component log.
+
+    Examples:
+        >>> format_service_component_log(ServiceComponentLog(...), ["id", "version"])
+        {"id": 1, "version": "1.0.0"}
+    """
+
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])

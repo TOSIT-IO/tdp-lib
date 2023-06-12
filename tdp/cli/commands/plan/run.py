@@ -24,29 +24,26 @@ def run(
     database_dsn,
     vars,
 ):
-    # Check parameters
     if not vars.exists():
-        raise click.BadParameter(f"{vars} does not exist")
+        raise click.BadParameter(f"{vars} does not exist.")
     dag = Dag(collections)
 
     operations = []
     for operation_name in operation_names:
         operation = dag.collections.operations.get(operation_name, None)
         if not operation:
-            raise click.BadParameter(f"{operation_name} is not a valid operation")
+            raise click.BadParameter(f"{operation_name} is not a valid operation.")
 
         if operation.noop:
             raise click.BadParameter(
                 f"{operation_name} is tagged as noop and thus"
-                " cannot be executed in an unitary deployment"
+                " cannot be executed in an unitary deployment."
             )
         operations.append(operation)
 
-    # Generate DeploymentLog from a DeploymentPlan
     deployment_plan = DeploymentPlan.from_operations(operations)
     deployment_log = deployment_plan.getDeploymentLog()
 
-    # Persist the deployment_log in the database
     session_class = get_session_class(database_dsn)
     with session_class() as session:
         session.add(deployment_log)

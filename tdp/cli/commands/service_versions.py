@@ -4,10 +4,11 @@
 import click
 from tabulate import tabulate
 
-from tdp.cli.queries import get_latest_success_service_component_version_query
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import ServiceComponentLog
+
+from .utils import execute_get_latest_success_service_component_version_query
 
 
 @click.command(
@@ -21,9 +22,9 @@ def service_versions(database_dsn):
     session_class = get_session_class(database_dsn)
 
     with session_class() as session:
-        latest_success_service_version = session.execute(
-            get_latest_success_service_component_version_query()
-        ).all()
+        latest_success_service_version = (
+            execute_get_latest_success_service_component_version_query(session)
+        )
 
         click.echo(
             "Service versions:\n"

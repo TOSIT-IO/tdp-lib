@@ -4,7 +4,6 @@
 
 import click
 
-from tdp.cli.queries import get_deployment, get_last_deployment
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -20,6 +19,7 @@ from tdp.core.dag import Dag
 from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
 from tdp.core.models.state_enum import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
+from .utils import execute_get_last_deployment_query, execute_get_deployment_query
 
 
 @click.command(short_help="Resume a TDP deployment")
@@ -61,10 +61,10 @@ def resume(
             collections, ansible_executor, cluster_variables
         )
         if id is None:
-            deployment_log_to_resume = get_last_deployment(session_class)
+            deployment_log_to_resume = execute_get_last_deployment_query(session)
             click.echo(f"Resuming latest deployment")
         else:
-            deployment_log_to_resume = get_deployment(session_class, id)
+            deployment_log_to_resume = execute_get_deployment_query(session, id)
             click.echo(f"Resuming deployment #{id}")
         try:
             deployment_plan = DeploymentPlan.from_failed_deployment(
