@@ -82,6 +82,16 @@ def env(func: FC) -> FC:
     )(func)
 
 
+def force(func: FC) -> FC:
+    return click.option(
+        "--force",
+        is_flag=True,
+        show_default=True,
+        default=False,
+        help="Force modifying an already existing deployment plan",
+    )(func)
+
+
 def mock_deploy(func: FC) -> FC:
     return click.option(
         "--mock-deploy",
@@ -92,7 +102,6 @@ def mock_deploy(func: FC) -> FC:
 
 
 def run_directory(func: FC) -> FC:
-
     return click.option(
         "--run-directory",
         envvar="TDP_RUN_DIRECTORY",

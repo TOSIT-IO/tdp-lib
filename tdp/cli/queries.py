@@ -4,7 +4,11 @@
 from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import Executable
-from tdp.core.models import DeploymentLog, ServiceComponentLog, OperationLog
+from tdp.core.models import (
+    DeploymentLog,
+    ServiceComponentLog,
+    DeploymentStateEnum,
+)
 
 
 def get_latest_success_service_component_version_query() -> Executable:
@@ -133,4 +137,16 @@ def get_operation_log_query(deployment_id: int, operation_name: str) -> Executab
             )
         )
         .order_by(OperationLog.start_time)
+    )
+
+
+def get_planned_deployments_query() -> Executable:
+    """Get all planned deployments.
+
+    Returns:
+        The query to get all planned deployments.
+    """
+
+    return select(DeploymentLog).filter(
+        DeploymentLog.state == DeploymentStateEnum.PLANNED
     )

@@ -10,6 +10,7 @@ from tdp.cli.queries import (
     get_operation_log_query,
     get_last_deployment_query,
     get_latest_success_service_component_version_query,
+    get_planned_deployments_query,
 )
 
 
@@ -124,3 +125,21 @@ def execute_get_last_deployment_query(session: Session) -> DeploymentLog:
     if deployment is None:
         raise ValueError(f"No deployments found")
     return deployment
+
+
+def execute_get_planned_deployment_query(session: Session) -> DeploymentLog:
+    """Get a planned deployment.
+
+    Args:
+        session: The database session.
+
+    Returns:
+        A planned deployment or none.
+    """
+    deployments = session.execute(get_planned_deployments_query()).scalars().all()
+    if len(deployments) > 1:
+        raise ValueError(f"More than one planned deployment found")
+    if len(deployments) == 1:
+        return deployments[0]
+    else:
+        return None
