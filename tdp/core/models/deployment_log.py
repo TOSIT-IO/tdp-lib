@@ -72,7 +72,10 @@ class DeploymentLog(Base):
     restart = Column(Boolean, default=False)
 
     operations = relationship(
-        "OperationLog", back_populates="deployment", order_by="OperationLog.start_time"
+        "OperationLog",
+        back_populates="deployment",
+        order_by="OperationLog.start_time",
+        cascade="all, delete-orphan",
     )
     service_components = relationship(
         "ServiceComponentLog", back_populates="deployment"

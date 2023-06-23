@@ -212,7 +212,7 @@ def format_deployment_log(deployment_log, headers):
 def format_operation_log(operation_log, headers):
     def custom_format(key, value):
         if key == "logs":
-            return str(value[:40])
+            return "" if value is None else str(value[:40])
         elif isinstance(value, datetime):
             return translate_timezone(value)
         elif isinstance(value, Enum):

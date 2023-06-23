@@ -56,6 +56,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         version="1.0.0",
     )
     operation_log = OperationLog(
+        operation_order=1,
         deployment_id=deployment_log.id,
         operation="start_target1",
         start_time=datetime.utcnow(),
@@ -96,6 +97,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         assert result.service_components[0].version == "1.0.0"
 
         assert len(result.operations) == 1
+        assert result.operations[0].operation_order == 1
         assert result.operations[0].operation == "start_target1"
         assert result.operations[0].state == "Success"
         assert result.operations[0].logs == b"operation log"

@@ -3,13 +3,16 @@
 
 from typing import List
 
+from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.models import (
     DeploymentLog,
+    DeploymentStateEnum,
     DeploymentTypeEnum,
     FilterTypeEnum,
+    OperationLog,
+    OperationStateEnum,
     ServiceComponentLog,
-    DeploymentStateEnum,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -31,6 +34,10 @@ class UnsupportedDeploymentTypeError(Exception):
     pass
 
 
+class NotPlannedDeploymentError(Exception):
+    pass
+
+
 class GeneratedDeploymentPlanMissesOperationError(Exception):
     def __init__(self, message: str, reconstructed_operations: List[str]):
         super(Exception).__init__(message)
@@ -45,9 +52,29 @@ class DeploymentPlan:
         deployment_args: Deployment arguments.
     """
 
-    def __init__(self, operations: List[Operation], deployment_args: dict):
-        self.operations = operations
-        self.deployment_args = deployment_args
+    def __init__(self, operations: List[Operation], deployment_log: DeploymentLog):
+        self._operations = operations
+        self._deployment_log = deployment_log
+        self._deployment_log.operations = []
+        for count, operation in enumerate(self.operations, start=1):
+            operation_log = OperationLog(
+                state=OperationStateEnum.PLANNED,
+                operation=operation.name,
+                operation_order=count,
+            )
+            self._deployment_log.operations.append(operation_log)
+
+    @property
+    def deployment_log(self) -> DeploymentLog:
+        return self._deployment_log
+
+    @deployment_log.setter
+    def deployment_log(self, value: DeploymentLog) -> None:
+        self._deployment_log = value
+
+    @property
+    def operations(self) -> List[Operation]:
+        return self._operations
 
     @staticmethod
     def from_dag(
@@ -85,8 +112,9 @@ class DeploymentPlan:
                 "Combination of parameters resulted into an empty list of Operations (noop included)"
             )
 
-        deployment_args = dict(
+        deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.DAG,
+            state=DeploymentStateEnum.PLANNED,
             targets=targets,
             sources=sources,
             filter_expression=filter_expression,
@@ -94,7 +122,7 @@ class DeploymentPlan:
             restart=restart,
         )
 
-        return DeploymentPlan(operations, deployment_args)
+        return DeploymentPlan(operations, deployment_log)
 
     @staticmethod
     def from_operations(operations: List[Operation]) -> "DeploymentPlan":
@@ -103,11 +131,12 @@ class DeploymentPlan:
         Args:
             operations: List of operations to perform.
         """
-        deployment_args = dict(
+        deployment_log = DeploymentLog(
             targets=[operation.name for operation in operations],
             deployment_type=DeploymentTypeEnum.OPERATIONS,
+            state=DeploymentStateEnum.PLANNED,
         )
-        return DeploymentPlan(operations, deployment_args)
+        return DeploymentPlan(operations, deployment_log)
 
     @staticmethod
     def from_reconfigure(
@@ -152,17 +181,9 @@ class DeploymentPlan:
             filter_expression=r".+_(config|(re|)start)",
             filter_type=FilterTypeEnum.REGEX,
         )
-        deployment_plan.deployment_args[
-            "deployment_type"
-        ] = DeploymentTypeEnum.RECONFIGURE
+        deployment_plan.deployment_log.deployment_type = DeploymentTypeEnum.RECONFIGURE
 
-        return DeploymentPlan(
-            deployment_plan.operations,
-            {
-                **deployment_plan.deployment_args,
-                "deployment_type": DeploymentTypeEnum.RECONFIGURE,
-            },
-        )
+        return deployment_plan
 
     @staticmethod
     def from_failed_deployment(dag: Dag, deployment_log: DeploymentLog):
@@ -227,8 +248,25 @@ class DeploymentPlan:
             remaining_operations = original_operations
             remaining_operation_names = original_operation_names
 
-        deployment_args = dict(
+        new_deployment_log = DeploymentLog(
             targets=remaining_operation_names,
             deployment_type=DeploymentTypeEnum.RESUME,
+            state=DeploymentStateEnum.PLANNED,
         )
-        return DeploymentPlan(remaining_operations, deployment_args)
+        return DeploymentPlan(remaining_operations, new_deployment_log)
+
+    @staticmethod
+    def from_deployment_log(
+        collections: Collections, deployment_log: DeploymentLog
+    ) -> "DeploymentPlan":
+        """Generate a DeploymentPlan from a planned DeploymentLog."""
+        if deployment_log.state != DeploymentStateEnum.PLANNED:
+            raise NotPlannedDeploymentError(
+                f"Cannot generate a deployment plan from a deployment log which is not PLANNED (got {deployment_log.state})."
+            )
+
+        operations: List[Operation] = []
+        for operation_log in deployment_log.operations:
+            operations.append(collections.operations[operation_log.operation])
+
+        return DeploymentPlan(operations, deployment_log)
