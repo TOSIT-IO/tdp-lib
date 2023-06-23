@@ -5,7 +5,7 @@ from .base import Base
 from .deployment_log import DeploymentLog, DeploymentTypeEnum, FilterTypeEnum
 from .operation_log import OperationLog
 from .service_component_log import ServiceComponentLog
-from .state_enum import StateEnum
+from .state_enum import DeploymentStateEnum, OperationStateEnum
 
 
 def init_database(engine):

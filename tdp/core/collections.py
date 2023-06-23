@@ -117,7 +117,6 @@ class Collections(Mapping):
                             f"'{self._dag_operations[operation_name].collection_name}' "
                             f"is merged with collection '{collection_name}'"
                         )
-                        # Merge the operation dependencies with the previous ones
                         self._dag_operations[operation_name].depends_on.extend(
                             operation["depends_on"]
                         )

@@ -7,7 +7,12 @@ from datetime import datetime
 from tdp.core.collections import Collections
 from tdp.core.deployment import DeploymentPlan
 from tdp.core.deployment.executor import Executor
-from tdp.core.models import DeploymentLog, OperationLog, StateEnum
+from tdp.core.models import (
+    DeploymentLog,
+    OperationLog,
+    DeploymentStateEnum,
+    OperationStateEnum,
+)
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
 
@@ -55,13 +60,13 @@ class DeploymentRunner:
         state, logs = self._executor.execute(operation_file)
         end = datetime.utcnow()
 
-        if not StateEnum.has_value(state):
+        if not OperationStateEnum.has_value(state):
             logger.error(
                 f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{operation_file}'))"
             )
-            state = StateEnum.FAILURE
-        elif not isinstance(state, StateEnum):
-            state = StateEnum(state)
+            state = OperationStateEnum.FAILURE
+        elif not isinstance(state, OperationStateEnum):
+            state = OperationStateEnum(state)
 
         return OperationLog(
             operation=operation.name,
@@ -81,7 +86,7 @@ class DeploymentRunner:
             DeploymentIterator object.
         """
         deployment_log = DeploymentLog(
-            state=StateEnum.PENDING,
+            state=DeploymentStateEnum.PENDING,
             **deployment_plan.deployment_args,
         )
         return DeploymentIterator(
