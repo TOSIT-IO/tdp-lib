@@ -6,7 +6,7 @@ import logging
 import subprocess
 from typing import Tuple
 
-from tdp.core.models import StateEnum
+from tdp.core.models import OperationStateEnum
 
 from .executor import Executor
 
@@ -27,7 +27,7 @@ class AnsibleExecutor(Executor):
         self._rundir = run_directory
         self._dry = dry
 
-    def _execute_ansible_command(self, command: str) -> Tuple[StateEnum, str]:
+    def _execute_ansible_command(self, command: str) -> Tuple[OperationStateEnum, str]:
         """Execute an ansible command.
 
         Args:
@@ -50,16 +50,20 @@ class AnsibleExecutor(Executor):
                 for stdout_line in iter(res.stdout.readline, ""):
                     print(stdout_line, end="")
                     byte_stream.write(bytes(stdout_line, "utf-8"))
-                state = StateEnum.SUCCESS if res.wait() == 0 else StateEnum.FAILURE
+                state = (
+                    OperationStateEnum.SUCCESS
+                    if res.wait() == 0
+                    else OperationStateEnum.FAILURE
+                )
             except KeyboardInterrupt:
                 logger.debug("KeyboardInterrupt caught")
                 byte_stream.write(b"\nKeyboardInterrupt")
-                return StateEnum.FAILURE, byte_stream.getvalue()
+                return OperationStateEnum.FAILURE, byte_stream.getvalue()
             return state, byte_stream.getvalue()
 
-    def execute(self, operation: str) -> Tuple[StateEnum, str]:
+    def execute(self, operation: str) -> Tuple[OperationStateEnum, str]:
         command = ["ansible-playbook", str(operation)]
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
-            return StateEnum.SUCCESS, b""
+            return OperationStateEnum.SUCCESS, b""
         return self._execute_ansible_command(command)

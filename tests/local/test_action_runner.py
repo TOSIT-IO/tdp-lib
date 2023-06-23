@@ -8,17 +8,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from tdp.core.dag import Dag
-from tdp.core.models import Base
+from tdp.core.models import Base, OperationStateEnum
 from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.runner.action_runner import ActionRunner
-from tdp.core.runner.executor import Executor, StateEnum
+from tdp.core.runner.executor import Executor
 
 logger = logging.getLogger("tdp").getChild("test_action_runner")
 
 
 class MockExecutor(Executor):
     def execute(self, action):
-        return StateEnum.SUCCESS, f"{action} LOG SUCCESS".encode("utf-8")
+        return OperationStateEnum.SUCCESS, f"{action} LOG SUCCESS".encode("utf-8")
 
 
 @pytest.fixture(scope="session")

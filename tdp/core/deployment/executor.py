@@ -4,14 +4,14 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from tdp.core.models import StateEnum
+from tdp.core.models import OperationStateEnum
 
 
 class Executor(ABC):
     """An Executor is an object able to run operations."""
 
     @abstractmethod
-    def execute(self, operation: str) -> Tuple[StateEnum, bytes]:
+    def execute(self, operation: str) -> Tuple[OperationStateEnum, bytes]:
         """Executes an operation.
 
         Args:

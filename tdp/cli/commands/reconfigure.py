@@ -23,7 +23,7 @@ from tdp.core.deployment import (
     EmptyDeploymentPlanError,
     NothingToRestartError,
 )
-from tdp.core.models import StateEnum
+from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
 
@@ -99,7 +99,7 @@ def reconfigure(
             # notify sqlalchemy deployment log has been updated
             session.merge(deployment_iterator.log)
             session.commit()
-        if deployment_iterator.log.state != StateEnum.SUCCESS:
+        if deployment_iterator.log.state != DeploymentStateEnum.SUCCESS:
             raise click.ClickException(
                 (
                     "Deployment didn't finish with success: "

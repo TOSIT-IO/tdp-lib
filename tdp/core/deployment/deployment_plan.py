@@ -9,7 +9,7 @@ from tdp.core.models import (
     DeploymentTypeEnum,
     FilterTypeEnum,
     ServiceComponentLog,
-    StateEnum,
+    DeploymentStateEnum,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -165,9 +165,7 @@ class DeploymentPlan:
         )
 
     @staticmethod
-    def from_failed_deployment(
-        dag: Dag, deployment_log: DeploymentLog
-    ) -> "DeploymentPlan":
+    def from_failed_deployment(dag: Dag, deployment_log: DeploymentLog):
         """Generate a deployment plan from a failed deployment.
 
         Args:
@@ -181,7 +179,7 @@ class DeploymentPlan:
         Returns:
             Deployment plan.
         """
-        if deployment_log.state == StateEnum.SUCCESS:
+        if deployment_log.state == DeploymentStateEnum.SUCCESS:
             raise NothingToResumeError(
                 f"Nothing to resume, deployment #{deployment_log.id} was successful"
             )
