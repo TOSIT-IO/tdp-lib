@@ -96,13 +96,13 @@ def dry(func: FC) -> FC:
     )(func)
 
 
-def mock_deploy(fun: FC) -> FC:
+def mock_deploy(func: FC) -> FC:
     return click.option(
         "--mock-deploy",
         envvar="TDP_MOCK_DEPLOY",
         is_flag=True,
         help="Mock the deploy, do not actually run the ansible playbook",
-    )(fun)
+    )(func)
 
 
 def run_directory(func: FC) -> FC:

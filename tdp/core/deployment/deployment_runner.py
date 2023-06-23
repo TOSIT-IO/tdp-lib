@@ -69,6 +69,7 @@ class DeploymentRunner:
             state = OperationStateEnum(state)
 
         return OperationLog(
+            operation_order=1,
             operation=operation.name,
             start_time=start,
             end_time=end,
@@ -85,12 +86,9 @@ class DeploymentRunner:
         Returns:
             DeploymentIterator object.
         """
-        deployment_log = DeploymentLog(
-            state=DeploymentStateEnum.PENDING,
-            **deployment_plan.deployment_args,
-        )
+        deployment_plan.deployment_log.state = DeploymentStateEnum.RUNNING
         return DeploymentIterator(
-            deployment_log,
+            deployment_plan.deployment_log,
             deployment_plan.operations,
             self._run_operation,
             self._cluster_variables,
