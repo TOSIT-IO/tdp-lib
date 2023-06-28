@@ -40,7 +40,10 @@ def run(
         operations.append(operation)
 
     click.echo(f"Creating a deployment plan to run {len(operations)} operation(s).")
-    deployment_log = DeploymentPlan.from_operations(operations).deployment_log
+    try:
+        deployment_log = DeploymentPlan.from_operations(operations).deployment_log
+    except Exception as e:
+        raise click.ClickException(str(e)) from e
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
