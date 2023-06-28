@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.commands.plan.utils import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,

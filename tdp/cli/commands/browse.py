@@ -5,11 +5,9 @@ from datetime import datetime, timezone
 from enum import Enum
 
 import click
-from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 from tabulate import tabulate
 
-from tdp.cli.queries import get_deployment
+from tdp.cli.queries import get_deployment, get_deployments, get_operation_log
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
@@ -36,52 +34,23 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
     help="At which offset should the database query should start",
 )
 @database_dsn
-def browse(deployment_id, operation, limit, offset, database_dsn):
+def browse(
+    deployment_id: int, operation: str, limit: int, offset: int, database_dsn: str
+):
     session_class = get_session_class(database_dsn)
-    try:
-        if not deployment_id:
-            print_formatted_deployments(get_deployments(session_class, limit, offset))
-        else:
-            if not operation:
-                print_formatted_deployment(get_deployment(session_class, deployment_id))
+    with session_class() as session:
+        try:
+            if not deployment_id:
+                print_formatted_deployments(get_deployments(session, limit, offset))
             else:
-                print_formatted_operation_log(
-                    get_operation_log(session_class, deployment_id, operation)
-                )
-    except Exception as e:
-        raise click.ClickException(str(e)) from e
-
-
-def get_deployments(session_class, limit, offset):
-    query = (
-        select(DeploymentLog)
-        .options(joinedload(DeploymentLog.service_components))
-        .order_by(DeploymentLog.id)
-        .limit(limit)
-        .offset(offset)
-    )
-    with session_class() as session:
-        return session.execute(query).unique().scalars().fetchall()
-
-
-def get_operation_log(session_class, deployment_id, operation):
-    query = (
-        select(OperationLog)
-        .options(
-            joinedload(OperationLog.deployment),
-            joinedload("deployment.service_components"),
-        )
-        .where(OperationLog.deployment_id == deployment_id)
-        .where(OperationLog.operation == operation)
-        .order_by(OperationLog.start_time)
-    )
-    with session_class() as session:
-        operation_log = session.execute(query).unique().scalar_one_or_none()
-        if operation_log is None:
-            raise ValueError(
-                f"Operation {operation} does exist in deployment {deployment_id}"
-            )
-        return operation_log
+                if not operation:
+                    print_formatted_deployment(get_deployment(session, deployment_id))
+                else:
+                    print_formatted_operation_log(
+                        get_operation_log(session, deployment_id, operation)
+                    )
+        except Exception as e:
+            raise click.ClickException(str(e)) from e
 
 
 def print_formatted_deployments(deployments):

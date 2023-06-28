@@ -10,7 +10,7 @@ from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentPlan
 
-from .utils import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log
 
 
 @click.command(short_help="Resume a failed deployment.")
@@ -31,10 +31,10 @@ def resume(
     session_class = get_session_class(database_dsn)
     with session_class() as session:
         if id is None:
-            deployment_log_to_resume = get_last_deployment(session_class)
+            deployment_log_to_resume = get_last_deployment(session)
             click.echo(f"Creating a deployment plan to resume latest deployment.")
         else:
-            deployment_log_to_resume = get_deployment(session_class, id)
+            deployment_log_to_resume = get_deployment(session, id)
             click.echo(f"Creating a deployment plan to resume deployment #{id}.")
         try:
             deployment_log = DeploymentPlan.from_failed_deployment(

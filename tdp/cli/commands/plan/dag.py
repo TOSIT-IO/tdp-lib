@@ -10,7 +10,7 @@ from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentPlan
 from tdp.core.models import FilterTypeEnum
 
-from .utils import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log
 
 
 def validate_filtertype(ctx, param, value):

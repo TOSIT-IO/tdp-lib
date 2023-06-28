@@ -8,7 +8,7 @@ from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentPlan
 
-from .utils import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log
 
 
 @click.command(short_help="Run single TDP operation.")

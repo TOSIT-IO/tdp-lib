@@ -21,9 +21,9 @@ def service_versions(database_dsn):
     session_class = get_session_class(database_dsn)
 
     with session_class() as session:
-        latest_success_service_version = session.execute(
-            get_latest_success_service_component_version_query()
-        ).all()
+        latest_success_service_version = (
+            get_latest_success_service_component_version_query(session)
+        )
 
         click.echo(
             "Service versions:\n"

@@ -20,7 +20,7 @@ from tdp.core.deployment import (
 )
 from tdp.core.variables import ClusterVariables
 
-from .utils import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log
 
 
 @click.command(short_help="Restart required TDP services.")
@@ -40,9 +40,9 @@ def reconfigure(
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        latest_success_service_component_version = session.execute(
-            get_latest_success_service_component_version_query()
-        ).all()
+        latest_success_service_component_version = (
+            get_latest_success_service_component_version_query(session)
+        )
         service_component_deployed_version = map(
             lambda result: result[1:], latest_success_service_component_version
         )
