@@ -6,6 +6,14 @@ tdp.cli.commands package
    :undoc-members:
    :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tdp.cli.commands.plan
+
 Submodules
 ----------
 
@@ -65,34 +73,18 @@ tdp.cli.commands.playbooks module
    :undoc-members:
    :show-inheritance:
 
-tdp.cli.commands.reconfigure module
------------------------------------
-
-.. automodule:: tdp.cli.commands.reconfigure
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tdp.cli.commands.resume module
-------------------------------
-
-.. automodule:: tdp.cli.commands.resume
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-tdp.cli.commands.run module
----------------------------
-
-.. automodule:: tdp.cli.commands.run
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 tdp.cli.commands.service\_versions module
 -----------------------------------------
 
 .. automodule:: tdp.cli.commands.service_versions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tdp.cli.commands.validate module
+--------------------------------
+
+.. automodule:: tdp.cli.commands.validate
    :members:
    :undoc-members:
    :show-inheritance:

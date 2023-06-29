@@ -3,7 +3,7 @@ Runners
 
 Runners are used to run operations with the DAG ordering constraints.
 
-To use a runner, an :py:class:`~tdp.core.deployment.DeploymentRunner` must be instanciated.
+To use a runner, a :py:class:`~tdp.core.deployment.DeploymentRunner` must be instanciated.
 In order to work, it needs a :py:class:`~tdp.core.collections.Collections` instance to be able to translate
 an operation into its action file, an implementation of `Executor` to run each operation,
 a `~tdp.core.variables.ClusterVariables` to know the service version
