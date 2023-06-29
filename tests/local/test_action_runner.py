@@ -11,7 +11,7 @@ from tdp.core.dag import Dag
 from tdp.core.models import Base, OperationStateEnum
 from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.runner.action_runner import ActionRunner
-from tdp.core.runner.executor import Executor
+from tdp.core.deployment import Executor
 
 logger = logging.getLogger("tdp").getChild("test_action_runner")
 
