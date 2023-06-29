@@ -25,6 +25,7 @@ Sphinx = {version = "4.5.0", optional = true}
 python-dotenv = "0.20.0"
 typing_extensions = "4.1.1"
 jsonschema = "3.2.0"
+sphinx-rtd-theme = {version = "^1.2.2", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
@@ -34,7 +35,7 @@ taskipy = "1.10.1"
 pre-commit = "2.17.0"
 
 [tool.poetry.extras]
-docs = ["Sphinx"]
+docs = ["Sphinx", "sphinx_rtd_theme"]
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
@@ -42,9 +43,10 @@ tdp = "tdp.cli.__main__:tdp"
 
 [tool.taskipy.variables]
 docs_path = "docs"
+docs_source_path = "docs/source"
 
 [tool.taskipy.tasks]
-docs-generate = {cmd = "sphinx-apidoc --output-dir {docs_path} --module-first --doc-project TDP --doc-author TOSIT --full --force tdp '*test*'", use_vars = true}
+docs-generate = {cmd = "sphinx-apidoc --output-dir {docs_source_path} --module-first --force tdp '*test*'", use_vars = true}
 docs-clean = {cmd = "make -C {docs_path} clean", use_vars = true}
 docs-html = {cmd = "make -C {docs_path} html", use_vars = true}
 
