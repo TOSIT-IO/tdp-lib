@@ -15,7 +15,7 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
-from tdp.core.deployment import AnsibleExecutor, DeploymentPlan, DeploymentRunner
+from tdp.core.deployment import Executor, DeploymentPlan, DeploymentRunner
 from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
@@ -47,7 +47,7 @@ def deploy(
 
     deployment_runner = DeploymentRunner(
         collections,
-        AnsibleExecutor(
+        Executor(
             run_directory=run_directory.absolute() if run_directory else None,
             dry=dry or mock_deploy,
         ),
