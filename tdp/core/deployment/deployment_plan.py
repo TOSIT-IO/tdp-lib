@@ -49,7 +49,7 @@ class DeploymentPlan:
 
     Attributes:
         operations: List of operations to perform.
-        deployment_args: Deployment arguments.
+        deployment_log: Deployment information
     """
 
     def __init__(self, operations: List[Operation], deployment_log: DeploymentLog):
