@@ -4,68 +4,85 @@
 from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Iterator
+from typing import Iterator, List, Callable, Tuple
 
 from tdp.core.models import (
+    DeploymentLog,
     DeploymentStateEnum,
+    OperationLog,
     OperationStateEnum,
     ServiceComponentLog,
 )
+from tdp.core.operation import Operation
+from tdp.core.variables import ClusterVariables
 
 
 class _Flags:
-    def __init__(self, configured=False, started=False):
-        self.configured = configured
-        self.started = started
+    """Class to store the status of a component.
+
+    Attributes:
+        is_configured: True if the component is configured.
+        is_started: True if the component is started.
+    """
+
+    def __init__(self, is_configured=False, is_started=False):
+        self.is_configured = is_configured
+        self.is_started = is_started
 
 
 class DeploymentIterator(Iterator):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
-        log: DeploymentLog object to update.
-        operations: List of operations to run.
-        run_method: Method to run the operation.
-        cluster_variables: ClusterVariables object.
+        deployment_log: DeploymentLog object to update.
     """
 
-    def __init__(self, log, operations, run_method, cluster_variables):
+    def __init__(
+        self,
+        deployment_log: DeploymentLog,
+        operations: List[Operation],
+        run_method: Callable[[Operation], OperationLog],
+        cluster_variables: ClusterVariables,
+    ):
         """Initialize the iterator.
 
         Args:
-            log: DeploymentLog object to update.
+            deployment_log: DeploymentLog object to update.
             operations: List of operations to run.
             run_method: Method to run the operation.
             cluster_variables: ClusterVariables object.
         """
-        self.deployment_log = log
-        self._operations = operations
+        self.deployment_log = deployment_log
+        self.deployment_log.start_time = datetime.utcnow()
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
-        operations_with_log = [(self._operations[i], self.deployment_log.operations[i]) for i in range(len(self._operations))]
-        self._iter = iter(operations_with_log)
-        self._failed = False
-        self._service_component_logs = defaultdict(_Flags)
-        self.deployment_log.start_time = datetime.utcnow()
+        operations_with_operation_logs: List[Tuple[Operation, OperationLog]] = [
+            (operations[i], self.deployment_log.operations[i])
+            for i in range(len(operations))
+        ]
+        self._iter = iter(operations_with_operation_logs)
+        self._component_states = defaultdict(_Flags)
 
-    def __next__(self):
+    def __next__(self) -> Tuple[OperationLog, ServiceComponentLog]:
         try:
             while True:
-                if self._failed == True:
-                    raise StopIteration()
                 (operation, operation_log) = next(self._iter)
-                service_component = self._service_component_logs[
+
+                if self.deployment_log.state == DeploymentStateEnum.FAILURE:
+                    operation_log.state = OperationStateEnum.HELD
+                    return operation_log, None
+
+                # Retrieve the component state.
+                # This is a reference to the object, so we can update it.
+                component_state = self._component_states[
                     (operation.service_name, operation.component_name)
                 ]
-
-                service_component_log = None
                 if operation.action_name == "config":
-                    service_component.configured = True
-
+                    component_state.is_configured = True
                 if (
                     operation.action_name in ("start", "restart")
-                    and service_component.configured == True
-                    and service_component.started == False
+                    and component_state.is_configured == True
+                    and component_state.is_started == False
                 ):
                     service_component_log = ServiceComponentLog(
                         service=operation.service_name,
@@ -73,17 +90,19 @@ class DeploymentIterator(Iterator):
                         version=self._cluster_variables[operation.service_name].version,
                     )
                     service_component_log.deployment = self.deployment_log
-
-                    service_component.started = True
+                    component_state.is_started = True
+                else:
+                    service_component_log = None
 
                 if operation.noop == False:
-                    new_operation_log = self._run_operation(operation)
-                    operation_log.state = new_operation_log.state
-                    operation_log.end_time = new_operation_log.end_time
-                    operation_log.start_time = new_operation_log.start_time
-                    operation_log.logs = new_operation_log.logs
-                    operation_log.state = new_operation_log.state
-                    self._failed = operation_log.state == OperationStateEnum.FAILURE
+                    result = self._run_operation(operation)
+                    operation_log.state = result.state
+                    operation_log.end_time = result.end_time
+                    operation_log.start_time = result.start_time
+                    operation_log.logs = result.logs
+                    operation_log.state = result.state
+                    if operation_log.state != OperationStateEnum.SUCCESS:
+                        self.deployment_log.state = DeploymentStateEnum.FAILURE
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
@@ -91,10 +110,7 @@ class DeploymentIterator(Iterator):
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
-            if len(self.deployment_log.operations) > 0:
-                self.deployment_log.state = self.deployment_log.operations[-1].state
-            else:
-                # case deployment is finised with only noop performed
+            if not self.deployment_log.state == DeploymentStateEnum.FAILURE:
                 self.deployment_log.state = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
