@@ -11,6 +11,7 @@ from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
 from tdp.core.operation import Operation
 
 
+# TODO: Transform this to a script as it is not really a command (see #346).
 @click.command(
     short_help="Generate meta playbooks in order to use a TDP like collection without tdp-lib"
 )
