@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import and_, desc, func, or_, tuple_, select
 from sqlalchemy.orm import joinedload
@@ -139,7 +139,7 @@ def get_last_deployment(session: Session) -> DeploymentLog:
         raise Exception(f"No deployments.") from e
 
 
-def get_planned_deployment_log(session: Session) -> DeploymentLog:
+def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
     """Get the planned deployment.
 
     Args:

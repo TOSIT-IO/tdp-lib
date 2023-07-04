@@ -7,7 +7,12 @@ from enum import Enum
 import click
 from tabulate import tabulate
 
-from tdp.cli.queries import get_deployment, get_deployments, get_operation_log
+from tdp.cli.queries import (
+    get_deployment,
+    get_deployments,
+    get_operation_log,
+    get_planned_deployment_log,
+)
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
@@ -19,6 +24,12 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 @click.command(short_help="Browse deployment logs")
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
+@click.option(
+    "-p",
+    "--plan",
+    is_flag=True,
+    help="Print the planned deployment, if exist.",
+)
 @click.option(
     "--limit",
     envvar="TDP_LIMIT",
@@ -35,20 +46,34 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 )
 @database_dsn
 def browse(
-    deployment_id: int, operation: str, limit: int, offset: int, database_dsn: str
+    deployment_id: int,
+    operation: str,
+    plan: bool,
+    limit: int,
+    offset: int,
+    database_dsn: str,
 ):
     session_class = get_session_class(database_dsn)
     with session_class() as session:
         try:
-            if not deployment_id:
-                print_formatted_deployments(get_deployments(session, limit, offset))
-            else:
-                if not operation:
-                    print_formatted_deployment(get_deployment(session, deployment_id))
+            if plan:
+                deployment_plan = get_planned_deployment_log(session)
+                if deployment_plan:
+                    print_formatted_deployment(deployment_plan)
                 else:
-                    print_formatted_operation_log(
-                        get_operation_log(session, deployment_id, operation)
-                    )
+                    print("No deployment plan to show.")
+            else:
+                if not deployment_id:
+                    print_formatted_deployments(get_deployments(session, limit, offset))
+                else:
+                    if not operation:
+                        print_formatted_deployment(
+                            get_deployment(session, deployment_id)
+                        )
+                    else:
+                        print_formatted_operation_log(
+                            get_operation_log(session, deployment_id, operation)
+                        )
         except Exception as e:
             raise click.ClickException(str(e)) from e
 
