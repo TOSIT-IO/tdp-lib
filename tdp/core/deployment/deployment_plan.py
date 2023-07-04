@@ -54,23 +54,15 @@ class DeploymentPlan:
 
     def __init__(self, operations: List[Operation], deployment_log: DeploymentLog):
         self._operations = operations
-        self._deployment_log = deployment_log
-        self._deployment_log.operations = []
+        self.deployment_log = deployment_log
+        self.deployment_log.operations = []
         for count, operation in enumerate(self.operations, start=1):
             operation_log = OperationLog(
                 state=OperationStateEnum.PLANNED,
                 operation=operation.name,
                 operation_order=count,
             )
-            self._deployment_log.operations.append(operation_log)
-
-    @property
-    def deployment_log(self) -> DeploymentLog:
-        return self._deployment_log
-
-    @deployment_log.setter
-    def deployment_log(self, value: DeploymentLog) -> None:
-        self._deployment_log = value
+            self.deployment_log.operations.append(operation_log)
 
     @property
     def operations(self) -> List[Operation]:
