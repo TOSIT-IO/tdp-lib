@@ -8,7 +8,6 @@ from tdp.core.collections import Collections
 from tdp.core.deployment import DeploymentPlan
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
-    DeploymentLog,
     OperationLog,
     DeploymentStateEnum,
     OperationStateEnum,
