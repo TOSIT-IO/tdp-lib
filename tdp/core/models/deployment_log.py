@@ -61,8 +61,8 @@ class DeploymentLog(Base):
     __tablename__ = "deployment_log"
 
     id = Column(Integer, primary_key=True)
-    sources = Column(JSON)
-    targets = Column(JSON)
+    sources = Column(JSON(none_as_null=True))
+    targets = Column(JSON(none_as_null=True))
     filter_expression = Column(String(length=OPERATION_NAME_MAX_LENGTH * 5))
     filter_type = Column(Enum(FilterTypeEnum))
     start_time = Column(DateTime(timezone=False))
