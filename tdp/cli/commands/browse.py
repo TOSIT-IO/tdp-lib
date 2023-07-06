@@ -99,37 +99,36 @@ def print_formatted_deployment(deployment_log):
     operation_headers = OperationLog.__table__.columns.keys()
     service_headers = ServiceComponentLog.__table__.columns.keys()
 
-    sources = deployment_log.sources or ["None"]
-    targets = deployment_log.targets or ["None"]
     click.echo(
         "Deployment:\n"
         + tabulate(
-            [format_deployment_log(deployment_log, deployment_headers)],
-            headers="keys",
+            format_deployment_log(deployment_log, deployment_headers).items(),
+            ["Property", "Value"],
+            colalign=("right",),
         )
     )
-    click.echo("Sources:\n  " + tabulate({"source": sources}, headers="keys"))
-    click.echo("Targets:\n  " + tabulate({"target": targets}, headers="keys"))
-    click.echo(
-        "Service Component logs:\n"
-        + tabulate(
-            [
-                format_service_component_log(service_logs, service_headers)
-                for service_logs in deployment_log.service_components
-            ],
-            headers="keys",
+    if deployment_log.service_components:
+        click.echo(
+            "\nService Component logs:\n"
+            + tabulate(
+                [
+                    format_service_component_log(service_logs, service_headers)
+                    for service_logs in deployment_log.service_components
+                ],
+                headers="keys",
+            )
         )
-    )
-    click.echo(
-        "Operations:\n"
-        + tabulate(
-            [
-                format_operation_log(operation_log, operation_headers)
-                for operation_log in deployment_log.operations
-            ],
-            headers="keys",
+    if deployment_log.operations:
+        click.echo(
+            "\nOperations:\n"
+            + tabulate(
+                [
+                    format_operation_log(operation_log, operation_headers)
+                    for operation_log in deployment_log.operations
+                ],
+                headers="keys",
+            )
         )
-    )
 
 
 def print_formatted_operation_log(operation_log):
