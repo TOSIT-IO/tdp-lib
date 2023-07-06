@@ -185,10 +185,10 @@ def test_deployment_plan_reconfigure_nothing_to_restart(dag, cluster_variables):
 def test_deployment_plan_reconfigure(dag, reconfigurable_cluster_variables):
     (
         cluster_variables,
-        service_component_deployed_version,
+        component_version_deployed,
     ) = reconfigurable_cluster_variables
     deployment_plan = DeploymentPlan.from_reconfigure(
-        dag, cluster_variables, service_component_deployed_version
+        dag, cluster_variables, component_version_deployed
     )
 
     assert len(deployment_plan.operations) == 4

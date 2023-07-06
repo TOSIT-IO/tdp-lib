@@ -12,7 +12,7 @@ from tdp.core.models import (
     FilterTypeEnum,
     OperationLog,
     OperationStateEnum,
-    ServiceComponentLog,
+    ComponentVersionLog,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -134,14 +134,14 @@ class DeploymentPlan:
     def from_reconfigure(
         dag: Dag,
         cluster_variables: ClusterVariables,
-        service_component_deployed_version: ServiceComponentLog,
+        component_version_deployed: ComponentVersionLog,
     ) -> "DeploymentPlan":
-        """Generate a deployment plan from a list of service component deployed version.
+        """Generate a deployment plan based on altered component configuration.
 
         Args:
             dag: DAG to generate the deployment plan from.
             cluster_variables: Cluster variables.
-            service_component_deployed_version: List of deployed versions.
+            component_version_deployed: List of deployed versions.
 
         Raises:
             RuntimeError: If a service is deployed but the repository is missing.
@@ -154,7 +154,7 @@ class DeploymentPlan:
             service,
             _component,
             version,
-        ) in service_component_deployed_version:
+        ) in component_version_deployed:
             if service not in cluster_variables:
                 raise RuntimeError(
                     f"Service '{service}' is deployed but the repository is missing."

@@ -36,7 +36,7 @@ tdp.core.models.operation\_log module
 tdp.core.models.service\_component\_log module
 ----------------------------------------------
 
-.. automodule:: tdp.core.models.service_component_log
+.. automodule:: tdp.core.models.component_version_log
    :members:
    :undoc-members:
    :show-inheritance:

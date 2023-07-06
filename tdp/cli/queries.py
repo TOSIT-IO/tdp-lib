@@ -8,11 +8,11 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.exc import NoResultFound
 
-from tdp.core.models import DeploymentLog, ServiceComponentLog, OperationLog
+from tdp.core.models import DeploymentLog, ComponentVersionLog, OperationLog
 
 
-def get_latest_success_service_component_version_query(session: Session):
-    """Get the latest success service component version.
+def get_latest_success_component_version_log(session: Session):
+    """Get the latest success component version.
 
     Args:
         session: The database session.
@@ -20,58 +20,58 @@ def get_latest_success_service_component_version_query(session: Session):
     Returns:
         Components with the latest success version.
     """
-    max_deployment_id_label = f"max_{ServiceComponentLog.deployment_id.name}"
+    max_deployment_id_label = f"max_{ComponentVersionLog.deployment_id.name}"
 
     # Latest success deployment for each service/component pair
-    latest_deployed_service_component = (
+    latest_deployed_component = (
         session.query(
-            func.max(ServiceComponentLog.deployment_id).label(max_deployment_id_label),
-            ServiceComponentLog.service,
-            ServiceComponentLog.component,
+            func.max(ComponentVersionLog.deployment_id).label(max_deployment_id_label),
+            ComponentVersionLog.service,
+            ComponentVersionLog.component,
         )
-        .group_by(ServiceComponentLog.service, ServiceComponentLog.component)
+        .group_by(ComponentVersionLog.service, ComponentVersionLog.component)
         .subquery()
     )
 
     return (
         session.query(
-            ServiceComponentLog.deployment_id,
-            ServiceComponentLog.service,
-            ServiceComponentLog.component,
-            func.substr(ServiceComponentLog.version, 1, 7),
+            ComponentVersionLog.deployment_id,
+            ComponentVersionLog.service,
+            ComponentVersionLog.component,
+            func.substr(ComponentVersionLog.version, 1, 7),
         )
         .filter(
             or_(
                 # Components with the latest success deployment
                 # Filter deployment_id, service and component from the subquery
                 tuple_(
-                    ServiceComponentLog.deployment_id,
-                    ServiceComponentLog.service,
-                    ServiceComponentLog.component,
-                ).in_(select(latest_deployed_service_component)),
+                    ComponentVersionLog.deployment_id,
+                    ComponentVersionLog.service,
+                    ComponentVersionLog.component,
+                ).in_(select(latest_deployed_component)),
                 # Services with the latest success depoyment (no component)
                 # Filter deployment_id and service from the subquery AND component is null
                 and_(
                     tuple_(
-                        ServiceComponentLog.deployment_id,
-                        ServiceComponentLog.service,
+                        ComponentVersionLog.deployment_id,
+                        ComponentVersionLog.service,
                     ).in_(
                         # Component column is removed from the subquery
                         select(
-                            latest_deployed_service_component.c[
+                            latest_deployed_component.c[
                                 max_deployment_id_label
                             ],
-                            latest_deployed_service_component.c.service,
+                            latest_deployed_component.c.service,
                         )
                     ),
-                    ServiceComponentLog.component.is_(None),
+                    ComponentVersionLog.component.is_(None),
                 ),
             )
         )
         .order_by(
-            desc(ServiceComponentLog.deployment_id),
-            ServiceComponentLog.service,
-            ServiceComponentLog.component,
+            desc(ComponentVersionLog.deployment_id),
+            ComponentVersionLog.service,
+            ComponentVersionLog.component,
         )
         .all()
     )
@@ -90,7 +90,7 @@ def get_deployments(session: Session, limit: int, offset: int) -> List[Deploymen
     """
     return (
         session.query(DeploymentLog)
-        .options(joinedload(DeploymentLog.service_components))
+        .options(joinedload(DeploymentLog.component_version))
         .order_by(DeploymentLog.id.desc())
         .limit(limit)
         .offset(offset)

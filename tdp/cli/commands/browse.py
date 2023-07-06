@@ -15,7 +15,7 @@ from tdp.cli.queries import (
 )
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
-from tdp.core.models import DeploymentLog, OperationLog, ServiceComponentLog
+from tdp.core.models import DeploymentLog, OperationLog, ComponentVersionLog
 from tdp.core.models.base import keyvalgen
 
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
@@ -80,7 +80,7 @@ def browse(
 
 def print_formatted_deployments(deployments):
     headers = DeploymentLog.__table__.columns.keys() + [
-        str(DeploymentLog.service_components).split(".")[1]
+        str(DeploymentLog.component_version).split(".")[1]
     ]
     click.echo(
         "Deployments:\n"
@@ -97,7 +97,7 @@ def print_formatted_deployments(deployments):
 def print_formatted_deployment(deployment_log):
     deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
     operation_headers = OperationLog.__table__.columns.keys()
-    service_headers = ServiceComponentLog.__table__.columns.keys()
+    service_headers = ComponentVersionLog.__table__.columns.keys()
 
     click.echo(
         "Deployment:\n"
@@ -107,13 +107,13 @@ def print_formatted_deployment(deployment_log):
             colalign=("right",),
         )
     )
-    if deployment_log.service_components:
+    if deployment_log.component_version:
         click.echo(
-            "\nService Component logs:\n"
+            "\Component verion logs:\n"
             + tabulate(
                 [
-                    format_service_component_log(service_logs, service_headers)
-                    for service_logs in deployment_log.service_components
+                    format_component_version_log(service_logs, service_headers)
+                    for service_logs in deployment_log.component_version
                 ],
                 headers="keys",
             )
@@ -133,16 +133,16 @@ def print_formatted_deployment(deployment_log):
 
 def print_formatted_operation_log(operation_log):
     headers = OperationLog.__table__.columns.keys()
-    service_headers = ServiceComponentLog.__table__.columns.keys()
-    # TODO: this outputs Service and ServiceComponent version when it should
-    # only output a ServiceComponent when service_component_log.component is not None
+    service_headers = ComponentVersionLog.__table__.columns.keys()
+    # TODO: this outputs Service and ComponentVersionLog when it should
+    # only output a ComponentVersionLog when component_version_log.component is not None
     click.echo(
         "Service:\n"
         + tabulate(
             [
-                format_service_component_log(service_component_log, service_headers)
-                for service_component_log in operation_log.deployment.service_components
-                if service_component_log.service
+                format_component_version_log(component_version_log, service_headers)
+                for component_version_log in operation_log.deployment.component_version
+                if component_version_log.service
                 == operation_log.operation.split("_")[0]
             ],
             headers="keys",
@@ -165,10 +165,10 @@ def translate_timezone(timestamp):
     return timestamp.replace(tzinfo=timezone.utc).astimezone(LOCAL_TIMEZONE)
 
 
-def format_service_component(service_component_log):
-    if service_component_log.component is None:
-        return service_component_log.service
-    return f"{service_component_log.service}_{service_component_log.component}"
+def format_service_component(component_version_log):
+    if component_version_log.component is None:
+        return component_version_log.service
+    return f"{component_version_log.service}_{component_version_log.component}"
 
 
 def format_deployment_log(deployment_log, headers):
@@ -181,7 +181,7 @@ def format_deployment_log(deployment_log, headers):
             if len(value) > 2:
                 return value[0].operation + ",...," + value[-1].operation
             return ",".join(operation_log.operation for operation_log in value)
-        elif key == "service_components":
+        elif key == "component_version":
             if len(value) > 2:
                 return (
                     format_service_component(value[0])
@@ -189,8 +189,8 @@ def format_deployment_log(deployment_log, headers):
                     + format_service_component(value[-1])
                 )
             return ",".join(
-                format_service_component(service_component_log)
-                for service_component_log in value
+                format_service_component(component_version_log)
+                for component_version_log in value
             )
         elif isinstance(value, datetime):
             return translate_timezone(value)
@@ -216,7 +216,7 @@ def format_operation_log(operation_log, headers):
     return {key: custom_format(key, getattr(operation_log, key)) for key in headers}
 
 
-def format_service_component_log(service_component_log, headers):
+def format_component_version_log(component_version_log, headers):
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])
@@ -224,5 +224,5 @@ def format_service_component_log(service_component_log, headers):
             return str(value)
 
     return {
-        key: custom_format(key, getattr(service_component_log, key)) for key in headers
+        key: custom_format(key, getattr(component_version_log, key)) for key in headers
     }

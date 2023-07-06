@@ -72,11 +72,11 @@ def deploy(
             # Update deployment log to RUNNING
             session.merge(deployment_iterator.deployment_log)
             session.commit()
-            for operation_log, service_component_log in deployment_iterator:
+            for operation_log, component_version_log in deployment_iterator:
                 if operation_log is not None:
                     session.merge(operation_log)
-                if service_component_log is not None:
-                    session.add(service_component_log)
+                if component_version_log is not None:
+                    session.add(component_version_log)
                 session.commit()
             # Update deployment log to SUCCESS or FAILURE
             session.merge(deployment_iterator.deployment_log)

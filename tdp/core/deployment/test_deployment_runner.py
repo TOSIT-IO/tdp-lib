@@ -50,7 +50,7 @@ def test_deployment_plan_is_success(dag, deployment_runner):
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 8
-    assert len(deployment_iterator.deployment_log.service_components) == 2
+    assert len(deployment_iterator.deployment_log.component_version) == 2
 
 
 def test_deployment_plan_with_filter_is_success(dag, deployment_runner):
@@ -103,7 +103,7 @@ def test_service_log_is_emitted(dag, deployment_runner):
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 2
+    assert len(deployment_iterator.deployment_log.component_version) == 2
 
 
 def test_service_log_is_not_emitted(dag, deployment_runner):
@@ -117,7 +117,7 @@ def test_service_log_is_not_emitted(dag, deployment_runner):
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 0
+    assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
 def test_service_log_only_noop_is_emitted(minimal_collections, deployment_runner):
@@ -134,7 +134,7 @@ def test_service_log_only_noop_is_emitted(minimal_collections, deployment_runner
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 1
+    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_service_log_not_emitted_when_config_start_wrong_order(
@@ -153,7 +153,7 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 0
+    assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
 def test_service_log_emitted_once_with_start_and_restart(
@@ -173,7 +173,7 @@ def test_service_log_emitted_once_with_start_and_restart(
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 1
+    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_service_log_emitted_once_with_multiple_config_and_start_on_same_component(
@@ -194,7 +194,7 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.service_components) == 1
+    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner):
@@ -225,11 +225,11 @@ def test_deployment_is_reconfigured(
 ):
     (
         cluster_variables,
-        service_component_deployed_version,
+        component_version_deployed,
     ) = reconfigurable_cluster_variables
 
     deployment_plan = DeploymentPlan.from_reconfigure(
-        dag, cluster_variables, service_component_deployed_version
+        dag, cluster_variables, component_version_deployed
     )
     deployment_iterator = deployment_runner.run(deployment_plan)
     for _ in deployment_iterator:
@@ -243,11 +243,11 @@ def test_deployment_reconfigure_is_resumed(
 ):
     (
         cluster_variables,
-        service_component_deployed_version,
+        component_version_deployed,
     ) = reconfigurable_cluster_variables
 
     deployment_plan = DeploymentPlan.from_reconfigure(
-        dag, cluster_variables, service_component_deployed_version
+        dag, cluster_variables, component_version_deployed
     )
     deployment_iterator = failing_deployment_runner.run(deployment_plan)
 

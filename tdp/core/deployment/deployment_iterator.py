@@ -11,7 +11,7 @@ from tdp.core.models import (
     DeploymentStateEnum,
     OperationLog,
     OperationStateEnum,
-    ServiceComponentLog,
+    ComponentVersionLog,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -63,7 +63,7 @@ class DeploymentIterator(Iterator):
         self._iter = iter(operations_with_operation_logs)
         self._component_states = defaultdict(_Flags)
 
-    def __next__(self) -> Tuple[OperationLog, ServiceComponentLog]:
+    def __next__(self) -> Tuple[OperationLog, ComponentVersionLog]:
         try:
             while True:
                 (operation, operation_log) = next(self._iter)
@@ -84,15 +84,15 @@ class DeploymentIterator(Iterator):
                     and component_state.is_configured == True
                     and component_state.is_started == False
                 ):
-                    service_component_log = ServiceComponentLog(
+                    component_version_log = ComponentVersionLog(
                         service=operation.service_name,
                         component=operation.component_name,
                         version=self._cluster_variables[operation.service_name].version,
                     )
-                    service_component_log.deployment = self.deployment_log
+                    component_version_log.deployment = self.deployment_log
                     component_state.is_started = True
                 else:
-                    service_component_log = None
+                    component_version_log = None
 
                 if operation.noop == False:
                     result = self._run_operation(operation)
@@ -106,7 +106,7 @@ class DeploymentIterator(Iterator):
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
-                return operation_log, service_component_log
+                return operation_log, component_version_log
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
