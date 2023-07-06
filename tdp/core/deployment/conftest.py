@@ -67,7 +67,7 @@ def reconfigurable_cluster_variables(
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         minimal_collections, tdp_vars
     )
-    service_component_deployed_version = [
+    latest_success_component_version = [
         ("mock", None, cluster_variables["mock"].version),
         ("mock", "node", cluster_variables["mock"].version),
     ]
@@ -76,7 +76,7 @@ def reconfigurable_cluster_variables(
         "update service configuration", ["mock.yml"]
     ) as configuration:
         configuration["mock.yml"].merge({"test": 1})
-    return (cluster_variables, service_component_deployed_version)
+    return (cluster_variables, latest_success_component_version)
 
 
 @pytest.fixture(scope="session")

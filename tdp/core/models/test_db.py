@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from .base import Base
 from .deployment_log import DeploymentLog
 from .operation_log import OperationLog
-from .service_component_log import ServiceComponentLog
+from .component_version_log import ComponentVersionLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 
@@ -49,7 +49,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         deployment_type="Dag",
         restart=False,
     )
-    service_component_log = ServiceComponentLog(
+    component_version_log = ComponentVersionLog(
         deployment_id=deployment_log.id,
         service="service1",
         component="component1",
@@ -65,7 +65,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         logs=b"operation log",
     )
 
-    deployment_log.service_components.append(service_component_log)
+    deployment_log.component_version.append(component_version_log)
     deployment_log.operations.append(operation_log)
 
     logger.info(deployment_log)
@@ -80,7 +80,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
 
         logger.info(result)
         logger.info(result.operations)
-        logger.info(result.service_components)
+        logger.info(result.component_version)
 
         assert result is not None
         assert result.sources == ["source1", "source2"]
@@ -91,10 +91,10 @@ def test_create_deployment_log(session_maker: sessionmaker):
         assert result.deployment_type == "Dag"
         assert result.restart is False
 
-        assert len(result.service_components) == 1
-        assert result.service_components[0].service == "service1"
-        assert result.service_components[0].component == "component1"
-        assert result.service_components[0].version == "1.0.0"
+        assert len(result.component_version) == 1
+        assert result.component_version[0].service == "service1"
+        assert result.component_version[0].component == "component1"
+        assert result.component_version[0].version == "1.0.0"
 
         assert len(result.operations) == 1
         assert result.operations[0].operation_order == 1

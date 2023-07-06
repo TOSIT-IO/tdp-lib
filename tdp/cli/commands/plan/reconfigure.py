@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.queries import get_latest_success_service_component_version_query
+from tdp.cli.queries import get_latest_success_component_version_log
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -40,11 +40,11 @@ def reconfigure(
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        latest_success_service_component_version = (
-            get_latest_success_service_component_version_query(session)
+        latest_success_component_version_log = (
+            get_latest_success_component_version_log(session)
         )
-        service_component_deployed_version = map(
-            lambda result: result[1:], latest_success_service_component_version
+        latest_success_component_version = map(
+            lambda result: result[1:], latest_success_component_version_log
         )
         cluster_variables = ClusterVariables.get_cluster_variables(
             collections, vars, validate=validate
@@ -54,7 +54,7 @@ def reconfigure(
         try:
             click.echo(f"Creating a deployment plan to reconfigure services.")
             deployment_log = DeploymentPlan.from_reconfigure(
-                dag, cluster_variables, service_component_deployed_version
+                dag, cluster_variables, latest_success_component_version
             ).deployment_log
         except NothingToRestartError:
             click.echo("Nothing needs to be restarted.")
