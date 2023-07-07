@@ -3,6 +3,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
+from typing import List
 
 import click
 from tabulate import tabulate
@@ -59,26 +60,34 @@ def browse(
             if plan:
                 deployment_plan = get_planned_deployment_log(session)
                 if deployment_plan:
-                    print_formatted_deployment(deployment_plan)
+                    _print_formatted_deployment(deployment_plan)
                 else:
                     print("No deployment plan to show.")
             else:
                 if not deployment_id:
-                    print_formatted_deployments(get_deployments(session, limit, offset))
+                    _print_formatted_deployments(get_deployments(session, limit, offset))
                 else:
                     if not operation:
-                        print_formatted_deployment(
+                        _print_formatted_deployment(
                             get_deployment(session, deployment_id)
                         )
                     else:
-                        print_formatted_operation_log(
+                        _print_formatted_operation_log(
                             get_operation_log(session, deployment_id, operation)
                         )
         except Exception as e:
             raise click.ClickException(str(e)) from e
 
 
-def print_formatted_deployments(deployments):
+def _print_formatted_deployments(deployments: List[DeploymentLog]) -> None:
+    """Print a list of deployment logs in a human readable format.
+
+    Args:
+        deployments: List of deployment logs to print
+
+    Raises:
+        ClickException: If the deployment log is not found
+    """
     headers = DeploymentLog.__table__.columns.keys() + [
         str(DeploymentLog.component_version).split(".")[1]
     ]
@@ -86,7 +95,7 @@ def print_formatted_deployments(deployments):
         "Deployments:\n"
         + tabulate(
             [
-                format_deployment_log(deployment_log, headers)
+                _format_deployment_log(deployment_log, headers)
                 for deployment_log in deployments
             ],
             headers="keys",
@@ -94,7 +103,15 @@ def print_formatted_deployments(deployments):
     )
 
 
-def print_formatted_deployment(deployment_log):
+def _print_formatted_deployment(deployment_log: DeploymentLog) -> None:
+    """Print a deployment log in a human readable format.
+
+    Args:
+        deployment_log: Deployment log to print
+
+    Raises:
+        ClickException: If the deployment log is not found
+    """
     deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
     operation_headers = OperationLog.__table__.columns.keys()
     service_headers = ComponentVersionLog.__table__.columns.keys()
@@ -102,7 +119,7 @@ def print_formatted_deployment(deployment_log):
     click.echo(
         "Deployment:\n"
         + tabulate(
-            format_deployment_log(deployment_log, deployment_headers).items(),
+            _format_deployment_log(deployment_log, deployment_headers).items(),
             ["Property", "Value"],
             colalign=("right",),
         )
@@ -112,7 +129,7 @@ def print_formatted_deployment(deployment_log):
             "\Component verion logs:\n"
             + tabulate(
                 [
-                    format_component_version_log(service_logs, service_headers)
+                    _format_component_version_log(service_logs, service_headers)
                     for service_logs in deployment_log.component_version
                 ],
                 headers="keys",
@@ -123,7 +140,7 @@ def print_formatted_deployment(deployment_log):
             "\nOperations:\n"
             + tabulate(
                 [
-                    format_operation_log(operation_log, operation_headers)
+                    _format_operation_log(operation_log, operation_headers)
                     for operation_log in deployment_log.operations
                 ],
                 headers="keys",
@@ -131,7 +148,15 @@ def print_formatted_deployment(deployment_log):
         )
 
 
-def print_formatted_operation_log(operation_log):
+def _print_formatted_operation_log(operation_log: OperationLog) -> None:
+    """Print an operation log in a human readable format.
+
+    Args:
+        operation_log: Operation log to print
+
+    Raises:
+        ClickException: If the operation log is not found
+    """
     headers = OperationLog.__table__.columns.keys()
     service_headers = ComponentVersionLog.__table__.columns.keys()
     # TODO: this outputs Service and ComponentVersionLog when it should
@@ -140,7 +165,7 @@ def print_formatted_operation_log(operation_log):
         "Service:\n"
         + tabulate(
             [
-                format_component_version_log(component_version_log, service_headers)
+                _format_component_version_log(component_version_log, service_headers)
                 for component_version_log in operation_log.deployment.component_version
                 if component_version_log.service
                 == operation_log.operation.split("_")[0]
@@ -151,7 +176,7 @@ def print_formatted_operation_log(operation_log):
     click.echo(
         "Operation:\n"
         + tabulate(
-            [format_operation_log(operation_log, headers)],
+            [_format_operation_log(operation_log, headers)],
             headers="keys",
         )
     )
@@ -161,17 +186,35 @@ def print_formatted_operation_log(operation_log):
         )
 
 
-def translate_timezone(timestamp):
+def _translate_timezone(timestamp: datetime) -> datetime:
+    """Translate a timestamp from UTC to the local timezone."""
     return timestamp.replace(tzinfo=timezone.utc).astimezone(LOCAL_TIMEZONE)
 
 
-def format_service_component(component_version_log):
+def _format_component_name(component_version_log: ComponentVersionLog) -> str:
+    """Format a component log into a string.
+
+    Args:
+        component_version_log: Service component log to format
+
+    Returns:
+        <service>_<component> string or <service> string.
+    """
     if component_version_log.component is None:
         return component_version_log.service
     return f"{component_version_log.service}_{component_version_log.component}"
 
 
-def format_deployment_log(deployment_log, headers):
+def _format_deployment_log(deployment_log: DeploymentLog, headers: List[str]) -> dict:
+    """Format a deployment log into a dict for tabulate.
+
+    Args:
+        deployment_log: Deployment log to format
+        headers: Headers to include in the formatted log
+
+    Returns:
+        A dict with the formatted DeploymentLog object.
+    """
     def custom_format(key, value):
         if key in ["sources", "targets"] and value is not None:
             if len(value) > 2:
@@ -184,16 +227,16 @@ def format_deployment_log(deployment_log, headers):
         elif key == "component_version":
             if len(value) > 2:
                 return (
-                    format_service_component(value[0])
+                    _format_component_name(value[0])
                     + ",...,"
-                    + format_service_component(value[-1])
+                    + _format_component_name(value[-1])
                 )
             return ",".join(
-                format_service_component(component_version_log)
+                _format_component_name(component_version_log)
                 for component_version_log in value
             )
         elif isinstance(value, datetime):
-            return translate_timezone(value)
+            return _translate_timezone(value)
         elif isinstance(value, Enum):
             return value.name
         else:
@@ -202,12 +245,21 @@ def format_deployment_log(deployment_log, headers):
     return {key: custom_format(key, getattr(deployment_log, key)) for key in headers}
 
 
-def format_operation_log(operation_log, headers):
+def _format_operation_log(operation_log: OperationLog, headers: List[str]) -> dict:
+    """Format an OperationLog object into a dict for tabulate.
+
+    Args:
+        operation_log: The OperationLog object to format.
+        headers: The headers to use for the tabulate table.
+
+    Returns:
+        A dict with the formatted OperationLog object.
+    """
     def custom_format(key, value):
         if key == "logs":
             return "" if value is None else str(value[:40])
         elif isinstance(value, datetime):
-            return translate_timezone(value)
+            return _translate_timezone(value)
         elif isinstance(value, Enum):
             return value.name
         else:
@@ -216,7 +268,16 @@ def format_operation_log(operation_log, headers):
     return {key: custom_format(key, getattr(operation_log, key)) for key in headers}
 
 
-def format_component_version_log(component_version_log, headers):
+def _format_component_version_log(component_version_log: ComponentVersionLog, headers: List[str]) -> dict:
+    """Format a ComponentVersionLog object into a dict for tabulate.
+
+    Args:
+        component_version_log: The ComponentVersionLog object to format.
+        headers: The headers to use for the tabulate table.
+
+    Returns:
+        A dict with the formatted ComponentVersionLog object.
+    """
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])
