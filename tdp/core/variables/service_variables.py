@@ -221,7 +221,8 @@ class ServiceVariables:
         """Get a list of operations that modified components since the given version.
 
         Args:
-            version: How far to look.
+            dag: Collections' Dag.
+            version: From what version to look. It is most likely the deployed version.
 
         Returns:
             Operations that modified components.

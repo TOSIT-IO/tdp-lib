@@ -96,7 +96,7 @@ class Dag:
         self.operations = None
 
     @property
-    def services_operations(self) -> Dict[str, Operation]:
+    def services_operations(self) -> Dict[str, List[Operation]]:
         """DAG operations dictionary grouped by service."""
         if self._services_operations is None:
             self._services_operations = {}
