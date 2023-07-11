@@ -192,60 +192,42 @@ class DeploymentPlan:
         Returns:
             Deployment plan.
         """
-        if deployment_log.state == DeploymentStateEnum.SUCCESS:
+        if deployment_log.state != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{deployment_log.id} was successful"
+                f"Nothing to resume, deployment #{deployment_log.id} was {deployment_log.state}."
             )
 
-        if deployment_log.deployment_type in (
-            DeploymentTypeEnum.DAG,
-            DeploymentTypeEnum.RECONFIGURE,
-        ):
-            original_operations = DeploymentPlan.from_dag(
-                dag,
-                deployment_log.targets,
-                deployment_log.sources,
-                deployment_log.filter_expression,
-                deployment_log.filter_type,
-                deployment_log.restart,
-            ).operations
-            original_operation_names = [
-                operation.name for operation in original_operations
-            ]
-        elif deployment_log.deployment_type in (
-            DeploymentTypeEnum.OPERATIONS,
-            DeploymentTypeEnum.RESUME,
-        ):
-            original_operation_names = deployment_log.targets
-            original_operations = [
-                dag.collections.operations[name] for name in original_operation_names
-            ]
-        else:
+        if not isinstance(deployment_log.deployment_type, DeploymentTypeEnum):
             raise UnsupportedDeploymentTypeError(
-                f"Resuming from a {deployment_log.deployment_type} is not supported"
+                f"Resuming from a {deployment_log.deployment_type} is not supported."
             )
 
         if len(deployment_log.operations) > 0:
-            last_operation_log = deployment_log.operations[-1]
-            try:
-                index = original_operation_names.index(last_operation_log.operation)
-            except ValueError as e:
-                raise GeneratedDeploymentPlanMissesOperationError(
-                    f"'{last_operation_log}' is not in the reconstructed operation list from database parameters",
-                    original_operation_names,
-                ) from e
-            remaining_operations = original_operations[index:]
-            remaining_operation_names = original_operation_names[index:]
-        else:
-            remaining_operations = original_operations
-            remaining_operation_names = original_operation_names
+            failed_operation_id = next(
+                (
+                    i
+                    for i, operation in enumerate(deployment_log.operations)
+                    if operation.state == OperationStateEnum.FAILURE
+                ),
+                None,
+            )
+            operations_names_to_resume = [
+                operation.operation
+                for operation in deployment_log.operations[failed_operation_id:]
+            ]
+            operations_to_resume = [
+                Operation(operation_name)
+                for operation_name in operations_names_to_resume
+            ]
 
         new_deployment_log = DeploymentLog(
-            targets=remaining_operation_names,
+            targets=operations_names_to_resume,
             deployment_type=DeploymentTypeEnum.RESUME,
             state=DeploymentStateEnum.PLANNED,
         )
-        return DeploymentPlan(remaining_operations, new_deployment_log)
+        return DeploymentPlan(
+            operations=operations_to_resume, deployment_log=new_deployment_log
+        )
 
     @staticmethod
     def from_deployment_log(
