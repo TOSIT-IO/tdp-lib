@@ -4,8 +4,9 @@
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
+from typing import Iterator
 from typing import Mapping as MappingType
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import yaml
 
@@ -45,6 +46,9 @@ class Collections(Mapping):
 
     def __len__(self):
         return self._collections.__len__()
+
+    def items(self) -> Iterator[Tuple[str, Collection]]:
+        return self._collections.items()
 
     @staticmethod
     def from_collection_list(collections: Sequence[Collection]) -> "Collections":
