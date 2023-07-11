@@ -16,7 +16,7 @@ from tdp.cli.queries import (
 )
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
-from tdp.core.models import DeploymentLog, OperationLog, ComponentVersionLog
+from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
 from tdp.core.models.base import keyvalgen
 
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
@@ -65,7 +65,9 @@ def browse(
                     print("No deployment plan to show.")
             else:
                 if not deployment_id:
-                    _print_formatted_deployments(get_deployments(session, limit, offset))
+                    _print_formatted_deployments(
+                        get_deployments(session, limit, offset)
+                    )
                 else:
                     if not operation:
                         _print_formatted_deployment(
@@ -215,6 +217,7 @@ def _format_deployment_log(deployment_log: DeploymentLog, headers: List[str]) ->
     Returns:
         A dict with the formatted DeploymentLog object.
     """
+
     def custom_format(key, value):
         if key in ["sources", "targets"] and value is not None:
             if len(value) > 2:
@@ -255,6 +258,7 @@ def _format_operation_log(operation_log: OperationLog, headers: List[str]) -> di
     Returns:
         A dict with the formatted OperationLog object.
     """
+
     def custom_format(key, value):
         if key == "logs":
             return "" if value is None else str(value[:40])
@@ -268,7 +272,9 @@ def _format_operation_log(operation_log: OperationLog, headers: List[str]) -> di
     return {key: custom_format(key, getattr(operation_log, key)) for key in headers}
 
 
-def _format_component_version_log(component_version_log: ComponentVersionLog, headers: List[str]) -> dict:
+def _format_component_version_log(
+    component_version_log: ComponentVersionLog, headers: List[str]
+) -> dict:
     """Format a ComponentVersionLog object into a dict for tabulate.
 
     Args:
@@ -278,6 +284,7 @@ def _format_component_version_log(component_version_log: ComponentVersionLog, he
     Returns:
         A dict with the formatted ComponentVersionLog object.
     """
+
     def custom_format(key, value):
         if key == "version":
             return str(value[:7])

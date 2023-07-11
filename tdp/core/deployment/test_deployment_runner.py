@@ -3,7 +3,6 @@
 
 import pytest
 
-
 from tdp.core.models import DeploymentStateEnum, DeploymentTypeEnum, OperationStateEnum
 
 from .deployment_plan import DeploymentPlan
@@ -206,14 +205,21 @@ def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
 
-    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_iterator.deployment_log)
+    resume_plan = DeploymentPlan.from_failed_deployment(
+        dag, deployment_iterator.deployment_log
+    )
     resume_deployment_iterator = deployment_runner.run(resume_plan)
 
     for _ in resume_deployment_iterator:
         pass
     assert deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.DAG
-    assert resume_deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.RESUME
-    assert resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert (
+        resume_deployment_iterator.deployment_log.deployment_type
+        == DeploymentTypeEnum.RESUME
+    )
+    assert (
+        resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    )
     assert (
         deployment_iterator.deployment_log.operations[-1].operation
         == resume_deployment_iterator.deployment_log.operations[0].operation
@@ -234,7 +240,10 @@ def test_deployment_is_reconfigured(
     deployment_iterator = deployment_runner.run(deployment_plan)
     for _ in deployment_iterator:
         pass
-    assert deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+    assert (
+        deployment_iterator.deployment_log.deployment_type
+        == DeploymentTypeEnum.RECONFIGURE
+    )
     assert len(deployment_iterator.deployment_log.operations) == 4
 
 
@@ -256,14 +265,24 @@ def test_deployment_reconfigure_is_resumed(
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
 
-    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_iterator.deployment_log)
+    resume_plan = DeploymentPlan.from_failed_deployment(
+        dag, deployment_iterator.deployment_log
+    )
     resume_deployment_iterator = deployment_runner.run(resume_plan)
 
     for _ in resume_deployment_iterator:
         pass
-    assert deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
-    assert resume_deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.RESUME
-    assert resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert (
+        deployment_iterator.deployment_log.deployment_type
+        == DeploymentTypeEnum.RECONFIGURE
+    )
+    assert (
+        resume_deployment_iterator.deployment_log.deployment_type
+        == DeploymentTypeEnum.RESUME
+    )
+    assert (
+        resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    )
     assert (
         deployment_iterator.deployment_log.operations[-1].operation
         == resume_deployment_iterator.deployment_log.operations[0].operation

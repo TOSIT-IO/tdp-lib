@@ -3,15 +3,17 @@
 
 from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, desc, func, or_, tuple_, select
+from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.session import Session
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
 
-from tdp.core.models import DeploymentLog, ComponentVersionLog, OperationLog
+from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
 
 
-def get_latest_success_component_version_log(session: Session) -> List[Tuple[int, str, str, str]]:
+def get_latest_success_component_version_log(
+    session: Session,
+) -> List[Tuple[int, str, str, str]]:
     """Get the latest success component version.
 
     Args:
@@ -58,9 +60,7 @@ def get_latest_success_component_version_log(session: Session) -> List[Tuple[int
                     ).in_(
                         # Component column is removed from the subquery
                         select(
-                            latest_deployed_component.c[
-                                max_deployment_id_label
-                            ],
+                            latest_deployed_component.c[max_deployment_id_label],
                             latest_deployed_component.c.service,
                         )
                     ),
