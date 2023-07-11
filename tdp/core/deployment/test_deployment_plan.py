@@ -22,8 +22,7 @@ def test_deployment_plan_from_operations():
     deployment_plan = DeploymentPlan.from_operations(operations)
 
     assert (
-        deployment_plan.deployment_log.deployment_type
-        == DeploymentTypeEnum.OPERATIONS
+        deployment_plan.deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
     )
     assert len(deployment_plan.operations) == 2
     assert any(filter(lambda op: op.name == "mock_start", deployment_plan.operations))
@@ -81,7 +80,7 @@ def failed_deployment_log(deployment_plan, index_to_fail):
         sources=deployment_plan.deployment_log.sources,
         filter_expression=deployment_plan.deployment_log.filter_expression,
         filter_type=deployment_plan.deployment_log.filter_type,
-        restart=deployment_plan.deployment_log.restart
+        restart=deployment_plan.deployment_log.restart,
     )
     deployment_log.operations = [
         OperationLog(
@@ -116,7 +115,7 @@ def success_deployment_log(deployment_plan):
         sources=deployment_plan.deployment_log.sources,
         filter_expression=deployment_plan.deployment_log.filter_expression,
         filter_type=deployment_plan.deployment_log.filter_type,
-        restart=deployment_plan.deployment_log.restart
+        restart=deployment_plan.deployment_log.restart,
     )
     deployment_log.operations = [
         OperationLog(
@@ -193,6 +192,5 @@ def test_deployment_plan_reconfigure(dag, reconfigurable_cluster_variables):
 
     assert len(deployment_plan.operations) == 4
     assert (
-        deployment_plan.deployment_log.deployment_type
-        == DeploymentTypeEnum.RECONFIGURE
+        deployment_plan.deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
     )
