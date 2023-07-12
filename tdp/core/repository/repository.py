@@ -117,13 +117,14 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def files_modified(self, commit: str) -> List[Optional[Union[str, os.PathLike]]]:
-        """Get the list of files modified in a commit.
+    def is_file_modified(self, commit: str, path: Union[str, os.PathLike]) -> bool:
+        """Check if a file has been modified in a commit.
 
         Args:
             commit: Commit hash.
+            path: Path to the file.
 
         Returns:
-            List of files modified in the commit.
+            True if the file has been modified, False otherwise.
         """
         pass

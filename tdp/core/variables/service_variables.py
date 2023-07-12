@@ -6,15 +6,17 @@ import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import Dict, Iterator, List, Union
+from typing import Dict, Iterator, List, Set, Union
 
 import jsonschema
 from jsonschema import exceptions, validators
 
 from tdp.core.collection import YML_EXTENSION
+from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.dag import Dag
-from tdp.core.operation import SERVICE_NAME_MAX_LENGTH, Operation
+from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
 from tdp.core.repository.repository import Repository
+from tdp.core.models import ComponentVersionLog
 
 from .variables import Variables, VariablesDict, is_object
 
@@ -217,32 +219,22 @@ class ServiceVariables:
             stack.close()
             self.repository.add_for_validation(paths)
 
-    def components_modified(self, dag: Dag, version: str) -> List[Operation]:
-        """Get a list of operations that modified components since the given version.
+    def is_service_component_modified_from_version(
+        self, service_component: ServiceComponentName, version: str
+    ) -> bool:
+        """Check if a component has been modified since the given version.
 
         Args:
-            dag: Collections' Dag.
             version: From what version to look. It is most likely the deployed version.
+            service_component: Name of the service or component to check.
 
         Returns:
-            Operations that modified components.
+            True if the component has been modified, False otherwise.
         """
-        files_modified = self._repo.files_modified(version)
-        components_modified = set()
-        for file_modified in files_modified:
-            operation = Operation(Path(file_modified).stem + "_config")
-            # If operation is about a service, all components inside this service have to be returned
-            if operation.is_service_operation():
-                service_operations = dag.services_operations[operation.service_name]
-                components_modified.update(
-                    filter(
-                        lambda operation: operation.action_name == "config",
-                        service_operations,
-                    )
-                )
-            else:
-                components_modified.add(operation)
-        return list(components_modified)
+        return self._repo.is_file_modified(
+            commit=version,
+            file=service_component.full_name + YML_EXTENSION,
+        )
 
     def validate_schema(self, variables: Variables, schema: dict) -> None:
         """Validate variables against a schema.

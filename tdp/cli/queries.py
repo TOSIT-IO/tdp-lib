@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
@@ -13,7 +13,7 @@ from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
 
 def get_latest_success_component_version_log(
     session: Session,
-) -> List[Tuple[int, str, str, str]]:
+) -> List[ComponentVersionLog]:
     """Get the latest success component version.
 
     Args:
@@ -36,12 +36,7 @@ def get_latest_success_component_version_log(
     )
 
     return (
-        session.query(
-            ComponentVersionLog.deployment_id,
-            ComponentVersionLog.service,
-            ComponentVersionLog.component,
-            func.substr(ComponentVersionLog.version, 1, 7),
-        )
+        session.query(ComponentVersionLog)
         .filter(
             or_(
                 # Components with the latest success deployment

@@ -41,11 +41,8 @@ def reconfigure(
 
     session_class = get_session_class(database_dsn)
     with session_class() as session:
-        latest_success_component_version_log = get_latest_success_component_version_log(
-            session
-        )
-        latest_success_component_version = map(
-            lambda result: result[1:], latest_success_component_version_log
+        latest_success_components_version_log = (
+            get_latest_success_component_version_log(session)
         )
         cluster_variables = ClusterVariables.get_cluster_variables(
             collections, vars, validate=validate
@@ -55,7 +52,7 @@ def reconfigure(
         try:
             click.echo(f"Creating a deployment plan to reconfigure services.")
             deployment_log = DeploymentPlan.from_reconfigure(
-                dag, cluster_variables, latest_success_component_version
+                dag, cluster_variables, latest_success_components_version_log
             ).deployment_log
         except NothingToRestartError:
             click.echo("Nothing needs to be restarted.")

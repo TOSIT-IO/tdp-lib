@@ -7,6 +7,7 @@ from tdp.conftest import generate_collection
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
+from tdp.core.models import ComponentVersionLog
 from tdp.core.variables import ClusterVariables
 
 
@@ -68,8 +69,12 @@ def reconfigurable_cluster_variables(
         minimal_collections, tdp_vars
     )
     latest_success_component_version = [
-        ("mock", None, cluster_variables["mock"].version),
-        ("mock", "node", cluster_variables["mock"].version),
+        ComponentVersionLog(
+            service="mock", component=None, version=cluster_variables["mock"].version
+        ),
+        ComponentVersionLog(
+            service="mock", component="node", version=cluster_variables["mock"].version
+        ),
     ]
 
     with cluster_variables["mock"].open_var_files(
