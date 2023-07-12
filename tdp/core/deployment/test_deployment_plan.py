@@ -4,6 +4,7 @@
 import pytest
 
 from tdp.core.models import (
+    ComponentVersionLog,
     DeploymentLog,
     DeploymentStateEnum,
     DeploymentTypeEnum,
@@ -11,7 +12,6 @@ from tdp.core.models import (
     OperationStateEnum,
 )
 from tdp.core.operation import Operation
-from tdp.core.variables import ClusterVariables
 
 from .deployment_plan import DeploymentPlan, NothingToRestartError, NothingToResumeError
 
@@ -138,11 +138,16 @@ def test_deployment_plan_resume_with_success_deployment(dag, minimal_collections
 
 
 def test_deployment_plan_reconfigure_nothing_to_restart(dag, cluster_variables):
+    component_version_log = ComponentVersionLog(
+        service="mock",
+        component="node",
+        version=cluster_variables["mock"].version,
+    )
     with pytest.raises(NothingToRestartError):
         _deployment_plan = DeploymentPlan.from_reconfigure(
             dag,
             cluster_variables,
-            [("mock", "node", cluster_variables["mock"].version)],
+            [component_version_log],
         )
 
 

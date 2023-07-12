@@ -3,13 +3,14 @@
 
 import logging
 import os
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Dict, Iterable
 from typing import Mapping as MappingType
-from typing import Optional, Union
+from typing import Optional, Set, Union
 
 from tdp.core.collections import Collections
+from tdp.core.models import ComponentVersionLog
+from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
 
@@ -166,3 +167,76 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
         """Validate all services schemas."""
         for service in self.values():
             service.validate()
+
+    def get_modified_components_names(
+        self,
+        services_components_versions: Iterable[ComponentVersionLog],
+    ) -> Set[ServiceComponentName]:
+        """Return the set of modified components names.
+
+        Args:
+            services_components_versions: List of coherent deployed components and services versions.
+
+        Returns:
+            Set of modified components names.
+
+        Raises:
+            RuntimeError: If a service is deployed but its repository is missing.
+        """
+        # Map of service component names with their log
+        services_components_versions_dict = {
+            ServiceComponentName(
+                service_name=service_component_version.service,
+                component_name=service_component_version.component,
+            ): service_component_version
+            for service_component_version in services_components_versions
+        }
+
+        modified_services_components: Set[ServiceComponentName] = set()
+        # Check if a service is modified
+        for (
+            service_component_name,
+            service_component_version,
+        ) in services_components_versions_dict.items():
+            if service_component_name.is_service:
+                if service_component_name.service_name not in self.keys():
+                    raise RuntimeError(
+                        f"Service '{service_component_name}' is deployed but its repository is missing."
+                    )
+                service = self[service_component_name.service_name]
+                is_service_modified = (
+                    service.is_service_component_modified_from_version(
+                        service_component=service_component_name,
+                        version=service_component_version.version,
+                    )
+                )
+                logger.debug(
+                    f"Service '{service_component_name}' is modified: {is_service_modified}"
+                )
+                if is_service_modified:
+                    modified_services_components.add(service_component_name)
+        modified_services_components_names = {
+            modified_service_component.service_name
+            for modified_service_component in modified_services_components
+        }
+
+        # Check if a component is modified
+        for (
+            service_component_name,
+            service_component_version,
+        ) in services_components_versions_dict.items():
+            if (
+                service_component_name.service_name
+                in modified_services_components_names
+            ):
+                continue
+            service = self[service_component_name.service_name]
+            is_component_modified = service.is_service_component_modified_from_version(
+                service_component=service_component_name,
+                version=service_component_version.version,
+            )
+            if is_component_modified:
+                modified_services_components.add(service_component_name)
+
+        logger.info(f"Modified services components: {modified_services_components}")
+        return modified_services_components

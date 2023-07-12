@@ -5,12 +5,13 @@ import logging
 from collections import OrderedDict
 from collections.abc import Mapping
 from typing import Mapping as MappingType
-from typing import Sequence
+from typing import Sequence, List
 
 import yaml
 
 from tdp.core.collection import Collection
 from tdp.core.operation import Operation
+from tdp.core.service_component_name import ServiceComponentName
 
 try:
     from yaml import CLoader as Loader
@@ -161,3 +162,22 @@ class Collections(Mapping):
             )
         )
         return dict(allOf=schemas) if schemas else {}
+
+    def get_components_from_service(
+        self, service_name: str
+    ) -> List[ServiceComponentName]:
+        """Get the service's components.
+
+        Args:
+            service_name: Name of the service.
+
+        Returns:
+            A list of components names.
+        """
+        return {
+            ServiceComponentName(
+                service_name=service_name, component_name=operation.component_name
+            )
+            for operation in self.operations.values()
+            if operation.service_name == service_name
+        }

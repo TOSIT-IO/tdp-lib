@@ -1,7 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
+from typing import Iterable, List
+import logging
 
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
@@ -16,6 +17,9 @@ from tdp.core.models import (
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
+
+
+logger = logging.getLogger("tdp").getChild("deployment_plan")
 
 
 class EmptyDeploymentPlanError(Exception):
@@ -134,14 +138,14 @@ class DeploymentPlan:
     def from_reconfigure(
         dag: Dag,
         cluster_variables: ClusterVariables,
-        component_version_deployed: ComponentVersionLog,
+        deployed_component_version_logs: Iterable[ComponentVersionLog],
     ) -> "DeploymentPlan":
         """Generate a deployment plan based on altered component configuration.
 
         Args:
             dag: DAG to generate the deployment plan from.
             cluster_variables: Cluster variables.
-            component_version_deployed: List of deployed versions.
+            deployed_component_version_logs: List of deployed versions.
 
         Raises:
             RuntimeError: If a service is deployed but the repository is missing.
@@ -149,26 +153,33 @@ class DeploymentPlan:
         Returns:
             Deployment plan.
         """
-        components_modified = set()
-        for (
-            service,
-            _component,
-            version,
-        ) in component_version_deployed:
-            if service not in cluster_variables:
-                raise RuntimeError(
-                    f"Service '{service}' is deployed but the repository is missing."
-                )
-            for component_modified in cluster_variables[service].components_modified(
-                dag, version
-            ):
-                components_modified.add(component_modified.name)
+        operations = set()
+        modified_components = cluster_variables.get_modified_components_names(
+            deployed_component_version_logs,
+        )
+        for modified_component in modified_components:
+            logger.debug(
+                f"Component {modified_component.component_name} of service {modified_component.service_name} has been modified"
+            )
+            if modified_component.is_service:
 
-        if len(components_modified) == 0:
+                service_operations = dag.services_operations[
+                    modified_component.service_name
+                ]
+                service_operations_config = filter(
+                    lambda operation: operation.action_name == "config",
+                    service_operations,
+                )
+                operations.update(
+                    map(lambda operation: operation.name, service_operations_config)
+                )
+            else:
+                operations.add(f"{modified_component.full_name}_config")
+        if len(operations) == 0:
             raise NothingToRestartError()
         deployment_plan = DeploymentPlan.from_dag(
             dag,
-            sources=list(components_modified),
+            sources=list(operations),
             restart=True,
             filter_expression=r".+_(config|(re|)start)",
             filter_type=FilterTypeEnum.REGEX,

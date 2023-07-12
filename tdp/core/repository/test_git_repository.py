@@ -79,75 +79,54 @@ def test_git_repository_multiple_validations(git_repository: GitRepository):
         assert set(file_list) == set(last_commit.stats.files)
 
 
-def test_git_repository_files_added(
+def test_git_repository_file_added(
     git_repository: GitRepository, git_commit_empty_tree
 ):
-    file_list = [
-        "foo",
-        "bar",
-    ]
-    with Path(git_repository.path, file_list[0]).open("w") as fd:
+    file_name = "foo"
+    with Path(git_repository.path, file_name).open("w") as fd:
         fd.write("foo\n")
-    with Path(git_repository.path, file_list[1]).open("w") as fd:
-        fd.write("bar\n")
 
     with Repo(git_repository.path) as repo:
-        repo.index.add(file_list)
-        repo.index.commit("add files")
+        repo.index.add(file_name)
+        repo.index.commit("add file")
 
-    assert sorted(git_repository.files_modified(git_commit_empty_tree)) == sorted(
-        file_list
-    )
+    assert git_repository.is_file_modified(git_commit_empty_tree, file_name)
 
 
 def test_git_repository_files_added_and_removed(
-    git_repository: GitRepository, git_commit_empty_tree
+    git_repository: GitRepository, git_commit_empty_tree: str
 ):
-    file_list = [
-        "foo",
-        "bar",
-    ]
-    with Path(git_repository.path, file_list[0]).open("w") as fd:
+    file_name = "foo"
+    with Path(git_repository.path, file_name).open("w") as fd:
         fd.write("foo\n")
-    with Path(git_repository.path, file_list[1]).open("w") as fd:
-        fd.write("bar\n")
 
     with Repo(git_repository.path) as repo:
-        repo.index.add(file_list)
+        repo.index.add(file_name)
         repo.index.commit("add files")
-        repo.index.remove([file_list[0]])
+        repo.index.remove([file_name])
         repo.index.commit("remove first file")
 
-    assert sorted(git_repository.files_modified(git_commit_empty_tree)) == sorted(
-        [file_list[1]]
-    )
+    assert not git_repository.is_file_modified(git_commit_empty_tree, file_name)
 
 
-def test_git_repository_file_updated(git_repository: GitRepository):
-    file_list = [
-        "foo",
-        "bar",
-    ]
-    with Path(git_repository.path, file_list[0]).open("w") as fd:
+def test_git_repository_file_updated(
+    git_repository: GitRepository, git_commit_empty_tree: str
+):
+    file_name = "foo"
+    with Path(git_repository.path, file_name).open("w") as fd:
         fd.write("foo\n")
-    with Path(git_repository.path, file_list[1]).open("w") as fd:
-        fd.write("bar\n")
 
-    initial_commit = None
     with Repo(git_repository.path) as repo:
-        repo.index.add(file_list)
-        initial_commit = str(repo.index.commit("add files"))
+        repo.index.add(file_name)
 
-    with Path(git_repository.path, file_list[0]).open("w") as fd:
+    with Path(git_repository.path, file_name).open("w") as fd:
         fd.write("foobar\n")
 
     with Repo(git_repository.path) as repo:
-        repo.index.add([file_list[0]])
+        repo.index.add([file_name])
         repo.index.commit("update first file")
 
-    assert sorted(git_repository.files_modified(initial_commit)) == sorted(
-        [file_list[0]]
-    )
+    assert git_repository.is_file_modified(git_commit_empty_tree, file_name)
 
 
 def test_git_repository_no_validation(git_repository: GitRepository):
