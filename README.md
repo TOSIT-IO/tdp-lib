@@ -1,4 +1,4 @@
-[![Python Version](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/)
+[![Python Version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -15,7 +15,7 @@ TDP lib is a [Python](https://www.python.org/) library built on top of [Ansible]
 
 TDP lib requires:
 
-- Python 3.6+ with [Poetry](https://python-poetry.org/)
+- Python 3.9+ with [Poetry](https://python-poetry.org/)
 - A RDBMS system (such as [PostgreSQL](https://www.postgresql.org/) or [SQLite](https://www.sqlite.org/index.html))
 
 Optionally, you can install the following dependencies for DAG visualization:
