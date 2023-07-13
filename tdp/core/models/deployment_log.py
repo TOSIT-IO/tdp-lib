@@ -74,7 +74,7 @@ class DeploymentLog(Base):
     operations = relationship(
         "OperationLog",
         back_populates="deployment",
-        order_by="OperationLog.start_time",
+        order_by="OperationLog.operation_order",
         cascade="all, delete-orphan",
     )
     component_version = relationship("ComponentVersionLog", back_populates="deployment")
