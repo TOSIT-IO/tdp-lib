@@ -18,7 +18,7 @@ from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
 from tdp.core.repository.repository import Repository
 from tdp.core.models import ComponentVersionLog
 
-from .variables import Variables, VariablesDict, is_object
+from .variables import Variables, VariablesDict
 
 logger = logging.getLogger("tdp").getChild("service_variables")
 
@@ -36,13 +36,6 @@ class InvalidSchema(Exception):
 
     def __repr__(self):
         return f"{self.msg}: {self.filename}"
-
-
-type_checker = jsonschema.Draft7Validator.TYPE_CHECKER.redefine("object", is_object)
-
-CustomValidator = validators.extend(
-    jsonschema.Draft7Validator, type_checker=type_checker
-)
 
 
 class ServiceVariables:
@@ -247,7 +240,7 @@ class ServiceVariables:
             InvalidSchema: If the schema is invalid.
         """
         try:
-            jsonschema.validate(variables, schema, CustomValidator)
+            jsonschema.validate(dict(variables), schema, jsonschema.Draft7Validator)
         except exceptions.ValidationError as e:
             raise InvalidSchema("Schema is invalid", variables.name) from e
 

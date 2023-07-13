@@ -56,21 +56,6 @@ def merge_hash(dict_a: Dict, dict_b: Dict) -> Dict:
     return _merge_hash(dict_a, dict_b)
 
 
-def is_object(checker: jsonschema.Draft7Validator, instance: Any) -> bool:
-    """Custom type checker for JSON Schema.
-
-    Args:
-        checker: JSON Schema validator.
-        instance: Instance to check.
-
-    Returns:
-        True if instance is an object or a VariablesDict/_VariablesIOWrapper instance, False otherwise.
-    """
-    return jsonschema.Draft7Validator.TYPE_CHECKER.is_type(
-        instance, "object"
-    ) or isinstance(instance, (VariablesDict, _VariablesIOWrapper))
-
-
 class Variables:
     """Manages a variables file.
 
