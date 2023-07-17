@@ -6,13 +6,13 @@ from typing import List
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.models import (
+    ComponentVersionLog,
     DeploymentLog,
     DeploymentStateEnum,
     DeploymentTypeEnum,
     FilterTypeEnum,
     OperationLog,
     OperationStateEnum,
-    ComponentVersionLog,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -178,11 +178,11 @@ class DeploymentPlan:
         return deployment_plan
 
     @staticmethod
-    def from_failed_deployment(dag: Dag, deployment_log: DeploymentLog):
+    def from_failed_deployment(collections: Collections, deployment_log: DeploymentLog):
         """Generate a deployment plan from a failed deployment.
 
         Args:
-            dag: DAG to generate the deployment plan from.
+            collections: Collections to retrieve the operation from.
             deployment_log: Deployment log.
 
         Raises:
@@ -215,11 +215,18 @@ class DeploymentPlan:
                 operation.operation
                 for operation in deployment_log.operations[failed_operation_id:]
             ]
-            operations_to_resume = [
-                Operation(operation_name)
-                for operation_name in operations_names_to_resume
-            ]
-
+            operations_to_resume = []
+            for operation_name in operations_names_to_resume:
+                if operation_name not in collections.operations:
+                    forged_operation = Operation(
+                        name=operation_name,
+                        collection_name="replace_restart_noop",
+                        noop=True,
+                    )
+                    if forged_operation.action_name == "restart":
+                        operations_to_resume.append(forged_operation)
+                else:
+                    operations_to_resume.append(collections.operations[operation_name])
         new_deployment_log = DeploymentLog(
             targets=operations_names_to_resume,
             deployment_type=DeploymentTypeEnum.RESUME,
