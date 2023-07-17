@@ -70,39 +70,16 @@ def test_deployment_plan_restart(dag):
     ), "The restart flag should have removed every start operations from dag"
 
 
-def failed_deployment_log(deployment_plan, index_to_fail):
-
-    deployment_log = DeploymentLog(
-        id=1,
-        state=DeploymentStateEnum.FAILURE,
-        deployment_type=deployment_plan.deployment_log.deployment_type,
-        targets=deployment_plan.deployment_log.targets,
-        sources=deployment_plan.deployment_log.sources,
-        filter_expression=deployment_plan.deployment_log.filter_expression,
-        filter_type=deployment_plan.deployment_log.filter_type,
-        restart=deployment_plan.deployment_log.restart,
-    )
-    deployment_log.operations = [
-        OperationLog(
-            deployment_id=1,
-            operation=operation.name,
-            start_time=-1,
-            end_time=-1,
-            state=OperationStateEnum.SUCCESS,
-            logs=b"",
-        )
-        for operation in deployment_plan.operations[:index_to_fail]
-    ]
-    deployment_log.operations.append(
-        OperationLog(
-            deployment_id=1,
-            operation=deployment_plan.operations[index_to_fail].name,
-            start_time=-1,
-            end_time=-1,
-            state=OperationStateEnum.FAILURE,
-            logs=b"",
-        )
-    )
+def failed_deployment_log(deployment_plan: DeploymentPlan, index_to_fail):
+    deployment_log = deployment_plan.deployment_log
+    deployment_log.state = DeploymentStateEnum.FAILURE
+    for operation in deployment_log.operations:
+        if operation.operation_order < index_to_fail:
+            operation.state = OperationStateEnum.SUCCESS
+        elif operation.operation_order == index_to_fail:
+            operation.state = OperationStateEnum.FAILURE
+        else:
+            operation.state = OperationStateEnum.HELD
     return deployment_log
 
 
@@ -131,7 +108,7 @@ def success_deployment_log(deployment_plan):
     return deployment_log
 
 
-def test_deployment_plan_resume_from_dag(dag):
+def test_deployment_plan_resume_from_dag(dag, minimal_collections):
     deployment_plan = DeploymentPlan.from_dag(
         dag,
         targets=["mock_init"],
@@ -139,37 +116,25 @@ def test_deployment_plan_resume_from_dag(dag):
     index_to_fail = 2
     deployment_log = failed_deployment_log(deployment_plan, index_to_fail)
 
-    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_log)
+    resume_plan = DeploymentPlan.from_failed_deployment(
+        minimal_collections, deployment_log
+    )
     assert resume_plan.deployment_log.deployment_type == DeploymentTypeEnum.RESUME
-    assert len(deployment_plan.operations) - index_to_fail == len(
+    # index starts at 1
+    assert len(deployment_plan.operations) - index_to_fail + 1 == len(
         resume_plan.operations
     )
-    assert set(deployment_plan.operations) >= set(resume_plan.operations)
+    assert len(deployment_plan.operations) >= len(resume_plan.operations)
 
 
-def test_deployment_plan_resume_from_dag_with_filter(dag):
-    deployment_plan = DeploymentPlan.from_dag(
-        dag, targets=["mock_init"], filter_expression="mock_node_*"
-    )
-    index_to_fail = 3
-    deployment_log = failed_deployment_log(deployment_plan, index_to_fail)
-
-    resume_plan = DeploymentPlan.from_failed_deployment(dag, deployment_log)
-    assert resume_plan.deployment_log.deployment_type == DeploymentTypeEnum.RESUME
-    assert len(deployment_plan.operations) - index_to_fail == len(
-        resume_plan.operations
-    )
-    assert set(deployment_plan.operations) >= set(resume_plan.operations)
-
-
-def test_deployment_plan_resume_with_success_deployment(dag):
+def test_deployment_plan_resume_with_success_deployment(dag, minimal_collections):
     deployment_plan = DeploymentPlan.from_dag(
         dag,
         targets=["mock_init"],
     )
     deployment_log = success_deployment_log(deployment_plan)
     with pytest.raises(NothingToResumeError):
-        DeploymentPlan.from_failed_deployment(dag, deployment_log)
+        DeploymentPlan.from_failed_deployment(minimal_collections, deployment_log)
 
 
 def test_deployment_plan_reconfigure_nothing_to_restart(dag, cluster_variables):

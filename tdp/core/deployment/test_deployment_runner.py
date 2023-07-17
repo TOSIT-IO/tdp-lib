@@ -196,23 +196,23 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
     assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
-def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner):
+def test_deployment_dag_is_resumed(
+    dag, failing_deployment_runner, deployment_runner, minimal_collections
+):
     deployment_plan = DeploymentPlan.from_dag(dag, targets=["mock_init"])
     deployment_iterator = failing_deployment_runner.run(deployment_plan)
-
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
 
     resume_plan = DeploymentPlan.from_failed_deployment(
-        dag, deployment_iterator.deployment_log
+        minimal_collections, deployment_iterator.deployment_log
     )
     resume_deployment_iterator = deployment_runner.run(resume_plan)
-
     for _ in resume_deployment_iterator:
         pass
-    assert deployment_iterator.deployment_log.deployment_type == DeploymentTypeEnum.DAG
+
     assert (
         resume_deployment_iterator.deployment_log.deployment_type
         == DeploymentTypeEnum.RESUME
@@ -220,9 +220,20 @@ def test_deployment_is_resumed(dag, failing_deployment_runner, deployment_runner
     assert (
         resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     )
+    failed_operation = next(
+        filter(
+            lambda x: x.state == DeploymentStateEnum.FAILURE,
+            deployment_iterator.deployment_log.operations,
+        )
+    )
     assert (
-        deployment_iterator.deployment_log.operations[-1].operation
+        failed_operation.operation
         == resume_deployment_iterator.deployment_log.operations[0].operation
+    )
+    assert len(
+        deployment_iterator.deployment_log.operations
+    ) - deployment_iterator.deployment_log.operations.index(failed_operation) == len(
+        resume_deployment_iterator.deployment_log.operations
     )
 
 
@@ -248,7 +259,11 @@ def test_deployment_is_reconfigured(
 
 
 def test_deployment_reconfigure_is_resumed(
-    dag, reconfigurable_cluster_variables, failing_deployment_runner, deployment_runner
+    dag,
+    reconfigurable_cluster_variables,
+    failing_deployment_runner,
+    deployment_runner,
+    minimal_collections,
 ):
     (
         cluster_variables,
@@ -259,23 +274,18 @@ def test_deployment_reconfigure_is_resumed(
         dag, cluster_variables, component_version_deployed
     )
     deployment_iterator = failing_deployment_runner.run(deployment_plan)
-
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
 
     resume_plan = DeploymentPlan.from_failed_deployment(
-        dag, deployment_iterator.deployment_log
+        minimal_collections, deployment_iterator.deployment_log
     )
     resume_deployment_iterator = deployment_runner.run(resume_plan)
-
     for _ in resume_deployment_iterator:
         pass
-    assert (
-        deployment_iterator.deployment_log.deployment_type
-        == DeploymentTypeEnum.RECONFIGURE
-    )
+
     assert (
         resume_deployment_iterator.deployment_log.deployment_type
         == DeploymentTypeEnum.RESUME
@@ -283,7 +293,18 @@ def test_deployment_reconfigure_is_resumed(
     assert (
         resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     )
+    failed_operation = next(
+        filter(
+            lambda x: x.state == DeploymentStateEnum.FAILURE,
+            deployment_iterator.deployment_log.operations,
+        )
+    )
     assert (
-        deployment_iterator.deployment_log.operations[-1].operation
+        failed_operation.operation
         == resume_deployment_iterator.deployment_log.operations[0].operation
+    )
+    assert len(
+        deployment_iterator.deployment_log.operations
+    ) - deployment_iterator.deployment_log.operations.index(failed_operation) == len(
+        resume_deployment_iterator.deployment_log.operations
     )
