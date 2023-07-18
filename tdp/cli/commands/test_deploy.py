@@ -7,7 +7,7 @@ from .init import init
 from .deploy import deploy
 
 
-def test_tdp_deploy_mock(collection_path, database_dsn_path, vars):
+def test_tdp_deploy_mock(collection_path, database_dsn_path, vars, tmp_path):
     args = [
         "--collection-path",
         collection_path,
@@ -21,6 +21,6 @@ def test_tdp_deploy_mock(collection_path, database_dsn_path, vars):
     assert result.exit_code == 0
     result = runner.invoke(dag, args)
     assert result.exit_code == 0
-    args.append("--mock-deploy")
+    args.extend(["--run-directory", tmp_path, "--mock-deploy"])
     result = runner.invoke(deploy, args)
     assert result.exit_code == 0
