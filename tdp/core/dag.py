@@ -154,7 +154,7 @@ class Dag:
 
     def topological_sort(
         self, nodes: List[str] = None, restart: bool = False
-    ) -> List[str]:
+    ) -> List[Operation]:
         """Perform a topological sort on the DAG.
 
         Args:
