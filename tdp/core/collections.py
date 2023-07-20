@@ -219,5 +219,7 @@ class Collections(Mapping):
             The Operation instance.
         """
         if operation_name not in self.operations:
-            raise MissingOperationError(f"Operation {operation_name} not found in collections.")
+            raise MissingOperationError(
+                f"Operation {operation_name} not found in collections."
+            )
         return self.operations[operation_name]
