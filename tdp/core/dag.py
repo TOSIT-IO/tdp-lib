@@ -39,10 +39,6 @@ SERVICE_PRIORITY = {
 DEFAULT_SERVICE_PRIORITY = 99
 
 
-class MissingOperationError(Exception):
-    pass
-
-
 class IllegalNodeError(Exception):
     pass
 
@@ -176,10 +172,7 @@ class Dag:
             return f"{operation_priority:02d}_{node}"
 
         def to_operation(node: str) -> Operation:
-            try:
-                operation = self.collections.operations[node]
-            except KeyError as e:
-                raise MissingOperationError(f"{node} is missing an operation") from e
+            operation = self.collections.get_operation(node)
             if restart:
                 if node.endswith("_start"):
                     node = node.replace("_start", "_restart")
@@ -191,12 +184,7 @@ class Dag:
                             noop=True,
                             depends_on=operation.depends_on,
                         )
-                try:
-                    return self.collections.operations[node]
-                except KeyError as e:
-                    raise MissingOperationError(
-                        f"{node} is missing an operation"
-                    ) from e
+                return self.collections.get_operation(node)
             return operation
 
         return list(

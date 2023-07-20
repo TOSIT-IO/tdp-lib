@@ -21,6 +21,10 @@ except ImportError:
 logger = logging.getLogger("tdp").getChild("collections")
 
 
+class MissingOperationError(Exception):
+    pass
+
+
 class Collections(Mapping):
     """A mapping of collection name to Collection instance.
 
@@ -215,5 +219,5 @@ class Collections(Mapping):
             The Operation instance.
         """
         if operation_name not in self.operations:
-            raise ValueError(f"Operation {operation_name} not found in collections.")
+            raise MissingOperationError(f"Operation {operation_name} not found in collections.")
         return self.operations[operation_name]
