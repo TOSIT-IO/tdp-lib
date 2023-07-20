@@ -69,9 +69,7 @@ def test_deployment_plan_with_filter_is_success(dag, deployment_runner):
 
 def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner):
     """deployment plan containing only noop operation"""
-    deployment_plan = DeploymentPlan.from_operations(
-        [minimal_collections.operations["mock_init"]]
-    )
+    deployment_plan = DeploymentPlan.from_operations(minimal_collections, ["mock_init"])
     deployment_iterator = deployment_runner.run(deployment_plan)
 
     for operation, _ in deployment_iterator:
@@ -122,10 +120,7 @@ def test_service_log_is_not_emitted(dag, deployment_runner):
 def test_service_log_only_noop_is_emitted(minimal_collections, deployment_runner):
     """deployment plan containing only noop config and start"""
     deployment_plan = DeploymentPlan.from_operations(
-        [
-            minimal_collections.operations["mock_config"],
-            minimal_collections.operations["mock_start"],
-        ]
+        minimal_collections, ["mock_config", "mock_start"]
     )
     deployment_iterator = deployment_runner.run(deployment_plan)
 
@@ -141,10 +136,7 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
 ):
     """deployment plan containing start then config should not emit service log"""
     deployment_plan = DeploymentPlan.from_operations(
-        [
-            minimal_collections.operations["mock_node_start"],
-            minimal_collections.operations["mock_node_config"],
-        ]
+        minimal_collections, ["mock_node_start", "mock_node_config"]
     )
     deployment_iterator = deployment_runner.run(deployment_plan)
 
@@ -160,11 +152,8 @@ def test_service_log_emitted_once_with_start_and_restart(
 ):
     """deployment plan containing config, start, and restart should emit only one service log"""
     deployment_plan = DeploymentPlan.from_operations(
-        [
-            minimal_collections.operations["mock_node_config"],
-            minimal_collections.operations["mock_node_start"],
-            minimal_collections.operations["mock_node_restart"],
-        ]
+        minimal_collections,
+        ["mock_node_config", "mock_node_start", "mock_node_restart"],
     )
     deployment_iterator = deployment_runner.run(deployment_plan)
 
@@ -180,12 +169,13 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
 ):
     """deployment plan containing multiple config, start, and restart should emit only one service log"""
     deployment_plan = DeploymentPlan.from_operations(
+        minimal_collections,
         [
-            minimal_collections.operations["mock_node_config"],
-            minimal_collections.operations["mock_node_start"],
-            minimal_collections.operations["mock_node_config"],
-            minimal_collections.operations["mock_node_restart"],
-        ]
+            "mock_node_config",
+            "mock_node_start",
+            "mock_node_config",
+            "mock_node_restart",
+        ],
     )
     deployment_iterator = deployment_runner.run(deployment_plan)
 

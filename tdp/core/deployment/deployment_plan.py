@@ -42,6 +42,10 @@ class NotPlannedDeploymentError(Exception):
     pass
 
 
+class UnsupportedOperationError(Exception):
+    pass
+
+
 class GeneratedDeploymentPlanMissesOperationError(Exception):
     def __init__(self, message: str, reconstructed_operations: List[str]):
         super(Exception).__init__(message)
@@ -121,14 +125,30 @@ class DeploymentPlan:
         return DeploymentPlan(operations, deployment_log)
 
     @staticmethod
-    def from_operations(operations: List[Operation]) -> "DeploymentPlan":
+    def from_operations(
+        collections: Collections, operation_names: List[str]
+    ) -> "DeploymentPlan":
         """Generate a deployment plan from a list of operations.
 
         Args:
-            operations: List of operations to perform.
+            collections: Collections to retrieve the operations from.
+            operations: List of operations names to perform.
+
+        Raises:
+            UnsupportedOperationError: If an operation is a noop.
+            ValueError: If an operation is not found in the collections.
         """
+        operations = []
+        for operation_name in operation_names:
+            operation = collections.get_operation(operation_name)
+            if operation.noop:
+                raise UnsupportedOperationError(
+                    f"Operation {operation.name} is a noop and cannot be executed in an unitary deployment."
+                )
+            operations.append(operation)
+
         deployment_log = DeploymentLog(
-            targets=[operation.name for operation in operations],
+            targets=operation_names,
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             state=DeploymentStateEnum.PLANNED,
         )
@@ -226,18 +246,10 @@ class DeploymentPlan:
                 operation.operation
                 for operation in deployment_log.operations[failed_operation_id:]
             ]
-            operations_to_resume = []
-            for operation_name in operations_names_to_resume:
-                if operation_name not in collections.operations:
-                    forged_operation = Operation(
-                        name=operation_name,
-                        collection_name="replace_restart_noop",
-                        noop=True,
-                    )
-                    if forged_operation.action_name == "restart":
-                        operations_to_resume.append(forged_operation)
-                else:
-                    operations_to_resume.append(collections.operations[operation_name])
+        operations_to_resume = [
+            collections.get_operation(operation_name)
+            for operation_name in operations_names_to_resume
+        ]
         new_deployment_log = DeploymentLog(
             targets=operations_names_to_resume,
             deployment_type=DeploymentTypeEnum.RESUME,
@@ -259,6 +271,6 @@ class DeploymentPlan:
 
         operations: List[Operation] = []
         for operation_log in deployment_log.operations:
-            operations.append(collections.operations[operation_log.operation])
+            operations.append(collections.get_operation(operation_log.operation))
 
         return DeploymentPlan(operations, deployment_log)

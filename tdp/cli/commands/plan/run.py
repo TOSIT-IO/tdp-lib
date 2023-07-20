@@ -24,24 +24,13 @@ def run(
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist.")
-    dag = Dag(collections)
-
-    operations = []
-    for operation_name in operation_names:
-        operation = dag.collections.operations.get(operation_name, None)
-        if not operation:
-            raise click.BadParameter(f"{operation_name} is not a valid operation.")
-
-        if operation.noop:
-            raise click.BadParameter(
-                f"{operation_name} is tagged as noop and thus"
-                " cannot be executed in an unitary deployment."
-            )
-        operations.append(operation)
-
-    click.echo(f"Creating a deployment plan to run {len(operations)} operation(s).")
+    click.echo(
+        f"Creating a deployment plan to run {len(operation_names)} operation(s)."
+    )
     try:
-        deployment_log = DeploymentPlan.from_operations(operations).deployment_log
+        deployment_log = DeploymentPlan.from_operations(
+            collections, operation_names
+        ).deployment_log
     except Exception as e:
         raise click.ClickException(str(e)) from e
 

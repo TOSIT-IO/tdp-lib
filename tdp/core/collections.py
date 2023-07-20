@@ -81,12 +81,12 @@ class Collections(Mapping):
 
     @property
     def dag_operations(self) -> MappingType[str, Operation]:
-        """Mapping of operation name that are in the DAG to Operation instance."""
+        """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
 
     @property
     def other_operations(self) -> MappingType[str, Operation]:
-        """Mapping of operation name that aren't in the DAG to Operation instance."""
+        """Mapping of operation name that aren't in dag files to their Operation instance."""
         return self._other_operations
 
     @property
@@ -125,6 +125,29 @@ class Collections(Mapping):
                         self._dag_operations[operation_name] = Operation(
                             collection_name=collection_name, **operation
                         )
+                        # Restart operations are not defined in the DAG for noop,
+                        # they are generated from the start operations.
+                        if (
+                            "noop" in operation
+                            and operation["noop"]
+                            and "_start" in operation_name
+                        ):
+                            restart_operation_name = operation_name.replace(
+                                "_start", "_restart"
+                            )
+                            operation.update(
+                                {
+                                    "name": restart_operation_name,
+                                }
+                            )
+                            logger.debug(
+                                f"DAG Operation '{operation_name}' is noop, "
+                                f"creating the associated restart operation."
+                            )
+                            self._other_operations[restart_operation_name] = Operation(
+                                collection_name="replace_restart_noop",
+                                **operation,
+                            )
 
         # Init Operations not in the DAG
         for collection_name, collection in self._collections.items():
@@ -181,3 +204,16 @@ class Collections(Mapping):
             for operation in self.operations.values()
             if operation.service_name == service_name
         }
+
+    def get_operation(self, operation_name: str) -> Operation:
+        """Get an operation by its name.
+
+        Args:
+            operation_name: Name of the operation.
+
+        Returns:
+            The Operation instance.
+        """
+        if operation_name not in self.operations:
+            raise ValueError(f"Operation {operation_name} not found in collections.")
+        return self.operations[operation_name]
