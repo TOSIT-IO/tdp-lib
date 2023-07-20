@@ -9,7 +9,7 @@ import yaml
 from tdp.core.collection import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
-    OPERATION_DIRECTORY_NAME,
+    PLAYBOOKS_DIRECTORY_NAME,
     SCHEMA_VARS_DIRECTORY_NAME,
 )
 
@@ -20,7 +20,7 @@ def generate_collection(
     service_vars: Mapping[str, Mapping[str, dict]],
 ):
     tdp_lib_dag = directory / DAG_DIRECTORY_NAME
-    playbooks = directory / OPERATION_DIRECTORY_NAME
+    playbooks = directory / PLAYBOOKS_DIRECTORY_NAME
     tdp_vars_defaults = directory / DEFAULT_VARS_DIRECTORY_NAME
     tdp_vars_schema = directory / SCHEMA_VARS_DIRECTORY_NAME
 

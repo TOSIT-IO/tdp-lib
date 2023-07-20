@@ -53,7 +53,7 @@ class DeploymentRunner:
 
         start = datetime.utcnow()
 
-        operation_file = self._collections[operation.collection_name].operations[
+        operation_file = self._collections[operation.collection_name].playbooks[
             operation.name
         ]
         state, logs = self._executor.execute(operation_file)

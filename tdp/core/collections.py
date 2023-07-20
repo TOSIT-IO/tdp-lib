@@ -128,7 +128,7 @@ class Collections(Mapping):
 
         # Init Operations not in the DAG
         for collection_name, collection in self._collections.items():
-            for operation_name, _ in collection.operations.items():
+            for operation_name, _ in collection.playbooks.items():
                 if operation_name in self._dag_operations:
                     continue
                 if operation_name in self._other_operations:
