@@ -81,13 +81,45 @@ class TestFromOperations:
 
     def test_single_noop_opeation(self, minimal_collections: Collections):
         operations_names = ["mock_config"]
-        with pytest.raises(UnsupportedOperationError):
-            DeploymentPlan.from_operations(minimal_collections, operations_names)
+        deployment_plan = DeploymentPlan.from_operations(
+            minimal_collections, operations_names
+        )
+
+        assert deployment_plan.operations == [
+            minimal_collections.get_operation(operations_names[0])
+        ]
+        assert (
+            deployment_plan.deployment_log.deployment_type
+            == DeploymentTypeEnum.OPERATIONS
+        )
+        assert deployment_plan.deployment_log.targets == operations_names
+        assert deployment_plan.deployment_log.sources == None
+        assert deployment_plan.deployment_log.filter_expression == None
+        assert deployment_plan.deployment_log.filter_type == None
+        assert (
+            deployment_plan.deployment_log.restart == None
+        )  # restart flag is only used in dag
 
     def test_single_restart_noop_operation(self, minimal_collections: Collections):
         operations_names = ["mock_restart"]
-        with pytest.raises(UnsupportedOperationError):
-            DeploymentPlan.from_operations(minimal_collections, operations_names)
+        deployment_plan = DeploymentPlan.from_operations(
+            minimal_collections, operations_names
+        )
+
+        assert deployment_plan.operations == [
+            minimal_collections.get_operation(operations_names[0])
+        ]
+        assert (
+            deployment_plan.deployment_log.deployment_type
+            == DeploymentTypeEnum.OPERATIONS
+        )
+        assert deployment_plan.deployment_log.targets == operations_names
+        assert deployment_plan.deployment_log.sources == None
+        assert deployment_plan.deployment_log.filter_expression == None
+        assert deployment_plan.deployment_log.filter_type == None
+        assert (
+            deployment_plan.deployment_log.restart == None
+        )  # restart flag is only used in dag
 
     def test_multiple_operations(self, minimal_collections: Collections):
         operations_names = ["mock_node_config", "mock_node_restart"]

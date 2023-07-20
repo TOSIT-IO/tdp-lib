@@ -138,14 +138,10 @@ class DeploymentPlan:
             UnsupportedOperationError: If an operation is a noop.
             ValueError: If an operation is not found in the collections.
         """
-        operations = []
-        for operation_name in operation_names:
-            operation = collections.get_operation(operation_name)
-            if operation.noop:
-                raise UnsupportedOperationError(
-                    f"Operation {operation.name} is a noop and cannot be executed in an unitary deployment."
-                )
-            operations.append(operation)
+        operations = [
+            collections.get_operation(operation_name)
+            for operation_name in operation_names
+        ]
 
         deployment_log = DeploymentLog(
             targets=operation_names,
