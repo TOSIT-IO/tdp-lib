@@ -4,11 +4,11 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Tuple
 
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
 DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
-OPERATION_DIRECTORY_NAME = "playbooks"
+PLAYBOOKS_DIRECTORY_NAME = "playbooks"
 SCHEMA_VARS_DIRECTORY_NAME = "tdp_vars_schema"
 
 JSON_EXTENSION = ".json"
@@ -17,7 +17,7 @@ YML_EXTENSION = ".yml"
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
-    OPERATION_DIRECTORY_NAME,
+    PLAYBOOKS_DIRECTORY_NAME,
 ]
 
 
@@ -36,66 +36,46 @@ class MissingMandatoryDirectoryError(Exception):
 class Collection:
     """An enriched version of an Ansible collection.
 
-    A TDP Collection is a directory containing playbooks, DAGs, default variables and schema variables.
-
-    Attributes:
-        path: Path to the collection.
-        name: Name of the collection.
-        dag_directory: Path to the DAG directory.
-        default_vars_directory: Path to the default variables directory.
-        operations_directory: Path to the operations directory.
-        schema_directory: Path to the schema variables directory.
-        dag_yamls: List of DAG files in the YAML format.
-        operations: Dictionary of operations with the operation name as key and the operation path as value.
+    A TDP Collection is a directory containing playbooks, DAGs, default variables and variables schemas.
     """
 
     def __init__(self, path: Union[str, os.PathLike]):
-        """Initialize a collection from a path.
+        """Initialize a collection.
 
         Args:
             path: The path to the collection.
-        """
-        self._path = Path(path)
-        self._dag_yamls: Optional[List[Path]] = None
-        self._operations: Optional[Dict[str, Path]] = None
-
-    @staticmethod
-    def from_path(path: Union[str, os.PathLike]):
-        """Factory method to build a collection from a path.
-
-        Args:
-            path: The path to the collection.
-
-        Returns:
-            A collection.
 
         Raises:
             PathDoesNotExistsError: If the path does not exists.
             PathIsNotADirectoryError: If the path is not a directory.
-            MissingMandatoryDirectoryError: If the path does not contain the mandatory directories.
+            MissingMandatoryDirectoryError: If the collection does not contain a mandatory directory.
         """
-        path = Path(path).expanduser().resolve()
-        if not path.exists():
-            raise PathDoesNotExistsError(f"{path} does not exists")
-        if not path.is_dir():
-            raise PathIsNotADirectoryError(f"{path} is not a directory")
-        for mandatory_directory in MANDATORY_DIRECTORIES:
-            mandatory_path = path / mandatory_directory
-            if not mandatory_path.exists() or not mandatory_path.is_dir():
-                raise MissingMandatoryDirectoryError(
-                    f"{path} does not contain the mandatory directory {mandatory_directory}",
-                )
-        return Collection(path)
+        self._path = Path(path)
+        self._check_path()
+
+        self._dag_yamls: Optional[List[Path]] = None
+        self._playbooks: Optional[Dict[str, Path]] = None
+
+    @staticmethod
+    def from_path(path: Union[str, os.PathLike]) -> "Collection":
+        """Factory method to create a collection from a path.
+
+        Args:
+            path: The path to the collection.
+
+        Returns: A collection.
+        """
+        return Collection(path=Path(path).expanduser().resolve())
+
+    @property
+    def name(self) -> str:
+        """Collection name."""
+        return self._path.name
 
     @property
     def path(self) -> Path:
         """Path to the collection."""
         return self._path
-
-    @property
-    def name(self) -> str:
-        """Name of the collection."""
-        return self._path.name
 
     @property
     def dag_directory(self) -> Path:
@@ -108,13 +88,13 @@ class Collection:
         return self._path / DEFAULT_VARS_DIRECTORY_NAME
 
     @property
-    def operations_directory(self) -> Path:
-        """Path to the operations directory."""
-        return self._path / OPERATION_DIRECTORY_NAME
+    def playbooks_directory(self) -> Path:
+        """Path to the playbook directory."""
+        return self._path / PLAYBOOKS_DIRECTORY_NAME
 
     @property
     def schema_directory(self) -> Path:
-        """Path to the schema variables directory."""
+        """Path to the variables schema directory."""
         return self._path / SCHEMA_VARS_DIRECTORY_NAME
 
     @property
@@ -125,16 +105,16 @@ class Collection:
         return self._dag_yamls
 
     @property
-    def operations(self) -> Dict[str, Path]:
-        """Dictionary of operations (playbooks) by name."""
-        if not self._operations:
-            self._operations = {
+    def playbooks(self) -> Dict[str, Path]:
+        """Dictionary of playbooks."""
+        if not self._playbooks:
+            self._playbooks = {
                 playbook.stem: playbook
-                for playbook in self.operations_directory.glob("*" + YML_EXTENSION)
+                for playbook in self.playbooks_directory.glob("*" + YML_EXTENSION)
             }
-        return self._operations
+        return self._playbooks
 
-    def get_service_default_vars(self, service_name: str) -> List[Path]:
+    def get_service_default_vars(self, service_name: str) -> List[Tuple[str, Path]]:
         """Get the default variables for a service.
 
         Args:
@@ -149,16 +129,27 @@ class Collection:
         return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
 
     def get_service_schema(self, service_name: str) -> Dict:
-        """Get the schema of the service.
+        """Get the variables schema of a service.
 
-        Args:
-            service_name: The name of the service.
+        Args: Name of the service to retrieve the schema for.
 
-        Returns:
-            The schema of the service's variables.
+        Returns: The service schema.
         """
         schema_path = self.schema_directory / (service_name + JSON_EXTENSION)
         if not schema_path.exists():
             return {}
         with schema_path.open() as fd:
             return json.load(fd)
+
+    def _check_path(self):
+        """Validate the collection path content."""
+        if not self._path.exists():
+            raise PathDoesNotExistsError(f"{self._path} does not exists.")
+        if not self._path.is_dir():
+            raise PathIsNotADirectoryError(f"{self._path} is not a directory.")
+        for mandatory_directory in MANDATORY_DIRECTORIES:
+            mandatory_path = self._path / mandatory_directory
+            if not mandatory_path.exists() or not mandatory_path.is_dir():
+                raise MissingMandatoryDirectoryError(
+                    f"{self._path} does not contain the mandatory directory {mandatory_directory}",
+                )

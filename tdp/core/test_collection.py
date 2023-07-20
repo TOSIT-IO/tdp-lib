@@ -47,5 +47,5 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
     generate_collection(collection_path, dag_service_operations, service_vars)
     collection = Collection.from_path(collection_path)
     assert collection_path / DAG_DIRECTORY_NAME / "service.yml" in collection.dag_yamls
-    assert "service_install" in collection.operations
-    assert "service_config" in collection.operations
+    assert "service_install" in collection.playbooks
+    assert "service_config" in collection.playbooks
