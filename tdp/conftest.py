@@ -35,7 +35,7 @@ def generate_collection(
             yaml.dump(operations, fd)
 
         for operation in operations:
-            if operation["name"].endswith("_start"):
+            if operation["name"].endswith("_start") and "noop" not in operation:
                 with (
                     playbooks / (operation["name"].rstrip("_start") + "_restart.yml")
                 ).open("w") as fd:
