@@ -15,6 +15,7 @@ from tdp.cli.commands.nodes import nodes
 from tdp.cli.commands.plan import plan
 from tdp.cli.commands.playbooks import playbooks
 from tdp.cli.commands.service_versions import service_versions
+from tdp.cli.commands.stale import stale
 from tdp.cli.commands.validate import validate
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
@@ -41,4 +42,5 @@ tdp.add_command(nodes)
 tdp.add_command(plan)
 tdp.add_command(playbooks)
 tdp.add_command(service_versions)
+tdp.add_command(stale)
 tdp.add_command(validate)
