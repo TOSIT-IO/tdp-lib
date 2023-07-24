@@ -12,7 +12,9 @@ def collection_path(tmp_path_factory):
     dag_service_operations = {
         "service": [
             {"name": "service_install"},
-            {"name": "service_config"},
+            {"name": "service_config", "depends_on": ["service_install"]},
+            {"name": "service_start", "depends_on": ["service_config"]},
+            {"name": "service_init", "depends_on": ["service_start"]},
         ],
     }
     service_vars = {
