@@ -16,5 +16,5 @@ def validate(collections, vars):
         ClusterVariables.get_cluster_variables(collections, vars, validate=True)
     except InvalidSchema as e:
         traceback.print_exc()
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
     click.echo("TDP Vars are valid")

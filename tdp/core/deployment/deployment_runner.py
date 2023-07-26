@@ -5,11 +5,11 @@ import logging
 from datetime import datetime
 
 from tdp.core.collections import Collections
-from tdp.core.deployment import DeploymentPlan
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
-    OperationLog,
+    DeploymentLog,
     DeploymentStateEnum,
+    OperationLog,
     OperationStateEnum,
 )
 from tdp.core.operation import Operation
@@ -40,24 +40,22 @@ class DeploymentRunner:
         self._executor = executor
         self._cluster_variables = cluster_variables
 
-    def _run_operation(self, operation: Operation) -> OperationLog:
+    def _run_operation(self, operation_log: OperationLog):
         """Run operation.
 
         Args:
-            operation: Operation to be run.
-
-        Returns:
-            OperationLog object with the operation's logs.
+            operation_log: Operation to run, modified in place with the result.
         """
-        logger.debug(f"Running operation {operation.name}")
+        logger.debug(f"Running operation {operation_log.operation}")
 
-        start = datetime.utcnow()
+        operation_log.start_time = datetime.utcnow()
 
+        operation = self._collections.get_operation(operation_log.operation)
         operation_file = self._collections[operation.collection_name].playbooks[
             operation.name
         ]
         state, logs = self._executor.execute(operation_file)
-        end = datetime.utcnow()
+        operation_log.end_time = datetime.utcnow()
 
         if not OperationStateEnum.has_value(state):
             logger.error(
@@ -66,29 +64,22 @@ class DeploymentRunner:
             state = OperationStateEnum.FAILURE
         elif not isinstance(state, OperationStateEnum):
             state = OperationStateEnum(state)
+        operation_log.state = state
+        operation_log.logs = logs
 
-        return OperationLog(
-            operation_order=1,
-            operation=operation.name,
-            start_time=start,
-            end_time=end,
-            state=state,
-            logs=logs,
-        )
-
-    def run(self, deployment_plan: DeploymentPlan) -> DeploymentIterator:
+    def run(self, deployment_log: DeploymentLog) -> DeploymentIterator:
         """Provides an iterator to run a deployment plan.
 
         Args:
-            deployment_plan: Deployment plan to be run.
+            deployment_log: Deployment log to run.
 
         Returns:
-            DeploymentIterator object.
+            DeploymentIterator object, to iterate over operations logs.
         """
-        deployment_plan.deployment_log.state = DeploymentStateEnum.RUNNING
+        deployment_log.state = DeploymentStateEnum.RUNNING
         return DeploymentIterator(
-            deployment_plan.deployment_log,
-            deployment_plan.operations,
-            self._run_operation,
-            self._cluster_variables,
+            deployment_log=deployment_log,
+            collections=self._collections,
+            run_method=self._run_operation,
+            cluster_variables=self._cluster_variables,
         )

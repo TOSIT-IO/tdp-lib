@@ -4,8 +4,9 @@
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
+from typing import List
 from typing import Mapping as MappingType
-from typing import Sequence, List
+from typing import Sequence
 
 import yaml
 
@@ -223,3 +224,18 @@ class Collections(Mapping):
                 f"Operation {operation_name} not found in collections."
             )
         return self.operations[operation_name]
+
+    def check_operations_exist(self, operations_names: List[str]) -> None:
+        """Check that all operations exist.
+
+        Args:
+            operations_names: List of operation names to check.
+
+        Raises:
+            MissingOperationError: If an operation is missing.
+        """
+        for operation_name in operations_names:
+            if operation_name not in self.operations:
+                raise MissingOperationError(
+                    f"Operation {operation_name} not found in collections."
+                )

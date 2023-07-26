@@ -3,12 +3,10 @@
 
 import click
 
+from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import collections, database_dsn, vars
-from tdp.core.dag import Dag
-from tdp.core.deployment import DeploymentPlan
-
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.core.models import DeploymentLog
 
 
 @click.command(short_help="Run single TDP operation.")
@@ -28,9 +26,7 @@ def run(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
     try:
-        deployment_log = DeploymentPlan.from_operations(
-            collections, operation_names
-        ).deployment_log
+        deployment_log = DeploymentLog.from_operations(collections, operation_names)
     except Exception as e:
         raise click.ClickException(str(e)) from e
 

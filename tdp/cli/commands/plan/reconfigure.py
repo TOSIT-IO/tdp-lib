@@ -16,11 +16,7 @@ from tdp.cli.utils import (
     vars,
 )
 from tdp.core.dag import Dag
-from tdp.core.deployment import (
-    DeploymentPlan,
-    EmptyDeploymentPlanError,
-    NothingToRestartError,
-)
+from tdp.core.models import DeploymentLog
 from tdp.core.variables import ClusterVariables
 
 
@@ -51,16 +47,11 @@ def reconfigure(
 
         try:
             click.echo(f"Creating a deployment plan to reconfigure services.")
-            deployment_log = DeploymentPlan.from_reconfigure(
+            deployment_log = DeploymentLog.from_reconfigure(
                 dag, cluster_variables, latest_success_components_version_log
-            ).deployment_log
-        except NothingToRestartError:
-            click.echo("Nothing needs to be restarted.")
-            return
-        except EmptyDeploymentPlanError:
-            raise click.ClickException(
-                f"Component(s) don't have any operation associated to restart (excluding noop). Nothing to restart."
             )
+        except Exception as e:
+            raise click.ClickException(f"Failed to create deployment plan: {e}") from e
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
