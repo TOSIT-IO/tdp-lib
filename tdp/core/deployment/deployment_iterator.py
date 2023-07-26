@@ -4,14 +4,15 @@
 from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Iterator, List, Callable, Tuple
+from typing import Callable, Iterator, Tuple
 
+from tdp.core.collections import Collections
 from tdp.core.models import (
+    ComponentVersionLog,
     DeploymentLog,
     DeploymentStateEnum,
     OperationLog,
     OperationStateEnum,
-    ComponentVersionLog,
 )
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
@@ -40,7 +41,7 @@ class DeploymentIterator(Iterator):
     def __init__(
         self,
         deployment_log: DeploymentLog,
-        operations: List[Operation],
+        collections: Collections,
         run_method: Callable[[Operation], OperationLog],
         cluster_variables: ClusterVariables,
     ):
@@ -54,24 +55,22 @@ class DeploymentIterator(Iterator):
         """
         self.deployment_log = deployment_log
         self.deployment_log.start_time = datetime.utcnow()
+        self._collections = collections
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
-        operations_with_operation_logs: List[Tuple[Operation, OperationLog]] = [
-            (operations[i], self.deployment_log.operations[i])
-            for i in range(len(operations))
-        ]
-        self._iter = iter(operations_with_operation_logs)
+        self._iter = iter(deployment_log.operations)
         self._component_states = defaultdict(_Flags)
 
     def __next__(self) -> Tuple[OperationLog, ComponentVersionLog]:
         try:
             while True:
-                (operation, operation_log) = next(self._iter)
+                operation_log: OperationLog = next(self._iter)
 
                 if self.deployment_log.state == DeploymentStateEnum.FAILURE:
                     operation_log.state = OperationStateEnum.HELD
                     return operation_log, None
 
+                operation = self._collections.get_operation(operation_log.operation)
                 # Retrieve the component state.
                 # This is a reference to the object, so we can update it.
                 component_state = self._component_states[
@@ -95,12 +94,7 @@ class DeploymentIterator(Iterator):
                     component_version_log = None
 
                 if operation.noop == False:
-                    result = self._run_operation(operation)
-                    operation_log.state = result.state
-                    operation_log.end_time = result.end_time
-                    operation_log.start_time = result.start_time
-                    operation_log.logs = result.logs
-                    operation_log.state = result.state
+                    self._run_operation(operation_log)
                     if operation_log.state != OperationStateEnum.SUCCESS:
                         self.deployment_log.state = DeploymentStateEnum.FAILURE
                 else:

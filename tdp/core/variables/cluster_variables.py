@@ -9,10 +9,10 @@ from typing import Mapping as MappingType
 from typing import Optional, Set, Union
 
 from tdp.core.collections import Collections
-from tdp.core.models import ComponentVersionLog
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
+from tdp.core.service_component_name import ServiceComponentName
 
 from .service_variables import ServiceVariables
 

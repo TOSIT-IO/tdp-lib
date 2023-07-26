@@ -6,17 +6,16 @@ import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import Dict, Iterator, List, Set, Union
+from typing import Dict, Iterator, List, Union
 
 import jsonschema
 from jsonschema import exceptions, validators
 
 from tdp.core.collection import YML_EXTENSION
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.dag import Dag
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
 from tdp.core.repository.repository import Repository
-from tdp.core.models import ComponentVersionLog
+from tdp.core.service_component_name import ServiceComponentName
 
 from .variables import Variables, VariablesDict, is_object
 

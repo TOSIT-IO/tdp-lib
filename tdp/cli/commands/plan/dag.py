@@ -4,13 +4,11 @@
 
 import click
 
+from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.dag import Dag
-from tdp.core.deployment import DeploymentPlan
-from tdp.core.models import FilterTypeEnum
-
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.core.models import DeploymentLog, FilterTypeEnum
 
 
 def validate_filtertype(ctx, param, value):
@@ -90,14 +88,14 @@ def dag(
     else:
         click.echo(f"Creating a deployment plan for the whole DAG.")
     try:
-        deployment_log = DeploymentPlan.from_dag(
+        deployment_log = DeploymentLog.from_dag(
             dag,
             sources=sources,
             targets=targets,
             filter_expression=filter,
             filter_type=filter_type,
             restart=restart,
-        ).deployment_log
+        )
     except Exception as e:
         raise click.ClickException(str(e)) from e
     session_class = get_session_class(database_dsn)

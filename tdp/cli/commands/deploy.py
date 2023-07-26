@@ -15,7 +15,7 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
-from tdp.core.deployment import Executor, DeploymentPlan, DeploymentRunner
+from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
@@ -61,10 +61,7 @@ def deploy(
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
             )
-        deployment_plan = DeploymentPlan.from_deployment_log(
-            collections, planned_deployment_log
-        )
-        deployment_iterator = deployment_runner.run(deployment_plan)
+        deployment_iterator = deployment_runner.run(planned_deployment_log)
         if dry:
             for _ in deployment_iterator:
                 pass

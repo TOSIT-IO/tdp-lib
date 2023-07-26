@@ -114,7 +114,7 @@ def _print_formatted_deployment(deployment_log: DeploymentLog) -> None:
     Raises:
         ClickException: If the deployment log is not found
     """
-    deployment_headers = [key for key, _ in keyvalgen(DeploymentLog)]
+    deployment_headers = DeploymentLog.__table__.columns.keys()
     operation_headers = OperationLog.__table__.columns.keys()
     service_headers = ComponentVersionLog.__table__.columns.keys()
 

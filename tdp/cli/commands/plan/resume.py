@@ -4,13 +4,15 @@
 
 import click
 
-from tdp.cli.queries import get_deployment, get_last_deployment
+from tdp.cli.queries import (
+    get_deployment,
+    get_last_deployment,
+    get_planned_deployment_log,
+)
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.dag import Dag
-from tdp.core.deployment import DeploymentPlan
-
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.core.models import DeploymentLog
 
 
 @click.command(short_help="Resume a failed deployment.")
@@ -37,9 +39,9 @@ def resume(
             deployment_log_to_resume = get_deployment(session, id)
             click.echo(f"Creating a deployment plan to resume deployment #{id}.")
         try:
-            deployment_log = DeploymentPlan.from_failed_deployment(
+            deployment_log = DeploymentLog.from_failed_deployment(
                 collections, deployment_log_to_resume
-            ).deployment_log
+            )
         except Exception as e:
             raise click.ClickException(str(e)) from e
         planned_deployment_log = get_planned_deployment_log(session)

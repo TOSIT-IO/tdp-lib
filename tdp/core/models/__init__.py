@@ -2,11 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .base import Base
-from .deployment_log import DeploymentLog, DeploymentTypeEnum, FilterTypeEnum
-from .operation_log import OperationLog
 from .component_version_log import ComponentVersionLog
-from .state_enum import DeploymentStateEnum, OperationStateEnum
+from .deployment_log import (
+    DeploymentLog,
+    DeploymentTypeEnum,
+    FilterTypeEnum,
+    NoOperationMatchError,
+    NothingToReconfigureError,
+    NothingToResumeError,
+)
+from .operation_log import OperationLog
 from .stale_component import StaleComponent
+from .state_enum import DeploymentStateEnum, OperationStateEnum
 
 
 def init_database(engine):
