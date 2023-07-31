@@ -103,8 +103,9 @@ class DeploymentLog(Base):
         order_by="OperationLog.operation_order",
         cascade="all, delete-orphan",
     )
-    component_version = relationship("ComponentVersionLog", back_populates="deployment")
-
+    component_version = relationship(
+        "ComponentVersionLog", back_populates="deployment", cascade_backrefs=False
+    )
 
     def __str__(self):
         return tabulate(
