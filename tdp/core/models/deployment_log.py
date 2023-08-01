@@ -12,10 +12,8 @@ from tabulate import tabulate
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
-from tdp.core.variables import ClusterVariables
 
 from .base import Base
-from .component_version_log import ComponentVersionLog
 from .operation_log import OperationLog
 from .stale_component import StaleComponent
 from .state_enum import DeploymentStateEnum, OperationStateEnum
@@ -231,7 +229,7 @@ class DeploymentLog(Base):
 
     @staticmethod
     def from_stale_components(
-        collections: Collections, stale_components: List[StaleComponent]
+        collections: Collections, stale_components: Iterable[Optional[StaleComponent]]
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of stale components.
 
@@ -255,7 +253,7 @@ class DeploymentLog(Base):
             if stale_component.to_reconfigure:
                 operations_names.add("_".join([base_operation_name, "config"]))
         if len(operations_names) == 0:
-            raise NothingToReconfigureError()
+            raise NothingToReconfigureError(f"No component needs to be reconfigured.")
         dag = Dag(collections)
         operations = dag.topological_sort(nodes=operations_names, restart=True)
         deployment_log = DeploymentLog(
