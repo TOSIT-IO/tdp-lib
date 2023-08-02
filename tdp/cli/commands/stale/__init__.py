@@ -1,14 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import click
 from typing import List
+
+import click
 from tabulate import tabulate
 
 from tdp.cli.queries import get_latest_success_component_version_log
-from tdp.core.variables import ClusterVariables
 from tdp.cli.session import get_session_class
-from tdp.core.dag import Dag
 from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
@@ -16,7 +15,9 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
+from tdp.core.dag import Dag
 from tdp.core.models import StaleComponent
+from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="List stale components.")
@@ -41,11 +42,11 @@ def stale(database_dsn: str, generate: bool, vars, collections):
             deployed_component_version_logs = get_latest_success_component_version_log(
                 session
             )
-            stale_components_dict = StaleComponent.generate(
+            stale_components = StaleComponent.generate(
                 dag, cluster_variables, deployed_component_version_logs
             )
             session.query(StaleComponent).delete()
-            session.add_all(list(stale_components_dict.values()))
+            session.add_all(stale_components)
             session.commit()
         # Print stale components
         stale_components = session.query(StaleComponent).all()

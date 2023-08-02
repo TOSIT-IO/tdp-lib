@@ -11,8 +11,8 @@ from tdp.core.models import (
     DeploymentStateEnum,
     OperationLog,
     OperationStateEnum,
+    StaleComponent,
 )
-from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
 
 from .deployment_iterator import DeploymentIterator
@@ -28,6 +28,7 @@ class DeploymentRunner:
         collections: Collections,
         executor: Executor,
         cluster_variables: ClusterVariables,
+        stale_components: list[StaleComponent],
     ):
         """Deployment runner.
 
@@ -35,10 +36,12 @@ class DeploymentRunner:
             collections: Collections object.
             executor: Executor object.
             cluster_variables: ClusterVariables object.
+            stale_components: List of stale components to actualize.
         """
         self._collections = collections
         self._executor = executor
         self._cluster_variables = cluster_variables
+        self._stale_components = stale_components
 
     def _run_operation(self, operation_log: OperationLog):
         """Run operation.
@@ -88,4 +91,5 @@ class DeploymentRunner:
             collections=self._collections,
             run_method=self._run_operation,
             cluster_variables=self._cluster_variables,
+            stale_components=self._stale_components,
         )

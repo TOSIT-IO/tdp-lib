@@ -4,7 +4,7 @@
 from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Callable, Iterator, Tuple
+from typing import Callable, Optional
 
 from tdp.core.collections import Collections
 from tdp.core.models import (
@@ -13,6 +13,7 @@ from tdp.core.models import (
     DeploymentStateEnum,
     OperationLog,
     OperationStateEnum,
+    StaleComponent,
 )
 from tdp.core.variables import ClusterVariables
 
@@ -30,7 +31,11 @@ class _Flags:
         self.is_started = is_started
 
 
-class DeploymentIterator(Iterator):
+class DeploymentIterator(
+    Iterator[
+        tuple[OperationLog, Optional[ComponentVersionLog], Optional[StaleComponent]]
+    ]
+):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -43,6 +48,7 @@ class DeploymentIterator(Iterator):
         collections: Collections,
         run_method: Callable[[OperationLog], None],
         cluster_variables: ClusterVariables,
+        stale_components: list[StaleComponent],
     ):
         """Initialize the iterator.
 
@@ -51,25 +57,36 @@ class DeploymentIterator(Iterator):
             operations: List of operations to run.
             run_method: Method to run the operation.
             cluster_variables: ClusterVariables object.
+            stale_components: List of stale components to actualize.
         """
         self.deployment_log = deployment_log
         self.deployment_log.start_time = datetime.utcnow()
+        self._stale_components = StaleComponent.to_dict(stale_components)
         self._collections = collections
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
         self._iter = iter(deployment_log.operations)
         self._component_states = defaultdict(_Flags)
 
-    def __next__(self) -> Tuple[OperationLog, ComponentVersionLog]:
+    def __next__(self):
         try:
             while True:
                 operation_log: OperationLog = next(self._iter)
 
                 if self.deployment_log.state == DeploymentStateEnum.FAILURE:
                     operation_log.state = OperationStateEnum.HELD
-                    return operation_log, None
+                    return operation_log, None, None
 
                 operation = self._collections.get_operation(operation_log.operation)
+                stale_component = self._stale_components.get(
+                    (operation.service_name, operation.component_name)
+                )
+                if operation.action_name == "config":
+                    if stale_component:
+                        stale_component.to_reconfigure = False
+                elif operation.action_name == "restart":
+                    if stale_component and not stale_component.to_reconfigure:
+                        stale_component.to_restart = False
                 # Retrieve the component state.
                 # This is a reference to the object, so we can update it.
                 component_state = self._component_states[
@@ -99,7 +116,7 @@ class DeploymentIterator(Iterator):
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
-                return operation_log, component_version_log
+                return operation_log, component_version_log, stale_component
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
