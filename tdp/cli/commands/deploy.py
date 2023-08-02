@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment_log, get_stale_components
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -45,15 +45,6 @@ def deploy(
     )
     check_services_cleanliness(cluster_variables)
 
-    deployment_runner = DeploymentRunner(
-        collections,
-        Executor(
-            run_directory=run_directory.absolute() if run_directory else None,
-            dry=dry or mock_deploy,
-        ),
-        cluster_variables,
-    )
-
     session_class = get_session_class(database_dsn)
     with session_class() as session:
         planned_deployment_log = get_planned_deployment_log(session)
@@ -61,6 +52,16 @@ def deploy(
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
             )
+        stale_components = get_stale_components(session)
+        deployment_runner = DeploymentRunner(
+            collections,
+            Executor(
+                run_directory=run_directory.absolute() if run_directory else None,
+                dry=dry or mock_deploy,
+            ),
+            cluster_variables,
+            stale_components,
+        )
         deployment_iterator = deployment_runner.run(planned_deployment_log)
         if dry:
             for _ in deployment_iterator:
@@ -69,11 +70,23 @@ def deploy(
             # Update deployment log to RUNNING
             session.merge(deployment_iterator.deployment_log)
             session.commit()
-            for operation_log, component_version_log in deployment_iterator:
+            for (
+                operation_log,
+                component_version_log,
+                stale_component,
+            ) in deployment_iterator:
                 if operation_log is not None:
                     session.merge(operation_log)
                 if component_version_log is not None:
                     session.add(component_version_log)
+                if stale_component:
+                    if (
+                        not stale_component.to_reconfigure
+                        and not stale_component.to_restart
+                    ):
+                        session.delete(stale_component)
+                    else:
+                        session.merge(stale_component)
                 session.commit()
             # Update deployment log to SUCCESS or FAILURE
             session.merge(deployment_iterator.deployment_log)

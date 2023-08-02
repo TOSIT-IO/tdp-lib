@@ -229,7 +229,7 @@ class DeploymentLog(Base):
 
     @staticmethod
     def from_stale_components(
-        collections: Collections, stale_components: Iterable[Optional[StaleComponent]]
+        collections: Collections, stale_components: list[StaleComponent]
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of stale components.
 

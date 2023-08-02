@@ -3,13 +3,17 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Column, String, Boolean
+import logging
 
+from sqlalchemy import Boolean, Column, String
+
+from tdp.core.dag import Dag
 from tdp.core.models.base import Base
 from tdp.core.models.component_version_log import ComponentVersionLog
-from tdp.core.operation import SERVICE_NAME_MAX_LENGTH, COMPONENT_NAME_MAX_LENGTH
-from tdp.core.dag import Dag
+from tdp.core.operation import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGTH
 from tdp.core.variables import ClusterVariables
+
+logger = logging.getLogger("tdp").getChild("stale_component")
 
 
 class StaleComponent(Base):
@@ -38,7 +42,7 @@ class StaleComponent(Base):
         dag: Dag,
         cluster_variables: ClusterVariables,
         deployed_component_version_logs: ComponentVersionLog,
-    ) -> dict[tuple[str, str], StaleComponent]:
+    ) -> list[StaleComponent]:
         modified_services_or_components_names = (
             cluster_variables.get_modified_components_names(
                 services_components_versions=deployed_component_version_logs
@@ -84,4 +88,24 @@ class StaleComponent(Base):
                 stale_component.to_reconfigure = True
             if operation.action_name == "restart":
                 stale_component.to_restart = True
-        return stale_components_dict
+        return list(stale_components_dict.values())
+
+    @staticmethod
+    def to_dict(
+        stale_components: list[StaleComponent],
+    ) -> dict[tuple[str, str], StaleComponent]:
+        """Convert the list of stale components to a dictionary.
+
+        Args:
+            stale_components: The list of stale components to convert.
+
+        Returns:
+            The dictionary of stale components.
+        """
+        return {
+            (
+                stale_component.service_name,
+                stale_component.component_name,
+            ): stale_component
+            for stale_component in stale_components
+        }

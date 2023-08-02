@@ -34,12 +34,16 @@ class FailingExecutor(MockExecutor):
 
 @pytest.fixture
 def deployment_runner(minimal_collections, cluster_variables):
-    return DeploymentRunner(minimal_collections, MockExecutor(), cluster_variables)
+    return DeploymentRunner(
+        minimal_collections, MockExecutor(), cluster_variables, stale_components=[]
+    )
 
 
 @pytest.fixture
 def failing_deployment_runner(minimal_collections, cluster_variables):
-    return DeploymentRunner(minimal_collections, FailingExecutor(), cluster_variables)
+    return DeploymentRunner(
+        minimal_collections, FailingExecutor(), cluster_variables, stale_components=[]
+    )
 
 
 def test_deployment_plan_is_success(dag: Dag, deployment_runner: DeploymentRunner):
@@ -47,7 +51,7 @@ def test_deployment_plan_is_success(dag: Dag, deployment_runner: DeploymentRunne
     deployment_log = DeploymentLog.from_dag(dag)
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation, _ in deployment_iterator:
+    for operation, _, _ in deployment_iterator:
         if operation is not None:
             assert operation.state == OperationStateEnum.SUCCESS
 
@@ -65,7 +69,7 @@ def test_deployment_plan_with_filter_is_success(
     )
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation_log, _ in deployment_iterator:
+    for operation_log, _, _ in deployment_iterator:
         if operation_log is not None:
             assert operation_log.state == OperationStateEnum.SUCCESS
 
@@ -78,7 +82,7 @@ def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner)
     deployment_log = DeploymentLog.from_operations(minimal_collections, ["mock_init"])
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation, _ in deployment_iterator:
+    for operation, _, _ in deployment_iterator:
         if operation is not None:
             assert operation.state == OperationStateEnum.SUCCESS
 
