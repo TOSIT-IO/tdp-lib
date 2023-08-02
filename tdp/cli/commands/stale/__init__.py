@@ -6,7 +6,10 @@ from typing import List
 import click
 from tabulate import tabulate
 
-from tdp.cli.queries import get_latest_success_component_version_log, get_stale_components
+from tdp.cli.queries import (
+    get_latest_success_component_version_log,
+    get_stale_components,
+)
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
