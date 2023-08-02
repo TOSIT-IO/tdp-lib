@@ -6,7 +6,7 @@ from typing import List
 import click
 from tabulate import tabulate
 
-from tdp.cli.queries import get_latest_success_component_version_log
+from tdp.cli.queries import get_latest_success_component_version_log, get_stale_components
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -49,7 +49,7 @@ def stale(database_dsn: str, generate: bool, vars, collections):
             session.add_all(stale_components)
             session.commit()
         # Print stale components
-        stale_components = session.query(StaleComponent).all()
+        stale_components = get_stale_components(session)
         _print_stale_components(stale_components)
 
 
