@@ -64,6 +64,8 @@ class StaleComponent(Base):
                 modified_components_names.add(
                     f"{modified_component_name.full_name}_config"
                 )
+        if not modified_components_names:
+            return []
         operations = dag.get_operations(
             sources=list(modified_components_names), restart=True
         )
