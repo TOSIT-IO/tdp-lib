@@ -9,9 +9,9 @@ from sqlalchemy import Table, create_engine
 from sqlalchemy.orm import sessionmaker
 
 from .base import Base
+from .component_version_log import ComponentVersionLog
 from .deployment_log import DeploymentLog
 from .operation_log import OperationLog
-from .component_version_log import ComponentVersionLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 
@@ -43,6 +43,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         targets=["target1", "target2"],
         filter_expression=".*",
         filter_type="glob",
+        hosts=["host1", "host2"],
         start_time=datetime.utcnow(),
         end_time=datetime.utcnow() + timedelta(0, 1),
         state="SUCCESS",
@@ -59,6 +60,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         operation_order=1,
         deployment_id=deployment_log.id,
         operation="start_target1",
+        host="host1",
         start_time=datetime.utcnow(),
         end_time=datetime.utcnow() + timedelta(0, 1),
         state="Success",
@@ -87,6 +89,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         assert result.targets == ["target1", "target2"]
         assert result.filter_expression == ".*"
         assert result.filter_type == "glob"
+        assert result.hosts == ["host1", "host2"]
         assert result.state == "Success"
         assert result.deployment_type == "Dag"
         assert result.restart is False
@@ -99,5 +102,6 @@ def test_create_deployment_log(session_maker: sessionmaker):
         assert len(result.operations) == 1
         assert result.operations[0].operation_order == 1
         assert result.operations[0].operation == "start_target1"
+        assert result.operations[0].host == "host1"
         assert result.operations[0].state == "Success"
         assert result.operations[0].logs == b"operation log"

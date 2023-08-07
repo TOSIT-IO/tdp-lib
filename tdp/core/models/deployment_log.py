@@ -3,11 +3,11 @@
 
 import enum
 import logging
-from typing import Iterable, List
-from tabulate import tabulate
+from typing import Iterable, List, Optional
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
+from tabulate import tabulate
 
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
@@ -77,6 +77,7 @@ class DeploymentLog(Base):
         targets (List[str]): List of target nodes, in the case of Dag deployment type. List of operations, in the case of Run deployment type.
         filter_expression (str): Filter expression.
         filter_type (FilterTypeEnum): Filter type.
+        hosts (List[str]): List of hosts.
         start_time (datetime): Deployment start time.
         end_time (datetime): Deployment end time.
         state (DeploymentStateEnum): Deployment state.
@@ -91,6 +92,7 @@ class DeploymentLog(Base):
     targets = Column(JSON(none_as_null=True))
     filter_expression = Column(String(length=OPERATION_NAME_MAX_LENGTH * 5))
     filter_type = Column(Enum(FilterTypeEnum))
+    hosts = Column(JSON(none_as_null=True))
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
     state: Column = Column(Enum(DeploymentStateEnum))
@@ -176,6 +178,7 @@ class DeploymentLog(Base):
             OperationLog(
                 operation=operation.name,
                 operation_order=i,
+                host=None,
                 state=OperationStateEnum.PLANNED,
             )
             for i, operation in enumerate(operations, 1)
@@ -184,30 +187,45 @@ class DeploymentLog(Base):
 
     @staticmethod
     def from_operations(
-        collections: Collections, operation_names: List[str]
+        collections: Collections,
+        operation_names: List[str],
+        host_names: Optional[Iterable[str]] = None,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of operations.
 
         Args:
             collections: Collections to retrieve the operations from.
             operations: List of operations names to perform.
+            host_names: Set of host for each operation.
 
         Raises:
             UnsupportedOperationError: If an operation is a noop.
             ValueError: If an operation is not found in the collections.
         """
         collections.check_operations_exist(operation_names)
+        if host_names is not None:
+            collections.check_operations_hosts_exist(
+                operation_names,
+                host_names,
+            )
         deployment_log = DeploymentLog(
             targets=operation_names,
+            hosts=list(host_names) if host_names is not None else None,
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             state=DeploymentStateEnum.PLANNED,
         )
-        deployment_log.operations = [
-            OperationLog(
-                operation=operation, operation_order=i, state=OperationStateEnum.PLANNED
-            )
-            for i, operation in enumerate(operation_names, 1)
-        ]
+        i = 1
+        for operation in operation_names:
+            for host_name in host_names or [None]:
+                deployment_log.operations.append(
+                    OperationLog(
+                        operation=operation,
+                        operation_order=i,
+                        host=host_name,
+                        state=OperationStateEnum.PLANNED,
+                    )
+                )
+                i += 1
         return deployment_log
 
     @staticmethod
@@ -297,10 +315,11 @@ class DeploymentLog(Base):
             ),
             None,
         )
-        operations_names_to_resume = [
-            operation.operation
+        operations_names_hosts_to_resume = [
+            (operation.operation, operation.host)
             for operation in deployment_log.operations[failed_operation_id:]
         ]
+        operations_names_to_resume = [i[0] for i in operations_names_hosts_to_resume]
         collections.check_operations_exist(operations_names_to_resume)
         deployment_log = DeploymentLog(
             targets=operations_names_to_resume,
@@ -309,8 +328,11 @@ class DeploymentLog(Base):
         )
         deployment_log.operations = [
             OperationLog(
-                operation=operation, operation_order=i, state=OperationStateEnum.PLANNED
+                operation=operation,
+                operation_order=i,
+                host=host,
+                state=OperationStateEnum.PLANNED,
             )
-            for i, operation in enumerate(operations_names_to_resume, 1)
+            for i, (operation, host) in enumerate(operations_names_hosts_to_resume, 1)
         ]
         return deployment_log

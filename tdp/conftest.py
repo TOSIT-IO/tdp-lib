@@ -29,6 +29,10 @@ def generate_collection(
     tdp_vars_defaults.mkdir()
     tdp_vars_schema.mkdir()
 
+    minimal_playbook = [
+        {"hosts": "localhost"},
+    ]
+
     for service, operations in dag_service_operations.items():
         service_filename = service + ".yml"
         with (tdp_lib_dag / service_filename).open("w") as fd:
@@ -39,9 +43,9 @@ def generate_collection(
                 with (
                     playbooks / (operation["name"].rstrip("_start") + "_restart.yml")
                 ).open("w") as fd:
-                    pass
+                    yaml.dump(minimal_playbook, fd)
             with (playbooks / (operation["name"] + ".yml")).open("w") as fd:
-                pass
+                yaml.dump(minimal_playbook, fd)
 
     for service_name, file_vars in service_vars.items():
         service_dir = tdp_vars_defaults / service_name

@@ -4,7 +4,9 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
+
+from tdp.core.inventory_reader import InventoryReader
 
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
 DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
@@ -33,13 +35,21 @@ class MissingMandatoryDirectoryError(Exception):
     pass
 
 
+class MissingPlaybookError(Exception):
+    pass
+
+
 class Collection:
     """An enriched version of an Ansible collection.
 
     A TDP Collection is a directory containing playbooks, DAGs, default variables and variables schemas.
     """
 
-    def __init__(self, path: Union[str, os.PathLike]):
+    def __init__(
+        self,
+        path: Union[str, os.PathLike],
+        inventory_reader: Optional[InventoryReader] = None,
+    ):
         """Initialize a collection.
 
         Args:
@@ -53,6 +63,7 @@ class Collection:
         self._path = Path(path)
         self._check_path()
 
+        self._inventory_reader = inventory_reader or InventoryReader()
         self._dag_yamls: Optional[List[Path]] = None
         self._playbooks: Optional[Dict[str, Path]] = None
 
@@ -140,6 +151,24 @@ class Collection:
             return {}
         with schema_path.open() as fd:
             return json.load(fd)
+
+    def get_hosts_from_playbook(self, playbook: str) -> Set[str]:
+        """Get the set of hosts for a playbook.
+
+        Args:
+            playbook: playbook name without extension
+
+        Returns:
+            Set of hosts
+        """
+        if playbook not in self.playbooks:
+            raise MissingPlaybookError(f"Playbook {playbook} not found")
+        try:
+            return self._inventory_reader.get_hosts_from_playbook(
+                self.playbooks[playbook].open()
+            )
+        except Exception as e:
+            raise ValueError(f"Can't parse playbook {self.playbooks[playbook]}") from e
 
     def _check_path(self):
         """Validate the collection path content."""

@@ -5,7 +5,7 @@ from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, LargeBinary,
 from sqlalchemy.orm import relationship
 
 from tdp.core.models.base import Base
-from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
+from tdp.core.operation import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 
 from .state_enum import OperationStateEnum
 
@@ -19,6 +19,7 @@ class OperationLog(Base):
         deployment_id (int): Deployment log id.
         operation_order (int): Operation order.
         operation (str): Operation name.
+        host (str): Operation host.
         start_time (datetime): Operation start time.
         end_time (datetime): Operation end time.
         state (OperationStateEnum): Operation state.
@@ -30,6 +31,7 @@ class OperationLog(Base):
     deployment_id = Column(Integer, ForeignKey("deployment_log.id"), primary_key=True)
     operation_order = Column(Integer, primary_key=True)
     operation = Column(String(length=OPERATION_NAME_MAX_LENGTH))
+    host = Column(String(length=HOST_NAME_MAX_LENGTH))
     start_time = Column(DateTime(timezone=False))
     end_time = Column(DateTime(timezone=False))
     state = Column(Enum(OperationStateEnum))

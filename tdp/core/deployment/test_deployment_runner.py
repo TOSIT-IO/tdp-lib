@@ -1,7 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import logging
 
 import pytest
 
@@ -18,21 +17,19 @@ from .executor import Executor
 
 
 class MockExecutor(Executor):
-    def execute(self, operation):
-        return OperationStateEnum.SUCCESS, f"{operation} LOG SUCCESS".encode("utf-8")
+    def execute(self, playbook, host=None):
+        return OperationStateEnum.SUCCESS, f"{playbook} LOG SUCCESS".encode("utf-8")
 
 
 class FailingExecutor(MockExecutor):
     def __init__(self):
         self.count = 0
 
-    def execute(self, operation):
+    def execute(self, playbook, host=None):
         if self.count > 0:
-            return OperationStateEnum.FAILURE, f"{operation} LOG FAILURE".encode(
-                "utf-8"
-            )
+            return OperationStateEnum.FAILURE, f"{playbook} LOG FAILURE".encode("utf-8")
         self.count += 1
-        return super().execute(operation)
+        return super().execute(playbook, host)
 
 
 @pytest.fixture

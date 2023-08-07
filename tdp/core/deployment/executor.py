@@ -4,7 +4,7 @@
 import io
 import logging
 import subprocess
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 from tdp.core.models import OperationStateEnum
 
@@ -25,11 +25,13 @@ class Executor:
         self._rundir = run_directory
         self._dry = dry
 
-    def _execute_ansible_command(self, command: str) -> Tuple[OperationStateEnum, str]:
+    def _execute_ansible_command(
+        self, command: List[str]
+    ) -> Tuple[OperationStateEnum, bytes]:
         """Execute an ansible command.
 
         Args:
-            command: Command to execute.
+            command: Command to execute with args.
 
         Returns:
             A tuple with the state of the command and the output of the command.
@@ -59,16 +61,21 @@ class Executor:
                 return OperationStateEnum.FAILURE, byte_stream.getvalue()
             return state, byte_stream.getvalue()
 
-    def execute(self, operation: str) -> Tuple[OperationStateEnum, str]:
-        """Executes an operation.
+    def execute(
+        self, playbook: str, host: Optional[str] = None
+    ) -> Tuple[OperationStateEnum, bytes]:
+        """Executes a playbook.
 
         Args:
-            operation: Name of the operation to execute.
+            playbook: Name of the playbook to execute.
+            host: Host where the playbook must be ran.
 
         Returns:
             A tuple with the state of the command and the output of the command in UTF-8.
         """
-        command = ["ansible-playbook", str(operation)]
+        command = ["ansible-playbook", str(playbook)]
+        if host is not None:
+            command.extend(["--limit", host])
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return OperationStateEnum.SUCCESS, b""
