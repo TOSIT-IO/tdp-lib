@@ -11,11 +11,19 @@ from tdp.core.models import DeploymentLog
 
 @click.command(short_help="Run single TDP operation.")
 @click.argument("operation_names", nargs=-1, required=True)
+@click.option(
+    "--host",
+    envvar="TDP_HOSTS",
+    type=str,
+    multiple=True,
+    help="Hosts where operations are launched. Can be used multiple times.",
+)
 @collections
 @database_dsn
 @vars
 def run(
     operation_names,
+    host,
     collections,
     database_dsn,
     vars,
@@ -26,7 +34,9 @@ def run(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
     try:
-        deployment_log = DeploymentLog.from_operations(collections, operation_names)
+        deployment_log = DeploymentLog.from_operations(
+            collections, operation_names, host
+        )
     except Exception as e:
         raise click.ClickException(str(e)) from e
 

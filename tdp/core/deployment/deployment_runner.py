@@ -46,20 +46,26 @@ class DeploymentRunner:
         Args:
             operation_log: Operation to run, modified in place with the result.
         """
-        logger.debug(f"Running operation {operation_log.operation}")
+        host_msg = ""
+        if operation_log.host is not None:
+            host_msg = f" on host {operation_log.host}"
+        logger.debug(f"Running operation {operation_log.operation}{host_msg}")
 
         operation_log.start_time = datetime.utcnow()
 
         operation = self._collections.get_operation(operation_log.operation)
-        operation_file = self._collections[operation.collection_name].playbooks[
+        playbook_file = self._collections[operation.collection_name].playbooks[
             operation.name
         ]
-        state, logs = self._executor.execute(operation_file)
+        state, logs = self._executor.execute(
+            playbook=playbook_file,
+            host=operation_log.host,
+        )
         operation_log.end_time = datetime.utcnow()
 
         if not OperationStateEnum.has_value(state):
             logger.error(
-                f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{operation_file}'))"
+                f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{playbook_file}'))"
             )
             state = OperationStateEnum.FAILURE
         elif not isinstance(state, OperationStateEnum):

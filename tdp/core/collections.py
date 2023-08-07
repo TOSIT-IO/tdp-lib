@@ -4,7 +4,7 @@
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import List
+from typing import Iterable, List
 from typing import Mapping as MappingType
 from typing import Sequence
 
@@ -23,6 +23,10 @@ logger = logging.getLogger("tdp").getChild("collections")
 
 
 class MissingOperationError(Exception):
+    pass
+
+
+class MissingHostForOperationError(Exception):
     pass
 
 
@@ -127,8 +131,16 @@ class Collections(Mapping):
                             operation["depends_on"]
                         )
                     else:
+                        host_names = None
+                        if not operation.get("noop", False):
+                            host_names = collection.get_hosts_from_playbook(
+                                operation_name
+                            )
+
                         self._dag_operations[operation_name] = Operation(
-                            collection_name=collection_name, **operation
+                            collection_name=collection_name,
+                            host_names=host_names,
+                            **operation,
                         )
                         # Restart operations are not defined in the DAG for noop,
                         # they are generated from the start operations.
@@ -168,6 +180,7 @@ class Collections(Mapping):
 
                 self._other_operations[operation_name] = Operation(
                     name=operation_name,
+                    host_names=collection.get_hosts_from_playbook(operation_name),
                     collection_name=collection_name,
                 )
 
@@ -225,7 +238,7 @@ class Collections(Mapping):
             )
         return self.operations[operation_name]
 
-    def check_operations_exist(self, operations_names: List[str]) -> None:
+    def check_operations_exist(self, operations_names: Iterable[str]) -> None:
         """Check that all operations exist.
 
         Args:
@@ -239,3 +252,23 @@ class Collections(Mapping):
                 raise MissingOperationError(
                     f"Operation {operation_name} not found in collections."
                 )
+
+    def check_operations_hosts_exist(
+        self, operation_names: Iterable[str], host_names: Iterable[str]
+    ) -> None:
+        """Check that all operations exist and hosts exist for all operations.
+
+        Args:
+            operation_names: Iterable of operation names to check.
+            host_names: Iterable of host names to check for each operation.
+
+        Raises:
+            MissingHostForOperationError: If a host name is missing for an operation.
+        """
+        for operation_name in operation_names:
+            operation = self.get_operation(operation_name)
+            for host_name in host_names:
+                if host_name not in operation.host_names:
+                    raise MissingHostForOperationError(
+                        f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.host_names}"
+                    )

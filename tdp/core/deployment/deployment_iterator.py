@@ -14,7 +14,6 @@ from tdp.core.models import (
     OperationLog,
     OperationStateEnum,
 )
-from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
 
 
@@ -42,7 +41,7 @@ class DeploymentIterator(Iterator):
         self,
         deployment_log: DeploymentLog,
         collections: Collections,
-        run_method: Callable[[Operation], OperationLog],
+        run_method: Callable[[OperationLog], None],
         cluster_variables: ClusterVariables,
     ):
         """Initialize the iterator.

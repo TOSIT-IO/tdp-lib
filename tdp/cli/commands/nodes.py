@@ -13,5 +13,8 @@ from tdp.core.dag import Dag
 def nodes(collections):
     dag = Dag(collections)
     endline = "\n- "
-    operations = endline.join(operation.name for operation in dag.get_all_operations())
+    operations = endline.join(
+        f"{operation.name} {sorted(operation.host_names)}"
+        for operation in dag.get_all_operations()
+    )
     click.echo(f"Operation list:{endline}{operations}")

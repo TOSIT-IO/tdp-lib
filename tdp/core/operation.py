@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
-from typing import List
+from typing import List, Optional, Set
 
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
@@ -20,6 +20,8 @@ OPERATION_NAME_MAX_LENGTH = (
     SERVICE_NAME_MAX_LENGTH + COMPONENT_NAME_MAX_LENGTH + ACTION_NAME_MAX_LENGTH
 )
 
+HOST_NAME_MAX_LENGTH = 255
+
 
 class Operation:
     """A task that can be executed by Ansible.
@@ -35,14 +37,16 @@ class Operation:
         depends_on: List of operations that must be executed before this one.
         noop: If True, the operation will not be executed.
         service: Name of the service.
+        host_names: Set of host names where the operation can be launched.
     """
 
     def __init__(
         self,
         name: str,
-        collection_name: str = None,
-        depends_on: List[str] = None,
+        collection_name: Optional[str] = None,
+        depends_on: Optional[List[str]] = None,
         noop: bool = False,
+        host_names: Optional[Set[str]] = None,
     ):
         """Create a new Operation.
 
@@ -51,11 +55,13 @@ class Operation:
             collection_name: Name of the collection where the operation is defined.
             depends_on: List of operations that must be executed before this one.
             noop: If True, the operation will not be executed.
+            host_names: Set of host names where the operation can be launched.
         """
         self.name = name
         self.collection_name = collection_name
         self.depends_on = depends_on or []
         self.noop = noop
+        self.host_names = host_names or set()
 
         if len(name) > OPERATION_NAME_MAX_LENGTH:
             raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}")
@@ -93,6 +99,12 @@ class Operation:
                 f"component {self.component_name} is longer than {COMPONENT_NAME_MAX_LENGTH}"
             )
 
+        for host_name in self.host_names:
+            if len(host_name) > HOST_NAME_MAX_LENGTH:
+                raise ValueError(
+                    f"host {host_name} is longer than {HOST_NAME_MAX_LENGTH}"
+                )
+
     def is_service_operation(self) -> bool:
         """Return True if the operation is about a service, False otherwise"""
         return bool(RE_IS_SERVICE.search(self.name))
@@ -102,5 +114,6 @@ class Operation:
             f"Operation(name={self.name}, "
             f"collection_name={self.collection_name}, "
             f"depends_on={self.depends_on}, "
-            f"noop={self.noop})"
+            f"noop={self.noop}, "
+            f"host_names={self.host_names})"
         )
