@@ -12,13 +12,13 @@ from tdp.core.dag import Dag
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.variables import ClusterVariables
 
-from .component_version_log import ComponentVersionLog
 from .deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
     NothingToReconfigureError,
     NothingToResumeError,
 )
+from .stale_component import StaleComponent
 from .state_enum import DeploymentStateEnum, OperationStateEnum
 
 
@@ -315,31 +315,29 @@ class TestFromFailedDeployment:
 
 
 class TestFromStaleComponents:
-    def test_deployment_plan_reconfigure_nothing_to_restart(
-        self, dag: Dag, cluster_variables: ClusterVariables
+    def test_nothing_stale(
+        self, minimal_collections: Collections, cluster_variables: ClusterVariables
     ):
-        component_version_log = ComponentVersionLog(
-            service="mock",
-            component="node",
-            version=cluster_variables["mock"].version,
-        )
+        stale_components = []
         with pytest.raises(NothingToReconfigureError):
-            DeploymentLog.from_reconfigure(
-                dag,
-                cluster_variables,
-                [component_version_log],
+            DeploymentLog.from_stale_components(
+                collections=minimal_collections,
+                stale_components=stale_components,
             )
 
-    def test_deployment_plan_reconfigure(
-        self, dag: Dag, reconfigurable_cluster_variables: ClusterVariables
-    ):
-        (
-            cluster_variables,
-            component_version_deployed,
-        ) = reconfigurable_cluster_variables
-        deployment_log = DeploymentLog.from_reconfigure(
-            dag, cluster_variables, component_version_deployed
+    def test_one_stale(self, minimal_collections: ClusterVariables):
+        stale_components = [
+            StaleComponent(
+                service_name="mock",
+                component_name="node",
+                to_reconfigure=True,
+                to_restart=True,
+            )
+        ]
+        deployment_log = DeploymentLog.from_stale_components(
+            collections=minimal_collections,
+            stale_components=stale_components,
         )
 
-        assert len(deployment_log.operations) == 4
+        assert len(deployment_log.operations) == 2
         assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE

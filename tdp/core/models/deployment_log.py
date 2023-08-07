@@ -17,6 +17,7 @@ from tdp.core.variables import ClusterVariables
 from .base import Base
 from .component_version_log import ComponentVersionLog
 from .operation_log import OperationLog
+from .stale_component import StaleComponent
 from .state_enum import DeploymentStateEnum, OperationStateEnum
 
 logger = logging.getLogger("tdp").getChild("deployment_log")
@@ -229,53 +230,47 @@ class DeploymentLog(Base):
         return deployment_log
 
     @staticmethod
-    def from_reconfigure(
-        dag: Dag,
-        cluster_variables: ClusterVariables,
-        deployed_component_version_logs: Iterable[ComponentVersionLog],
+    def from_stale_components(
+        collections: Collections, stale_components: List[StaleComponent]
     ) -> "DeploymentLog":
-        """Generate a deployment plan based on altered component configuration.
+        """Generate a deployment plan from a list of stale components.
 
         Args:
-            dag: DAG to generate the deployment plan from.
-            cluster_variables: Cluster variables.
-            deployed_component_version_logs: List of deployed versions.
+            collections: Collections to retrieve the operations from.
+            stale_components: List of stale components to perform.
 
         Raises:
-            RuntimeError: If a service is deployed but the repository is missing.
+            NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operations = set()
-        modified_components = cluster_variables.get_modified_components_names(
-            deployed_component_version_logs,
-        )
-        for modified_component in modified_components:
-            logger.debug(
-                f"Component {modified_component.component_name} of service {modified_component.service_name} has been modified"
+        operations_names = set()
+        for stale_component in stale_components:
+            # should not append as those components should have been filtered out
+            if not stale_component.to_reconfigure and not stale_component.to_restart:
+                continue
+            base_operation_name = "_".join(
+                [stale_component.service_name, stale_component.component_name]
             )
-            if modified_component.is_service:
-                service_operations = dag.services_operations[
-                    modified_component.service_name
-                ]
-                # TODO: use dag.filter_operations_glob instead
-                service_operations_config = filter(
-                    lambda operation: operation.action_name == "config",
-                    service_operations,
-                )
-                operations.update(
-                    map(lambda operation: operation.name, service_operations_config)
-                )
-            else:
-                operations.add(f"{modified_component.full_name}_config")
-        if len(operations) == 0:
-            raise NothingToReconfigureError("No component to reconfigure.")
-        deployment_log = DeploymentLog.from_dag(
-            dag,
-            sources=list(operations),
-            restart=True,
-            filter_expression=r".+_(config|(re|)start)",
-            filter_type=FilterTypeEnum.REGEX,
+            if stale_component.to_restart:
+                operations_names.add("_".join([base_operation_name, "start"]))
+            if stale_component.to_reconfigure:
+                operations_names.add("_".join([base_operation_name, "config"]))
+        if len(operations_names) == 0:
+            raise NothingToReconfigureError()
+        dag = Dag(collections)
+        operations = dag.topological_sort(nodes=operations_names, restart=True)
+        deployment_log = DeploymentLog(
+            targets=list([operation.name for operation in operations]),
+            deployment_type=DeploymentTypeEnum.RECONFIGURE,
+            state=DeploymentStateEnum.PLANNED,
         )
-        deployment_log.deployment_type = DeploymentTypeEnum.RECONFIGURE
+        deployment_log.operations = [
+            OperationLog(
+                operation=operation.name,
+                operation_order=i,
+                state=OperationStateEnum.PLANNED,
+            )
+            for i, operation in enumerate(operations, 1)
+        ]
         return deployment_log
 
     @staticmethod
