@@ -232,26 +232,7 @@ def test_deployment_dag_is_resumed(
     )
 
 
-def test_deployment_is_reconfigured(
-    dag, reconfigurable_cluster_variables, deployment_runner
-):
-    (
-        cluster_variables,
-        component_version_deployed,
-    ) = reconfigurable_cluster_variables
-    deployment_log = DeploymentLog.from_reconfigure(
-        dag, cluster_variables, component_version_deployed
-    )
-    deployment_iterator = deployment_runner.run(deployment_log)
-    for _ in deployment_iterator:
-        pass
-    assert (
-        deployment_iterator.deployment_log.deployment_type
-        == DeploymentTypeEnum.RECONFIGURE
-    )
-    assert len(deployment_iterator.deployment_log.operations) == 4
-
-
+@pytest.mark.skip(reason="from_reconfigure have been removed, to be reworked")
 def test_deployment_reconfigure_is_resumed(
     dag,
     reconfigurable_cluster_variables,

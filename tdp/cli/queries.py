@@ -8,7 +8,24 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
 
-from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
+from tdp.core.models import (
+    ComponentVersionLog,
+    DeploymentLog,
+    OperationLog,
+    StaleComponent,
+)
+
+
+def get_stale_components(session: Session) -> List[StaleComponent]:
+    """Get stale components.
+
+    Args:
+        session: The database session.
+
+    Returns:
+        The stale components.
+    """
+    return session.query(StaleComponent).all()
 
 
 def get_latest_success_component_version_log(
