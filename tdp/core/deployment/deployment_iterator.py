@@ -78,8 +78,14 @@ class DeploymentIterator(
                     return operation_log, None, None
 
                 operation = self._collections.get_operation(operation_log.operation)
+                # TODO: operation component_name should be an empty string instead of None when service operation
                 stale_component = self._stale_components.get(
-                    (operation.service_name, operation.component_name)
+                    (
+                        operation.service_name,
+                        operation.component_name
+                        if not operation.is_service_operation()
+                        else "",
+                    )
                 )
                 if operation.action_name == "config":
                     if stale_component:

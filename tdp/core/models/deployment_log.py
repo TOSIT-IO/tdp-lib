@@ -245,15 +245,18 @@ class DeploymentLog(Base):
             # should not append as those components should have been filtered out
             if not stale_component.to_reconfigure and not stale_component.to_restart:
                 continue
-            base_operation_name = "_".join(
-                [stale_component.service_name, stale_component.component_name]
-            )
+            if stale_component.component_name:
+                base_operation_name = "_".join(
+                    [stale_component.service_name, stale_component.component_name]
+                )
+            else:
+                base_operation_name = stale_component.service_name
             if stale_component.to_restart:
                 operations_names.add("_".join([base_operation_name, "start"]))
             if stale_component.to_reconfigure:
                 operations_names.add("_".join([base_operation_name, "config"]))
         if len(operations_names) == 0:
-            raise NothingToReconfigureError(f"No component needs to be reconfigured.")
+            raise NothingToReconfigureError("No component needs to be reconfigured.")
         dag = Dag(collections)
         operations = dag.topological_sort(nodes=operations_names, restart=True)
         deployment_log = DeploymentLog(
