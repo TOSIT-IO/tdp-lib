@@ -168,7 +168,7 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
         for service in self.values():
             service.validate()
 
-    def get_modified_components_names(
+    def get_modified_services_components_names(
         self,
         services_components_versions: Iterable[ComponentVersionLog],
     ) -> Set[ServiceComponentName]:
