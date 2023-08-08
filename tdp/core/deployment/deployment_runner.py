@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 
 from tdp.core.collections import Collections
+from tdp.core.deployment.deployment_iterator import DeploymentIterator
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
     DeploymentLog,
@@ -14,8 +15,6 @@ from tdp.core.models import (
     StaleComponent,
 )
 from tdp.core.variables import ClusterVariables
-
-from .deployment_iterator import DeploymentIterator
 
 logger = logging.getLogger("tdp").getChild("deployment_runner")
 

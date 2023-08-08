@@ -13,8 +13,7 @@ from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
 from tdp.core.service_component_name import ServiceComponentName
-
-from .service_variables import ServiceVariables
+from tdp.core.variables.service_variables import ServiceVariables
 
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 

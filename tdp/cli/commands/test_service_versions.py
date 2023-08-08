@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .init import init
-from .service_versions import service_versions
+
+from tdp.cli.commands.init import init
+from tdp.cli.commands.service_versions import service_versions
 
 
 def test_tdp_service_versions(collection_path, database_dsn_path, vars):

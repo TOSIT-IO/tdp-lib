@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .run import run
-from ..init import init
+
+from tdp.cli.commands.init import init
+from tdp.cli.commands.plan.run import run
 
 
 def test_tdp_plan_run(collection_path, database_dsn_path, vars):

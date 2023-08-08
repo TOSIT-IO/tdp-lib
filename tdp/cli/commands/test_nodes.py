@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .nodes import nodes
+
+from tdp.cli.commands.nodes import nodes
 
 
 def test_tdp_nodes(collection_path):

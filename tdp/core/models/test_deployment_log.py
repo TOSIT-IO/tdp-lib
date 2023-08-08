@@ -10,16 +10,15 @@ from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.inventory_reader import InventoryReader
-from tdp.core.variables import ClusterVariables
-
-from .deployment_log import (
+from tdp.core.models.deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
     NothingToReconfigureError,
     NothingToResumeError,
 )
-from .stale_component import StaleComponent
-from .state_enum import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.stale_component import StaleComponent
+from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
+from tdp.core.variables import ClusterVariables
 
 
 class MockInventoryReader(InventoryReader):

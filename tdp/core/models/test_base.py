@@ -4,7 +4,7 @@
 import pytest
 from sqlalchemy import Column, Integer, String
 
-from .base import Base, keyvalgen
+from tdp.core.models.base import Base, keyvalgen
 
 
 class ExampleClass(Base):

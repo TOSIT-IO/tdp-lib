@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .playbooks import playbooks
+
+from tdp.cli.commands.playbooks import playbooks
 
 
 def test_tdp_playbooks(collection_path, tmp_path):

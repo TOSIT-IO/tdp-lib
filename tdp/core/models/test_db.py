@@ -8,10 +8,10 @@ import pytest
 from sqlalchemy import Table, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .base import Base
-from .component_version_log import ComponentVersionLog
-from .deployment_log import DeploymentLog
-from .operation_log import OperationLog
+from tdp.core.models.base import Base
+from tdp.core.models.component_version_log import ComponentVersionLog
+from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.operation_log import OperationLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 

@@ -5,15 +5,14 @@
 import pytest
 
 from tdp.core.dag import Dag
+from tdp.core.deployment.deployment_runner import DeploymentRunner
+from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
     DeploymentLog,
     DeploymentStateEnum,
     DeploymentTypeEnum,
     OperationStateEnum,
 )
-
-from .deployment_runner import DeploymentRunner
-from .executor import Executor
 
 
 class MockExecutor(Executor):

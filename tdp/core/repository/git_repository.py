@@ -4,7 +4,7 @@
 import logging
 import os
 from contextlib import contextmanager
-from typing import List, Optional, Union
+from typing import List, Union
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 

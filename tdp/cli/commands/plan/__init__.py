@@ -3,10 +3,10 @@
 
 import click
 
-from .dag import dag
-from .reconfigure import reconfigure
-from .resume import resume
-from .run import run
+from tdp.cli.commands.plan.dag import dag
+from tdp.cli.commands.plan.reconfigure import reconfigure
+from tdp.cli.commands.plan.resume import resume
+from tdp.cli.commands.plan.run import run
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 

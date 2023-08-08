@@ -1,6 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from .deployment_iterator import DeploymentIterator
-from .deployment_runner import DeploymentRunner
-from .executor import Executor
+from tdp.core.deployment.deployment_iterator import DeploymentIterator
+from tdp.core.deployment.deployment_runner import DeploymentRunner
+from tdp.core.deployment.executor import Executor

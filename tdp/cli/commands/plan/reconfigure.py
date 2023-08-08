@@ -3,15 +3,9 @@
 
 import click
 
-from tdp.cli.queries import (
-    get_stale_components,
-    get_planned_deployment_log,
-)
+from tdp.cli.queries import get_planned_deployment_log, get_stale_components
 from tdp.cli.session import get_session_class
-from tdp.cli.utils import (
-    collections,
-    database_dsn,
-)
+from tdp.cli.utils import collections, database_dsn
 from tdp.core.models import DeploymentLog
 
 

@@ -11,12 +11,11 @@ from tabulate import tabulate
 
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
+from tdp.core.models.base import Base
+from tdp.core.models.operation_log import OperationLog
+from tdp.core.models.stale_component import StaleComponent
+from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
-
-from .base import Base
-from .operation_log import OperationLog
-from .stale_component import StaleComponent
-from .state_enum import DeploymentStateEnum, OperationStateEnum
 
 logger = logging.getLogger("tdp").getChild("deployment_log")
 
