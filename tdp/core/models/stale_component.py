@@ -52,6 +52,18 @@ class StaleComponent(Base):
             service_component_name.full_name + "_config"
             for service_component_name in modified_services_components_names
         ]
+        #  When a service is modified, extend operation list with its components
+        for modified_service_component_name in modified_services_components_names:
+            if modified_service_component_name.is_service:
+                service_operations = filter(
+                    lambda operation: operation.action_name == "config",
+                    dag.services_operations[
+                        modified_service_component_name.service_name
+                    ],
+                )
+                sources_config_operations.extend(
+                    [service_operation.name for service_operation in service_operations]
+                )
         operations = dag.get_operations(sources=sources_config_operations, restart=True)
         config_and_restart_operations = dag.filter_operations_regex(
             operations, r".+_(config|restart)"
