@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import List
+from pathlib import Path
 
 import click
 from tabulate import tabulate
@@ -18,17 +19,21 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
+from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.models import StaleComponent
 from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="List stale components.")
-@database_dsn
-@vars
 @collections
+@database_dsn
 @click.option("--generate", is_flag=True, help="Generate the list of stale components.")
-def stale(database_dsn: str, generate: bool, vars, collections):
+@validate
+@vars
+def stale(
+    collections: Collections, database_dsn: str, generate: bool, validate, vars: Path
+):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist.")
     dag = Dag(collections)
