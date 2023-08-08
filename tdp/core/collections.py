@@ -1,16 +1,17 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Iterable, List
+from typing import TYPE_CHECKING, Iterable, List
 from typing import Mapping as MappingType
 from typing import Sequence
 
 import yaml
 
-from tdp.core.collection import Collection
 from tdp.core.operation import Operation
 from tdp.core.service_component_name import ServiceComponentName
 
@@ -18,6 +19,9 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
+if TYPE_CHECKING:
+    from tdp.core.collection import Collection
 
 logger = logging.getLogger("tdp").getChild("collections")
 

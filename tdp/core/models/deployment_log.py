@@ -1,21 +1,25 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import enum
 import logging
-from typing import Iterable, List, Optional
+from typing import TYPE_CHECKING, Iterable, List, Optional
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
 from tabulate import tabulate
 
-from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.models.base import Base
 from tdp.core.models.operation_log import OperationLog
-from tdp.core.models.stale_component import StaleComponent
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+    from tdp.core.models.stale_component import StaleComponent
 
 logger = logging.getLogger("tdp").getChild("deployment_log")
 

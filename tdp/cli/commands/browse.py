@@ -17,7 +17,6 @@ from tdp.cli.queries import (
 from tdp.cli.session import get_session_class
 from tdp.cli.utils import database_dsn
 from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
-from tdp.core.models.base import keyvalgen
 
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 

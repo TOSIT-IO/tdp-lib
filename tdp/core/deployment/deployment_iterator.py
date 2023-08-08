@@ -1,21 +1,25 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
-from tdp.core.collections import Collections
 from tdp.core.models import (
     ComponentVersionLog,
-    DeploymentLog,
     DeploymentStateEnum,
     OperationLog,
     OperationStateEnum,
     StaleComponent,
 )
-from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+    from tdp.core.models import DeploymentLog
+    from tdp.core.variables import ClusterVariables
 
 
 class _Flags:

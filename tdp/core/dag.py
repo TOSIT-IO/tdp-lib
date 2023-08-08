@@ -10,16 +10,20 @@ It is used to get a list of operations by performing a topological sort on the D
 or on a subgraph of the DAG.
 """
 
+from __future__ import annotations
+
 import fnmatch
 import functools
 import logging
 import re
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List
 
 import networkx as nx
 
-from tdp.core.collections import Collections
 from tdp.core.operation import Operation
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 logger = logging.getLogger("tdp").getChild("dag")
 

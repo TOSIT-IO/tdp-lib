@@ -1,20 +1,20 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from tdp.core.collections import Collections
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
-from tdp.core.deployment.executor import Executor
-from tdp.core.models import (
-    DeploymentLog,
-    DeploymentStateEnum,
-    OperationLog,
-    OperationStateEnum,
-    StaleComponent,
-)
+from tdp.core.models import DeploymentStateEnum, OperationStateEnum
 from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+    from tdp.core.deployment.executor import Executor
+    from tdp.core.models import DeploymentLog, OperationLog, StaleComponent
 
 logger = logging.getLogger("tdp").getChild("deployment_runner")
 
