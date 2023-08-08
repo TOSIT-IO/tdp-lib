@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Column, String
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from tdp.core.models.base import Base
 from tdp.core.operation import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGTH
@@ -20,18 +21,22 @@ class StaleComponent(Base):
     """Hold what components are staled.
 
     Attributes:
-        service_name (str): Service name.
-        component_name (str): Component name.
-        to_reconfigure (bool): Is configured flag.
-        to_restart (bool): Is restarted flag.
+        service_name: Service name.
+        component_name: Component name.
+        to_reconfigure: Is configured flag.
+        to_restart: Is restarted flag.
     """
 
     __tablename__ = "stale_component"
 
-    service_name = Column(String(length=SERVICE_NAME_MAX_LENGTH), primary_key=True)
-    component_name = Column(String(length=COMPONENT_NAME_MAX_LENGTH), primary_key=True)
-    to_reconfigure = Column(Boolean, default=False)
-    to_restart = Column(Boolean, default=False)
+    service_name: Mapped[str] = mapped_column(
+        String(SERVICE_NAME_MAX_LENGTH), primary_key=True
+    )
+    component_name: Mapped[str] = mapped_column(
+        String(COMPONENT_NAME_MAX_LENGTH), primary_key=True
+    )
+    to_reconfigure: Mapped[Optional[bool]]
+    to_restart: Mapped[Optional[bool]]
 
     @staticmethod
     def generate(

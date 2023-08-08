@@ -1,33 +1,40 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from sqlalchemy import Column, ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.orm import relationship
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
+from sqlalchemy import ForeignKey, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tdp.core.models.base import Base
 from tdp.core.operation import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGTH
 from tdp.core.repository.repository import VERSION_MAX_LENGTH
+
+if TYPE_CHECKING:
+    from tdp.core.models.deployment_log import DeploymentLog
 
 
 class ComponentVersionLog(Base):
     """Hold what component version are deployed.
 
     Attributes:
-        id (int): Component version log id.
-        deployment_id (int): Deployment log id.
-        service (str): Service name.
-        component (str): Component name.
-        version (str): Component version.
+        id: Component version log id.
+        deployment_id: Deployment log id.
+        service: Service name.
+        component: Component name.
+        version: Component version.
     """
 
     __tablename__ = "component_version_log"
 
-    id = Column(Integer, primary_key=True)
-    deployment_id = Column(Integer, ForeignKey("deployment_log.id"), nullable=False)
-    service = Column(String(length=SERVICE_NAME_MAX_LENGTH), nullable=False)
-    component = Column(String(length=COMPONENT_NAME_MAX_LENGTH), nullable=True)
-    version = Column(String(length=VERSION_MAX_LENGTH), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    deployment_id: Mapped[int] = mapped_column(ForeignKey("deployment_log.id"))
+    service: Mapped[str] = mapped_column(String(SERVICE_NAME_MAX_LENGTH))
+    component: Mapped[Optional[str]] = mapped_column(String(COMPONENT_NAME_MAX_LENGTH))
+    version: Mapped[str] = mapped_column(String(VERSION_MAX_LENGTH))
 
-    deployment = relationship("DeploymentLog", back_populates="component_version")
+    deployment: Mapped[DeploymentLog] = relationship(back_populates="component_version")
 
     __table_args__ = (UniqueConstraint("deployment_id", "service", "component"),)
