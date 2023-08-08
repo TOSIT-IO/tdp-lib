@@ -1,12 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.session import Session
 
 from tdp.core.models import (
     ComponentVersionLog,
@@ -14,6 +15,9 @@ from tdp.core.models import (
     OperationLog,
     StaleComponent,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm.session import Session
 
 
 def get_stale_components(session: Session) -> List[StaleComponent]:

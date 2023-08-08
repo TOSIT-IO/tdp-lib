@@ -3,13 +3,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import Boolean, Column, String
 
-from tdp.core.dag import Dag
 from tdp.core.models.base import Base
-from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.operation import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGTH
-from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.dag import Dag
+    from tdp.core.models.component_version_log import ComponentVersionLog
+    from tdp.core.variables import ClusterVariables
 
 
 class StaleComponent(Base):

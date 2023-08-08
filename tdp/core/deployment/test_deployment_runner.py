@@ -1,10 +1,12 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pytest
 
-from tdp.core.dag import Dag
 from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
@@ -13,6 +15,9 @@ from tdp.core.models import (
     DeploymentTypeEnum,
     OperationStateEnum,
 )
+
+if TYPE_CHECKING:
+    from tdp.core.dag import Dag
 
 
 class MockExecutor(Executor):

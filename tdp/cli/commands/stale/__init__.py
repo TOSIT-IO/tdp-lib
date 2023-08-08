@@ -1,8 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import click
 from tabulate import tabulate
@@ -19,10 +21,12 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
-from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.models import StaleComponent
 from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 
 @click.command(short_help="List stale components.")

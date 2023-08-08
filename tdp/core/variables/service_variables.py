@@ -1,22 +1,25 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 
 import logging
 import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import Dict, Iterator, List, Union
+from typing import TYPE_CHECKING, Dict, Iterator, List, Union
 
 import jsonschema
 from jsonschema import exceptions
 
 from tdp.core.collection import YML_EXTENSION
-from tdp.core.dag import Dag
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
-from tdp.core.repository.repository import Repository
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.variables import Variables, VariablesDict
+
+if TYPE_CHECKING:
+    from tdp.core.dag import Dag
+    from tdp.core.repository.repository import Repository
+    from tdp.core.service_component_name import ServiceComponentName
 
 logger = logging.getLogger("tdp").getChild("service_variables")
 

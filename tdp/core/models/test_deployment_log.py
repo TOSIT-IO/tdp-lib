@@ -1,14 +1,15 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Set, TextIO
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Set, TextIO
 
 import pytest
 
 from tdp.conftest import generate_collection
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
-from tdp.core.dag import Dag
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.models.deployment_log import (
     DeploymentLog,
@@ -18,7 +19,10 @@ from tdp.core.models.deployment_log import (
 )
 from tdp.core.models.stale_component import StaleComponent
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
-from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.dag import Dag
+    from tdp.core.variables import ClusterVariables
 
 
 class MockInventoryReader(InventoryReader):

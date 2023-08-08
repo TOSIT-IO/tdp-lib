@@ -1,19 +1,24 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Iterable
+from typing import TYPE_CHECKING, Dict, Iterable
 from typing import Mapping as MappingType
 from typing import Optional, Set, Union
 
-from tdp.core.collections import Collections
-from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
+from tdp.core.repository.repository import EmptyCommit, NoVersionYet
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.service_variables import ServiceVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+    from tdp.core.models.component_version_log import ComponentVersionLog
+    from tdp.core.repository.repository import Repository
 
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 
@@ -40,10 +45,10 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
 
     @staticmethod
     def initialize_cluster_variables(
-        collections: "Collections",
+        collections: Collections,
         tdp_vars: Union[str, os.PathLike],
         override_folders: Iterable[Optional[Union[str, os.PathLike]]] = None,
-        repository_class: "Repository" = GitRepository,
+        repository_class: Repository = GitRepository,
         validate: bool = False,
     ) -> "ClusterVariables":
         """Get an instance of ClusterVariables, initialize services repositories if needed.
@@ -128,9 +133,9 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
 
     @staticmethod
     def get_cluster_variables(
-        collections: "Collections",
+        collections: Collections,
         tdp_vars: Union[str, os.PathLike],
-        repository_class: "Repository" = GitRepository,
+        repository_class: Repository = GitRepository,
         validate: bool = False,
     ):
         """Get an instance of ClusterVariables.
