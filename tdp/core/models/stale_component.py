@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from sqlalchemy import Boolean, Column, String
 
 from tdp.core.dag import Dag

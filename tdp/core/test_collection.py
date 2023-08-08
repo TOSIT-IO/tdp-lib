@@ -4,8 +4,7 @@
 import pytest
 
 from tdp.conftest import generate_collection
-
-from .collection import (
+from tdp.core.collection import (
     DAG_DIRECTORY_NAME,
     Collection,
     MissingMandatoryDirectoryError,

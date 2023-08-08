@@ -4,9 +4,8 @@
 import pytest
 
 from tdp.conftest import generate_collection
-
-from .collection import Collection
-from .collections import Collections
+from tdp.core.collection import Collection
+from tdp.core.collections import Collections
 
 
 def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFactory):

@@ -2,9 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .plan.dag import dag
-from .init import init
-from .deploy import deploy
+
+from tdp.cli.commands.deploy import deploy
+from tdp.cli.commands.init import init
+from tdp.cli.commands.plan.dag import dag
 
 
 def test_tdp_deploy_mock(collection_path, database_dsn_path, vars, tmp_path):

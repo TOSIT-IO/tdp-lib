@@ -1,8 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
 from pathlib import Path
+from typing import List
 
 import click
 from tabulate import tabulate

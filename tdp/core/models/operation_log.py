@@ -5,9 +5,8 @@ from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, LargeBinary,
 from sqlalchemy.orm import relationship
 
 from tdp.core.models.base import Base
+from tdp.core.models.state_enum import OperationStateEnum
 from tdp.core.operation import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
-
-from .state_enum import OperationStateEnum
 
 
 class OperationLog(Base):

@@ -3,8 +3,8 @@
 
 from click.testing import CliRunner
 
-from ..init import init
-from .reconfigure import reconfigure
+from tdp.cli.commands.init import init
+from tdp.cli.commands.plan.reconfigure import reconfigure
 
 
 def test_tdp_plan_reconfigure(collection_path, database_dsn_path, vars):

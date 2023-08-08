@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from .stale_component import StaleComponent
+from tdp.core.models.stale_component import StaleComponent
 
 
 def test_stale_components_to_dict():

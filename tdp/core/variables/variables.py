@@ -4,10 +4,9 @@
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional, Union
 from weakref import proxy
 
-import jsonschema
 import yaml
 from ansible.utils.vars import merge_hash as _merge_hash
 

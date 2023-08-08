@@ -1,9 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from .base import Base
-from .component_version_log import ComponentVersionLog
-from .deployment_log import (
+from tdp.core.models.base import Base
+from tdp.core.models.component_version_log import ComponentVersionLog
+from tdp.core.models.deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
     FilterTypeEnum,
@@ -11,9 +11,9 @@ from .deployment_log import (
     NothingToReconfigureError,
     NothingToResumeError,
 )
-from .operation_log import OperationLog
-from .stale_component import StaleComponent
-from .state_enum import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.operation_log import OperationLog
+from tdp.core.models.stale_component import StaleComponent
+from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 
 def init_database(engine):

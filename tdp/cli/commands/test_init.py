@@ -1,10 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from click.testing import CliRunner
-from .init import init
-
 import os
+
+from click.testing import CliRunner
+
+from tdp.cli.commands.init import init
 
 
 def test_tdp_init(collection_path, database_dsn, vars):

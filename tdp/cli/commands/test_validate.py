@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from click.testing import CliRunner
-from .validate import validate
+
+from tdp.cli.commands.validate import validate
 
 
 def test_tdp_validate(collection_path, vars):
