@@ -4,7 +4,7 @@
 import logging
 import os
 from contextlib import contextmanager
-from typing import List, Union
+from typing import Union
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 
@@ -58,7 +58,7 @@ class GitRepository(Repository):
             commit = self._repo.index.commit(msg)
             logger.info(f"commit: [{commit.hexsha}] {msg}")
 
-    def add_for_validation(self, paths: List[Union[str, os.PathLike]]) -> None:
+    def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
         with self._lock:
             self._repo.index.add(paths)
             logger.debug(f"{', '.join(paths)} staged")

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
-from typing import List, Optional, Set
+from typing import Optional
 
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
@@ -44,9 +44,9 @@ class Operation:
         self,
         name: str,
         collection_name: Optional[str] = None,
-        depends_on: Optional[List[str]] = None,
+        depends_on: Optional[list[str]] = None,
         noop: bool = False,
-        host_names: Optional[Set[str]] = None,
+        host_names: Optional[set[str]] = None,
     ):
         """Create a new Operation.
 

@@ -6,9 +6,9 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterable
+from typing import TYPE_CHECKING, Iterable
 from typing import Mapping as MappingType
-from typing import Optional, Set, Union
+from typing import Optional, Union
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
@@ -26,7 +26,7 @@ logger = logging.getLogger("tdp").getChild("cluster_variables")
 class ClusterVariables(MappingType[str, ServiceVariables]):
     """Mapping of service names with their ServiceVariables instance."""
 
-    def __init__(self, service_variables_dict: Dict[str, ServiceVariables]):
+    def __init__(self, service_variables_dict: dict[str, ServiceVariables]):
         """Initialize a ClusterVariables object.
 
         Args:
@@ -175,7 +175,7 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
     def get_modified_services_components_names(
         self,
         services_components_versions: Iterable[ComponentVersionLog],
-    ) -> Set[ServiceComponentName]:
+    ) -> set[ServiceComponentName]:
         """Return the set of modified components names.
 
         Args:
@@ -196,7 +196,7 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
             for service_component_version in services_components_versions
         }
 
-        modified_services_components: Set[ServiceComponentName] = set()
+        modified_services_components: set[ServiceComponentName] = set()
         # Check if a service is modified
         for (
             service_component_name,

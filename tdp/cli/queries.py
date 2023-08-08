@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import and_, desc, func, or_, select, tuple_
 from sqlalchemy.orm import joinedload
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from sqlalchemy.orm.session import Session
 
 
-def get_stale_components(session: Session) -> List[StaleComponent]:
+def get_stale_components(session: Session) -> list[StaleComponent]:
     """Get stale components.
 
     Args:
@@ -34,7 +34,7 @@ def get_stale_components(session: Session) -> List[StaleComponent]:
 
 def get_latest_success_component_version_log(
     session: Session,
-) -> List[ComponentVersionLog]:
+) -> list[ComponentVersionLog]:
     """Get the latest success component version.
 
     Args:
@@ -93,7 +93,7 @@ def get_latest_success_component_version_log(
     )
 
 
-def get_deployments(session: Session, limit: int, offset: int) -> List[DeploymentLog]:
+def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentLog]:
     """Get deployments.
 
     Args:

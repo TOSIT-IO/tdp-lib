@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod, abstractstaticmethod
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
-from typing import List, Union
+from typing import Union
 from weakref import proxy
 
 # Version string length isn't checked before inserting into database
@@ -71,7 +71,7 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def add_for_validation(self, paths: List[Union[str, os.PathLike]]) -> None:
+    def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
         """Add files to the index for validation.
 
         Args:

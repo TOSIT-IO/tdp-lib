@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Iterable, List
+from typing import TYPE_CHECKING, Iterable
 from typing import Mapping as MappingType
 from typing import Sequence
 
@@ -210,7 +210,7 @@ class Collections(Mapping):
 
     def get_components_from_service(
         self, service_name: str
-    ) -> List[ServiceComponentName]:
+    ) -> list[ServiceComponentName]:
         """Get the service's components.
 
         Args:

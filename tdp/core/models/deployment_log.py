@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import enum
 import logging
-from typing import TYPE_CHECKING, Iterable, List, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Integer, String
 from sqlalchemy.orm import relationship
@@ -131,8 +131,8 @@ class DeploymentLog(Base):
     @staticmethod
     def from_dag(
         dag: Dag,
-        targets: List[str] = None,
-        sources: List[str] = None,
+        targets: list[str] = None,
+        sources: list[str] = None,
         filter_expression: str = None,
         filter_type: DeploymentTypeEnum = None,
         restart: bool = False,
@@ -190,7 +190,7 @@ class DeploymentLog(Base):
     @staticmethod
     def from_operations(
         collections: Collections,
-        operation_names: List[str],
+        operation_names: list[str],
         host_names: Optional[Iterable[str]] = None,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of operations.

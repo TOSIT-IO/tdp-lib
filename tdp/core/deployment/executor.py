@@ -4,7 +4,7 @@
 import io
 import logging
 import subprocess
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 from tdp.core.models import OperationStateEnum
 
@@ -26,7 +26,7 @@ class Executor:
         self._dry = dry
 
     def _execute_ansible_command(
-        self, command: List[str]
+        self, command: list[str]
     ) -> Tuple[OperationStateEnum, bytes]:
         """Execute an ansible command.
 
