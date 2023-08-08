@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import enum
 import logging
+from datetime import datetime
 from typing import TYPE_CHECKING, Iterable, Optional
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Enum, Integer, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import JSON, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
 from tdp.core.dag import Dag
@@ -19,7 +20,7 @@ from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.models.stale_component import StaleComponent
+    from tdp.core.models import ComponentVersionLog, StaleComponent
 
 logger = logging.getLogger("tdp").getChild("deployment_log")
 
@@ -74,41 +75,43 @@ class DeploymentLog(Base):
     Hold past and current deployment information.
 
     Attributes:
-        id (int): Deployment log id.
-        sources (List[str]): List of source nodes, in the case of Dag deployment type.
-        targets (List[str]): List of target nodes, in the case of Dag deployment type. List of operations, in the case of Run deployment type.
-        filter_expression (str): Filter expression.
-        filter_type (FilterTypeEnum): Filter type.
-        hosts (List[str]): List of hosts.
-        start_time (datetime): Deployment start time.
-        end_time (datetime): Deployment end time.
-        state (DeploymentStateEnum): Deployment state.
-        deployment_type (DeploymentTypeEnum): Deployment type.
-        restart (bool): Restart flag.
+        id: Deployment log id.
+        sources: List of source nodes, in the case of Dag deployment type.
+        targets: List of target nodes, in the case of Dag deployment type.
+          List of operations, in the case of Run deployment type.
+        filter_expression: Filter expression.
+        filter_type: Filter type.
+        hosts: List of hosts.
+        start_time: Deployment start time.
+        end_time: Deployment end time.
+        state: Deployment state.
+        deployment_type: Deployment type.
+        restart: Restart flag.
     """
 
     __tablename__ = "deployment_log"
 
-    id = Column(Integer, primary_key=True)
-    sources = Column(JSON(none_as_null=True))
-    targets = Column(JSON(none_as_null=True))
-    filter_expression = Column(String(length=OPERATION_NAME_MAX_LENGTH * 5))
-    filter_type = Column(Enum(FilterTypeEnum))
-    hosts = Column(JSON(none_as_null=True))
-    start_time = Column(DateTime(timezone=False))
-    end_time = Column(DateTime(timezone=False))
-    state: Column = Column(Enum(DeploymentStateEnum))
-    deployment_type: Column = Column(Enum(DeploymentTypeEnum))
-    restart = Column(Boolean, default=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sources: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
+    targets: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
+    filter_expression: Mapped[Optional[str]] = mapped_column(
+        String(OPERATION_NAME_MAX_LENGTH * 5)
+    )
+    filter_type: Mapped[Optional[FilterTypeEnum]]
+    hosts: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
+    start_time: Mapped[Optional[datetime]]
+    end_time: Mapped[Optional[datetime]]
+    state: Mapped[Optional[DeploymentStateEnum]]
+    deployment_type: Mapped[Optional[DeploymentTypeEnum]]
+    restart: Mapped[Optional[bool]] = mapped_column(default=False)
 
-    operations = relationship(
-        "OperationLog",
+    operations: Mapped[list[OperationLog]] = relationship(
         back_populates="deployment",
         order_by="OperationLog.operation_order",
         cascade="all, delete-orphan",
     )
-    component_version = relationship(
-        "ComponentVersionLog", back_populates="deployment", cascade_backrefs=False
+    component_version: Mapped[list[ComponentVersionLog]] = relationship(
+        back_populates="deployment"
     )
 
     def __str__(self):
