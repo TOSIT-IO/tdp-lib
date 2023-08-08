@@ -40,11 +40,17 @@ class StaleComponent(Base):
         # Nothing is deployed (empty cluster)
         if len(deployed_component_version_logs) == 0:
             return []
+        modified_services_components_names = (
+            cluster_variables.get_modified_services_components_names(
+                deployed_component_version_logs
+            )
+        )
+        # No configuration have been modified (clean cluster)
+        if len(modified_services_components_names) == 0:
+            return []
         sources_config_operations = [
             service_component_name.full_name + "_config"
-            for service_component_name in cluster_variables.get_modified_services_components_names(
-                services_components_versions=deployed_component_version_logs
-            )
+            for service_component_name in modified_services_components_names
         ]
         operations = dag.get_operations(sources=sources_config_operations, restart=True)
         config_and_restart_operations = dag.filter_operations_regex(
