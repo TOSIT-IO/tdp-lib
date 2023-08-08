@@ -35,8 +35,11 @@ class StaleComponent(Base):
     def generate(
         dag: Dag,
         cluster_variables: ClusterVariables,
-        deployed_component_version_logs: ComponentVersionLog,
+        deployed_component_version_logs: list[ComponentVersionLog],
     ) -> list[StaleComponent]:
+        # Nothing is deployed (empty cluster)
+        if len(deployed_component_version_logs) == 0:
+            return []
         sources_config_operations = [
             service_component_name.full_name + "_config"
             for service_component_name in cluster_variables.get_modified_services_components_names(
