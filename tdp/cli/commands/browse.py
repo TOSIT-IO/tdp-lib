@@ -3,7 +3,6 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List
 
 import click
 from tabulate import tabulate
@@ -80,7 +79,7 @@ def browse(
             raise click.ClickException(str(e)) from e
 
 
-def _print_formatted_deployments(deployments: List[DeploymentLog]) -> None:
+def _print_formatted_deployments(deployments: list[DeploymentLog]) -> None:
     """Print a list of deployment logs in a human readable format.
 
     Args:
@@ -206,7 +205,7 @@ def _format_component_name(component_version_log: ComponentVersionLog) -> str:
     return f"{component_version_log.service}_{component_version_log.component}"
 
 
-def _format_deployment_log(deployment_log: DeploymentLog, headers: List[str]) -> dict:
+def _format_deployment_log(deployment_log: DeploymentLog, headers: list[str]) -> dict:
     """Format a deployment log into a dict for tabulate.
 
     Args:
@@ -247,7 +246,7 @@ def _format_deployment_log(deployment_log: DeploymentLog, headers: List[str]) ->
     return {key: custom_format(key, getattr(deployment_log, key)) for key in headers}
 
 
-def _format_operation_log(operation_log: OperationLog, headers: List[str]) -> dict:
+def _format_operation_log(operation_log: OperationLog, headers: list[str]) -> dict:
     """Format an OperationLog object into a dict for tabulate.
 
     Args:
@@ -272,7 +271,7 @@ def _format_operation_log(operation_log: OperationLog, headers: List[str]) -> di
 
 
 def _format_component_version_log(
-    component_version_log: ComponentVersionLog, headers: List[str]
+    component_version_log: ComponentVersionLog, headers: list[str]
 ) -> dict:
     """Format a ComponentVersionLog object into a dict for tabulate.
 

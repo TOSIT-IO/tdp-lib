@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import click
 from tabulate import tabulate
@@ -65,7 +65,7 @@ def stale(
         _print_stale_components(stale_components)
 
 
-def _print_stale_components(stale_components: List[StaleComponent]):
+def _print_stale_components(stale_components: list[StaleComponent]):
     """Print the list of stale components.
 
     Args:
@@ -84,7 +84,7 @@ def _print_stale_components(stale_components: List[StaleComponent]):
 
 
 def _format_stale_component(
-    stale_component: StaleComponent, headers: List[str]
+    stale_component: StaleComponent, headers: list[str]
 ) -> dict:
     """Format a StaleComponent object into a dict for tabulate.
 

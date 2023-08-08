@@ -1,8 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List
-
 import networkx as nx
 
 from tdp.core.operation import Operation
@@ -11,7 +9,7 @@ from tdp.core.operation import Operation
 # Needed :
 #   pip install pydot
 def to_pydot(
-    graph: nx.DiGraph, nodes_to_color: List[str] = None, cluster_service: bool = False
+    graph: nx.DiGraph, nodes_to_color: list[str] = None, cluster_service: bool = False
 ):
     """Convert a graph to a pydot graph.
 

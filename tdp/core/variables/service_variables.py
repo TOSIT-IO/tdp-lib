@@ -7,7 +7,7 @@ import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Iterator, List, Union
+from typing import TYPE_CHECKING, Iterator, Union
 
 import jsonschema
 from jsonschema import exceptions
@@ -96,7 +96,7 @@ class ServiceVariables:
         return self.repository.path
 
     # TODO: rename to `get_component_variables`
-    def get_variables(self, component_name: str) -> Dict:
+    def get_variables(self, component_name: str) -> dict:
         """Get the variables for a component.
 
         Args:
@@ -185,9 +185,9 @@ class ServiceVariables:
 
     @contextmanager
     def open_var_files(
-        self, message: str, paths: List[str], fail_if_does_not_exist: bool = False
+        self, message: str, paths: list[str], fail_if_does_not_exist: bool = False
     ) -> Iterator[
-        Dict[str, Variables]
+        dict[str, Variables]
     ]:  # TODO: Transform Dict to OrderedDict with python>3.6
         """Open variables files.
 

@@ -16,7 +16,7 @@ import fnmatch
 import functools
 import logging
 import re
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING
 
 import networkx as nx
 
@@ -74,7 +74,7 @@ class Dag:
         del self.operations
 
     @property
-    def operations(self) -> Dict[str, Operation]:
+    def operations(self) -> dict[str, Operation]:
         """DAG operations dictionary."""
         if self._operations is not None:
             return self._operations
@@ -84,7 +84,7 @@ class Dag:
         return self._operations
 
     @operations.setter
-    def operations(self, value: Dict[str, Operation]) -> None:
+    def operations(self, value: dict[str, Operation]) -> None:
         """Set operations and reset graph, services_operations and services."""
         self._operations = value
         del self.graph
@@ -96,7 +96,7 @@ class Dag:
         self.operations = None
 
     @property
-    def services_operations(self) -> Dict[str, List[Operation]]:
+    def services_operations(self) -> dict[str, list[Operation]]:
         """DAG operations dictionary grouped by service."""
         if self._services_operations is None:
             self._services_operations = {}
@@ -112,7 +112,7 @@ class Dag:
         del self.services
 
     @property
-    def services(self) -> List[str]:
+    def services(self) -> list[str]:
         """List of services in the DAG."""
         if self._services is None:
             self._services = list(self.services_operations.keys())
@@ -153,8 +153,8 @@ class Dag:
         self.graph = None
 
     def topological_sort(
-        self, nodes: List[str] = None, restart: bool = False
-    ) -> List[Operation]:
+        self, nodes: list[str] = None, restart: bool = False
+    ) -> list[Operation]:
         """Perform a topological sort on the DAG.
 
         Args:
@@ -200,10 +200,10 @@ class Dag:
 
     def get_operations(
         self,
-        sources: List[str] = None,
-        targets: List[str] = None,
+        sources: list[str] = None,
+        targets: list[str] = None,
         restart: bool = False,
-    ) -> List[Operation]:
+    ) -> list[Operation]:
         if sources:
             return self.get_operations_from_nodes(sources, restart)
         elif targets:
@@ -211,8 +211,8 @@ class Dag:
         return self.get_all_operations(restart)
 
     def get_operations_to_nodes(
-        self, nodes: List[str], restart: bool = False
-    ) -> List[Operation]:
+        self, nodes: list[str], restart: bool = False
+    ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -221,8 +221,8 @@ class Dag:
         return self.topological_sort(nodes_set, restart)
 
     def get_operations_from_nodes(
-        self, nodes: List[str], restart: bool = False
-    ) -> List[Operation]:
+        self, nodes: list[str], restart: bool = False
+    ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -230,7 +230,7 @@ class Dag:
             nodes_set.update(nx.descendants(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
-    def get_all_operations(self, restart: bool = False) -> List[Operation]:
+    def get_all_operations(self, restart: bool = False) -> list[Operation]:
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
@@ -239,13 +239,13 @@ class Dag:
         return self.topological_sort(self.graph, restart)
 
     def filter_operations_glob(
-        self, operations: List[Operation], glob: str
-    ) -> List[Operation]:
+        self, operations: list[Operation], glob: str
+    ) -> list[Operation]:
         return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
 
     def filter_operations_regex(
-        self, operations: List[Operation], regex: str
-    ) -> List[Operation]:
+        self, operations: list[Operation], regex: str
+    ) -> list[Operation]:
         compiled_regex = re.compile(regex)
         return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
 

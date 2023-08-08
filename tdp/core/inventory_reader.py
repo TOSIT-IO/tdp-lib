@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import List, Optional, Set, TextIO
+from typing import Optional, TextIO
 
 import yaml
 from ansible.cli.inventory import InventoryCLI
@@ -11,6 +11,7 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
 
 # From ansible/cli/inventory.py
 class _CustomInventoryCLI(InventoryCLI):
@@ -40,7 +41,7 @@ class InventoryReader:
     def __init__(self, inventory: Optional[InventoryManager] = None):
         self.inventory = inventory or custom_inventory_cli_instance.inventory
 
-    def get_hosts(self, *args, **kwargs) -> List[str]:
+    def get_hosts(self, *args, **kwargs) -> list[str]:
         """Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
         or applied subsets.
@@ -55,7 +56,7 @@ class InventoryReader:
         # so we convert them to "str"
         return [str(host) for host in self.inventory.get_hosts(*args, **kwargs)]
 
-    def get_hosts_from_playbook(self, fd: TextIO) -> Set[str]:
+    def get_hosts_from_playbook(self, fd: TextIO) -> set[str]:
         """Takes a playbook content, read all plays inside and return a set
         of matching host like "ansible-playbook --list-hosts playbook.yml".
 
@@ -69,7 +70,7 @@ class InventoryReader:
         if not isinstance(plays, list):
             raise TypeError(f"Playbook content is not a list, given {type(plays)}")
 
-        hosts: Set[str] = set()
+        hosts: set[str] = set()
 
         for play in plays:
             if not isinstance(play, dict):

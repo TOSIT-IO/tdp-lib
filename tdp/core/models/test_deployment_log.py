@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Set, TextIO
+from typing import TYPE_CHECKING, TextIO
 
 import pytest
 
@@ -26,13 +26,13 @@ if TYPE_CHECKING:
 
 
 class MockInventoryReader(InventoryReader):
-    def __init__(self, hosts: List[str]):
+    def __init__(self, hosts: list[str]):
         self.hosts = hosts
 
-    def get_hosts(self, *args, **kwargs) -> List[str]:
+    def get_hosts(self, *args, **kwargs) -> list[str]:
         return self.hosts
 
-    def get_hosts_from_playbook(self, fd: TextIO) -> Set[str]:
+    def get_hosts_from_playbook(self, fd: TextIO) -> set[str]:
         return set(self.hosts)
 
 

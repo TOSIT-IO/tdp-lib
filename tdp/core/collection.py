@@ -4,7 +4,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Optional, Tuple, Union
 
 from tdp.core.inventory_reader import InventoryReader
 
@@ -64,8 +64,8 @@ class Collection:
         self._check_path()
 
         self._inventory_reader = inventory_reader or InventoryReader()
-        self._dag_yamls: Optional[List[Path]] = None
-        self._playbooks: Optional[Dict[str, Path]] = None
+        self._dag_yamls: Optional[list[Path]] = None
+        self._playbooks: Optional[dict[str, Path]] = None
 
     @staticmethod
     def from_path(path: Union[str, os.PathLike]) -> "Collection":
@@ -109,14 +109,14 @@ class Collection:
         return self._path / SCHEMA_VARS_DIRECTORY_NAME
 
     @property
-    def dag_yamls(self) -> List[Path]:
+    def dag_yamls(self) -> list[Path]:
         """List of DAG files in the YAML format."""
         if not self._dag_yamls:
             self._dag_yamls = list(self.dag_directory.glob("*" + YML_EXTENSION))
         return self._dag_yamls
 
     @property
-    def playbooks(self) -> Dict[str, Path]:
+    def playbooks(self) -> dict[str, Path]:
         """Dictionary of playbooks."""
         if not self._playbooks:
             self._playbooks = {
@@ -125,7 +125,7 @@ class Collection:
             }
         return self._playbooks
 
-    def get_service_default_vars(self, service_name: str) -> List[Tuple[str, Path]]:
+    def get_service_default_vars(self, service_name: str) -> list[Tuple[str, Path]]:
         """Get the default variables for a service.
 
         Args:
@@ -139,7 +139,7 @@ class Collection:
             return []
         return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
 
-    def get_service_schema(self, service_name: str) -> Dict:
+    def get_service_schema(self, service_name: str) -> dict:
         """Get the variables schema of a service.
 
         Args: Name of the service to retrieve the schema for.
@@ -152,7 +152,7 @@ class Collection:
         with schema_path.open() as fd:
             return json.load(fd)
 
-    def get_hosts_from_playbook(self, playbook: str) -> Set[str]:
+    def get_hosts_from_playbook(self, playbook: str) -> set[str]:
         """Get the set of hosts for a playbook.
 
         Args:

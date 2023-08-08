@@ -4,7 +4,7 @@
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 from weakref import proxy
 
 import yaml
@@ -42,7 +42,7 @@ def str_presenter(dumper: Dumper, data: str) -> str:
 Dumper.add_representer(str, str_presenter)
 
 
-def merge_hash(dict_a: Dict, dict_b: Dict) -> Dict:
+def merge_hash(dict_a: dict, dict_b: dict) -> dict:
     """Merges two dictionaries.
 
     Args:
@@ -92,7 +92,7 @@ class VariablesDict(MutableMapping):
     Manages the content of a variables file as a dictionary.
     """
 
-    def __init__(self, content: Dict, name: Optional[str] = None):
+    def __init__(self, content: dict, name: Optional[str] = None):
         """Initializes the VariablesDict instance.
 
         Args:
@@ -107,7 +107,7 @@ class VariablesDict(MutableMapping):
         """Name of the variables file."""
         return self._name
 
-    def copy(self) -> Dict:
+    def copy(self) -> dict:
         """Copy the content of the variables file.
 
         Returns:
@@ -115,7 +115,7 @@ class VariablesDict(MutableMapping):
         """
         return self._content.copy()
 
-    def merge(self, mapping: Dict) -> None:
+    def merge(self, mapping: dict) -> None:
         """Merges the provided mapping into the content.
 
         Args:

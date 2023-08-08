@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
-from typing import List, Mapping
+from typing import Mapping
 
 import yaml
 
@@ -16,7 +16,7 @@ from tdp.core.collection import (
 
 def generate_collection(
     directory: Path,
-    dag_service_operations: Mapping[str, List],
+    dag_service_operations: Mapping[str, list],
     service_vars: Mapping[str, Mapping[str, dict]],
 ):
     tdp_lib_dag = directory / DAG_DIRECTORY_NAME
