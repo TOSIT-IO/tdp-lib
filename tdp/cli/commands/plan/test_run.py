@@ -10,17 +10,14 @@ from tdp.cli.commands.plan.run import run
 
 
 def test_tdp_plan_run(collection_path: Path, database_dsn_path: str, vars: Path):
-    args = [
+    base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
         database_dsn_path,
-        "--vars",
-        vars,
     ]
     runner = CliRunner()
-    result = runner.invoke(init, args)
+    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
-    args.append("service_install")
-    result = runner.invoke(run, args)
+    result = runner.invoke(run, [*base_args, "service_install"])
     assert result.exit_code == 0, result.output

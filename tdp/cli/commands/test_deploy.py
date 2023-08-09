@@ -13,19 +13,26 @@ from tdp.cli.commands.plan.dag import dag
 def test_tdp_deploy_mock(
     collection_path: Path, database_dsn_path: str, vars: Path, tmp_path: Path
 ):
-    args = [
+    base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
         database_dsn_path,
-        "--vars",
-        vars,
     ]
     runner = CliRunner()
-    result = runner.invoke(init, args)
+    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(dag, args)
+    result = runner.invoke(dag, base_args)
     assert result.exit_code == 0, result.output
-    args.extend(["--run-directory", tmp_path, "--mock-deploy"])
-    result = runner.invoke(deploy, args)
+    result = runner.invoke(
+        deploy,
+        [
+            *base_args,
+            "--vars",
+            str(vars),
+            "--run-directory",
+            str(tmp_path),
+            "--mock-deploy",
+        ],
+    )
     assert result.exit_code == 0, result.output

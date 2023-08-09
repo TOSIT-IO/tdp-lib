@@ -13,18 +13,16 @@ from tdp.cli.commands.plan.resume import resume
 def test_tdp_plan_resume_nothing_to_resume(
     collection_path: Path, database_dsn_path: str, vars: Path
 ):
-    args = [
+    base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
         database_dsn_path,
-        "--vars",
-        vars,
     ]
     runner = CliRunner()
-    result = runner.invoke(init, args)
+    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(dag, args)
+    result = runner.invoke(dag, base_args)
     assert result.exit_code == 0, result.output
-    result = runner.invoke(resume, args)
+    result = runner.invoke(resume, base_args)
     assert result.exit_code == 1, result.output  # No deployment to resume.
