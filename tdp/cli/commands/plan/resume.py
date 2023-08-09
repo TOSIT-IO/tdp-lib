@@ -37,12 +37,9 @@ def resume(
         else:
             deployment_log_to_resume = get_deployment(session, id)
             click.echo(f"Creating a deployment plan to resume deployment #{id}.")
-        try:
-            deployment_log = DeploymentLog.from_failed_deployment(
-                collections, deployment_log_to_resume
-            )
-        except Exception as e:
-            raise click.ClickException(str(e)) from e
+        deployment_log = DeploymentLog.from_failed_deployment(
+            collections, deployment_log_to_resume
+        )
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id

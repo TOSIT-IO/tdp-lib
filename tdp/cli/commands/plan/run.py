@@ -42,13 +42,9 @@ def run(
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
-    try:
-        deployment_log = DeploymentLog.from_operations(
-            collections, operation_names, host, extra_vars
-        )
-    except Exception as e:
-        raise click.ClickException(str(e)) from e
-
+    deployment_log = DeploymentLog.from_operations(
+        collections, operation_names, host, extra_vars
+    )
     with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
