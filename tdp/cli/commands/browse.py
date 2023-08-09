@@ -13,7 +13,7 @@ from tdp.cli.queries import (
     get_operation_log,
     get_planned_deployment_log,
 )
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn
 from tdp.core.models import ComponentVersionLog, DeploymentLog, OperationLog
 
@@ -52,8 +52,7 @@ def browse(
     offset: int,
     database_dsn: str,
 ):
-    session_class = get_session_class(database_dsn)
-    with session_class() as session:
+    with get_session(database_dsn) as session:
         try:
             if plan:
                 deployment_plan = get_planned_deployment_log(session)

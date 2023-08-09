@@ -1,28 +1,39 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from contextlib import contextmanager
+from typing import Iterator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.models import init_database
 
 
-def get_session_class(database_dsn: str) -> sessionmaker:
-    """Get a Session factory.
-
-    The Session are created with echo=False to avoid logging and future=True to use
-    SQLAlchemy 2.0.
+@contextmanager
+def get_session(database_dsn: str, commit_on_exit: bool = False) -> Iterator[Session]:
+    """Get a SQLAlchemy session for use in a with-statement.
 
     Args:
         database_dsn: DSN of the database.
+        commit_on_exit: Whether to commit the session automatically on exit.
 
-    Returns:
-        A Session factory.
+    Yields:
+        An instance of a SQLAlchemy session.
     """
     engine = create_engine(database_dsn, echo=False, future=True)
-    session_class = sessionmaker(bind=engine)
+    session_maker = sessionmaker(bind=engine)
+    session = session_maker()
 
-    return session_class
+    try:
+        yield session
+        if commit_on_exit:
+            session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def init_db(database_dsn: str) -> None:

@@ -13,7 +13,7 @@ from tdp.cli.queries import (
     get_latest_success_component_version_log,
     get_stale_components,
 )
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
@@ -47,8 +47,7 @@ def stale(
     )
     check_services_cleanliness(cluster_variables)
 
-    session_class = get_session_class(database_dsn)
-    with session_class() as session:
+    with get_session(database_dsn) as session:
         if generate:
             click.echo("Generating the list of stale components.")
             deployed_component_version_logs = get_latest_success_component_version_log(

@@ -4,7 +4,7 @@
 import click
 
 from tdp.cli.queries import get_planned_deployment_log, get_stale_components
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
@@ -45,8 +45,7 @@ def deploy(
     )
     check_services_cleanliness(cluster_variables)
 
-    session_class = get_session_class(database_dsn)
-    with session_class() as session:
+    with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log is None:
             raise click.ClickException(
@@ -83,9 +82,6 @@ def deploy(
                         ):
                             session.delete(stale_component)
                 session.commit()
-            # Update deployment log to SUCCESS or FAILURE
-            session.merge(deployment_iterator.deployment_log)
-            session.commit()
         if deployment_iterator.deployment_log.state != DeploymentStateEnum.SUCCESS:
             raise click.ClickException(
                 (
