@@ -4,7 +4,7 @@
 import click
 
 from tdp.cli.queries import get_planned_deployment_log
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.models import DeploymentLog
 
@@ -49,11 +49,9 @@ def run(
     except Exception as e:
         raise click.ClickException(str(e)) from e
 
-    session_class = get_session_class(database_dsn)
-    with session_class() as session:
+    with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
         session.merge(deployment_log)
-        session.commit()
         click.echo("Deployment plan successfully created.")

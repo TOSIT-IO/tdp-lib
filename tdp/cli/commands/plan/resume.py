@@ -9,7 +9,7 @@ from tdp.cli.queries import (
     get_last_deployment,
     get_planned_deployment_log,
 )
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, vars
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentLog
@@ -30,8 +30,7 @@ def resume(
         raise click.BadParameter(f"{vars} does not exist.")
     dag = Dag(collections)
 
-    session_class = get_session_class(database_dsn)
-    with session_class() as session:
+    with get_session(database_dsn, commit_on_exit=True) as session:
         if id is None:
             deployment_log_to_resume = get_last_deployment(session)
             click.echo(f"Creating a deployment plan to resume latest deployment.")
@@ -48,5 +47,4 @@ def resume(
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
         session.merge(deployment_log)
-        session.commit()
         click.echo("Deployment plan successfully created.")

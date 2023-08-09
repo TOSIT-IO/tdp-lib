@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from tdp.cli.commands.browse import _format_component_version_log
 from tdp.cli.queries import get_latest_success_component_version_log
-from tdp.cli.session import get_session_class
+from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn
 from tdp.core.models import ComponentVersionLog
 
@@ -19,13 +19,10 @@ from tdp.core.models import ComponentVersionLog
 )
 @database_dsn
 def service_versions(database_dsn):
-    session_class = get_session_class(database_dsn)
-
-    with session_class() as session:
+    with get_session(database_dsn) as session:
         latest_success_service_version_logs = get_latest_success_component_version_log(
             session
         )
-
         if any(latest_success_service_version_logs):
             # TODO: refactor so that this not import private method from browse.py
             _print_component_version_logs(latest_success_service_version_logs)
