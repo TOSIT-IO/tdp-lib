@@ -17,14 +17,11 @@ def reconfigure(
     database_dsn,
 ):
     with get_session(database_dsn, commit_on_exit=True) as session:
-        try:
-            click.echo(f"Creating a deployment plan to reconfigure services.")
-            stale_components = get_stale_components(session)
-            deployment_log = DeploymentLog.from_stale_components(
-                collections, stale_components
-            )
-        except Exception as e:
-            raise click.ClickException(str(e)) from e
+        click.echo(f"Creating a deployment plan to reconfigure services.")
+        stale_components = get_stale_components(session)
+        deployment_log = DeploymentLog.from_stale_components(
+            collections, stale_components
+        )
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id

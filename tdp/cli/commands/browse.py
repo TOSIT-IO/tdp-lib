@@ -53,29 +53,22 @@ def browse(
     database_dsn: str,
 ):
     with get_session(database_dsn) as session:
-        try:
-            if plan:
-                deployment_plan = get_planned_deployment_log(session)
-                if deployment_plan:
-                    _print_formatted_deployment(deployment_plan)
-                else:
-                    print("No deployment plan to show.")
+        if plan:
+            deployment_plan = get_planned_deployment_log(session)
+            if deployment_plan:
+                _print_formatted_deployment(deployment_plan)
             else:
-                if not deployment_id:
-                    _print_formatted_deployments(
-                        get_deployments(session, limit, offset)
-                    )
+                print("No deployment plan to show.")
+        else:
+            if not deployment_id:
+                _print_formatted_deployments(get_deployments(session, limit, offset))
+            else:
+                if not operation:
+                    _print_formatted_deployment(get_deployment(session, deployment_id))
                 else:
-                    if not operation:
-                        _print_formatted_deployment(
-                            get_deployment(session, deployment_id)
-                        )
-                    else:
-                        _print_formatted_operation_log(
-                            get_operation_log(session, deployment_id, operation)
-                        )
-        except Exception as e:
-            raise click.ClickException(str(e)) from e
+                    _print_formatted_operation_log(
+                        get_operation_log(session, deployment_id, operation)
+                    )
 
 
 def _print_formatted_deployments(deployments: list[DeploymentLog]) -> None:

@@ -87,17 +87,14 @@ def dag(
         click.echo(f"Creating a deployment plan to: {targets}")
     else:
         click.echo(f"Creating a deployment plan for the whole DAG.")
-    try:
-        deployment_log = DeploymentLog.from_dag(
-            dag,
-            sources=sources,
-            targets=targets,
-            filter_expression=filter,
-            filter_type=filter_type,
-            restart=restart,
-        )
-    except Exception as e:
-        raise click.ClickException(str(e)) from e
+    deployment_log = DeploymentLog.from_dag(
+        dag,
+        sources=sources,
+        targets=targets,
+        filter_expression=filter,
+        filter_type=filter_type,
+        restart=restart,
+    )
     with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
