@@ -55,9 +55,8 @@ def test_deployment_plan_is_success(dag: Dag, deployment_runner: DeploymentRunne
     deployment_log = DeploymentLog.from_dag(dag)
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation, _, _ in deployment_iterator:
-        if operation is not None:
-            assert operation.state == OperationStateEnum.SUCCESS
+    for i, (_, _) in enumerate(deployment_iterator):
+        assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 8
@@ -73,9 +72,8 @@ def test_deployment_plan_with_filter_is_success(
     )
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation_log, _, _ in deployment_iterator:
-        if operation_log is not None:
-            assert operation_log.state == OperationStateEnum.SUCCESS
+    for i, (_, _) in enumerate(deployment_iterator):
+        assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 2
@@ -86,9 +84,8 @@ def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner)
     deployment_log = DeploymentLog.from_operations(minimal_collections, ["mock_init"])
     deployment_iterator = deployment_runner.run(deployment_log)
 
-    for operation, _, _ in deployment_iterator:
-        if operation is not None:
-            assert operation.state == OperationStateEnum.SUCCESS
+    for i, (_, _) in enumerate(deployment_iterator):
+        assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 1
