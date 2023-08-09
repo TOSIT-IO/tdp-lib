@@ -4,7 +4,7 @@
 import io
 import logging
 import subprocess
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 
 from tdp.core.models import OperationStateEnum
 
@@ -62,7 +62,10 @@ class Executor:
             return state, byte_stream.getvalue()
 
     def execute(
-        self, playbook: str, host: Optional[str] = None
+        self,
+        playbook: str,
+        host: Optional[str] = None,
+        extra_vars: Optional[Iterable[str]] = None,
     ) -> Tuple[OperationStateEnum, bytes]:
         """Executes a playbook.
 
@@ -76,6 +79,9 @@ class Executor:
         command = ["ansible-playbook", str(playbook)]
         if host is not None:
             command.extend(["--limit", host])
+        if extra_vars is not None:
+            for extra_var in extra_vars:
+                command.extend(["--extra-vars", extra_var])
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return OperationStateEnum.SUCCESS, b""

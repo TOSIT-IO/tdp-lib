@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class MockExecutor(Executor):
-    def execute(self, playbook, host=None):
+    def execute(self, playbook, host=None, extra_vars=None):
         return OperationStateEnum.SUCCESS, f"{playbook} LOG SUCCESS".encode("utf-8")
 
 
@@ -29,11 +29,11 @@ class FailingExecutor(MockExecutor):
     def __init__(self):
         self.count = 0
 
-    def execute(self, playbook, host=None):
+    def execute(self, playbook, host=None, extra_vars=None):
         if self.count > 0:
             return OperationStateEnum.FAILURE, f"{playbook} LOG FAILURE".encode("utf-8")
         self.count += 1
-        return super().execute(playbook, host)
+        return super().execute(playbook, host, extra_vars)
 
 
 @pytest.fixture

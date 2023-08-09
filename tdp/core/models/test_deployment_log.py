@@ -68,6 +68,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None
 
     def test_single_operation(self, minimal_collections: Collections):
@@ -85,6 +86,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None
 
     def test_single_restart_operation(self, minimal_collections: Collections):
@@ -102,6 +104,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None  # restart flag is only used in dag
 
     def test_single_noop_opeation(self, minimal_collections: Collections):
@@ -119,6 +122,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None  # restart flag is only used in dag
 
     def test_single_restart_noop_operation(self, minimal_collections: Collections):
@@ -136,6 +140,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None  # restart flag is only used in dag
 
     def test_multiple_operations(self, minimal_collections: Collections):
@@ -153,6 +158,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None  # restart flag is only used in dag
 
     def test_single_host(self, minimal_collections: Collections):
@@ -173,6 +179,7 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == [host]
+        assert deployment_log.extra_vars == None
         assert deployment_log.restart == None
 
     def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
@@ -213,6 +220,30 @@ class TestFromOperations:
         assert deployment_log.filter_expression == None
         assert deployment_log.filter_type == None
         assert deployment_log.hosts == hosts
+        assert deployment_log.extra_vars == None
+        assert deployment_log.restart == None
+
+    def test_extra_vars(self, minimal_collections: Collections):
+        operations_names = ["mock_node_config", "mock_node_start"]
+        extra_vars = ["foo1=bar1", "foo2=bar2"]
+        deployment_log = DeploymentLog.from_operations(
+            collections=minimal_collections,
+            operation_names=operations_names,
+            extra_vars=extra_vars,
+        )
+
+        assert [
+            operation_log.operation for operation_log in deployment_log.operations
+        ] == operations_names
+        for operation_log in deployment_log.operations:
+            assert operation_log.extra_vars == extra_vars
+        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment_log.targets == operations_names
+        assert deployment_log.sources == None
+        assert deployment_log.filter_expression == None
+        assert deployment_log.filter_type == None
+        assert deployment_log.hosts == None
+        assert deployment_log.extra_vars == extra_vars
         assert deployment_log.restart == None
 
 
@@ -315,6 +346,31 @@ class TestFromFailedDeployment:
         assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
         for operation_log in resume_deployment_log.operations:
             assert operation_log.host == host
+
+    def test_deployment_plan_resume_from_operations_extra_vars(
+        self, minimal_collections: Collections
+    ):
+        operations_names = ["mock_node_install", "mock_node_config", "mock_node_start"]
+        extra_vars = ["foo1=bar1", "foo2=bar2"]
+        deployment_log = DeploymentLog.from_operations(
+            minimal_collections,
+            operation_names=operations_names,
+            extra_vars=extra_vars,
+        )
+        index_to_fail = 2
+        deployment_log = fail_deployment_log(deployment_log, index_to_fail)
+
+        resume_deployment_log = DeploymentLog.from_failed_deployment(
+            minimal_collections, deployment_log
+        )
+        assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
+        # index starts at 1
+        assert len(deployment_log.operations) - index_to_fail + 1 == len(
+            resume_deployment_log.operations
+        )
+        assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
+        for operation_log in resume_deployment_log.operations:
+            assert operation_log.extra_vars == extra_vars
 
 
 class TestFromStaleComponents:
