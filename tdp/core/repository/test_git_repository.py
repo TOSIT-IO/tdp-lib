@@ -80,7 +80,7 @@ def test_git_repository_multiple_validations(git_repository: GitRepository):
 
 
 def test_git_repository_file_added(
-    git_repository: GitRepository, git_commit_empty_tree
+    git_repository: GitRepository, git_commit_empty_tree: str
 ):
     file_name = "foo"
     with Path(git_repository.path, file_name).open("w") as fd:

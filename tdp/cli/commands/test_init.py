@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+from pathlib import Path
 
 from click.testing import CliRunner
 
 from tdp.cli.commands.init import init
 
 
-def test_tdp_init(collection_path, database_dsn, vars):
+def test_tdp_init(collection_path: Path, database_dsn: str, vars: Path):
     args = [
         "--collection-path",
         collection_path,
@@ -22,7 +23,7 @@ def test_tdp_init(collection_path, database_dsn, vars):
     assert result.exit_code == 0
 
 
-def test_tdp_init_db_is_created(collection_path, vars, tmp_path):
+def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Path):
     db_path = tmp_path / "sqlite.db"
     args = [
         "--collection-path",

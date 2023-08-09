@@ -1,13 +1,15 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from pathlib import Path
+
 import pytest
 
 from tdp.conftest import generate_collection
 
 
 @pytest.fixture
-def collection_path(tmp_path_factory):
+def collection_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
     collection_path = tmp_path_factory.mktemp("collection")
     dag_service_operations = {
         "service": [
@@ -27,15 +29,15 @@ def collection_path(tmp_path_factory):
 
 
 @pytest.fixture
-def database_dsn():
+def database_dsn() -> str:
     return "sqlite+pysqlite:///:memory:"
 
 
 @pytest.fixture
-def database_dsn_path(tmp_path):
+def database_dsn_path(tmp_path: Path) -> str:
     return "sqlite:///" + str(tmp_path / "sqlite.db")
 
 
 @pytest.fixture
-def vars(tmp_path_factory):
+def vars(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return tmp_path_factory.mktemp("collection")

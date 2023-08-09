@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from pathlib import Path
+
 import pytest
 
 from tdp.conftest import generate_collection
@@ -18,14 +20,14 @@ def test_collection_from_path_does_not_exist():
         Collection.from_path("foo")
 
 
-def test_collection_from_path_is_not_a_directory(tmp_path):
+def test_collection_from_path_is_not_a_directory(tmp_path: Path):
     empty_file = tmp_path / "foo"
     empty_file.touch()
     with pytest.raises(PathIsNotADirectoryError):
         Collection.from_path(empty_file)
 
 
-def test_collection_from_path_missing_mandatory_directory(tmp_path):
+def test_collection_from_path_missing_mandatory_directory(tmp_path: Path):
     with pytest.raises(MissingMandatoryDirectoryError):
         Collection.from_path(tmp_path)
 
