@@ -11,7 +11,7 @@ from tdp.core.dag import Dag
 from tdp.core.models import DeploymentLog, FilterTypeEnum
 
 
-def validate_filtertype(ctx, param, value):
+def _validate_filtertype(ctx, param, value):
     if value is not None:
         return FilterTypeEnum[value]
     return value
@@ -35,7 +35,7 @@ def validate_filtertype(ctx, param, value):
     "--glob",
     "-g",
     "filter_type",
-    callback=validate_filtertype,
+    callback=_validate_filtertype,
     flag_value=FilterTypeEnum.REGEX.name,
     help="Filter expression matched as a glob.",
 )
@@ -43,7 +43,7 @@ def validate_filtertype(ctx, param, value):
     "--regex",
     "-r",
     "filter_type",
-    callback=validate_filtertype,
+    callback=_validate_filtertype,
     flag_value=FilterTypeEnum.REGEX.name,
     help="Filter expression matched as a regex.",
 )
