@@ -18,12 +18,21 @@ from tdp.core.models import DeploymentLog
     multiple=True,
     help="Hosts where operations are launched. Can be used multiple times.",
 )
+@click.option(
+    "-e",
+    "--extra-vars",
+    envvar="TDP_EXTRA_VARS",
+    type=str,
+    multiple=True,
+    help="Extra vars for operations (forwarded to ansible as is). Can be used multiple times.",
+)
 @collections
 @database_dsn
 @vars
 def run(
     operation_names,
     host,
+    extra_vars,
     collections,
     database_dsn,
     vars,
@@ -35,7 +44,7 @@ def run(
     )
     try:
         deployment_log = DeploymentLog.from_operations(
-            collections, operation_names, host
+            collections, operation_names, host, extra_vars
         )
     except Exception as e:
         raise click.ClickException(str(e)) from e

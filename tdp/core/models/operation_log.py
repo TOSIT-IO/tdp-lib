@@ -6,7 +6,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tdp.core.models.base import Base
@@ -27,6 +27,7 @@ class OperationLog(Base):
         operation_order: Operation order.
         operation: Operation name.
         host: Operation host.
+        extra_vars: List of extra vars.
         start_time: Operation start time.
         end_time: Operation end time.
         state: Operation state.
@@ -41,6 +42,7 @@ class OperationLog(Base):
     operation_order: Mapped[int] = mapped_column(primary_key=True)
     operation: Mapped[str] = mapped_column(String(OPERATION_NAME_MAX_LENGTH))
     host: Mapped[Optional[str]] = mapped_column(String(HOST_NAME_MAX_LENGTH))
+    extra_vars: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
     start_time: Mapped[Optional[datetime]]
     end_time: Mapped[Optional[datetime]]
     state: Mapped[OperationStateEnum]
