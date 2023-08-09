@@ -12,7 +12,7 @@ from tdp.core.collections import Collections
 from tdp.core.variables.cluster_variables import ClusterVariables
 
 
-def collection_paths_to_collections(
+def _collections_from_paths(
     ctx: click.Context, param: click.Parameter, value: str
 ) -> Collections:
     """Transforms a list of paths into a Collections object.
@@ -70,7 +70,7 @@ def collections(func: FC) -> FC:
         "collections",
         envvar="TDP_COLLECTION_PATH",
         required=True,
-        callback=collection_paths_to_collections,  # transforms into Collections object
+        callback=_collections_from_paths,
         help=f"List of paths separated by your os' path separator ({os.pathsep})",
     )(func)
 
