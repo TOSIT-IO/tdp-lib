@@ -36,9 +36,7 @@ class _Flags:
 
 
 class DeploymentIterator(
-    Iterator[
-        Tuple[OperationLog, Optional[ComponentVersionLog], Optional[StaleComponent]]
-    ]
+    Iterator[Tuple[Optional[ComponentVersionLog], Optional[StaleComponent]]]
 ):
     """Iterator that runs an operation at each iteration.
 
@@ -79,7 +77,7 @@ class DeploymentIterator(
 
                 if self.deployment_log.state == DeploymentStateEnum.FAILURE:
                     operation_log.state = OperationStateEnum.HELD
-                    return operation_log, None, None
+                    return None, None
 
                 operation = self._collections.get_operation(operation_log.operation)
                 # TODO: operation component_name should be an empty string instead of None when service operation
@@ -126,7 +124,7 @@ class DeploymentIterator(
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
-                return operation_log, component_version_log, stale_component
+                return component_version_log, stale_component
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
