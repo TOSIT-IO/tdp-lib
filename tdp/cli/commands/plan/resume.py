@@ -28,7 +28,6 @@ def resume(
 ):
     if not vars.exists():
         raise click.BadParameter(f"{vars} does not exist.")
-    dag = Dag(collections)
 
     with get_session(database_dsn, commit_on_exit=True) as session:
         if id is None:
