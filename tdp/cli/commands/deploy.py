@@ -67,16 +67,11 @@ def deploy(
             for _ in deployment_iterator:
                 pass
         else:
-            # Update deployment log to RUNNING
-            session.merge(deployment_iterator.deployment_log)
-            session.commit()
+            session.commit()  # Update deployment log to RUNNING
             for (
-                operation_log,
                 component_version_log,
                 stale_component,
             ) in deployment_iterator:
-                if operation_log is not None:
-                    session.merge(operation_log)
                 if component_version_log is not None:
                     session.add(component_version_log)
                 if stale_component:
@@ -85,8 +80,6 @@ def deploy(
                         and not stale_component.to_restart
                     ):
                         session.delete(stale_component)
-                    else:
-                        session.merge(stale_component)
                 session.commit()
             # Update deployment log to SUCCESS or FAILURE
             session.merge(deployment_iterator.deployment_log)
