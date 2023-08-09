@@ -17,7 +17,9 @@ from tdp.core.models import (
 )
 
 if TYPE_CHECKING:
+    from tdp.core.collections import Collections
     from tdp.core.dag import Dag
+    from tdp.core.variables import ClusterVariables
 
 
 class MockExecutor(Executor):
@@ -79,7 +81,9 @@ def test_deployment_plan_with_filter_is_success(
     assert len(deployment_iterator.deployment_log.operations) == 2
 
 
-def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner):
+def test_noop_deployment_plan_is_success(
+    minimal_collections: Collections, deployment_runner: DeploymentRunner
+):
     """deployment plan containing only noop operation"""
     deployment_log = DeploymentLog.from_operations(minimal_collections, ["mock_init"])
     deployment_iterator = deployment_runner.run(deployment_log)
@@ -91,7 +95,7 @@ def test_noop_deployment_plan_is_success(minimal_collections, deployment_runner)
     assert len(deployment_iterator.deployment_log.operations) == 1
 
 
-def test_failed_operation_stops(dag, failing_deployment_runner):
+def test_failed_operation_stops(dag: Dag, failing_deployment_runner: DeploymentRunner):
     """execution fails at the 2 task"""
     deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
     deployment_iterator = failing_deployment_runner.run(deployment_log)
@@ -102,7 +106,7 @@ def test_failed_operation_stops(dag, failing_deployment_runner):
     assert len(deployment_iterator.deployment_log.operations) == 8
 
 
-def test_service_log_is_emitted(dag, deployment_runner):
+def test_service_log_is_emitted(dag: Dag, deployment_runner: DeploymentRunner):
     """executing 2 * config and restart (1 on component, 1 on service)"""
     deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
     deployment_iterator = deployment_runner.run(deployment_log)
@@ -114,7 +118,7 @@ def test_service_log_is_emitted(dag, deployment_runner):
     assert len(deployment_iterator.deployment_log.component_version) == 2
 
 
-def test_service_log_is_not_emitted(dag, deployment_runner):
+def test_service_log_is_not_emitted(dag: Dag, deployment_runner: DeploymentRunner):
     """executing only install tasks, therefore no service log"""
     deployment_log = DeploymentLog.from_dag(
         dag, targets=["mock_init"], filter_expression="*_install"
@@ -128,7 +132,9 @@ def test_service_log_is_not_emitted(dag, deployment_runner):
     assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
-def test_service_log_only_noop_is_emitted(minimal_collections, deployment_runner):
+def test_service_log_only_noop_is_emitted(
+    minimal_collections: Collections, deployment_runner: DeploymentRunner
+):
     """deployment plan containing only noop config and start"""
     deployment_log = DeploymentLog.from_operations(
         minimal_collections, ["mock_config", "mock_start"]
@@ -143,7 +149,7 @@ def test_service_log_only_noop_is_emitted(minimal_collections, deployment_runner
 
 
 def test_service_log_not_emitted_when_config_start_wrong_order(
-    minimal_collections, deployment_runner
+    minimal_collections: Collections, deployment_runner: DeploymentRunner
 ):
     """deployment plan containing start then config should not emit service log"""
     deployment_log = DeploymentLog.from_operations(
@@ -159,7 +165,7 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
 
 
 def test_service_log_emitted_once_with_start_and_restart(
-    minimal_collections, deployment_runner
+    minimal_collections: Collections, deployment_runner: DeploymentRunner
 ):
     """deployment plan containing config, start, and restart should emit only one service log"""
     deployment_log = DeploymentLog.from_operations(
@@ -175,7 +181,7 @@ def test_service_log_emitted_once_with_start_and_restart(
 
 
 def test_service_log_emitted_once_with_multiple_config_and_start_on_same_component(
-    minimal_collections, deployment_runner
+    minimal_collections: Collections, deployment_runner: DeploymentRunner
 ):
     """deployment plan containing multiple config, start, and restart should emit only one service log"""
     deployment_log = DeploymentLog.from_operations(
@@ -197,7 +203,10 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
 
 
 def test_deployment_dag_is_resumed(
-    dag, failing_deployment_runner, deployment_runner, minimal_collections
+    dag: Dag,
+    failing_deployment_runner: DeploymentRunner,
+    deployment_runner: DeploymentRunner,
+    minimal_collections: Collections,
 ):
     deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
     deployment_iterator = failing_deployment_runner.run(deployment_log)
@@ -239,11 +248,11 @@ def test_deployment_dag_is_resumed(
 
 @pytest.mark.skip(reason="from_reconfigure have been removed, to be reworked")
 def test_deployment_reconfigure_is_resumed(
-    dag,
-    reconfigurable_cluster_variables,
-    failing_deployment_runner,
-    deployment_runner,
-    minimal_collections,
+    dag: Dag,
+    reconfigurable_cluster_variables: ClusterVariables,
+    failing_deployment_runner: DeploymentRunner,
+    deployment_runner: DeploymentRunner,
+    minimal_collections: Collections,
 ):
     (
         cluster_variables,

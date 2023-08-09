@@ -18,7 +18,7 @@ def generate_collection(
     directory: Path,
     dag_service_operations: Mapping[str, list],
     service_vars: Mapping[str, Mapping[str, dict]],
-):
+) -> None:
     tdp_lib_dag = directory / DAG_DIRECTORY_NAME
     playbooks = directory / PLAYBOOKS_DIRECTORY_NAME
     tdp_vars_defaults = directory / DEFAULT_VARS_DIRECTORY_NAME

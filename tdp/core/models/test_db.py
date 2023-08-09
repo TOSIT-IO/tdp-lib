@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import Table, create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.models.base import Base
 from tdp.core.models.component_version_log import ComponentVersionLog
@@ -37,7 +37,7 @@ def clear_tables(session_maker: sessionmaker):
         session.commit()
 
 
-def test_create_deployment_log(session_maker: sessionmaker):
+def test_create_deployment_log(session_maker: sessionmaker[Session]):
     deployment_log = DeploymentLog(
         sources=["source1", "source2"],
         targets=["target1", "target2"],

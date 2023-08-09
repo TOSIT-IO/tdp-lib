@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Tuple
+
 import pytest
 
 from tdp.conftest import generate_collection
@@ -12,7 +14,7 @@ from tdp.core.variables import ClusterVariables
 
 
 @pytest.fixture(scope="session")
-def minimal_collections(tmp_path_factory):
+def minimal_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
     collection_path = tmp_path_factory.mktemp("minimal_collection")
     dag_service_operations = {
         "mock": [
@@ -51,7 +53,9 @@ def minimal_collections(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def cluster_variables(tmp_path_factory: pytest.TempPathFactory, minimal_collections):
+def cluster_variables(
+    tmp_path_factory: pytest.TempPathFactory, minimal_collections: Collections
+) -> ClusterVariables:
     tdp_vars = tmp_path_factory.mktemp("tdp_vars")
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         minimal_collections, tdp_vars
@@ -62,8 +66,8 @@ def cluster_variables(tmp_path_factory: pytest.TempPathFactory, minimal_collecti
 
 @pytest.fixture(scope="function")
 def reconfigurable_cluster_variables(
-    tmp_path_factory: pytest.TempPathFactory, minimal_collections
-):
+    tmp_path_factory: pytest.TempPathFactory, minimal_collections: Collections
+) -> Tuple[ClusterVariables, list[ComponentVersionLog]]:
     tdp_vars = tmp_path_factory.mktemp("tdp_vars")
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         minimal_collections, tdp_vars
@@ -85,5 +89,5 @@ def reconfigurable_cluster_variables(
 
 
 @pytest.fixture(scope="session")
-def dag(minimal_collections):
+def dag(minimal_collections: Collections) -> Dag:
     return Dag(minimal_collections)

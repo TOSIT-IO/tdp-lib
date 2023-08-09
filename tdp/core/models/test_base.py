@@ -15,17 +15,17 @@ class ExampleClass(Base):
 
 
 @pytest.fixture
-def test_instance():
+def test_instance() -> ExampleClass:
     instance = ExampleClass(id=1, name="TestName")
     return instance
 
 
-def test_keyvalgen(test_instance):
+def test_keyvalgen(test_instance: ExampleClass):
     gen = keyvalgen(test_instance)
     attrs = dict(gen)
     assert attrs == {"id": 1, "name": "TestName"}
 
 
-def test_custom_base_repr(test_instance):
+def test_custom_base_repr(test_instance: ExampleClass):
     repr_str = repr(test_instance)
     assert repr_str == "ExampleClass(id=1, name=TestName)"

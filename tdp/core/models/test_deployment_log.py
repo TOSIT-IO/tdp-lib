@@ -48,7 +48,7 @@ def fail_deployment_log(deployment_log: DeploymentLog, index_to_fail: int):
     return deployment_log
 
 
-def set_success(deployment_log):
+def set_success(deployment_log: DeploymentLog):
     deployment_log.state = DeploymentStateEnum.SUCCESS
     for operation in deployment_log.operations:
         operation.state = OperationStateEnum.SUCCESS
@@ -374,9 +374,7 @@ class TestFromFailedDeployment:
 
 
 class TestFromStaleComponents:
-    def test_nothing_stale(
-        self, minimal_collections: Collections, cluster_variables: ClusterVariables
-    ):
+    def test_nothing_stale(self, minimal_collections: Collections):
         stale_components = []
         with pytest.raises(NothingToReconfigureError):
             DeploymentLog.from_stale_components(
@@ -384,7 +382,7 @@ class TestFromStaleComponents:
                 stale_components=stale_components,
             )
 
-    def test_one_stale(self, minimal_collections: ClusterVariables):
+    def test_one_stale(self, minimal_collections: Collections):
         stale_components = [
             StaleComponent(
                 service_name="mock",

@@ -1,6 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from pathlib import Path
+from typing import Any, Generator, Tuple
+
 import pytest
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
@@ -8,9 +11,11 @@ from ansible.vars.manager import VariableManager
 
 from tdp.core.variables import Variables
 
+_DummyInventory = Tuple[DataLoader, InventoryManager, VariableManager, Path]
+
 
 @pytest.fixture
-def dummy_inventory(tmp_path):
+def dummy_inventory(tmp_path: Path) -> Generator[_DummyInventory, Any, None]:
     group_vars = tmp_path / "group_vars"
     hdfs_vars = group_vars / "hdfs.yml"
     group_vars.mkdir()
@@ -34,7 +39,7 @@ def dummy_inventory(tmp_path):
     yield (loader, inventory, variable_manager, hdfs_vars)
 
 
-def test_variables_update(dummy_inventory):
+def test_variables_update(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
     with Variables(hdfs_vars).open() as variables:
         variables.update({"hdfs_property": "hdfs_value"})
@@ -44,7 +49,7 @@ def test_variables_update(dummy_inventory):
     ).get("hdfs_property")
 
 
-def test_variables_unset(dummy_inventory):
+def test_variables_unset(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
     with Variables(hdfs_vars).open() as variables:
@@ -64,7 +69,7 @@ def test_variables_unset(dummy_inventory):
     )
 
 
-def test_variables_unset_nested(dummy_inventory):
+def test_variables_unset_nested(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
     with Variables(hdfs_vars).open() as variables:
@@ -89,7 +94,7 @@ def test_variables_unset_nested(dummy_inventory):
     ).get("hdfs_site").get("hdfs.another.nested.property")
 
 
-def test_variables_item_is_settable(dummy_inventory):
+def test_variables_item_is_settable(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
     with Variables(hdfs_vars).open() as variables:
         variables["hdfs_property"] = "hdfs_value"
@@ -99,14 +104,14 @@ def test_variables_item_is_settable(dummy_inventory):
     ).get("hdfs_property")
 
 
-def test_variables_item_is_gettable(dummy_inventory):
+def test_variables_item_is_gettable(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
     with Variables(hdfs_vars).open() as variables:
         variables["hdfs_property"] = "hdfs_value"
         assert "hdfs_value" == variables["hdfs_property"]
 
 
-def test_variables_item_is_deletable(dummy_inventory):
+def test_variables_item_is_deletable(dummy_inventory: _DummyInventory):
     (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
 
     with Variables(hdfs_vars).open() as variables:

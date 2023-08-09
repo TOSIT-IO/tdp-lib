@@ -1,13 +1,17 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from pathlib import Path
+
 from click.testing import CliRunner
 
 from tdp.cli.commands.init import init
 from tdp.cli.commands.plan.reconfigure import reconfigure
 
 
-def test_tdp_plan_reconfigure(collection_path, database_dsn_path, vars):
+def test_tdp_plan_reconfigure(
+    collection_path: Path, database_dsn_path: str, vars: Path
+):
     base_args = [
         "--collection-path",
         collection_path,
