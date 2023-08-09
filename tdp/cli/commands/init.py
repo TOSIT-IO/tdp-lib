@@ -22,7 +22,7 @@ from tdp.core.variables import ClusterVariables
 @collections
 @database_dsn
 @validate
-@vars
+@vars(exists=False)
 def init(overrides, collections, database_dsn, validate, vars):
     init_db(database_dsn)
     cluster_variables = ClusterVariables.initialize_cluster_variables(

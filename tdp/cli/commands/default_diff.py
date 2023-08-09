@@ -17,8 +17,6 @@ from tdp.core.variables import ClusterVariables, Variables, merge_hash
 @collections
 @vars
 def default_diff(service, collections, vars):
-    if not vars.exists():
-        raise click.BadParameter(f"{vars} does not exist")
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
 
     if service:

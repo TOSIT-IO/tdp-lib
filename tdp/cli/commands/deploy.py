@@ -37,9 +37,6 @@ def deploy(
     validate,
     vars,
 ):
-    if not vars.exists():
-        raise click.BadParameter(f"{vars} does not exist.")
-
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
     )

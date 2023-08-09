@@ -123,11 +123,18 @@ def validate(func: FC) -> FC:
     )(func)
 
 
-def vars(func: FC) -> FC:
-    return click.option(
-        "--vars",
-        envvar="TDP_VARS",
-        required=True,
-        type=click.Path(resolve_path=True, path_type=Path),
-        help="Path to the tdp vars",
-    )(func)
+def vars(func=None, *, exists=True):
+    def decorator(fn: FC) -> FC:
+        return click.option(
+            "--vars",
+            envvar="TDP_VARS",
+            required=True,
+            type=click.Path(resolve_path=True, path_type=Path, exists=exists),
+            help="Path to the tdp vars",
+        )(fn)
+
+    # Checks if the decorator was used without parentheses.
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)
