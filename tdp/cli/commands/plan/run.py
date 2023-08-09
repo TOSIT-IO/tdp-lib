@@ -50,4 +50,4 @@ def run(
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
         session.merge(deployment_log)
-        click.echo("Deployment plan successfully created.")
+    click.echo("Deployment plan successfully created.")

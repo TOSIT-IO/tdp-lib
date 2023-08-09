@@ -16,8 +16,8 @@ def reconfigure(
     collections,
     database_dsn,
 ):
+    click.echo("Creating a deployment plan to reconfigure services.")
     with get_session(database_dsn, commit_on_exit=True) as session:
-        click.echo(f"Creating a deployment plan to reconfigure services.")
         stale_components = get_stale_components(session)
         deployment_log = DeploymentLog.from_stale_components(
             collections, stale_components
@@ -26,4 +26,4 @@ def reconfigure(
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
         session.merge(deployment_log)
-        click.echo("Deployment plan successfully created.")
+    click.echo("Deployment plan successfully created.")
