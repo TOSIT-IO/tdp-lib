@@ -6,7 +6,7 @@ import click
 
 from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn, vars
+from tdp.cli.utils import collections, database_dsn
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentLog, FilterTypeEnum
 
@@ -56,7 +56,6 @@ def validate_filtertype(ctx, param, value):
 )
 @collections
 @database_dsn
-@vars
 def dag(
     sources,
     targets,
@@ -65,10 +64,7 @@ def dag(
     restart,
     collections,
     database_dsn,
-    vars,
 ):
-    if not vars.exists():
-        raise click.BadParameter(f"{vars} does not exist.")
     dag = Dag(collections)
     set_nodes = set()
     if sources:

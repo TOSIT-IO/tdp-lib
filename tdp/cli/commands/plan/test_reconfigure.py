@@ -18,12 +18,8 @@ def test_tdp_plan_reconfigure(
         "--database-dsn",
         database_dsn_path,
     ]
-    init_args = base_args + [
-        "--vars",
-        vars,
-    ]
     runner = CliRunner()
-    result = runner.invoke(init, init_args)
+    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
     result = runner.invoke(reconfigure, base_args)
     assert (
