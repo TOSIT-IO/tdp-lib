@@ -86,7 +86,7 @@ def dag(
     elif targets:
         click.echo(f"Creating a deployment plan to: {targets}")
     else:
-        click.echo(f"Creating a deployment plan for the whole DAG.")
+        click.echo("Creating a deployment plan for the whole DAG.")
     deployment_log = DeploymentLog.from_dag(
         dag,
         sources=sources,
@@ -100,4 +100,4 @@ def dag(
         if planned_deployment_log:
             deployment_log.id = planned_deployment_log.id
         session.merge(deployment_log)
-        click.echo("Deployment plan successfully created.")
+    click.echo("Deployment plan successfully created.")
