@@ -6,8 +6,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import and_, desc, func, or_, select, tuple_
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.exc import NoResultFound
 
 from tdp.core.models import (
     ComponentVersionLog,
