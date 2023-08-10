@@ -36,7 +36,7 @@ class _Flags:
 
 
 class DeploymentIterator(
-    Iterator[Tuple[Optional[ComponentVersionLog], Optional[StaleComponent]]]
+    Iterator[Tuple[Optional[ComponentVersionLog], Optional[list[StaleComponent]]]]
 ):
     """Iterator that runs an operation at each iteration.
 
@@ -80,23 +80,53 @@ class DeploymentIterator(
                     return None, None
 
                 operation = self._collections.get_operation(operation_log.operation)
-                # TODO: operation component_name should be an empty string instead of None when service operation
-                stale_component = self._stale_components.get(
-                    (
-                        operation.service_name,
-                        operation.component_name
-                        if not operation.is_service_operation()
-                        else "",
+
+                # Get the component state if stale
+                stale_components: list[StaleComponent] = []
+                if operation_log.host or operation.noop:
+                    # Host is in the operation log or operation is noop (hence no host),
+                    # so we get a single stale_component
+                    _stale_component = self._stale_components.get(
+                        (
+                            operation.service_name,
+                            operation.component_name or "",
+                            operation_log.host or "",
+                        )
                     )
-                )
-                if operation.action_name == "config":
-                    if stale_component:
-                        stale_component.to_reconfigure = False
-                elif operation.action_name == "restart":
-                    if stale_component and not stale_component.to_reconfigure:
-                        stale_component.to_restart = False
+                    if _stale_component:
+                        stale_components.append(_stale_component)
+                else:
+                    # Host is not in the operation log,
+                    # so we get stale_components for all hosts
+                    for stale_component in self._stale_components.values():
+                        if (
+                            stale_component.service_name == operation.service_name
+                            and stale_component.component_name
+                            == operation.component_name
+                        ):
+                            stale_components.append(stale_component)
+                    stale_components.extend(
+                        filter(
+                            lambda x: x.service_name == operation.service_name
+                            and x.component_name == operation.component_name,
+                            self._stale_components.values(),
+                        )
+                    )
+
+                if any(stale_components):
+                    # Update the component state
+                    if operation.action_name == "config":
+                        for stale_component in stale_components:
+                            stale_component.to_reconfigure = False
+                    elif operation.action_name == "restart":
+                        for stale_component in stale_components:
+                            # Component must be configured for a restart to be effective
+                            if not stale_component.to_reconfigure:
+                                stale_component.to_restart = False
+
                 # Retrieve the component state.
                 # This is a reference to the object, so we can update it.
+                # TODO: move the component_version_log logic along with the stale component
                 component_state = self._component_states[
                     (operation.service_name, operation.component_name)
                 ]
@@ -124,7 +154,7 @@ class DeploymentIterator(
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
-                return component_version_log, stale_component
+                return component_version_log, stale_components
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
