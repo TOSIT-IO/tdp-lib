@@ -68,18 +68,20 @@ def deploy(
                 pass
         else:
             session.commit()  # Update deployment log to RUNNING
+            # TODO: check stale_component to delete without returning it.
             for (
                 component_version_log,
-                stale_component,
+                stale_components,
             ) in deployment_iterator:
                 if component_version_log is not None:
                     session.add(component_version_log)
-                if stale_component:
-                    if (
-                        not stale_component.to_reconfigure
-                        and not stale_component.to_restart
-                    ):
-                        session.delete(stale_component)
+                if stale_components and any(stale_components):
+                    for stale_component in stale_components:
+                        if (
+                            not stale_component.to_reconfigure
+                            and not stale_component.to_restart
+                        ):
+                            session.delete(stale_component)
                 session.commit()
             # Update deployment log to SUCCESS or FAILURE
             session.merge(deployment_iterator.deployment_log)
