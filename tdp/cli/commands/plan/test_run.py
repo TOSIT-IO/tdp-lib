@@ -20,7 +20,7 @@ def test_tdp_plan_run(collection_path: Path, database_dsn_path: str, vars: Path)
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     args.append("service_install")
     result = runner.invoke(run, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

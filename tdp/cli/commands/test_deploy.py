@@ -23,9 +23,9 @@ def test_tdp_deploy_mock(
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(dag, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     args.extend(["--run-directory", tmp_path, "--mock-deploy"])
     result = runner.invoke(deploy, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

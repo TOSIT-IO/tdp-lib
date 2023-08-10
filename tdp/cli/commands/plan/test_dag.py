@@ -21,6 +21,6 @@ def test_tdp_plan_dag(collection_path: Path, database_dsn_path: str, vars: Path)
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(dag, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
