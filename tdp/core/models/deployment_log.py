@@ -47,6 +47,7 @@ class DeploymentTypeEnum(BaseEnum):
     OPERATIONS = "Operations"
     RESUME = "Resume"
     RECONFIGURE = "Reconfigure"
+    CUSTOM = "Custom"
 
 
 class FilterTypeEnum(BaseEnum):
@@ -63,7 +64,7 @@ class DeploymentLog(Base):
     __tablename__ = "deployment_log"
 
     id: Mapped[int] = mapped_column(primary_key=True, doc="Deployment log id.")
-    options: Mapped[dict] = mapped_column(
+    options: Mapped[Optional[dict]] = mapped_column(
         JSON(none_as_null=True), doc="Deployment options."
     )
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
@@ -237,6 +238,49 @@ class DeploymentLog(Base):
                         )
                     )
                 i += 1
+        return deployment_log
+
+    @staticmethod
+    def from_operations_hosts_vars(
+        collections: Collections,
+        operation_host_vars_names: list[tuple[str, Optional[str], Optional[list[str]]]],
+    ) -> "DeploymentLog":
+        """Generate a deployment plan from a list of operations, hosts and extra vars.
+
+        Args:
+            collections: Collections to retrieve the operations from.
+            operation_host_vars_names: List of operations, hosts and extra vars to perform.
+
+        Raises:
+            MissingOperationError: If an operation is a noop.
+            MissingHostForOperationError: If an operation is not found in the collections.
+        """
+        deployment_log = DeploymentLog(
+            deployment_type=DeploymentTypeEnum.CUSTOM,
+            status=DeploymentStateEnum.PLANNED,
+        )
+
+        for order, operation_host_vars in enumerate(operation_host_vars_names, start=1):
+            operation_name, host_name, var_names = operation_host_vars
+            if host_name is not None:
+                collections.check_operations_hosts_exist(
+                    [operation_name],
+                    [host_name],
+                )
+            else:
+                collections.check_operations_exist(
+                    [operation_name],
+                )
+
+            deployment_log.operations.append(
+                OperationLog(
+                    operation=operation_name,
+                    operation_order=order,
+                    host=host_name,
+                    extra_vars=var_names,
+                    state=OperationStateEnum.PLANNED,
+                )
+            )
         return deployment_log
 
     @staticmethod
