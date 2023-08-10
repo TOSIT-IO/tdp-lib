@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import fnmatch
+import importlib.util
 import re
 
 import click
@@ -108,13 +109,13 @@ def dag(
 
 
 def import_show():
-    try:
-        import matplotlib
-        import pydot
-    except ImportError as e:
-        raise click.ClickException(
-            "You need to install the 'visualization' extras to be able to use the dag command. Run 'poetry install --extras visualization'"
-        ) from e
+    for package in ["matplotlib", "pydot"]:
+        if importlib.util.find_spec(package) is None:
+            raise click.ClickException(
+                "You need to install the 'visualization' extras to be able to use the "
+                + "dag command. Run 'poetry install --extras visualization'."
+            )
+
     from tdp.core.dag_dot import show
 
     return show
