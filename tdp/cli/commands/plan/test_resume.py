@@ -23,8 +23,8 @@ def test_tdp_plan_resume_nothing_to_resume(
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(dag, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(resume, args)
-    assert result.exit_code == 1
+    assert result.exit_code == 1, result.output  # No deployment to resume.

@@ -17,4 +17,4 @@ def test_tdp_default_diff(collection_path: Path, vars: Path):
     ]
     runner = CliRunner()
     result = runner.invoke(default_diff, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

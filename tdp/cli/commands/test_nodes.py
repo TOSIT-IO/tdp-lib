@@ -12,4 +12,4 @@ def test_tdp_nodes(collection_path: Path):
     args = ["--collection-path", collection_path]
     runner = CliRunner()
     result = runner.invoke(nodes, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

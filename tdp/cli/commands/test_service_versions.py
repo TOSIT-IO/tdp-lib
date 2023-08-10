@@ -22,6 +22,6 @@ def test_tdp_service_versions(
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(service_versions, ["--database-dsn", database_dsn_path])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

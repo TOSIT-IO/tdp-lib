@@ -20,7 +20,7 @@ def test_tdp_init(collection_path: Path, database_dsn: str, vars: Path):
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
 
 
 def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Path):
@@ -36,4 +36,4 @@ def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Pat
     runner = CliRunner()
     result = runner.invoke(init, args)
     assert os.path.exists(db_path) == True
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output

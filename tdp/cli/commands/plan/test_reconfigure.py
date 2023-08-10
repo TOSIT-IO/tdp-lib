@@ -24,6 +24,8 @@ def test_tdp_plan_reconfigure(
     ]
     runner = CliRunner()
     result = runner.invoke(init, init_args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     result = runner.invoke(reconfigure, base_args)
-    assert result.exit_code == 1  # No stale components, hence nothing to reconfigure.
+    assert (
+        result.exit_code == 1
+    ), result.output  # No stale components, hence nothing to reconfigure.

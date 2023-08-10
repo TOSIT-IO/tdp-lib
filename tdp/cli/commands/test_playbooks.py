@@ -12,4 +12,4 @@ def test_tdp_playbooks(collection_path: Path, tmp_path: Path):
     args = ["--collection-path", collection_path, "--output-dir", tmp_path]
     runner = CliRunner()
     result = runner.invoke(playbooks, args)
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
