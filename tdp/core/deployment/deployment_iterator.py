@@ -36,7 +36,7 @@ class _Flags:
 
 
 class DeploymentIterator(
-    Iterator[Tuple[Optional[ComponentVersionLog], Optional[list[StaleComponent]]]]
+    Iterator[Tuple[Optional[list[ComponentVersionLog]], Optional[list[StaleComponent]]]]
 ):
     """Iterator that runs an operation at each iteration.
 
@@ -124,9 +124,9 @@ class DeploymentIterator(
                             if not stale_component.to_reconfigure:
                                 stale_component.to_restart = False
 
-                # Retrieve the component state.
-                # This is a reference to the object, so we can update it.
                 # TODO: move the component_version_log logic along with the stale component
+                # For now, it is still needed for the first deployment (no stale component)
+                component_version_logs: list[ComponentVersionLog] = []
                 component_state = self._component_states[
                     (operation.service_name, operation.component_name)
                 ]
@@ -137,15 +137,41 @@ class DeploymentIterator(
                     and component_state.is_configured == True
                     and component_state.is_started == False
                 ):
-                    component_version_log = ComponentVersionLog(
-                        service=operation.service_name,
-                        component=operation.component_name,
-                        version=self._cluster_variables[operation.service_name].version,
-                    )
-                    component_version_log.deployment = self.deployment_log
                     component_state.is_started = True
-                else:
-                    component_version_log = None
+                    # Component version that are both configured and started are saved
+                    if operation.noop:
+                        component_version_log = ComponentVersionLog(
+                            service=operation.service_name,
+                            component=operation.component_name,
+                            version=self._cluster_variables[
+                                operation.service_name
+                            ].version,
+                        )
+                        component_version_log.deployment = self.deployment_log
+                        component_version_logs.append(component_version_log)
+                    elif operation_log.host:
+                        component_version_log = ComponentVersionLog(
+                            service=operation.service_name,
+                            component=operation.component_name,
+                            host=operation_log.host,
+                            version=self._cluster_variables[
+                                operation.service_name
+                            ].version,
+                        )
+                        component_version_log.deployment = self.deployment_log
+                        component_version_logs.append(component_version_log)
+                    else:
+                        for host_name in operation.host_names:
+                            component_version_log = ComponentVersionLog(
+                                service=operation.service_name,
+                                component=operation.component_name,
+                                host=host_name,
+                                version=self._cluster_variables[
+                                    operation.service_name
+                                ].version,
+                            )
+                            component_version_log.deployment = self.deployment_log
+                            component_version_logs.append(component_version_log)
 
                 if operation.noop == False:
                     self._run_operation(operation_log)
@@ -154,7 +180,7 @@ class DeploymentIterator(
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
-                return component_version_log, stale_components
+                return component_version_logs, stale_components
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()

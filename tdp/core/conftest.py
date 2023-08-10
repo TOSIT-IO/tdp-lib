@@ -70,10 +70,16 @@ def reconfigurable_cluster_variables(
     )
     latest_success_component_version = [
         ComponentVersionLog(
-            service="mock", component=None, version=cluster_variables["mock"].version
+            service="mock",
+            component=None,
+            host=None,
+            version=cluster_variables["mock"].version,
         ),
         ComponentVersionLog(
-            service="mock", component="node", version=cluster_variables["mock"].version
+            service="mock",
+            component="node",
+            host=None,
+            version=cluster_variables["mock"].version,
         ),
     ]
 

@@ -70,11 +70,11 @@ def deploy(
             session.commit()  # Update deployment log to RUNNING
             # TODO: check stale_component to delete without returning it.
             for (
-                component_version_log,
+                component_version_logs,
                 stale_components,
             ) in deployment_iterator:
-                if component_version_log is not None:
-                    session.add(component_version_log)
+                if component_version_logs and any(component_version_logs):
+                    session.add_all(component_version_logs)
                 if stale_components and any(stale_components):
                     for stale_component in stale_components:
                         if (

@@ -54,6 +54,7 @@ def test_create_deployment_log(session_maker: sessionmaker):
         deployment_id=deployment_log.id,
         service="service1",
         component="component1",
+        host=None,
         version="1.0.0",
     )
     operation_log = OperationLog(

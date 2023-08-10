@@ -9,7 +9,11 @@ from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tdp.core.models.base import Base
-from tdp.core.operation import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGTH
+from tdp.core.operation import (
+    COMPONENT_NAME_MAX_LENGTH,
+    HOST_NAME_MAX_LENGTH,
+    SERVICE_NAME_MAX_LENGTH,
+)
 from tdp.core.repository.repository import VERSION_MAX_LENGTH
 
 if TYPE_CHECKING:
@@ -33,8 +37,11 @@ class ComponentVersionLog(Base):
     deployment_id: Mapped[int] = mapped_column(ForeignKey("deployment_log.id"))
     service: Mapped[str] = mapped_column(String(SERVICE_NAME_MAX_LENGTH))
     component: Mapped[Optional[str]] = mapped_column(String(COMPONENT_NAME_MAX_LENGTH))
+    host: Mapped[Optional[str]] = mapped_column(String(HOST_NAME_MAX_LENGTH))
     version: Mapped[str] = mapped_column(String(VERSION_MAX_LENGTH))
 
     deployment: Mapped[DeploymentLog] = relationship(back_populates="component_version")
 
-    __table_args__ = (UniqueConstraint("deployment_id", "service", "component"),)
+    __table_args__ = (
+        UniqueConstraint("deployment_id", "service", "component", "host"),
+    )
