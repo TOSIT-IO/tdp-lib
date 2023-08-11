@@ -85,10 +85,9 @@ class StaleComponent(Base):
         )
         stale_components_dict = {}
         for operation in config_and_restart_operations:
-            # Noop operation don't have any host
             if not any(operation.host_names):
                 stale_component = stale_components_dict.setdefault(
-                    (operation.service_name, "", ""),
+                    (operation.service_name, operation.component_name or "", ""),
                     StaleComponent(
                         service_name=operation.service_name,
                         component_name=operation.component_name or "",
@@ -102,7 +101,11 @@ class StaleComponent(Base):
                 if operation.action_name == "restart":
                     stale_component.to_restart = True
             for host_name in operation.host_names:
-                key = (operation.service_name, operation.component_name, host_name)
+                key = (
+                    operation.service_name,
+                    operation.component_name or "",
+                    host_name,
+                )
                 stale_component = stale_components_dict.setdefault(
                     key,
                     StaleComponent(
