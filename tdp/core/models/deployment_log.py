@@ -136,10 +136,10 @@ class DeploymentLog(Base):
     @staticmethod
     def from_dag(
         dag: Dag,
-        targets: list[str] = None,
-        sources: list[str] = None,
-        filter_expression: str = None,
-        filter_type: DeploymentTypeEnum = None,
+        targets: Optional[list[str]] = None,
+        sources: Optional[list[str]] = None,
+        filter_expression: Optional[str] = None,
+        filter_type: Optional[FilterTypeEnum] = None,
         restart: bool = False,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a DAG.
@@ -254,7 +254,7 @@ class DeploymentLog(Base):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operations_names = set()
+        operations_names: set[str] = set()
         for stale_component in stale_components:
             # should not append as those components should have been filtered out
             if not stale_component.to_reconfigure and not stale_component.to_restart:
@@ -272,7 +272,7 @@ class DeploymentLog(Base):
         if len(operations_names) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
         dag = Dag(collections)
-        operations = dag.topological_sort(nodes=operations_names, restart=True)
+        operations = dag.topological_sort(nodes=list(operations_names), restart=True)
         deployment_log = DeploymentLog(
             targets=list([operation.name for operation in operations]),
             extra_vars=None,

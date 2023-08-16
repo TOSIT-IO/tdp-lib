@@ -16,7 +16,7 @@ import fnmatch
 import functools
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 import networkx as nx
 
@@ -200,8 +200,8 @@ class Dag:
 
     def get_operations(
         self,
-        sources: list[str] = None,
-        targets: list[str] = None,
+        sources: Optional[list[str]] = None,
+        targets: Optional[list[str]] = None,
         restart: bool = False,
     ) -> list[Operation]:
         if sources:
