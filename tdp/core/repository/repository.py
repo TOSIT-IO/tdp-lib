@@ -1,12 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import os
-from abc import ABC, abstractmethod, abstractstaticmethod
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
-from typing import Union
+from typing import Generator, Union
 from weakref import proxy
 
 # Version string length isn't checked before inserting into database
@@ -58,8 +60,9 @@ class Repository(ABC):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._lock.release()
 
-    @abstractstaticmethod
-    def init(path: Union[str, os.PathLike]) -> "Repository":
+    @classmethod
+    @abstractmethod
+    def init(cls, path: Union[str, os.PathLike[str]]) -> Repository:
         """Initialize a new repository.
 
         Args:
@@ -68,7 +71,6 @@ class Repository(ABC):
         Returns:
             A repository object.
         """
-        pass
 
     @abstractmethod
     def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
@@ -80,8 +82,8 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    @contextmanager  # type: ignore
-    def validate(self, message: str) -> "Repository":
+    @contextmanager
+    def validate(self, message: str) -> Generator[Repository, None, None]:
         """Validate the changes in the index.
 
         Args:

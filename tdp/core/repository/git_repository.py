@@ -1,10 +1,12 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 import os
 from contextlib import contextmanager
-from typing import Union
+from typing import Generator, Union
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 
@@ -33,7 +35,7 @@ class GitRepository(Repository):
             self._repo.close()
 
     @staticmethod
-    def init(path: Union[str, os.PathLike]) -> "GitRepository":
+    def init(path: Union[str, os.PathLike]) -> GitRepository:
         """Initialize a new Git repository at the given path."""
         try:
             with Repo(path):
@@ -43,7 +45,7 @@ class GitRepository(Repository):
                 return GitRepository(path)
 
     @contextmanager
-    def validate(self, msg: str) -> "GitRepository":
+    def validate(self, msg: str) -> Generator[GitRepository, None, None]:
         with self._lock:
             yield self
             try:
@@ -61,7 +63,7 @@ class GitRepository(Repository):
     def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
         with self._lock:
             self._repo.index.add(paths)
-            logger.debug(f"{', '.join(paths)} staged")
+            logger.debug(f"{', '.join([str(p) for p in paths])} staged")
 
     def current_version(self) -> str:
         try:
