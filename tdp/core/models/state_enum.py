@@ -49,4 +49,3 @@ class DeploymentStateEnum(_StateEnum):
     RUNNING = _RUNNING_STATE
     SUCCESS = _SUCCESS_STATE
     FAILURE = _FAILURE_STATE
-    PENDING = _PENDING_STATE  # TODO: remove this state (should be replaced by RUNNING)
