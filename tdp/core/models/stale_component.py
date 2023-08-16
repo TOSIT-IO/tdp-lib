@@ -77,7 +77,10 @@ class StaleComponent(Base):
                     ],
                 )
                 sources_config_operations.extend(
-                    [service_operation.name for service_operation in service_operations]
+                    [
+                        service_operation.full_name
+                        for service_operation in service_operations
+                    ]
                 )
         operations = dag.get_operations(sources=sources_config_operations, restart=True)
         config_and_restart_operations = dag.filter_operations_regex(

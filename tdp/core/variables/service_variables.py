@@ -18,8 +18,8 @@ from tdp.core.variables.variables import Variables, VariablesDict
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag
+    from tdp.core.operation import ServiceComponentName
     from tdp.core.repository.repository import Repository
-    from tdp.core.service_component_name import ServiceComponentName
 
 logger = logging.getLogger("tdp").getChild("service_variables")
 

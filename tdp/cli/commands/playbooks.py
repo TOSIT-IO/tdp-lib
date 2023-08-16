@@ -8,7 +8,7 @@ import networkx as nx
 
 from tdp.cli.utils import collections
 from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
-from tdp.core.operation import Operation
+from tdp.core.operation import OperationName
 
 
 # TODO: Transform this to a script as it is not really a command (see #346).
@@ -40,7 +40,7 @@ def playbooks(services, output_dir, for_collection, collections):
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.service_name)
         for dependency in operation.depends_on:
-            dependency_operation = Operation(dependency)
+            dependency_operation = OperationName.from_full_name(dependency)
             if dependency_operation.service_name != operation.service_name:
                 dag_services.add_edge(
                     dependency_operation.service_name, operation.service_name
@@ -82,7 +82,7 @@ def playbooks(services, output_dir, for_collection, collections):
     with Path(meta_dir, "all_per_service.yml").open("w") as all_per_service_fd:
         write_copyright_licence_headers(all_per_service_fd)
         all_per_service_fd.write("---\n")
-        is_noop = lambda op: op.noop
+        is_noop = lambda op: op.is_noop()
         is_in_collection = lambda op: op.collection_name in for_collection
         for service in services:
             if for_collection and not any(
@@ -102,12 +102,12 @@ def playbooks(services, output_dir, for_collection, collections):
                         and operation.collection_name not in for_collection
                     ):
                         continue
-                    if not operation.noop:
+                    if not operation.is_noop():
                         service_fd.write(
-                            f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                            f"- import_playbook: {playbooks_prefix}{operation.full_name}.yml\n"
                         )
                     else:
-                        service_fd.write(f"# {operation.name}\n")
+                        service_fd.write(f"# {operation.full_name}\n")
 
     with Path(meta_dir, "all.yml").open("w") as all_fd:
         write_copyright_licence_headers(all_fd)
@@ -115,9 +115,9 @@ def playbooks(services, output_dir, for_collection, collections):
         for operation in dag.get_all_operations():
             if for_collection and operation.collection_name not in for_collection:
                 continue
-            if not operation.noop:
+            if not operation.is_noop():
                 all_fd.write(
-                    f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                    f"- import_playbook: {playbooks_prefix}{operation.full_name}.yml\n"
                 )
             else:
-                all_fd.write(f"# {operation.name}\n")
+                all_fd.write(f"# {operation.full_name}\n")

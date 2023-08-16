@@ -180,7 +180,7 @@ class Dag:
             if restart:
                 if node.endswith("_start"):
                     node = node.replace("_start", "_restart")
-                    if operation.noop:
+                    if operation.is_noop():
                         # if start operation is a noop, outputs a noop restart operation
                         return Operation(
                             name=node,
@@ -241,13 +241,13 @@ class Dag:
     def filter_operations_glob(
         self, operations: list[Operation], glob: str
     ) -> list[Operation]:
-        return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
+        return list(filter(lambda o: fnmatch.fnmatch(o.full_name, glob), operations))  # type: ignore
 
     def filter_operations_regex(
         self, operations: list[Operation], regex: str
     ) -> list[Operation]:
         compiled_regex = re.compile(regex)
-        return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
+        return list(filter(lambda o: compiled_regex.match(o.full_name), operations))  # type: ignore
 
     def validate(self) -> None:
         r"""Validation rules :
@@ -323,12 +323,12 @@ class Dag:
             # Operations tagged with the noop flag should not have a playbook defined in the collection
 
             if operation_name in self._collections[operation.collection_name].playbooks:
-                if operation.noop:
+                if operation.is_noop():
                     c_warning(
                         f"Operation '{operation_name}' is noop and the playbook should not exist"
                     )
             else:
-                if not operation.noop:
+                if not operation.is_noop():
                     c_warning(f"Operation '{operation_name}' should have a playbook")
 
         # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions

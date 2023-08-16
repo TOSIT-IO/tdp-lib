@@ -83,7 +83,7 @@ class DeploymentIterator(
 
                 # Get the component state if stale
                 stale_components: list[StaleComponent] = []
-                if operation_log.host or operation.noop:
+                if operation_log.host or operation.is_noop():
                     # Host is in the operation log or operation is noop (hence no host),
                     # so we get a single stale_component
                     _stale_component = self._stale_components.get(
@@ -139,7 +139,7 @@ class DeploymentIterator(
                 ):
                     component_state.is_started = True
                     # Component version that are both configured and started are saved
-                    if operation.noop:
+                    if operation.is_noop():
                         component_version_log = ComponentVersionLog(
                             service=operation.service_name,
                             component=operation.component_name,
@@ -173,7 +173,7 @@ class DeploymentIterator(
                             component_version_log.deployment = self.deployment_log
                             component_version_logs.append(component_version_log)
 
-                if operation.noop == False:
+                if operation.is_noop() == False:
                     self._run_operation(operation_log)
                     if operation_log.state != OperationStateEnum.SUCCESS:
                         self.deployment_log.state = DeploymentStateEnum.FAILURE

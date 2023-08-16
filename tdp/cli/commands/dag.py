@@ -94,12 +94,18 @@ def dag(
     if color_to:
         nodes_to_color.update(
             list(
-                map(lambda o: o.name, dag.get_operations_to_nodes(color_to.split(",")))
+                map(
+                    lambda o: o.full_name,
+                    dag.get_operations_to_nodes(color_to.split(",")),
+                )
             )
         )
     if color_from:
         nodes_from = list(
-            map(lambda o: o.name, dag.get_operations_from_nodes(color_from.split(",")))
+            map(
+                lambda o: o.full_name,
+                dag.get_operations_from_nodes(color_from.split(",")),
+            )
         )
         if nodes_to_color:
             nodes_to_color = nodes_to_color.intersection(nodes_from)

@@ -14,7 +14,7 @@ def nodes(collections):
     dag = Dag(collections)
     endline = "\n- "
     operations = endline.join(
-        f"{operation.name} {sorted(operation.host_names)}"
+        f"{operation.full_name} {sorted(operation.host_names)}"
         for operation in dag.get_all_operations()
     )
     click.echo(f"Operation list:{endline}{operations}")

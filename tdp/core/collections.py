@@ -12,8 +12,7 @@ from typing import Sequence
 
 import yaml
 
-from tdp.core.operation import Operation
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.operation import Operation, ServiceComponentName
 
 try:
     from yaml import CLoader as Loader
@@ -274,5 +273,5 @@ class Collections(Mapping):
             for host_name in host_names:
                 if host_name not in operation.host_names:
                     raise MissingHostForOperationError(
-                        f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.host_names}"
+                        f"Host {host_name} not found for operation {operation.full_name}. Valid hosts are {operation.host_names}"
                     )

@@ -184,7 +184,7 @@ class DeploymentLog(Base):
         )
         deployment_log.operations = [
             OperationLog(
-                operation=operation.name,
+                operation=operation.full_name,
                 operation_order=i,
                 host=None,
                 extra_vars=None,
@@ -274,14 +274,14 @@ class DeploymentLog(Base):
         dag = Dag(collections)
         operations = dag.topological_sort(nodes=operations_names, restart=True)
         deployment_log = DeploymentLog(
-            targets=list([operation.name for operation in operations]),
+            targets=list([operation.full_name for operation in operations]),
             extra_vars=None,
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             state=DeploymentStateEnum.PLANNED,
         )
         deployment_log.operations = [
             OperationLog(
-                operation=operation.name,
+                operation=operation.full_name,
                 operation_order=i,
                 extra_vars=None,
                 state=OperationStateEnum.PLANNED,

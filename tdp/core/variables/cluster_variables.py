@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Iterable
 from typing import Mapping as MappingType
 from typing import Optional, Union
 
+from tdp.core.operation import ServiceComponentName
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:

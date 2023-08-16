@@ -62,7 +62,7 @@ class DeploymentRunner:
 
         operation = self._collections.get_operation(operation_log.operation)
         playbook_file = self._collections[operation.collection_name].playbooks[
-            operation.name
+            operation.full_name
         ]
         state, logs = self._executor.execute(
             playbook=playbook_file,
