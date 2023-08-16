@@ -71,7 +71,7 @@ class DeploymentRunner:
         )
         operation_log.end_time = datetime.utcnow()
 
-        if not OperationStateEnum.has_value(state):
+        if state not in OperationStateEnum:
             logger.error(
                 f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{playbook_file}'))"
             )

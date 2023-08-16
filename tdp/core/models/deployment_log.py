@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import enum
 import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Iterable, Optional
@@ -17,6 +16,7 @@ from tdp.core.models.base import Base
 from tdp.core.models.operation_log import OperationLog
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
+from tdp.core.utils import BaseEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -41,7 +41,7 @@ class UnsupportedDeploymentTypeError(Exception):
     pass
 
 
-class DeploymentTypeEnum(str, enum.Enum):
+class DeploymentTypeEnum(BaseEnum):
     """Deployment type enum.
 
     Attributes:
@@ -57,7 +57,7 @@ class DeploymentTypeEnum(str, enum.Enum):
     RECONFIGURE = "Reconfigure"
 
 
-class FilterTypeEnum(str, enum.Enum):
+class FilterTypeEnum(BaseEnum):
     """Filter type enum.
 
     Attributes:
