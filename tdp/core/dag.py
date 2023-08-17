@@ -204,6 +204,8 @@ class Dag:
         targets: Optional[list[str]] = None,
         restart: bool = False,
     ) -> list[Operation]:
+        if sources and targets:
+            raise NotImplementedError("Cannot specify both sources and targets.")
         if sources:
             return self.get_operations_from_nodes(sources, restart)
         elif targets:
