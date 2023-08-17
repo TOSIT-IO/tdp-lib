@@ -21,31 +21,30 @@ class OperationLog(Base):
     """Operation log model.
 
     Hold past and current operation information linked to a deployment.
-
-    Attributes:
-        deployment_id: Deployment log id.
-        operation_order: Operation order.
-        operation: Operation name.
-        host: Operation host.
-        extra_vars: List of extra vars.
-        start_time: Operation start time.
-        end_time: Operation end time.
-        state: Operation state.
-        logs: Operation logs.
     """
 
     __tablename__ = "operation_log"
 
     deployment_id: Mapped[int] = mapped_column(
-        ForeignKey("deployment_log.id"), primary_key=True
+        ForeignKey("deployment_log.id"), primary_key=True, doc="Deployment log id."
     )
-    operation_order: Mapped[int] = mapped_column(primary_key=True)
-    operation: Mapped[str] = mapped_column(String(OPERATION_NAME_MAX_LENGTH))
-    host: Mapped[Optional[str]] = mapped_column(String(HOST_NAME_MAX_LENGTH))
-    extra_vars: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
-    start_time: Mapped[Optional[datetime]]
-    end_time: Mapped[Optional[datetime]]
-    state: Mapped[OperationStateEnum]
-    logs: Mapped[Optional[bytes]]
+    operation_order: Mapped[int] = mapped_column(
+        primary_key=True, doc="Operation order."
+    )
+    operation: Mapped[str] = mapped_column(
+        String(OPERATION_NAME_MAX_LENGTH), doc="Operation name."
+    )
+    host: Mapped[Optional[str]] = mapped_column(
+        String(HOST_NAME_MAX_LENGTH), doc="Operation host."
+    )
+    extra_vars: Mapped[Optional[list[str]]] = mapped_column(
+        JSON(none_as_null=True), doc="Extra vars."
+    )
+    start_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation start time.")
+    end_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation end time.")
+    state: Mapped[OperationStateEnum] = mapped_column(doc="Operation state.")
+    logs: Mapped[Optional[bytes]] = mapped_column(doc="Operation logs.")
 
-    deployment: Mapped[DeploymentLog] = relationship(back_populates="operations")
+    deployment: Mapped[DeploymentLog] = relationship(
+        back_populates="operations", doc="Deployment log."
+    )

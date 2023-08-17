@@ -21,26 +21,30 @@ if TYPE_CHECKING:
 
 
 class ComponentVersionLog(Base):
-    """Hold what component version are deployed.
-
-    Attributes:
-        id: Component version log id.
-        deployment_id: Deployment log id.
-        service: Service name.
-        component: Component name.
-        version: Component version.
-    """
+    """Hold what component version are deployed."""
 
     __tablename__ = "component_version_log"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    deployment_id: Mapped[int] = mapped_column(ForeignKey("deployment_log.id"))
-    service: Mapped[str] = mapped_column(String(SERVICE_NAME_MAX_LENGTH))
-    component: Mapped[Optional[str]] = mapped_column(String(COMPONENT_NAME_MAX_LENGTH))
-    host: Mapped[Optional[str]] = mapped_column(String(HOST_NAME_MAX_LENGTH))
-    version: Mapped[str] = mapped_column(String(VERSION_MAX_LENGTH))
+    id: Mapped[int] = mapped_column(primary_key=True, doc="Component version log id.")
+    deployment_id: Mapped[int] = mapped_column(
+        ForeignKey("deployment_log.id"), doc="Deployment log id."
+    )
+    service: Mapped[str] = mapped_column(
+        String(SERVICE_NAME_MAX_LENGTH), doc="Service name."
+    )
+    component: Mapped[Optional[str]] = mapped_column(
+        String(COMPONENT_NAME_MAX_LENGTH), doc="Component name."
+    )
+    host: Mapped[Optional[str]] = mapped_column(
+        String(HOST_NAME_MAX_LENGTH), doc="Host name."
+    )
+    version: Mapped[str] = mapped_column(
+        String(VERSION_MAX_LENGTH), doc="Component version."
+    )
 
-    deployment: Mapped[DeploymentLog] = relationship(back_populates="component_version")
+    deployment: Mapped[DeploymentLog] = relationship(
+        back_populates="component_version", doc="Deployment log."
+    )
 
     __table_args__ = (
         UniqueConstraint("deployment_id", "service", "component", "host"),

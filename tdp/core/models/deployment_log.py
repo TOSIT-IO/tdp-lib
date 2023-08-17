@@ -42,15 +42,6 @@ class UnsupportedDeploymentTypeError(Exception):
 
 
 class DeploymentTypeEnum(BaseEnum):
-    """Deployment type enum.
-
-    Attributes:
-        DAG: Dag deployment type.
-        OPERATIONS: Operations deployment type.
-        RESUME: Resume deployment type.
-        RECONFIGURE: Reconfigure deployment type.
-    """
-
     DAG = "Dag"
     OPERATIONS = "Operations"
     RESUME = "Resume"
@@ -58,13 +49,6 @@ class DeploymentTypeEnum(BaseEnum):
 
 
 class FilterTypeEnum(BaseEnum):
-    """Filter type enum.
-
-    Attributes:
-        REGEX: Regex filter type.
-        GLOB: Glob filter type.
-    """
-
     REGEX = "regex"
     GLOB = "glob"
 
@@ -73,47 +57,48 @@ class DeploymentLog(Base):
     """Deployment log model.
 
     Hold past and current deployment information.
-
-    Attributes:
-        id: Deployment log id.
-        sources: List of source nodes, in the case of Dag deployment type.
-        targets: List of target nodes, in the case of Dag deployment type.
-          List of operations, in the case of Run deployment type.
-        filter_expression: Filter expression.
-        filter_type: Filter type.
-        hosts: List of hosts.
-        extra_vars: List of extra vars.
-        start_time: Deployment start time.
-        end_time: Deployment end time.
-        state: Deployment state.
-        deployment_type: Deployment type.
-        restart: Restart flag.
     """
 
     __tablename__ = "deployment_log"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    sources: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
-    targets: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
-    filter_expression: Mapped[Optional[str]] = mapped_column(
-        String(OPERATION_NAME_MAX_LENGTH * 5)
+    id: Mapped[int] = mapped_column(primary_key=True, doc="Deployment log id.")
+    sources: Mapped[Optional[list[str]]] = mapped_column(
+        JSON(none_as_null=True),
+        doc="List of source nodes, in the case of Dag deployment type.",
     )
-    filter_type: Mapped[Optional[FilterTypeEnum]]
-    hosts: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
-    extra_vars: Mapped[Optional[list[str]]] = mapped_column(JSON(none_as_null=True))
-    start_time: Mapped[Optional[datetime]]
-    end_time: Mapped[Optional[datetime]]
-    state: Mapped[Optional[DeploymentStateEnum]]
-    deployment_type: Mapped[Optional[DeploymentTypeEnum]]
-    restart: Mapped[Optional[bool]] = mapped_column(default=False)
+    targets: Mapped[Optional[list[str]]] = mapped_column(
+        JSON(none_as_null=True),
+        doc="List of target nodes, in the case of Dag deployment type.",
+    )
+    filter_expression: Mapped[Optional[str]] = mapped_column(
+        String(OPERATION_NAME_MAX_LENGTH * 5), doc="Filter expression."
+    )
+    filter_type: Mapped[Optional[FilterTypeEnum]] = mapped_column(doc="Filter type.")
+    hosts: Mapped[Optional[list[str]]] = mapped_column(
+        JSON(none_as_null=True), doc="List of hosts."
+    )
+    extra_vars: Mapped[Optional[list[str]]] = mapped_column(
+        JSON(none_as_null=True), doc="List of extra vars."
+    )
+    start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
+    end_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment end time.")
+    state: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
+        doc="Deployment state."
+    )
+    deployment_type: Mapped[Optional[DeploymentTypeEnum]] = mapped_column(
+        doc="Deployment type."
+    )
+    restart: Mapped[Optional[bool]] = mapped_column(default=False, doc="Restart flag.")
 
     operations: Mapped[list[OperationLog]] = relationship(
         back_populates="deployment",
         order_by="OperationLog.operation_order",
         cascade="all, delete-orphan",
+        doc="List of operations.",
     )
     component_version: Mapped[list[ComponentVersionLog]] = relationship(
-        back_populates="deployment"
+        back_populates="deployment",
+        doc="List of component versions.",
     )
 
     def __str__(self):

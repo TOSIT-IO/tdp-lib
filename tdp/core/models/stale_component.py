@@ -24,29 +24,21 @@ if TYPE_CHECKING:
 
 
 class StaleComponent(Base):
-    """Hold what components are staled.
-
-    Attributes:
-        service_name: Service name.
-        component_name: Component name.
-        host_name: Host name.
-        to_reconfigure: Is configured flag.
-        to_restart: Is restarted flag.
-    """
+    """Hold what components are staled."""
 
     __tablename__ = "stale_component"
 
     service_name: Mapped[str] = mapped_column(
-        String(SERVICE_NAME_MAX_LENGTH), primary_key=True
+        String(SERVICE_NAME_MAX_LENGTH), primary_key=True, doc="Service name."
     )
     component_name: Mapped[str] = mapped_column(
-        String(COMPONENT_NAME_MAX_LENGTH), primary_key=True
+        String(COMPONENT_NAME_MAX_LENGTH), primary_key=True, doc="Component name."
     )
     host_name: Mapped[str] = mapped_column(
-        String(HOST_NAME_MAX_LENGTH), primary_key=True
+        String(HOST_NAME_MAX_LENGTH), primary_key=True, doc="Host name."
     )
-    to_reconfigure: Mapped[Optional[bool]]
-    to_restart: Mapped[Optional[bool]]
+    to_reconfigure: Mapped[Optional[bool]] = mapped_column(doc="Is configured flag.")
+    to_restart: Mapped[Optional[bool]] = mapped_column(doc="Is restarted flag.")
 
     @staticmethod
     def generate(
