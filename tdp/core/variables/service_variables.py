@@ -40,13 +40,7 @@ class InvalidSchema(Exception):
 
 
 class ServiceVariables:
-    """Variables of a service.
-
-    Attributes:
-        name: Service name.
-        repository: Repository of the service.
-        schema: Schema for the service.
-    """
+    """Variables of a service."""
 
     def __init__(self, service_name: str, repository: Repository, schema: dict):
         """Initialize a ServiceVariables object.
