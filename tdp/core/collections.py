@@ -38,12 +38,8 @@ class MissingHostForOperationError(Exception):
 class Collections(Mapping):
     """A mapping of collection name to Collection instance.
 
-    This class also gather operations from all collections and filter them by their presence or not in the DAG.
-
-    Attributes:
-        collections: Mapping of collection name to Collection instance.
-        dag_operations: Mapping of operation name that are in the DAG to Operation instance.
-        other_operations: Mapping of operation name that are not in the DAG to Operation instance.
+    This class also gather operations from all collections and filter them by their
+    presence or not in the DAG.
     """
 
     def __init__(self, collections: MappingType[str, Collection]):
