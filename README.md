@@ -68,7 +68,7 @@ Full documentation can be found inside [docs/cli](docs/developer/cli/index.rst).
 Documentation can be built with:
 
 ```sh
-poetry run task docs-html
+poetry run task docs
 ```
 
 Built doc is available at `docs/_build/html/index.html`.
