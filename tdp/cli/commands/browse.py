@@ -118,7 +118,7 @@ def _print_formatted_deployment(deployment_log: DeploymentLog) -> None:
     )
     if deployment_log.component_version:
         click.echo(
-            "\Component verion logs:\n"
+            "\nComponent version logs:\n"
             + tabulate(
                 [
                     _format_component_version_log(service_logs, service_headers)
