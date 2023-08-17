@@ -6,6 +6,5 @@ Core
     models
     repository
     deployment
-    dag
     service_manager
     variables
