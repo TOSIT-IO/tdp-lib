@@ -22,6 +22,17 @@ jobs:
       - name: Check conventional commits
         uses: webiny/action-conventional-commits@v1.0.3
 
+  check-format:
+    name: Check format with Black
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Check code formatting with Black
+        uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+
   pytest:
     name: Run pytest
     runs-on: ubuntu-latest
