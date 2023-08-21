@@ -54,6 +54,7 @@ def stale(
             stale_components = StaleComponent.generate(
                 dag, cluster_variables, deployed_component_version_logs
             )
+            # TODO: remove the deletion of stale component
             session.query(StaleComponent).delete()
             session.add_all(stale_components)
             session.commit()

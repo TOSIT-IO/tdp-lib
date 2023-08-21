@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional, Tuple
 
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -254,7 +254,7 @@ class DeploymentLog(Base):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operations_names: set[str] = set()
+        operation_host_names: set[Tuple[str, str]] = set()
         for stale_component in stale_components:
             # should not append as those components should have been filtered out
             if not stale_component.to_reconfigure and not stale_component.to_restart:
@@ -266,15 +266,39 @@ class DeploymentLog(Base):
             else:
                 base_operation_name = stale_component.service_name
             if stale_component.to_restart:
-                operations_names.add("_".join([base_operation_name, "start"]))
+                operation_host_names.add(
+                    (
+                        "_".join([base_operation_name, "start"]),
+                        stale_component.host_name,
+                    )
+                )
             if stale_component.to_reconfigure:
-                operations_names.add("_".join([base_operation_name, "config"]))
-        if len(operations_names) == 0:
+                operation_host_names.add(
+                    (
+                        "_".join([base_operation_name, "config"]),
+                        stale_component.host_name,
+                    )
+                )
+        if len(operation_host_names) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
+        # Sort the result in order to have host in lexicographical order.
+        operation_host_names_sorted = sorted(
+            operation_host_names, key=lambda x: f"{x[0]}_{x[1]}"
+        )
         dag = Dag(collections)
-        operations = dag.topological_sort(nodes=list(operations_names), restart=True)
+        # Sort operations with DAG topological sort, convert string operation to Operation
+        # instance and replace start action with restart action.
+        operation_hosts = list(
+            map(
+                lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
+                dag.topological_sort_key(
+                    operation_host_names_sorted, key=lambda x: x[0]
+                ),
+            )
+        )
         deployment_log = DeploymentLog(
-            targets=list([operation.name for operation in operations]),
+            targets=list([operation.name for (operation, _) in operation_hosts]),
+            hosts=None,
             extra_vars=None,
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             state=DeploymentStateEnum.PLANNED,
@@ -283,10 +307,11 @@ class DeploymentLog(Base):
             OperationLog(
                 operation=operation.name,
                 operation_order=i,
+                host=host,
                 extra_vars=None,
                 state=OperationStateEnum.PLANNED,
             )
-            for i, operation in enumerate(operations, 1)
+            for i, (operation, host) in enumerate(operation_hosts, 1)
         ]
         return deployment_log
 
