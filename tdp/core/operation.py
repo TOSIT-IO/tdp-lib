@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
-from typing import Optional
+from typing import Any, Optional
 
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
@@ -117,3 +117,11 @@ class Operation:
             f"noop={self.noop}, "
             f"host_names={self.host_names})"
         )
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Operation):
+            return NotImplemented
+        return repr(self) == repr(other)
+
+    def __hash__(self) -> int:
+        return hash(repr(self))

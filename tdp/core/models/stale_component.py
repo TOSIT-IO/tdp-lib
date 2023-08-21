@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
+from tdp.core.collections import MissingOperationError
 from tdp.core.models.base import Base
 from tdp.core.operation import (
     COMPONENT_NAME_MAX_LENGTH,
@@ -18,6 +19,7 @@ from tdp.core.operation import (
 if TYPE_CHECKING:
     from tdp.core.dag import Dag
     from tdp.core.models.component_version_log import ComponentVersionLog
+    from tdp.core.operation import Operation
     from tdp.core.variables import ClusterVariables
 
 
@@ -52,75 +54,144 @@ class StaleComponent(Base):
         cluster_variables: ClusterVariables,
         deployed_component_version_logs: list[ComponentVersionLog],
     ) -> list[StaleComponent]:
-        # Nothing is deployed (empty cluster)
+        """
+        Generate a list of components that need config or restart.
+
+        This method identifies components that have undergone changes in their
+        versions and determines if they need to be configured, restarted, or both.
+
+        Note: If a component has neither config or restart operations, it is not
+        considered stale and is excluded from the results.
+
+        Args:
+            dag: The DAG representing dependencies between operations.
+            cluster_variables: Current configuration.
+            deployed_component_version_logs: Logs capturing versions of previously
+              deployed components.
+
+        Returns:
+            List of components that need configuration or restart.
+
+        Raises:
+            MissingOperationError if a particular operation associated with a
+              component does not exist in the DAG.
+        """
+        # Return early if there are no previously deployed components
+        # (indicating an empty cluster).
         if len(deployed_component_version_logs) == 0:
             return []
-        modified_services_components_names = (
-            cluster_variables.get_modified_services_components_names(
-                deployed_component_version_logs
-            )
+
+        # Identify components that have modified configurations.
+        modified_components = cluster_variables.get_modified_service_components(
+            deployed_component_version_logs
         )
-        # No configuration have been modified (clean cluster)
-        if len(modified_services_components_names) == 0:
+
+        # Return early if no components have modified configurations.
+        if len(modified_components) == 0:
             return []
-        sources_config_operations = [
-            service_component_name.full_name + "_config"
-            for service_component_name in modified_services_components_names
-        ]
-        #  When a service is modified, extend operation list with its components
-        for modified_service_component_name in modified_services_components_names:
-            if modified_service_component_name.is_service:
-                service_operations = filter(
-                    lambda operation: operation.action_name == "config",
-                    dag.services_operations[
-                        modified_service_component_name.service_name
-                    ],
+
+        # Retrieve config and start operations for components with modifications.
+        config_start_modified_operations: set[Operation] = set()
+        for modified_component in modified_components:
+            try:
+                config_start_modified_operations.add(
+                    dag.collections.get_operation(
+                        modified_component.full_name + "_config"
+                    )
                 )
-                sources_config_operations.extend(
-                    [service_operation.name for service_operation in service_operations]
+            except MissingOperationError:
+                pass
+
+            try:
+                config_start_modified_operations.add(
+                    dag.collections.get_operation(
+                        modified_component.full_name + "_start"
+                    )
                 )
-        operations = dag.get_operations(sources=sources_config_operations, restart=True)
-        config_and_restart_operations = dag.filter_operations_regex(
-            operations, r".+_(config|restart)"
+            except MissingOperationError:
+                pass
+
+        stale_components_host_dict: dict[tuple[str, str, str], StaleComponent] = {}
+        # Identify config and restart operations directly associated with
+        # modified components for specific hosts.
+        for modified_component in modified_components:
+            service_name = modified_component.service_component_name.service_name
+            component_name = (
+                modified_component.service_component_name.component_name or ""
+            )
+            host_name = modified_component.host_name or ""
+
+            # Attempt to find related config and restart operations for the component.
+            config_operation = None
+            try:
+                config_operation = dag.collections.get_operation(
+                    modified_component.full_name + "_config"
+                )
+            except MissingOperationError:
+                pass
+
+            restart_operation = None
+            try:
+                restart_operation = dag.collections.get_operation(
+                    modified_component.full_name + "_restart"
+                )
+            except MissingOperationError:
+                pass
+
+            # Create a StaleComponent entry if either operation exists.
+            if config_operation or restart_operation:
+                stale_component = StaleComponent(
+                    service_name=service_name,
+                    component_name=component_name,
+                    host_name=host_name,
+                )
+                if config_operation:
+                    stale_component.to_reconfigure = True
+                if restart_operation:
+                    stale_component.to_restart = True
+                stale_components_host_dict[
+                    (service_name, component_name, host_name)
+                ] = stale_component
+
+        # Identify descendants in the DAG for the configuration operations.
+        # A reconfigure is made of a config and restart operations.
+        operation_descendants = dag.get_operation_descendants(
+            nodes=[operation.name for operation in config_start_modified_operations],
+            restart=True,
         )
-        stale_components_dict = {}
-        for operation in config_and_restart_operations:
-            if not any(operation.host_names):
-                stale_component = stale_components_dict.setdefault(
-                    (operation.service_name, operation.component_name or "", ""),
+
+        # Determine actions (config or restart) for the descendants of
+        # modified components.
+        for operation_descendant in operation_descendants:
+            # Consider only config and restart action
+            if (
+                not operation_descendant.action_name == "config"
+                and not operation_descendant.action_name == "restart"
+            ):
+                continue
+
+            service_name = operation_descendant.service_name or ""
+            component_name = operation_descendant.component_name or ""
+            host_names = operation_descendant.host_names or [""]
+            for host_name in host_names:
+                stale_component = stale_components_host_dict.setdefault(
+                    (service_name, component_name, host_name),
                     StaleComponent(
-                        service_name=operation.service_name,
-                        component_name=operation.component_name or "",
-                        host_name="",
-                        to_reconfigure=False,
-                        to_restart=False,
-                    ),
-                )
-                if operation.action_name == "config":
-                    stale_component.to_reconfigure = True
-                if operation.action_name == "restart":
-                    stale_component.to_restart = True
-            for host_name in operation.host_names:
-                key = (
-                    operation.service_name,
-                    operation.component_name or "",
-                    host_name,
-                )
-                stale_component = stale_components_dict.setdefault(
-                    key,
-                    StaleComponent(
-                        service_name=operation.service_name,
-                        component_name=operation.component_name or "",
+                        service_name=service_name,
+                        component_name=component_name,
                         host_name=host_name,
-                        to_reconfigure=False,
-                        to_restart=False,
                     ),
                 )
-                if operation.action_name == "config":
+                if operation_descendant.action_name == "config":
                     stale_component.to_reconfigure = True
-                if operation.action_name == "restart":
+                if operation_descendant.action_name == "restart":
                     stale_component.to_restart = True
-        return list(stale_components_dict.values())
+
+        # Return the list of stale components, sorted lexicographically on hosts.
+        return sorted(
+            stale_components_host_dict.values(),
+            key=lambda x: f"{x.service_name}_{x.component_name}_{x.host_name}",
+        )
 
     @staticmethod
     def to_dict(

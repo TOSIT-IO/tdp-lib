@@ -12,6 +12,7 @@ from typing import Optional, Union
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
+from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.service_variables import ServiceVariables
 
@@ -172,75 +173,49 @@ class ClusterVariables(MappingType[str, ServiceVariables]):
         for service in self.values():
             service.validate()
 
-    def get_modified_services_components_names(
+    def get_modified_service_components(
         self,
         services_components_versions: Iterable[ComponentVersionLog],
-    ) -> set[ServiceComponentName]:
-        """Return the set of modified components names.
+    ) -> set[ServiceComponentHostName]:
+        """Get the list of modified services and components.
 
         Args:
-            services_components_versions: List of coherent deployed components and services versions.
+            services_components_versions: List of coherent deployed components and
+                services versions.
 
         Returns:
-            Set of modified components names.
+            Modified service components names with host.
 
         Raises:
             RuntimeError: If a service is deployed but its repository is missing.
         """
-        # Map of service component names with their log
-        services_components_versions_dict = {
-            ServiceComponentName(
-                service_name=service_component_version.service,
-                component_name=service_component_version.component,
-            ): service_component_version
-            for service_component_version in services_components_versions
-        }
-
-        modified_services_components: set[ServiceComponentName] = set()
-        # Check if a service is modified
-        for (
-            service_component_name,
-            service_component_version,
-        ) in services_components_versions_dict.items():
-            if service_component_name.is_service:
-                if service_component_name.service_name not in self.keys():
-                    raise RuntimeError(
-                        f"Service '{service_component_name}' is deployed but its repository is missing."
-                    )
-                service = self[service_component_name.service_name]
-                is_service_modified = (
-                    service.is_service_component_modified_from_version(
-                        service_component=service_component_name,
-                        version=service_component_version.version,
-                    )
+        modified_service_components: set[ServiceComponentHostName] = set()
+        for service_component_version in services_components_versions:
+            service_name = service_component_version.service
+            if service_name not in self.keys():
+                raise RuntimeError(
+                    f"Service '{service_name}' is deployed but its repository is "
+                    + "missing."
                 )
-                logger.debug(
-                    f"Service '{service_component_name}' is modified: {is_service_modified}"
-                )
-                if is_service_modified:
-                    modified_services_components.add(service_component_name)
-        modified_services_components_names = {
-            modified_service_component.service_name
-            for modified_service_component in modified_services_components
-        }
-
-        # Check if a component is modified
-        for (
-            service_component_name,
-            service_component_version,
-        ) in services_components_versions_dict.items():
-            if (
-                service_component_name.service_name
-                in modified_services_components_names
-            ):
-                continue
-            service = self[service_component_name.service_name]
-            is_component_modified = service.is_service_component_modified_from_version(
-                service_component=service_component_name,
-                version=service_component_version.version,
+            component_name = service_component_version.component
+            version = service_component_version.version
+            host = service_component_version.host
+            service_component_name = ServiceComponentName(service_name, component_name)
+            service_component_host_name = ServiceComponentHostName(
+                service_component_name, host
             )
-            if is_component_modified:
-                modified_services_components.add(service_component_name)
 
-        logger.info(f"Modified services components: {modified_services_components}")
-        return modified_services_components
+            # Check if the service component is modified
+            if self[service_name].is_service_component_modified_from_version(
+                service_component_name, version
+            ):
+                debug_msg = (
+                    "Service" if service_component_name.is_service else "Component"
+                ) + f" '{service_component_name.full_name}' has been modified"
+                if host:
+                    debug_msg += f" for host {host}"
+                debug_msg += "."
+                logger.debug(debug_msg)
+                modified_service_components.add(service_component_host_name)
+
+        return modified_service_components

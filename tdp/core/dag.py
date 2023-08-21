@@ -152,6 +152,11 @@ class Dag:
     def graph(self) -> None:
         self.graph = None
 
+    def node_to_operation(self, node: str, restart: bool = False) -> Operation:
+        if restart and node.endswith("_start"):
+            node = node.replace("_start", "_restart")
+        return self.collections.get_operation(node)
+
     def topological_sort(
         self, nodes: list[str] = None, restart: bool = False
     ) -> list[Operation]:
@@ -239,6 +244,40 @@ class Dag:
         :rtype: List[str]
         """
         return self.topological_sort(self.graph, restart)
+
+    def get_operation_descendants(
+        self, nodes: list[str], restart: bool = False
+    ) -> list[Operation]:
+        """
+        Retrieve all descendant operations for the specified nodes in the DAG.
+
+        For each node in the provided list, this method identifies and returns
+        all its descendant operations, excluding the input nodes themselves.
+
+        Args:
+            nodes: List of node names to find descendants for.
+            restart: If True, restart the operation mapping process. Defaults to False.
+
+        Returns:
+            List of descendant operations.
+
+        Raises:
+            IllegalNodeError: Raised if a provided node does not exist in the DAG.
+
+        Example:
+            Given a DAG with nodes A -> B -> C and D -> E,
+            get_operation_descendants(["A", "D"]) would return operations for B, C, and E.
+        """
+        nodes_set = set()
+        for node in nodes:
+            if not self.graph.has_node(node):
+                raise IllegalNodeError(f"{node} does not exists in the dag")
+            nodes_set.update(nx.descendants(self.graph, node))
+        # Remove input nodes from the set to exclude them from the result.
+        nodes_filtered = filter(lambda node: node not in nodes, nodes_set)
+        return list(
+            map(lambda node: self.node_to_operation(node, restart), nodes_filtered)
+        )
 
     def filter_operations_glob(
         self, operations: list[Operation], glob: str

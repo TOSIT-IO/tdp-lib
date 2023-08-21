@@ -218,6 +218,9 @@ class ServiceVariables:
     ) -> bool:
         """Check if a component has been modified since the given version.
 
+        A component is modified if the component variable file is modified
+        or if the service variable file of this component is modified.
+
         Args:
             version: From what version to look. It is most likely the deployed version.
             service_component: Name of the service or component to check.
@@ -226,8 +229,9 @@ class ServiceVariables:
             True if the component has been modified, False otherwise.
         """
         return self._repo.is_file_modified(
-            commit=version,
-            file=service_component.full_name + YML_EXTENSION,
+            commit=version, path=service_component.full_name + YML_EXTENSION
+        ) or self._repo.is_file_modified(
+            commit=version, path=service_component.service_name + YML_EXTENSION
         )
 
     def validate_schema(self, variables: Variables, schema: dict) -> None:

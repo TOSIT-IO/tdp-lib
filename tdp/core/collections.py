@@ -13,6 +13,7 @@ from typing import Sequence
 import yaml
 
 from tdp.core.operation import Operation
+from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
 try:
@@ -210,14 +211,19 @@ class Collections(Mapping):
 
     def get_components_from_service(
         self, service_name: str
-    ) -> list[ServiceComponentName]:
-        """Get the service's components.
+    ) -> set[ServiceComponentName]:
+        """Retrieve the distinct components associated with a specific service.
+
+        This method fetches and returns the unique component names tied to a given
+        service. The input service is not returned.
 
         Args:
-            service_name: Name of the service.
+            service_name: The name of the service for which to retrieve associated
+              components.
 
         Returns:
-            A list of components names.
+            A set containing the unique names of components related to the provided
+              service.
         """
         return {
             ServiceComponentName(
@@ -225,7 +231,41 @@ class Collections(Mapping):
             )
             for operation in self.operations.values()
             if operation.service_name == service_name
+            and not operation.is_service_operation()
         }
+
+    def get_components_hosts_from_service(
+        self, service_name: str
+    ) -> set[ServiceComponentHostName]:
+        """Retrieve the distinct components with host associated with a specific
+        service.
+
+        This method fetches and returns the unique component names tied to a given
+        service. The input service is not returned.
+
+        Args:
+            service_name: The name of the service for which to retrieve associated
+              components.
+
+        Returns:
+            A set containing the unique names of components related to the provided
+              service.
+        """
+        result = set()
+        for operation in self.operations.values():
+            if (
+                operation.service_name != service_name
+                or operation.is_service_operation()
+            ):
+                continue
+            for host in operation.host_names:
+                result.add(
+                    ServiceComponentHostName(
+                        ServiceComponentName(service_name, operation.component_name),
+                        host,
+                    )
+                )
+        return result
 
     def get_operation(self, operation_name: str) -> Operation:
         """Get an operation by its name.

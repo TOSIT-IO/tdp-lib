@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+from typing import Any, Optional
+
+
 class ServiceComponentName:
     """Represent a service or a component name."""
 
-    def __init__(self, service_name: str, component_name: str = None):
+    def __init__(self, service_name: str, component_name: Optional[str] = None):
         self.service_name = service_name
         self.component_name = component_name
 
@@ -42,3 +45,11 @@ class ServiceComponentName:
 
     def __str__(self) -> str:
         return self.full_name
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, ServiceComponentName):
+            return NotImplemented
+        return repr(self) == repr(other)
+
+    def __hash__(self) -> int:
+        return hash(repr(self))
