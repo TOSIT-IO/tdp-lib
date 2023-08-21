@@ -16,7 +16,7 @@ import fnmatch
 import functools
 import logging
 import re
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Generator, Iterable, Optional, TypeVar
 
 import networkx as nx
 
@@ -24,6 +24,8 @@ from tdp.core.operation import Operation
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
+
+T = TypeVar("T")
 
 logger = logging.getLogger("tdp").getChild("dag")
 
@@ -157,8 +159,71 @@ class Dag:
             node = node.replace("_start", "_restart")
         return self.collections.get_operation(node)
 
+    def topological_sort_key(
+        self,
+        items: Optional[Iterable[T]] = None,
+        key: Optional[Callable[[T], str]] = None,
+    ) -> Generator[T, None, None]:
+        """Sorts the given iterable in topological order based on the DAG structure.
+
+        The method supports custom mapping of the input items to the DAG nodes using a
+        "key" function.
+
+        By default, if no "key" function is provided, each item is used as is and must
+        match against DAG nodes. If the "items" are not directly nodes of the DAG,
+        the "key" function can be provided to map each item to its corresponding DAG
+        node.
+
+        The function ensures that multiple items mapped to the same DAG node maintain
+        their relative order post sorting.
+
+        Args:
+            items: The iterable of items to sort. If None, sorts
+              all DAG nodes.
+            key: A function that maps an item to a DAG
+              node. If None, items are converted to strings.
+
+        Returns:
+            A generator producing items in topologically sorted order.
+
+        Example:
+            dag = Dag(...)
+            items = [("hdfs_start", "foo"), ("hdfs_config", "bar")]
+            sorted_items = list(dag.topological_sort_key(items, key=lambda x: x[0]))
+            # sorted_items = [("hdfs_config", "bar"), ("hdfs_start", "foo")]
+        """
+        # Map the items to the corresponding DAG nodes.
+        # Use a dictionary to handle multiple items corresponding to a single DAG node.
+        key_items = {}
+        if items:
+            for item in items:
+                key_items.setdefault(item if key is None else key(item), []).append(
+                    item
+                )
+
+        # If specific items are provided, restrict the graph to those nodes.
+        # Otherwise, use the entire graph.
+        graph = self.graph.subgraph(key_items.keys()) if key_items else self.graph
+
+        # Define a priority function for nodes based on service priority.
+        def priority_key(node: str) -> str:
+            operation = self.operations[node]
+            operation_priority = SERVICE_PRIORITY.get(
+                operation.service_name, DEFAULT_SERVICE_PRIORITY
+            )
+            return f"{operation_priority:02d}_{node}"
+
+        topo_sorted = nx.lexicographical_topological_sort(graph, priority_key)
+        # Yield the sorted items. If custom items are provided, map the sorted nodes
+        # back to the original items.
+        if key_items:
+            for node in topo_sorted:
+                for item in key_items[node]:
+                    yield item
+        return topo_sorted
+
     def topological_sort(
-        self, nodes: list[str] = None, restart: bool = False
+        self, nodes: Optional[list[str]] = None, restart: bool = False
     ) -> list[Operation]:
         """Perform a topological sort on the DAG.
 
@@ -169,37 +234,10 @@ class Dag:
         Returns:
             List of operations sorted topologically.
         """
-        graph = self.graph
-        if nodes:
-            graph = self.graph.subgraph(nodes)
-
-        def custom_key(node: str) -> str:
-            operation = self.operations[node]
-            operation_priority = SERVICE_PRIORITY.get(
-                operation.service_name, DEFAULT_SERVICE_PRIORITY
-            )
-            return f"{operation_priority:02d}_{node}"
-
-        def to_operation(node: str) -> Operation:
-            operation = self.collections.get_operation(node)
-            if restart:
-                if node.endswith("_start"):
-                    node = node.replace("_start", "_restart")
-                    if operation.noop:
-                        # if start operation is a noop, outputs a noop restart operation
-                        return Operation(
-                            name=node,
-                            collection_name="replace_restart_noop",
-                            noop=True,
-                            depends_on=operation.depends_on,
-                        )
-                return self.collections.get_operation(node)
-            return operation
-
         return list(
             map(
-                lambda node: to_operation(node),
-                nx.lexicographical_topological_sort(graph, custom_key),
+                lambda node: self.node_to_operation(node, restart),
+                self.topological_sort_key(nodes),
             )
         )
 
