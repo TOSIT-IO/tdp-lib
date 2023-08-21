@@ -74,10 +74,10 @@ class GitRepository(Repository):
     def is_clean(self) -> bool:
         return not self._repo.is_dirty(untracked_files=True)
 
-    def is_file_modified(self, commit: str, file: Union[str, os.PathLike]) -> bool:
+    def is_file_modified(self, commit: str, path: Union[str, os.PathLike]) -> bool:
         with self._lock:
             diff_index = self._repo.head.commit.diff(commit)
             for diff in diff_index:
-                if diff.a_path == file or diff.b_path == file:
+                if diff.a_path == path or diff.b_path == path:
                     return True
             return False
