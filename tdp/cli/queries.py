@@ -43,51 +43,62 @@ def get_latest_success_component_version_log(
     Returns:
         Components with the latest success version. ([id, service_name, component_name, short_version])
     """
+    # A label to represent the maximum deployment ID for readability.
     max_deployment_id_label = f"max_{ComponentVersionLog.deployment_id.name}"
 
-    # Latest success deployment for each service/component pair
+    # Subquery: Identify the latest successful deployment ID for each service,
+    # component, and host combination.
     latest_deployed_component = (
         session.query(
             func.max(ComponentVersionLog.deployment_id).label(max_deployment_id_label),
             ComponentVersionLog.service,
             ComponentVersionLog.component,
+            ComponentVersionLog.host,
         )
-        .group_by(ComponentVersionLog.service, ComponentVersionLog.component)
+        .group_by(
+            ComponentVersionLog.service,
+            ComponentVersionLog.component,
+            ComponentVersionLog.host,
+        )
         .subquery()
     )
 
+    # Main query: Retrieve ComponentVersionLog entries that match the latest
+    # deployment IDs identified in the subquery.
     return (
         session.query(ComponentVersionLog)
         .filter(
             or_(
-                # Components with the latest success deployment
-                # Filter deployment_id, service and component from the subquery
+                # Components with the latest success deployment for each host
                 tuple_(
                     ComponentVersionLog.deployment_id,
                     ComponentVersionLog.service,
                     ComponentVersionLog.component,
+                    ComponentVersionLog.host,
                 ).in_(select(latest_deployed_component)),
-                # Services with the latest success depoyment (no component)
-                # Filter deployment_id and service from the subquery AND component is null
+                # Services with the latest success deployment for each host when there's
+                # no specific component
                 and_(
                     tuple_(
                         ComponentVersionLog.deployment_id,
                         ComponentVersionLog.service,
                     ).in_(
-                        # Component column is removed from the subquery
                         select(
                             latest_deployed_component.c[max_deployment_id_label],
                             latest_deployed_component.c.service,
                         )
                     ),
-                    ComponentVersionLog.component.is_(None),
+                    ComponentVersionLog.component.is_(
+                        None
+                    ),  # Ensure the component is null for this condition
                 ),
             )
         )
         .order_by(
-            desc(ComponentVersionLog.deployment_id),
             ComponentVersionLog.service,
             ComponentVersionLog.component,
+            ComponentVersionLog.host,
+            desc(ComponentVersionLog.deployment_id),
         )
         .all()
     )
