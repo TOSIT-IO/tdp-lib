@@ -14,11 +14,16 @@ from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.models.operation_log import OperationLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
+sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
+sqlalchemy_logger.setLevel(logging.INFO)
+
+
+DATABASE_URL = "sqlite:///:memory:"
 
 
 @pytest.fixture(scope="session")
 def session_maker():
-    engine = create_engine("sqlite+pysqlite:///:memory:", echo=True, future=True)
+    engine = create_engine(DATABASE_URL)
     Base.metadata.create_all(engine)
     session_maker = sessionmaker(bind=engine)
 
