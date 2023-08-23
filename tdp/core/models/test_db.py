@@ -85,9 +85,6 @@ def test_create_deployment_log(db_session: Session):
     result = db_session.get(DeploymentLog, deployment_log.id)
 
     logger.info(result)
-    logger.info(result.operations)
-    logger.info(result.component_version)
-
     assert result is not None
     assert result.sources == ["source1", "source2"]
     assert result.targets == ["target1", "target2"]
@@ -98,11 +95,13 @@ def test_create_deployment_log(db_session: Session):
     assert result.deployment_type == "Dag"
     assert result.restart is False
 
+    logger.info(result.operations)
     assert len(result.component_version) == 1
     assert result.component_version[0].service == "service1"
     assert result.component_version[0].component == "component1"
     assert result.component_version[0].version == "1.0.0"
 
+    logger.info(result.component_version)
     assert len(result.operations) == 1
     assert result.operations[0].operation_order == 1
     assert result.operations[0].operation == "start_target1"
