@@ -128,7 +128,11 @@ class DeploymentIterator(
                 # For now, it is still needed for the first deployment (no stale component)
                 component_version_logs: list[ComponentVersionLog] = []
                 component_state = self._component_states[
-                    (operation.service_name, operation.component_name)
+                    (
+                        operation.service_name,
+                        operation.component_name,
+                        operation_log.host,
+                    )
                 ]
                 if operation.action_name == "config":
                     component_state.is_configured = True
