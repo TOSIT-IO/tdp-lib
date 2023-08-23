@@ -3,42 +3,14 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Generator
 
-import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
-from tdp.core.models.base import Base
 from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.models.deployment_log import DeploymentLog
 from tdp.core.models.operation_log import OperationLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
-sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
-sqlalchemy_logger.setLevel(logging.INFO)
-
-
-DATABASE_URL = "sqlite:///:memory:"
-
-
-@pytest.fixture()
-def db_session() -> Generator[Session, None, None]:
-    # Connect to the database
-    engine = create_engine(DATABASE_URL)
-
-    # Create tables
-    Base.metadata.create_all(engine)
-
-    # Create a session
-    session_maker = sessionmaker(bind=engine)
-    session = session_maker()
-    yield session
-
-    # Close and rollback for isolation
-    session.close()
-    Base.metadata.drop_all(engine)
-    engine.dispose()
 
 
 def test_create_deployment_log(db_session: Session):
@@ -77,7 +49,7 @@ def test_create_deployment_log(db_session: Session):
 
     logger.info(deployment_log)
     logger.info(operation_log)
-    logger.info(operation_log)
+    logger.info(component_version_log)
 
     db_session.add(deployment_log)
     db_session.commit()

@@ -1,10 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import pytest
 from pathlib import Path
-from typing import Mapping
+from typing import Generator, Mapping
 
 import yaml
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.collection import (
     DAG_DIRECTORY_NAME,
@@ -12,6 +15,29 @@ from tdp.core.collection import (
     PLAYBOOKS_DIRECTORY_NAME,
     SCHEMA_VARS_DIRECTORY_NAME,
 )
+from tdp.core.models import Base
+
+
+DATABASE_URL = "sqlite:///:memory:"
+
+
+@pytest.fixture()
+def db_session() -> Generator[Session, None, None]:
+    # Connect to the database
+    engine = create_engine(DATABASE_URL)
+
+    # Create tables
+    Base.metadata.create_all(engine)
+
+    # Create a session
+    session_maker = sessionmaker(bind=engine)
+    session = session_maker()
+    yield session
+
+    # Close and rollback for isolation
+    session.close()
+    Base.metadata.drop_all(engine)
+    engine.dispose()
 
 
 def generate_collection(
