@@ -75,23 +75,16 @@ Built doc is available at `docs/_build/html/index.html`.
 
 ## Contributing
 
-Install pre-commit hooks:
-
-```sh
-poetry run pre-commit install --hook-type pre-commit
-poetry run pre-commit install --hook-type commit-msg
-```
-
 Run the tests:
 
 ```sh
 poetry run pytest tdp
 ```
 
-Format the code:
+A task is available to format ([Black](https://black.readthedocs.io/en/stable/)) and lint ([Ruff](https://beta.ruff.rs/docs/)) the code:
 
 ```sh
-poetry run black .
+poetry run task precommit-fix
 ```
 
 Developers documentation: [docs/Developer](docs/developer/index.rst)
