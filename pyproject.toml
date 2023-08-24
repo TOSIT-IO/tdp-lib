@@ -27,7 +27,7 @@ typing_extensions = "4.5.0"
 jsonschema = "4.10.3"
 sphinx-rtd-theme = { version = "^1.2.2", optional = true }
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "6.2.5"
 black = "^23.7.0"
 taskipy = "1.10.1"
