@@ -57,23 +57,6 @@ precommit-fix = { cmd = "task format && task lint" }
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-target-version = ['py36']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.venv
-    | venv
-    | _build
-    | build
-    | dist
-  )/
-)
-'''
-
 [tool.ruff]
 select = ["F", "W", "I"]
 
