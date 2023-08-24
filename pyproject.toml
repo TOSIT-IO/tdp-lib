@@ -30,9 +30,9 @@ sphinx-rtd-theme = { version = "^1.2.2", optional = true }
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
 black = "^23.7.0"
-isort = "5.10.1"
 taskipy = "1.10.1"
 pre-commit = "2.17.0"
+ruff = "^0.0.285"
 
 [tool.poetry.extras]
 docs = ["Sphinx", "sphinx_rtd_theme"]
@@ -72,12 +72,5 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-src_paths = ["tdp"]
-force_single_line = false
-known_first_party = "tdp"
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 88
-multi_line_output = 3
+[tool.ruff]
+select = ["I"]
