@@ -94,5 +94,5 @@ def show(graph: nx.DiGraph, *args, **kwargs):
     sio.seek(0)
     img = mpimg.imread(sio)
 
-    imgplot = plt.imshow(img)
+    plt.imshow(img)
     plt.show()

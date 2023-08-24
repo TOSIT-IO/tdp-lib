@@ -163,7 +163,7 @@ def get_last_deployment(session: Session) -> DeploymentLog:
             .one()
         )
     except NoResultFound as e:
-        raise Exception(f"No deployments.") from e
+        raise Exception("No deployments.") from e
 
 
 def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
