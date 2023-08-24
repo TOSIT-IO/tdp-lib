@@ -4,7 +4,7 @@ on: pull_request
 
 jobs:
 
-  check-license-headers:
+  license-headers:
     name: Check license headers
     runs-on: ubuntu-latest
     steps:
@@ -13,8 +13,8 @@ jobs:
     - name: Check license headers
       uses: kt3k/license_checker@v1.0.6
 
-  check-conventional-commits:
-    name: Check Conventional Commits
+  conventional-commits:
+    name: Check conventional commits
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -22,7 +22,7 @@ jobs:
       - name: Check conventional commits
         uses: webiny/action-conventional-commits@v1.0.3
 
-  check-format:
+  black:
     name: Check format with Black
     runs-on: ubuntu-latest
     steps:
