@@ -6,9 +6,8 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Sequence
 from typing import Mapping as MappingType
-from typing import Sequence
 
 import yaml
 
