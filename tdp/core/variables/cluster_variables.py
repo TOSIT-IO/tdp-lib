@@ -6,9 +6,8 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 from typing import Mapping as MappingType
-from typing import Optional, Union
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet

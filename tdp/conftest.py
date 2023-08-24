@@ -1,10 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import pytest
 from pathlib import Path
 from typing import Generator, Mapping
 
+import pytest
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -16,7 +16,6 @@ from tdp.core.collection import (
     SCHEMA_VARS_DIRECTORY_NAME,
 )
 from tdp.core.models import Base
-
 
 DATABASE_URL = "sqlite:///:memory:"
 
