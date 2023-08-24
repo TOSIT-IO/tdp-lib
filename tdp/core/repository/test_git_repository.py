@@ -141,7 +141,6 @@ def test_git_repository_no_validation(git_repository: GitRepository):
         repository.add_for_validation([hive_yml])
 
     # second commit does not change anything
-    commit_message_mock = "[HIVE] no changes"
     hive_yml = "group_vars/hive.yml"
     with pytest.raises(EmptyCommit):
         with git_repository.validate(commit_message) as repository:

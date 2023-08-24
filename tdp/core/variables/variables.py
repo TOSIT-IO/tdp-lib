@@ -8,9 +8,9 @@ from typing import Optional, Union
 from weakref import proxy
 
 import yaml
-from ansible.utils.vars import merge_hash as _merge_hash
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.utils.vars import merge_hash as _merge_hash
 
 
 def merge_hash(dict_a: dict, dict_b: dict) -> dict:

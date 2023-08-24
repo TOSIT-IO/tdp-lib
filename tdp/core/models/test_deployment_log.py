@@ -26,7 +26,6 @@ from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag
-    from tdp.core.variables import ClusterVariables
 
 
 class MockInventoryReader(InventoryReader):
