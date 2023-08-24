@@ -32,6 +32,17 @@ jobs:
         uses: psf/black@stable
         with:
           options: "--check --verbose"
+  
+  ruff:
+    name: Check linting with Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Check code linting with Ruff
+        uses: chartboost/ruff-action@v1
+        with:
+          version: 0.0.285
 
   pytest:
     name: Run pytest
