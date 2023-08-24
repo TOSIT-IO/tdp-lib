@@ -31,7 +31,6 @@ sphinx-rtd-theme = { version = "^1.2.2", optional = true }
 pytest = "6.2.5"
 black = "^23.7.0"
 taskipy = "1.10.1"
-pre-commit = "2.17.0"
 ruff = "^0.0.285"
 
 [tool.poetry.extras]
@@ -50,6 +49,9 @@ docs-generate = { cmd = "sphinx-apidoc --output-dir {docs_source_path} --module-
 docs-clean = { cmd = "make -C {docs_path} clean", use_vars = true }
 docs-html = { cmd = "make -C {docs_path} html", use_vars = true }
 docs = { cmd = "task docs-generate && task docs-clean && task docs-html" }
+format = { cmd = "black ." }
+lint = { cmd = "ruff check . --fix" }
+precommit-fix = { cmd = "task format && task lint" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -73,4 +75,7 @@ exclude = '''
 '''
 
 [tool.ruff]
-select = ["I"]
+select = ["F", "W", "I"]
+
+[tool.ruff.per-file-ignores]
+"**/__init__.py" = ["F401"]
