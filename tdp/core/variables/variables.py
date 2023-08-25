@@ -9,12 +9,12 @@ from weakref import proxy
 
 import yaml
 from ansible.utils.vars import merge_hash as _merge_hash
+from ansible.parsing.utils.yaml import from_yaml
 
 try:
     from yaml import CDumper as Dumper
-    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Dumper, Loader
+    from yaml import Dumper
 
 
 # https://stackoverflow.com/a/33300001
@@ -151,7 +151,7 @@ class _VariablesIOWrapper(VariablesDict):
         """
         self._file_path = path
         self._file_descriptor = open(self._file_path, mode or "r+")
-        self._content = yaml.load(self._file_descriptor, Loader=Loader) or {}
+        self._content = from_yaml(self._file_descriptor) or {}
         self._name = path.name
 
     def __enter__(self):
