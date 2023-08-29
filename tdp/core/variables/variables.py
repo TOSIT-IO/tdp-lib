@@ -10,6 +10,7 @@ from weakref import proxy
 import yaml
 from ansible.utils.vars import merge_hash as _merge_hash
 from ansible.parsing.utils.yaml import from_yaml
+from ansible.parsing.yaml.dumper import AnsibleDumper
 
 try:
     from yaml import CDumper as Dumper
@@ -176,7 +177,7 @@ class _VariablesIOWrapper(VariablesDict):
 
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
-            yaml.dump(self._content, Dumper=Dumper, sort_keys=False, width=1000)
+            yaml.dump(self._content, Dumper=AnsibleDumper, sort_keys=False, width=1000)
         )
         self._file_descriptor.truncate()
         self._file_descriptor.flush()
