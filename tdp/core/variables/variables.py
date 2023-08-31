@@ -10,36 +10,7 @@ from weakref import proxy
 import yaml
 from ansible.utils.vars import merge_hash as _merge_hash
 from ansible.parsing.utils.yaml import from_yaml
-
-try:
-    from yaml import CDumper as Dumper
-except ImportError:
-    from yaml import Dumper
-
-
-# https://stackoverflow.com/a/33300001
-def str_presenter(dumper: Dumper, data: str) -> str:
-    r"""Presents a multiline string in a YAML-friendly format.
-
-    Args:
-        dumper: YAML dumper.
-        data: String to present.
-
-    Returns:
-        YAML-friendly string representation.
-
-    Examples:
-        >>> str_presenter("foo\nbar")
-        '"foo\\nbar"\\n'
-        >>> str_presenter("foo\nbar", Dumper=Dumper)
-        '|\n  foo\n  bar\n'
-    """
-    if len(data.splitlines()) > 1:  # check for multiline string
-        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data)
-
-
-Dumper.add_representer(str, str_presenter)
+from ansible.parsing.yaml.dumper import AnsibleDumper
 
 
 def merge_hash(dict_a: dict, dict_b: dict) -> dict:
@@ -176,7 +147,7 @@ class _VariablesIOWrapper(VariablesDict):
 
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
-            yaml.dump(self._content, Dumper=Dumper, sort_keys=False, width=1000)
+            yaml.dump(self._content, Dumper=AnsibleDumper, sort_keys=False, width=1000)
         )
         self._file_descriptor.truncate()
         self._file_descriptor.flush()
