@@ -21,7 +21,7 @@ from tdp.cli.commands.validate import validate
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-@click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
+@click.group(context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--env",
     default=".env",
