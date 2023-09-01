@@ -83,16 +83,19 @@ def _print_formatted_deployments(deployments: list[DeploymentLog]) -> None:
     headers = DeploymentLog.__table__.columns.keys() + [
         str(DeploymentLog.component_version).split(".")[1]
     ]
-    click.echo(
-        "Deployments:\n"
-        + tabulate(
-            [
-                _format_deployment_log(deployment_log, headers)
-                for deployment_log in deployments
-            ],
-            headers="keys",
+    if deployments:
+        click.echo(
+            "Deployments:\n"
+            + tabulate(
+                [
+                    _format_deployment_log(deployment_log, headers)
+                    for deployment_log in deployments
+                ],
+                headers="keys",
+            )
         )
-    )
+    else:
+        click.echo("No deployments found, create a deployment plan with `tdp plan`.")
 
 
 def _print_formatted_deployment(deployment_log: DeploymentLog) -> None:
