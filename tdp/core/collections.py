@@ -26,6 +26,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("tdp").getChild("collections")
 
+OPERATION_SLEEP_NAME = "wait_sleep"
+OPERATION_SLEEP_VARIABLE = "wait_sleep_seconds"
+
 
 class MissingOperationError(Exception):
     pass

@@ -1,10 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import pytest
 from pathlib import Path
 from typing import Generator, Mapping
 
+import pytest
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -15,8 +15,8 @@ from tdp.core.collection import (
     PLAYBOOKS_DIRECTORY_NAME,
     SCHEMA_VARS_DIRECTORY_NAME,
 )
+from tdp.core.collections import OPERATION_SLEEP_NAME
 from tdp.core.models import Base
-
 
 DATABASE_URL = "sqlite:///:memory:"
 
@@ -72,6 +72,9 @@ def generate_collection(
                     yaml.dump(minimal_playbook, fd)
             with (playbooks / (operation["name"] + ".yml")).open("w") as fd:
                 yaml.dump(minimal_playbook, fd)
+
+    with (playbooks / (OPERATION_SLEEP_NAME + ".yml")).open("w") as fd:
+        yaml.dump(minimal_playbook, fd)
 
     for service_name, file_vars in service_vars.items():
         service_dir = tdp_vars_defaults / service_name

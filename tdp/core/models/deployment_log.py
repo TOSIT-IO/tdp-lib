@@ -11,6 +11,7 @@ from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
+from tdp.core.collections import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.models.base import Base
 from tdp.core.models.operation_log import OperationLog
@@ -79,6 +80,9 @@ class DeploymentLog(Base):
     )
     extra_vars: Mapped[Optional[list[str]]] = mapped_column(
         JSON(none_as_null=True), doc="List of extra vars."
+    )
+    rolling_interval: Mapped[Optional[int]] = mapped_column(
+        doc="Deployment rolling interval (in sec)."
     )
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment end time.")
@@ -163,6 +167,7 @@ class DeploymentLog(Base):
             targets=targets,
             sources=sources,
             extra_vars=None,
+            rolling_interval=None,
             filter_expression=filter_expression,
             filter_type=filter_type,
             restart=restart,
@@ -208,6 +213,7 @@ class DeploymentLog(Base):
             targets=operation_names,
             hosts=list(host_names) if host_names is not None else None,
             extra_vars=list(extra_vars) if extra_vars else None,
+            rolling_interval=None,
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             state=DeploymentStateEnum.PLANNED,
         )
@@ -228,13 +234,16 @@ class DeploymentLog(Base):
 
     @staticmethod
     def from_stale_components(
-        collections: Collections, stale_components: list[StaleComponent]
+        collections: Collections,
+        stale_components: list[StaleComponent],
+        rolling_interval: Optional[int] = None,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
             stale_components: List of stale components to perform.
+            rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
@@ -285,19 +294,35 @@ class DeploymentLog(Base):
             targets=list([operation.name for (operation, _) in operation_hosts]),
             hosts=None,
             extra_vars=None,
+            rolling_interval=rolling_interval,
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             state=DeploymentStateEnum.PLANNED,
         )
-        deployment_log.operations = [
-            OperationLog(
-                operation=operation.name,
-                operation_order=i,
-                host=host,
-                extra_vars=None,
-                state=OperationStateEnum.PLANNED,
+        operation_order = 1
+        for operation, host in operation_hosts:
+            deployment_log.operations.append(
+                OperationLog(
+                    operation=operation.name,
+                    operation_order=operation_order,
+                    host=host,
+                    extra_vars=None,
+                    state=OperationStateEnum.PLANNED,
+                )
             )
-            for i, (operation, host) in enumerate(operation_hosts, 1)
-        ]
+            # Add sleep operation after each "restart"
+            if rolling_interval is not None and operation.action_name == "restart":
+                operation_order += 1
+                deployment_log.operations.append(
+                    OperationLog(
+                        operation=OPERATION_SLEEP_NAME,
+                        operation_order=operation_order,
+                        host=None,
+                        extra_vars=[f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"],
+                        state=OperationStateEnum.PLANNED,
+                    )
+                )
+
+            operation_order += 1
         return deployment_log
 
     @staticmethod
