@@ -9,7 +9,11 @@ import pytest
 
 from tdp.conftest import generate_collection
 from tdp.core.collection import Collection
-from tdp.core.collections import Collections
+from tdp.core.collections import (
+    OPERATION_SLEEP_NAME,
+    OPERATION_SLEEP_VARIABLE,
+    Collections,
+)
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.models.deployment_log import (
     DeploymentLog,
@@ -398,3 +402,86 @@ class TestFromStaleComponents:
 
         assert len(deployment_log.operations) == 2
         assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+
+    def test_one_stale_rolling(self, tmp_path_factory: pytest.TempPathFactory):
+        operations_names = ["mock_node_config", "mock_node_start"]
+        operation_name_restart = "mock_node_restart"
+        hosts = ["host2", "host3", "host1"]
+        sorted_hosts = sorted(hosts)
+        rolling_interval = 1
+        collection_path = tmp_path_factory.mktemp("multiple_host_rolling_collection")
+        dag_service_operations = {
+            "mock": [
+                {"name": operations_names[0]},
+                {"name": operations_names[1]},
+            ]
+        }
+        generate_collection(collection_path, dag_service_operations, {})
+        collection = Collection.from_path(collection_path)
+        collection._inventory_reader = MockInventoryReader(hosts)
+        collections = Collections.from_collection_list([collection])
+
+        stale_components = [
+            StaleComponent(
+                service_name="mock",
+                component_name="node",
+                host_name=host,
+                to_reconfigure=True,
+                to_restart=True,
+            )
+            for host in hosts
+        ]
+
+        deployment_log = DeploymentLog.from_stale_components(
+            collections=collections,
+            stale_components=stale_components,
+            rolling_interval=rolling_interval,
+        )
+
+        assert len(deployment_log.operations) == 9
+        assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+        assert deployment_log.rolling_interval == rolling_interval
+
+        # Config operations
+        assert deployment_log.operations[0].operation == operations_names[0]
+        assert deployment_log.operations[0].host == sorted_hosts[0]
+        assert deployment_log.operations[0].extra_vars == None
+
+        assert deployment_log.operations[1].operation == operations_names[0]
+        assert deployment_log.operations[1].host == sorted_hosts[1]
+        assert deployment_log.operations[1].extra_vars == None
+
+        assert deployment_log.operations[2].operation == operations_names[0]
+        assert deployment_log.operations[2].host == sorted_hosts[2]
+        assert deployment_log.operations[2].extra_vars == None
+
+        # Restart and sleep operations
+        assert deployment_log.operations[3].operation == operation_name_restart
+        assert deployment_log.operations[3].host == sorted_hosts[0]
+        assert deployment_log.operations[3].extra_vars == None
+
+        assert deployment_log.operations[4].operation == OPERATION_SLEEP_NAME
+        assert deployment_log.operations[4].host == None
+        assert deployment_log.operations[4].extra_vars == [
+            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+        ]
+
+        assert deployment_log.operations[5].operation == operation_name_restart
+        assert deployment_log.operations[5].host == sorted_hosts[1]
+        assert deployment_log.operations[5].extra_vars == None
+
+        assert deployment_log.operations[6].operation == OPERATION_SLEEP_NAME
+        assert deployment_log.operations[6].host == None
+        assert deployment_log.operations[6].extra_vars == [
+            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+        ]
+
+        assert deployment_log.operations[7].operation == operation_name_restart
+        assert deployment_log.operations[7].host == sorted_hosts[2]
+        assert deployment_log.operations[7].extra_vars == None
+
+        assert deployment_log.operations[8].operation == OPERATION_SLEEP_NAME
+        assert deployment_log.operations[8].host == None
+        assert deployment_log.operations[8].extra_vars == [
+            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+        ]
