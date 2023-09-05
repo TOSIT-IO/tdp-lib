@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Iterable, Optional, Tuple
 
-from sqlalchemy import JSON, String
+from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
@@ -16,7 +16,6 @@ from tdp.core.dag import Dag
 from tdp.core.models.base import Base
 from tdp.core.models.operation_log import OperationLog
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
-from tdp.core.operation import OPERATION_NAME_MAX_LENGTH
 from tdp.core.utils import BaseEnum
 
 if TYPE_CHECKING:
@@ -63,36 +62,17 @@ class DeploymentLog(Base):
     __tablename__ = "deployment_log"
 
     id: Mapped[int] = mapped_column(primary_key=True, doc="Deployment log id.")
-    sources: Mapped[Optional[list[str]]] = mapped_column(
-        JSON(none_as_null=True),
-        doc="List of source nodes, in the case of Dag deployment type.",
-    )
-    targets: Mapped[Optional[list[str]]] = mapped_column(
-        JSON(none_as_null=True),
-        doc="List of target nodes, in the case of Dag deployment type.",
-    )
-    filter_expression: Mapped[Optional[str]] = mapped_column(
-        String(OPERATION_NAME_MAX_LENGTH * 5), doc="Filter expression."
-    )
-    filter_type: Mapped[Optional[FilterTypeEnum]] = mapped_column(doc="Filter type.")
-    hosts: Mapped[Optional[list[str]]] = mapped_column(
-        JSON(none_as_null=True), doc="List of hosts."
-    )
-    extra_vars: Mapped[Optional[list[str]]] = mapped_column(
-        JSON(none_as_null=True), doc="List of extra vars."
-    )
-    rolling_interval: Mapped[Optional[int]] = mapped_column(
-        doc="Deployment rolling interval (in sec)."
+    options: Mapped[dict] = mapped_column(
+        JSON(none_as_null=True), doc="Deployment options."
     )
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment end time.")
-    state: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
-        doc="Deployment state."
+    status: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
+        doc="Deployment status."
     )
     deployment_type: Mapped[Optional[DeploymentTypeEnum]] = mapped_column(
         doc="Deployment type."
     )
-    restart: Mapped[Optional[bool]] = mapped_column(default=False, doc="Restart flag.")
 
     operations: Mapped[list[OperationLog]] = relationship(
         back_populates="deployment",
@@ -109,15 +89,9 @@ class DeploymentLog(Base):
         return tabulate(
             [
                 ["id", self.id],
-                ["sources", self.sources],
-                ["targets", self.targets],
-                ["filter_expression", self.filter_expression],
-                ["filter_type", self.filter_type],
                 ["start_time", self.start_time],
                 ["end_time", self.end_time],
-                ["state", self.state],
-                ["deployment_type", self.deployment_type],
-                ["restart", self.restart],
+                ["state", self.status],
             ],
             tablefmt="plain",
         )
@@ -158,20 +132,24 @@ class DeploymentLog(Base):
 
         if len(operations) == 0:
             raise NoOperationMatchError(
-                "Combination of parameters resulted into an empty list of Operations (noop included)."
+                "Combination of parameters resulted into an empty list of Operations."
             )
 
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.DAG,
-            state=DeploymentStateEnum.PLANNED,
-            targets=targets,
-            sources=sources,
-            extra_vars=None,
-            rolling_interval=None,
-            filter_expression=filter_expression,
-            filter_type=filter_type,
-            restart=restart,
+            options={
+                "restart": restart,
+            },
+            status=DeploymentStateEnum.PLANNED,
         )
+        if targets is not None:
+            deployment_log.options["targets"] = targets
+        if sources is not None:
+            deployment_log.options["sources"] = sources
+        if filter_expression is not None:
+            deployment_log.options["filter_expression"] = filter_expression
+        if filter_type is not None:
+            deployment_log.options["filter_type"] = filter_type
         deployment_log.operations = [
             OperationLog(
                 operation=operation.name,
@@ -210,13 +188,16 @@ class DeploymentLog(Base):
                 host_names,
             )
         deployment_log = DeploymentLog(
-            targets=operation_names,
-            hosts=list(host_names) if host_names is not None else None,
-            extra_vars=list(extra_vars) if extra_vars else None,
-            rolling_interval=None,
             deployment_type=DeploymentTypeEnum.OPERATIONS,
-            state=DeploymentStateEnum.PLANNED,
+            options={
+                "operations": operation_names,
+            },
+            status=DeploymentStateEnum.PLANNED,
         )
+        if host_names is not None:
+            deployment_log.options["hosts"] = list(host_names)
+        if extra_vars is not None:
+            deployment_log.options["extra_vars"] = list(extra_vars)
         i = 1
         for operation in operation_names:
             for host_name in host_names or [None]:
@@ -280,8 +261,8 @@ class DeploymentLog(Base):
             operation_host_names, key=lambda x: f"{x[0]}_{x[1]}"
         )
         dag = Dag(collections)
-        # Sort operations with DAG topological sort, convert string operation to Operation
-        # instance and replace start action with restart action.
+        # Sort operations with DAG topological sort, convert string operation to
+        # Operation instance and replace start action with restart action.
         operation_hosts = list(
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
@@ -291,12 +272,11 @@ class DeploymentLog(Base):
             )
         )
         deployment_log = DeploymentLog(
-            targets=list([operation.name for (operation, _) in operation_hosts]),
-            hosts=None,
-            extra_vars=None,
-            rolling_interval=rolling_interval,
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
-            state=DeploymentStateEnum.PLANNED,
+            options={
+                "rolling_interval": rolling_interval,
+            },
+            status=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
         for operation, host in operation_hosts:
@@ -339,14 +319,10 @@ class DeploymentLog(Base):
             NothingToResumeError: If the deployment was successful.
             UnsupportedDeploymentTypeError: If the deployment type is not supported.
         """
-        if deployment_log.state != DeploymentStateEnum.FAILURE:
+        if deployment_log.status != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{deployment_log.id} was {deployment_log.state}."
-            )
-
-        if not isinstance(deployment_log.deployment_type, DeploymentTypeEnum):
-            raise UnsupportedDeploymentTypeError(
-                f"Resuming from a {deployment_log.deployment_type} is not supported."
+                f"Nothing to resume, deployment #{deployment_log.id} "
+                + f"was {deployment_log.status}."
             )
 
         if len(deployment_log.operations) == 0:
@@ -369,9 +345,12 @@ class DeploymentLog(Base):
         operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
         collections.check_operations_exist(operations_names_to_resume)
         deployment_log = DeploymentLog(
-            targets=operations_names_to_resume,
             deployment_type=DeploymentTypeEnum.RESUME,
-            state=DeploymentStateEnum.PLANNED,
+            options={
+                "operations": operations_names_to_resume,
+                # TODO: add from deployment id
+            },
+            status=DeploymentStateEnum.PLANNED,
         )
         deployment_log.operations = [
             OperationLog(

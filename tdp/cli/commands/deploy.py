@@ -79,11 +79,11 @@ def deploy(
                         ):
                             session.delete(stale_component)
                 session.commit()
-        if deployment_iterator.deployment_log.state != DeploymentStateEnum.SUCCESS:
+        if deployment_iterator.deployment_log.status != DeploymentStateEnum.SUCCESS:
             raise click.ClickException(
                 (
                     "Deployment didn't finish with success: "
-                    f"final state {deployment_iterator.deployment_log.state}"
+                    f"final state {deployment_iterator.deployment_log.status}"
                 )
             )
         else:
