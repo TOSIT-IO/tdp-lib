@@ -75,7 +75,7 @@ class DeploymentIterator(
             while True:
                 operation_log: OperationLog = next(self._iter)
 
-                if self.deployment_log.state == DeploymentStateEnum.FAILURE:
+                if self.deployment_log.status == DeploymentStateEnum.FAILURE:
                     operation_log.state = OperationStateEnum.HELD
                     return None, None
 
@@ -180,7 +180,7 @@ class DeploymentIterator(
                 if operation.noop == False:
                     self._run_operation(operation_log)
                     if operation_log.state != OperationStateEnum.SUCCESS:
-                        self.deployment_log.state = DeploymentStateEnum.FAILURE
+                        self.deployment_log.status = DeploymentStateEnum.FAILURE
                 else:
                     operation_log.state = OperationStateEnum.SUCCESS
 
@@ -188,11 +188,11 @@ class DeploymentIterator(
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment_log.end_time = datetime.utcnow()
-            if not self.deployment_log.state == DeploymentStateEnum.FAILURE:
-                self.deployment_log.state = DeploymentStateEnum.SUCCESS
+            if not self.deployment_log.status == DeploymentStateEnum.FAILURE:
+                self.deployment_log.status = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
             self.deployment_log.end_time = datetime.utcnow()
-            self.deployment_log.state = DeploymentStateEnum.FAILURE
+            self.deployment_log.status = DeploymentStateEnum.FAILURE
             raise e

@@ -175,7 +175,7 @@ def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
     Returns:
         The planned deployment or None if there is no planned deployment.
     """
-    return session.query(DeploymentLog).filter_by(state="PLANNED").one_or_none()
+    return session.query(DeploymentLog).filter_by(status="PLANNED").one_or_none()
 
 
 def get_operation_log(

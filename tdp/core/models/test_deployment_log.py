@@ -40,7 +40,7 @@ class MockInventoryReader(InventoryReader):
 
 
 def fail_deployment_log(deployment_log: DeploymentLog, index_to_fail: int):
-    deployment_log.state = DeploymentStateEnum.FAILURE
+    deployment_log.status = DeploymentStateEnum.FAILURE
     for operation in deployment_log.operations:
         if operation.operation_order < index_to_fail:
             operation.state = OperationStateEnum.SUCCESS
@@ -52,7 +52,7 @@ def fail_deployment_log(deployment_log: DeploymentLog, index_to_fail: int):
 
 
 def set_success(deployment_log: DeploymentLog):
-    deployment_log.state = DeploymentStateEnum.SUCCESS
+    deployment_log.status = DeploymentStateEnum.SUCCESS
     for operation in deployment_log.operations:
         operation.state = OperationStateEnum.SUCCESS
 
@@ -66,13 +66,8 @@ class TestFromOperations:
 
         assert len(deployment_log.operations) == 0
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == []
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None
+        assert deployment_log.options == {"operations": []}  # TODO should be {}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_single_operation(self, minimal_collections: Collections):
         operations_names = ["mock_node_config"]
@@ -84,13 +79,8 @@ class TestFromOperations:
             operation_log.operation for operation_log in deployment_log.operations
         ] == operations_names
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None
+        assert deployment_log.options == {"operations": operations_names}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_single_restart_operation(self, minimal_collections: Collections):
         operations_names = ["mock_node_restart"]
@@ -102,13 +92,8 @@ class TestFromOperations:
             operation_log.operation for operation_log in deployment_log.operations
         ] == operations_names
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None  # restart flag is only used in dag
+        assert deployment_log.options == {"operations": operations_names}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_single_noop_opeation(self, minimal_collections: Collections):
         operations_names = ["mock_config"]
@@ -120,13 +105,8 @@ class TestFromOperations:
             operation_log.operation for operation_log in deployment_log.operations
         ] == operations_names
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None  # restart flag is only used in dag
+        assert deployment_log.options == {"operations": operations_names}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_single_restart_noop_operation(self, minimal_collections: Collections):
         operations_names = ["mock_restart"]
@@ -138,13 +118,8 @@ class TestFromOperations:
             operation_log.operation for operation_log in deployment_log.operations
         ] == operations_names
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None  # restart flag is only used in dag
+        assert deployment_log.options == {"operations": operations_names}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_multiple_operations(self, minimal_collections: Collections):
         operations_names = ["mock_node_config", "mock_node_restart"]
@@ -156,13 +131,8 @@ class TestFromOperations:
             operation_log.operation for operation_log in deployment_log.operations
         ] == operations_names
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None  # restart flag is only used in dag
+        assert deployment_log.options == {"operations": operations_names}
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_single_host(self, minimal_collections: Collections):
         operations_names = ["mock_node_config", "mock_node_start"]
@@ -177,13 +147,11 @@ class TestFromOperations:
         for operation_log in deployment_log.operations:
             assert operation_log.host == host
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == [host]
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None
+        assert deployment_log.options == {
+            "operations": operations_names,
+            "hosts": [host],
+        }
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
         operations_names = ["mock_node_config", "mock_node_start"]
@@ -218,13 +186,11 @@ class TestFromOperations:
         assert deployment_log.operations[5].operation == operations_names[1]
         assert deployment_log.operations[5].host == hosts[2]
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == hosts
-        assert deployment_log.extra_vars == None
-        assert deployment_log.restart == None
+        assert deployment_log.options == {
+            "operations": operations_names,
+            "hosts": hosts,
+        }
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_extra_vars(self, minimal_collections: Collections):
         operations_names = ["mock_node_config", "mock_node_start"]
@@ -241,13 +207,11 @@ class TestFromOperations:
         for operation_log in deployment_log.operations:
             assert operation_log.extra_vars == extra_vars
         assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.targets == operations_names
-        assert deployment_log.sources == None
-        assert deployment_log.filter_expression == None
-        assert deployment_log.filter_type == None
-        assert deployment_log.hosts == None
-        assert deployment_log.extra_vars == extra_vars
-        assert deployment_log.restart == None
+        assert deployment_log.options == {
+            "operations": operations_names,
+            "extra_vars": extra_vars,
+        }
+        assert deployment_log.status == DeploymentStateEnum.PLANNED
 
 
 class TestFromDag:
@@ -439,7 +403,9 @@ class TestFromStaleComponents:
 
         assert len(deployment_log.operations) == 9
         assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
-        assert deployment_log.rolling_interval == rolling_interval
+        assert deployment_log.options == {
+            "rolling_interval": rolling_interval,
+        }
 
         # Config operations
         assert deployment_log.operations[0].operation == operations_names[0]

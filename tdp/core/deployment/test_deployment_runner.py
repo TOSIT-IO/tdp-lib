@@ -60,7 +60,7 @@ def test_deployment_plan_is_success(dag: Dag, deployment_runner: DeploymentRunne
     for i, (_, _) in enumerate(deployment_iterator):
         assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 8
     assert len(deployment_iterator.deployment_log.component_version) == 2
 
@@ -77,7 +77,7 @@ def test_deployment_plan_with_filter_is_success(
     for i, (_, _) in enumerate(deployment_iterator):
         assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 2
 
 
@@ -91,7 +91,7 @@ def test_noop_deployment_plan_is_success(
     for i, (_, _) in enumerate(deployment_iterator):
         assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 1
 
 
@@ -102,7 +102,7 @@ def test_failed_operation_stops(dag: Dag, failing_deployment_runner: DeploymentR
 
     for _ in deployment_iterator:
         pass
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
     assert len(deployment_iterator.deployment_log.operations) == 8
 
 
@@ -114,7 +114,7 @@ def test_service_log_is_emitted(dag: Dag, deployment_runner: DeploymentRunner):
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 2
 
 
@@ -128,7 +128,7 @@ def test_service_log_is_not_emitted(dag: Dag, deployment_runner: DeploymentRunne
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
@@ -144,7 +144,7 @@ def test_service_log_only_noop_is_emitted(
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
@@ -160,7 +160,7 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
@@ -176,7 +176,7 @@ def test_service_log_emitted_once_with_start_and_restart(
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
@@ -198,7 +198,7 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
@@ -213,7 +213,7 @@ def test_deployment_dag_is_resumed(
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
 
     resume_log = DeploymentLog.from_failed_deployment(
         minimal_collections, deployment_iterator.deployment_log
@@ -227,7 +227,7 @@ def test_deployment_dag_is_resumed(
         == DeploymentTypeEnum.RESUME
     )
     assert (
-        resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+        resume_deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     )
     failed_operation = next(
         filter(
@@ -265,7 +265,7 @@ def test_deployment_reconfigure_is_resumed(
     for _ in deployment_iterator:
         pass
 
-    assert deployment_iterator.deployment_log.state == DeploymentStateEnum.FAILURE
+    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
     resume_log = DeploymentLog.from_failed_deployment(
         minimal_collections, deployment_iterator.deployment_log
     )
@@ -278,7 +278,7 @@ def test_deployment_reconfigure_is_resumed(
         == DeploymentTypeEnum.RESUME
     )
     assert (
-        resume_deployment_iterator.deployment_log.state == DeploymentStateEnum.SUCCESS
+        resume_deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     )
     failed_operation = next(
         filter(
