@@ -180,9 +180,7 @@ class ServiceVariables:
     @contextmanager
     def open_var_files(
         self, message: str, paths: list[str], fail_if_does_not_exist: bool = False
-    ) -> Iterator[
-        dict[str, Variables]
-    ]:  # TODO: Transform Dict to OrderedDict with python>3.6
+    ) -> Iterator[OrderedDict[str, Variables]]:
         """Open variables files.
 
         Adds the underlying files for validation.
