@@ -3,8 +3,7 @@
 
 from typing import Any, Tuple
 
-from sqlalchemy import MetaData
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 
 def keyvalgen(obj: object) -> Tuple[str, Any]:
@@ -25,13 +24,9 @@ def keyvalgen(obj: object) -> Tuple[str, Any]:
             yield k, v
 
 
-class CustomBase:
+class Base(DeclarativeBase):
     """Custom base class for SQLAlchemy models."""
 
     def __repr__(self):
         params = ", ".join(f"{k}={v}" for k, v in keyvalgen(self))
         return f"{self.__class__.__name__}({params})"
-
-
-metadata = MetaData()
-Base = declarative_base(cls=CustomBase, metadata=metadata)
