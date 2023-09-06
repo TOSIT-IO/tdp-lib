@@ -4,7 +4,7 @@
 import pytest
 from sqlalchemy import Column, Integer, String
 
-from tdp.core.models.base import Base, keyvalgen
+from tdp.core.models.base import Base
 
 
 class ExampleClass(Base):
@@ -20,10 +20,9 @@ def test_instance() -> ExampleClass:
     return instance
 
 
-def test_keyvalgen(test_instance: ExampleClass):
-    gen = keyvalgen(test_instance)
-    attrs = dict(gen)
-    assert attrs == {"id": 1, "name": "TestName"}
+def test_custom_base_to_dict(test_instance: ExampleClass):
+    dict_repr = test_instance.to_dict()
+    assert dict_repr == {"id": 1, "name": "TestName"}
 
 
 def test_custom_base_repr(test_instance: ExampleClass):
