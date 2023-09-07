@@ -1,8 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator, Tuple
+from typing import Any
 
 import pytest
 from ansible.inventory.manager import InventoryManager
@@ -11,7 +12,7 @@ from ansible.vars.manager import VariableManager
 
 from tdp.core.variables import Variables
 
-_DummyInventory = Tuple[DataLoader, InventoryManager, VariableManager, Path]
+_DummyInventory = tuple[DataLoader, InventoryManager, VariableManager, Path]
 
 
 @pytest.fixture

@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
-from typing import Generator, Union
+from typing import Union
 from weakref import proxy
 
 # Version string length isn't checked before inserting into database

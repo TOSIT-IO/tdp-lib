@@ -4,7 +4,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from tdp.core.inventory_reader import InventoryReader
 
@@ -125,7 +125,7 @@ class Collection:
             }
         return self._playbooks
 
-    def get_service_default_vars(self, service_name: str) -> list[Tuple[str, Path]]:
+    def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
         """Get the default variables for a service.
 
         Args:

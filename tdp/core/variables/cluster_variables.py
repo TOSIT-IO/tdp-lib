@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional, Union
-from typing import Mapping as MappingType
+from typing import TYPE_CHECKING, Optional, Union
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 
 
-class ClusterVariables(MappingType[str, ServiceVariables]):
+class ClusterVariables(Mapping[str, ServiceVariables]):
     """Mapping of service names with their ServiceVariables instance."""
 
     def __init__(self, service_variables_dict: dict[str, ServiceVariables]):

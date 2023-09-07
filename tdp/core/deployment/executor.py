@@ -4,7 +4,8 @@
 import io
 import logging
 import subprocess
-from typing import Iterable, Optional, Tuple
+from collections.abc import Iterable
+from typing import Optional
 
 from tdp.core.models import OperationStateEnum
 
@@ -27,7 +28,7 @@ class Executor:
 
     def _execute_ansible_command(
         self, command: list[str]
-    ) -> Tuple[OperationStateEnum, bytes]:
+    ) -> tuple[OperationStateEnum, bytes]:
         """Execute an ansible command.
 
         Args:
@@ -66,7 +67,7 @@ class Executor:
         playbook: str,
         host: Optional[str] = None,
         extra_vars: Optional[Iterable[str]] = None,
-    ) -> Tuple[OperationStateEnum, bytes]:
+    ) -> tuple[OperationStateEnum, bytes]:
         """Executes a playbook.
 
         Args:
