@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -49,3 +49,9 @@ class ComponentVersionLog(Base):
     __table_args__ = (
         UniqueConstraint("deployment_id", "service", "component", "host"),
     )
+
+    def _formater(self, key: str, value: Any):
+        """Format a value for printing."""
+        if key == "version":
+            return str(value[:7])
+        return super()._formater(key, value)
