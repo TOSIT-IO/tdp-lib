@@ -7,7 +7,7 @@ import os
 from collections import OrderedDict
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterator, Union
+from typing import TYPE_CHECKING, Generator, Union
 
 import jsonschema
 from jsonschema import exceptions
@@ -180,7 +180,7 @@ class ServiceVariables:
     @contextmanager
     def open_var_files(
         self, message: str, paths: list[str], fail_if_does_not_exist: bool = False
-    ) -> Iterator[OrderedDict[str, Variables]]:
+    ) -> Generator[OrderedDict[str, Variables], None, None]:
         """Open variables files.
 
         Adds the underlying files for validation.
