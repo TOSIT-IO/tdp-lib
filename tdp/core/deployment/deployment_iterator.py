@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Callable, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.models import (
     ComponentVersionLog,
@@ -36,7 +36,7 @@ class _Flags:
 
 
 class DeploymentIterator(
-    Iterator[Tuple[Optional[list[ComponentVersionLog]], Optional[list[StaleComponent]]]]
+    Iterator[tuple[Optional[list[ComponentVersionLog]], Optional[list[StaleComponent]]]]
 ):
     """Iterator that runs an operation at each iteration.
 

@@ -5,9 +5,10 @@ from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
+from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Generator, Union
+from typing import TYPE_CHECKING, Union
 
 import jsonschema
 from jsonschema import exceptions

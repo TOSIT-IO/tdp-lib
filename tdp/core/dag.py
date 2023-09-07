@@ -16,7 +16,8 @@ import fnmatch
 import functools
 import logging
 import re
-from typing import TYPE_CHECKING, Callable, Generator, Iterable, Optional, TypeVar
+from collections.abc import Callable, Generator, Iterable
+from typing import TYPE_CHECKING, Optional, TypeVar
 
 import networkx as nx
 

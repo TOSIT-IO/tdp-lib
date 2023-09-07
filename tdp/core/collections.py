@@ -5,9 +5,8 @@ from __future__ import annotations
 
 import logging
 from collections import OrderedDict
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, Iterable, Sequence
-from typing import Mapping as MappingType
+from collections.abc import Iterable, Mapping, Sequence
+from typing import TYPE_CHECKING
 
 import yaml
 
@@ -44,7 +43,7 @@ class Collections(Mapping):
     presence or not in the DAG.
     """
 
-    def __init__(self, collections: MappingType[str, Collection]):
+    def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
         self._dag_operations = None
         self._other_operations = None
@@ -92,17 +91,17 @@ class Collections(Mapping):
         self._init_operations()
 
     @property
-    def dag_operations(self) -> MappingType[str, Operation]:
+    def dag_operations(self) -> dict[str, Operation]:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
 
     @property
-    def other_operations(self) -> MappingType[str, Operation]:
+    def other_operations(self) -> dict[str, Operation]:
         """Mapping of operation name that aren't in dag files to their Operation instance."""
         return self._other_operations
 
     @property
-    def operations(self) -> MappingType[str, Operation]:
+    def operations(self) -> dict[str, Operation]:
         """Mapping of all operation name to Operation instance."""
         operations = {}
         if self._dag_operations:

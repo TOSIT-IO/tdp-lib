@@ -4,8 +4,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterable
 from datetime import datetime
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -229,7 +230,7 @@ class DeploymentLog(Base):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_host_names: set[Tuple[str, str]] = set()
+        operation_host_names: set[tuple[str, str]] = set()
         for stale_component in stale_components:
             # should not append as those components should have been filtered out
             if not stale_component.to_reconfigure and not stale_component.to_restart:

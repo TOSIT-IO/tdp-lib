@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Generator, Union
+from typing import Union
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 

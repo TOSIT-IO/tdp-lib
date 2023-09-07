@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Iterable
+from collections.abc import Iterable
 
 import click
 from tabulate import tabulate

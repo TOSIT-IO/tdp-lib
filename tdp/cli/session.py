@@ -1,8 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -11,7 +11,9 @@ from tdp.core.models import init_database
 
 
 @contextmanager
-def get_session(database_dsn: str, commit_on_exit: bool = False) -> Iterator[Session]:
+def get_session(
+    database_dsn: str, commit_on_exit: bool = False
+) -> Generator[Session, None, None]:
     """Get a SQLAlchemy session for use in a with-statement.
 
     Args:

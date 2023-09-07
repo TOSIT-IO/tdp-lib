@@ -1,8 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Tuple
-
 import pytest
 
 from tdp.conftest import generate_collection
@@ -67,7 +65,7 @@ def cluster_variables(
 @pytest.fixture(scope="function")
 def reconfigurable_cluster_variables(
     tmp_path_factory: pytest.TempPathFactory, minimal_collections: Collections
-) -> Tuple[ClusterVariables, list[ComponentVersionLog]]:
+) -> tuple[ClusterVariables, list[ComponentVersionLog]]:
     tdp_vars = tmp_path_factory.mktemp("tdp_vars")
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         minimal_collections, tdp_vars
