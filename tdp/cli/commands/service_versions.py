@@ -4,11 +4,9 @@
 import click
 from tabulate import tabulate
 
-from tdp.cli.commands.browse import _format_component_version_log
 from tdp.cli.queries import get_latest_success_component_version_log
 from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn
-from tdp.core.models import ComponentVersionLog
 
 
 @click.command(
@@ -23,25 +21,16 @@ def service_versions(database_dsn):
         latest_success_service_version_logs = get_latest_success_component_version_log(
             session
         )
-        if any(latest_success_service_version_logs):
-            # TODO: refactor so that this not import private method from browse.py
-            _print_component_version_logs(latest_success_service_version_logs)
-        else:
+        if not any(latest_success_service_version_logs):
             click.echo("No service has been deployed.")
+            return
 
-
-def _print_component_version_logs(component_version_logs: list[ComponentVersionLog]):
-    component_version_log_headers = ComponentVersionLog.__table__.columns.keys()
-
-    click.echo(
-        "Service versions:\n"
-        + tabulate(
-            [
-                _format_component_version_log(
-                    component_version_log, component_version_log_headers
-                )
-                for component_version_log in component_version_logs
-            ],
-            headers="keys",
+        click.echo(
+            tabulate(
+                [
+                    c.to_dict(filter_out=["id"])
+                    for c in latest_success_service_version_logs
+                ],
+                headers="keys",
+            )
         )
-    )

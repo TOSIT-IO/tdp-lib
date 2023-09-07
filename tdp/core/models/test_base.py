@@ -21,7 +21,7 @@ def test_instance() -> ExampleClass:
 
 
 def test_custom_base_to_dict(test_instance: ExampleClass):
-    dict_repr = test_instance.to_dict()
+    dict_repr = test_instance.to_dict(format=False)
     assert dict_repr == {"id": 1, "name": "TestName"}
 
 

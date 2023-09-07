@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -48,3 +48,8 @@ class OperationLog(Base):
     deployment: Mapped[DeploymentLog] = relationship(
         back_populates="operations", doc="Deployment log."
     )
+
+    def _formater(self, key: str, value: Optional[Any]) -> str:
+        if key == "logs":
+            return value.decode("utf-8")[:20] + "..." if value else ""
+        return super()._formater(key, value)
