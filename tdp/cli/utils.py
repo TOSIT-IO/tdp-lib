@@ -1,15 +1,22 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 from click.decorators import FC
+from tabulate import tabulate
 
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 from tdp.core.variables.cluster_variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.models import DeploymentLog
 
 
 def _collections_from_paths(
@@ -103,6 +110,65 @@ def mock_deploy(func: FC) -> FC:
         is_flag=True,
         help="Mock the deploy, do not actually run the ansible playbook",
     )(func)
+
+
+def preview(func: FC) -> FC:
+    return click.option(
+        "--preview",
+        is_flag=True,
+        help="Preview the plan without running any action",
+    )(func)
+
+
+def print_deployment(deployment: DeploymentLog) -> None:
+    # Print general deployment infos
+    click.secho("Deployment details", bold=True)
+    click.echo(print_object(deployment.to_dict()))
+
+    # Print related component version logs
+    if deployment.component_version:
+        click.secho("\nAffected components", bold=True)
+        print_table(
+            [
+                c.to_dict()
+                for c in deployment.component_version
+                if c.component is not None
+            ],
+        )
+
+    # Print deployment operations
+    click.secho("\nOperations", bold=True)
+    print_table(
+        [o.to_dict() for o in deployment.operations],
+    )
+
+
+def print_object(obj: dict) -> None:
+    """Print an object in a human readable format.
+
+    Args:
+        obj: Object to print
+    """
+    click.echo(
+        tabulate(
+            obj.items(),
+            tablefmt="plain",
+        )
+    )
+
+
+def print_table(rows) -> None:
+    """Print a list of rows in a human readable format.
+
+    Args:
+        rows: List of rows to print
+    """
+    click.echo(
+        tabulate(
+            rows,
+            headers="keys",
+        )
+    )
 
 
 def rolling_interval(func: FC) -> FC:

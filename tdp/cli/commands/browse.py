@@ -4,7 +4,6 @@
 from collections.abc import Iterable
 
 import click
-from tabulate import tabulate
 
 from tdp.cli.queries import (
     get_deployment,
@@ -13,7 +12,7 @@ from tdp.cli.queries import (
     get_planned_deployment_log,
 )
 from tdp.cli.session import get_session
-from tdp.cli.utils import database_dsn
+from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
 from tdp.core.models import DeploymentLog, OperationLog
 
 
@@ -84,7 +83,7 @@ def _print_deployments(deployments: Iterable[DeploymentLog]) -> None:
         click.echo("No deployment found")
         click.echo("Create a deployment plan using the `tdp plan` command")
 
-    _print_table(
+    print_table(
         [d.to_dict(filter_out=["options"]) for d in deployments],
     )
 
@@ -99,26 +98,7 @@ def _print_deployment(deployment: DeploymentLog) -> None:
         click.echo("Deployment does not exist.")
         return
 
-    # Print general deployment infos
-    click.secho("Deployment details", bold=True)
-    click.echo(_print_object(deployment.to_dict()))
-
-    # Print related component version logs
-    if deployment.component_version:
-        click.secho("\nAffected components", bold=True)
-        _print_table(
-            [
-                c.to_dict()
-                for c in deployment.component_version
-                if c.component is not None
-            ],
-        )
-
-    # Print deployment operations
-    click.secho("\nOperations", bold=True)
-    _print_table(
-        [o.to_dict() for o in deployment.operations],
-    )
+    print_deployment(deployment)
 
 
 def _print_operation(operation: OperationLog) -> None:
@@ -129,12 +109,12 @@ def _print_operation(operation: OperationLog) -> None:
     """
     # Print general operation infos
     click.secho("Operation details", bold=True)
-    click.echo(_print_object(operation.to_dict()))
+    click.echo(print_object(operation.to_dict()))
 
     # Print related component version logs
     if operation.deployment.component_version:
         click.secho("\nAffected hosts", bold=True)
-        _print_table(
+        print_table(
             [
                 c.to_dict()
                 for c in operation.deployment.component_version
@@ -147,31 +127,3 @@ def _print_operation(operation: OperationLog) -> None:
         click.secho("\nOperation logs", bold=True)
         click.echo(str(operation.logs, "utf-8"))
     pass
-
-
-def _print_table(rows) -> None:
-    """Print a list of rows in a human readable format.
-
-    Args:
-        rows: List of rows to print
-    """
-    click.echo(
-        tabulate(
-            rows,
-            headers="keys",
-        )
-    )
-
-
-def _print_object(obj: dict) -> None:
-    """Print an object in a human readable format.
-
-    Args:
-        obj: Object to print
-    """
-    click.echo(
-        tabulate(
-            obj.items(),
-            tablefmt="plain",
-        )
-    )
