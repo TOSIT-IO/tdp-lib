@@ -156,6 +156,9 @@ class Dag:
         self.graph = None
 
     def node_to_operation(self, node: str, restart: bool = False) -> Operation:
+        # ? Restart operations are now stored in collections.operations they can be
+        # ? directly retrieved using the collections.get_operation method.
+        # ? This method could be removed in the future.
         if restart and node.endswith("_start"):
             node = node.replace("_start", "_restart")
         return self.collections.get_operation(node)

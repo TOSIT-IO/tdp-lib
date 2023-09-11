@@ -169,6 +169,7 @@ class DeploymentLog(Base):
         operation_names: list[str],
         host_names: Optional[Iterable[str]] = None,
         extra_vars: Optional[Iterable[str]] = None,
+        rolling_interval: Optional[int] = None,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a list of operations.
 
@@ -177,12 +178,13 @@ class DeploymentLog(Base):
             operations: List of operations names to perform.
             host_names: Set of host for each operation.
             extra_vars: List of extra vars for each operation.
+            rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             UnsupportedOperationError: If an operation is a noop.
             ValueError: If an operation is not found in the collections.
         """
-        collections.check_operations_exist(operation_names)
+        operations = [collections.get_operation(o) for o in operation_names]
         if host_names is not None:
             collections.check_operations_hosts_exist(
                 operation_names,
@@ -199,18 +201,44 @@ class DeploymentLog(Base):
             deployment_log.options["hosts"] = list(host_names)
         if extra_vars is not None:
             deployment_log.options["extra_vars"] = list(extra_vars)
+        if rolling_interval is not None:
+            deployment_log.options["rolling_interval"] = rolling_interval
         i = 1
-        for operation in operation_names:
-            for host_name in host_names or [None]:
+        for operation in operations:
+            can_perform_rolling_restart = (
+                rolling_interval is not None
+                and operation.action_name == "restart"
+                and operation.host_names
+            )
+            for host_name in host_names or (
+                # if restart operation with rolling and no host is specified,
+                # run on all hosts
+                operation.host_names
+                if can_perform_rolling_restart
+                else [None]
+            ):
                 deployment_log.operations.append(
                     OperationLog(
-                        operation=operation,
+                        operation=operation.name,
                         operation_order=i,
                         host=host_name,
                         extra_vars=list(extra_vars) if extra_vars else None,
                         state=OperationStateEnum.PLANNED,
                     )
                 )
+                if can_perform_rolling_restart:
+                    i += 1
+                    deployment_log.operations.append(
+                        OperationLog(
+                            operation=OPERATION_SLEEP_NAME,
+                            operation_order=i,
+                            host=host_name,
+                            extra_vars=[
+                                f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+                            ],
+                            state=OperationStateEnum.PLANNED,
+                        )
+                    )
                 i += 1
         return deployment_log
 

@@ -5,7 +5,7 @@ import click
 
 from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn
+from tdp.cli.utils import collections, database_dsn, rolling_interval
 from tdp.core.models import DeploymentLog
 
 
@@ -28,18 +28,20 @@ from tdp.core.models import DeploymentLog
 )
 @collections
 @database_dsn
+@rolling_interval
 def run(
     operation_names,
     host,
     extra_vars,
     collections,
     database_dsn,
+    rolling_interval,
 ):
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
     deployment_log = DeploymentLog.from_operations(
-        collections, operation_names, host, extra_vars
+        collections, operation_names, host, extra_vars, rolling_interval
     )
     with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
