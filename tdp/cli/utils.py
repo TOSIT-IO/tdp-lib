@@ -105,6 +105,16 @@ def mock_deploy(func: FC) -> FC:
     )(func)
 
 
+def rolling_interval(func: FC) -> FC:
+    return click.option(
+        "-ri",
+        "--rolling-interval",
+        envvar="TDP_ROLLING_INTERVAL",
+        type=int,
+        help="Enable rolling restart with specific waiting time (in seconds) between component restart.",
+    )(func)
+
+
 def run_directory(func: FC) -> FC:
     return click.option(
         "--run-directory",

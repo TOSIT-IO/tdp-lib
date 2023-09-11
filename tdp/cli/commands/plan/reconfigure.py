@@ -5,24 +5,18 @@ import click
 
 from tdp.cli.queries import get_planned_deployment_log, get_stale_components
 from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn
+from tdp.cli.utils import collections, database_dsn, rolling_interval
 from tdp.core.models import DeploymentLog
 
 
 @click.command(short_help="Restart required TDP services.")
-@click.option(
-    "-ri",
-    "--rolling-interval",
-    envvar="TDP_ROLLING_INTERVAL",
-    type=int,
-    help="Enable rolling restart with specific waiting time (in seconds) between component restart.",
-)
 @collections
 @database_dsn
+@rolling_interval
 def reconfigure(
-    rolling_interval,
     collections,
     database_dsn,
+    rolling_interval,
 ):
     click.echo("Creating a deployment plan to reconfigure services.")
     with get_session(database_dsn, commit_on_exit=True) as session:
