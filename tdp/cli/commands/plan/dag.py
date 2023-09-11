@@ -6,7 +6,7 @@ import click
 
 from tdp.cli.queries import get_planned_deployment_log
 from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn
+from tdp.cli.utils import collections, database_dsn, preview, print_deployment
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentLog, FilterTypeEnum
 
@@ -54,6 +54,7 @@ def _validate_filtertype(ctx, param, value):
     default=False,
     help="Whether start operations should be replaced by restart operations.",
 )
+@preview
 @collections
 @database_dsn
 def dag(
@@ -62,6 +63,7 @@ def dag(
     filter,
     filter_type,
     restart,
+    preview,
     collections,
     database_dsn,
 ):
@@ -91,6 +93,9 @@ def dag(
         filter_type=filter_type,
         restart=restart,
     )
+    if preview:
+        print_deployment(deployment_log)
+        return
     with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment_log = get_planned_deployment_log(session)
         if planned_deployment_log:
