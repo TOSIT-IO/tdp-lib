@@ -61,4 +61,6 @@ class Base(DeclarativeBase):
                 .astimezone(LOCAL_TIMEZONE)
                 .strftime("%Y-%m-%d %H:%M:%S")
             )
+        elif value is None:
+            return ""
         return str(value)
