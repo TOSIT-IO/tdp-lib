@@ -3,7 +3,10 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log, get_stale_components
+from tdp.cli.queries import (
+    get_planned_deployment_log,
+    get_sch_status,
+)
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -15,6 +18,7 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
+from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
@@ -48,43 +52,29 @@ def deploy(
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
             )
-        stale_components = get_stale_components(session)
-        deployment_runner = DeploymentRunner(
-            collections,
-            Executor(
+
+        deployment_iterator = DeploymentRunner(
+            collections=collections,
+            executor=Executor(
                 run_directory=run_directory.absolute() if run_directory else None,
                 dry=dry or mock_deploy,
             ),
-            cluster_variables,
-            stale_components,
-        )
-        deployment_iterator = deployment_runner.run(planned_deployment_log)
+            cluster_variables=cluster_variables,
+            cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
+        ).run(planned_deployment_log)
+
         if dry:
             for _ in deployment_iterator:
                 pass
-        else:
-            session.commit()  # Update deployment log to RUNNING
-            # TODO: check stale_component to delete without returning it.
-            for (
-                component_version_logs,
-                stale_components,
-            ) in deployment_iterator:
-                if component_version_logs and any(component_version_logs):
-                    session.add_all(component_version_logs)
-                if stale_components and any(stale_components):
-                    for stale_component in stale_components:
-                        if (
-                            not stale_component.to_reconfigure
-                            and not stale_component.to_restart
-                        ):
-                            session.delete(stale_component)
+            return
+
+        session.commit()  # Update deployment log status to RUNNING
+        for cluster_status_logs in deployment_iterator:
+            if cluster_status_logs and any(cluster_status_logs):
+                session.add_all(cluster_status_logs)
                 session.commit()
+
         if deployment_iterator.deployment_log.status != DeploymentStateEnum.SUCCESS:
-            raise click.ClickException(
-                (
-                    "Deployment didn't finish with success: "
-                    f"final state {deployment_iterator.deployment_log.status}"
-                )
-            )
+            raise click.ClickException("Deployment failed.")
         else:
             click.echo("Deployment finished with success.")

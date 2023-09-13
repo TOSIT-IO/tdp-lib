@@ -11,14 +11,13 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:
+    from tdp.core.cluster_status import SCHStatus
     from tdp.core.collections import Collections
-    from tdp.core.models.component_version_log import ComponentVersionLog
     from tdp.core.repository.repository import Repository
+    from tdp.core.service_component_host_name import ServiceComponentHostName
 
 logger = logging.getLogger("tdp").getChild("cluster_variables")
 
@@ -172,15 +171,14 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         for service in self.values():
             service.validate()
 
-    def get_modified_service_components(
+    def get_modified_sch(
         self,
-        services_components_versions: Iterable[ComponentVersionLog],
+        sch_statuses: Iterable[SCHStatus],
     ) -> set[ServiceComponentHostName]:
-        """Get the list of modified services and components.
+        """Get the list of modified sch.
 
         Args:
-            services_components_versions: List of coherent deployed components and
-                services versions.
+            sch_statuses: List of deployed sch statuses.
 
         Returns:
             Modified service components names with host.
@@ -188,33 +186,29 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         Raises:
             RuntimeError: If a service is deployed but its repository is missing.
         """
-        modified_service_components: set[ServiceComponentHostName] = set()
-        for service_component_version in services_components_versions:
-            service_name = service_component_version.service
-            if service_name not in self.keys():
+        modified_sch: set[ServiceComponentHostName] = set()
+        for status in sch_statuses:
+            # Check if the service exist
+            if status.service not in self.keys():
                 raise RuntimeError(
-                    f"Service '{service_name}' is deployed but its repository is "
+                    f"Service '{status.service}' is deployed but its repository is "
                     + "missing."
                 )
-            component_name = service_component_version.component
-            version = service_component_version.version
-            host = service_component_version.host
-            service_component_name = ServiceComponentName(service_name, component_name)
-            service_component_host_name = ServiceComponentHostName(
-                service_component_name, host
+
+            sch = status.get_sch_name()
+            sc = sch.service_component_name
+
+            # Skip if no newer version is available
+            if status.configured_version and not self[
+                sc.service_name
+            ].is_sc_modified_from_version(sc, status.configured_version):
+                continue
+
+            logger.debug(
+                f"{sc.full_name} has been modified"
+                + (f" for host {sch.host_name}" if sch.host_name else "")
             )
 
-            # Check if the service component is modified
-            if self[service_name].is_service_component_modified_from_version(
-                service_component_name, version
-            ):
-                debug_msg = (
-                    "Service" if service_component_name.is_service else "Component"
-                ) + f" '{service_component_name.full_name}' has been modified"
-                if host:
-                    debug_msg += f" for host {host}"
-                debug_msg += "."
-                logger.debug(debug_msg)
-                modified_service_components.add(service_component_host_name)
+            modified_sch.add(sch)
 
-        return modified_service_components
+        return modified_sch

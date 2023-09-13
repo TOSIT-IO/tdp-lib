@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tdp.conftest import generate_collection
+from tdp.conftest import generate_collection_at_path
 from tdp.core.collection import (
     DAG_DIRECTORY_NAME,
     Collection,
@@ -45,7 +45,7 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
             "service": {},
         },
     }
-    generate_collection(collection_path, dag_service_operations, service_vars)
+    generate_collection_at_path(collection_path, dag_service_operations, service_vars)
     collection = Collection.from_path(collection_path)
     assert collection_path / DAG_DIRECTORY_NAME / "service.yml" in collection.dag_yamls
     assert "service_install" in collection.playbooks

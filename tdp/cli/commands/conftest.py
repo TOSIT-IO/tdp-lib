@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tdp.conftest import generate_collection
+from tdp.conftest import generate_collection_at_path
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def collection_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
             "service": {},
         },
     }
-    generate_collection(collection_path, dag_service_operations, service_vars)
+    generate_collection_at_path(collection_path, dag_service_operations, service_vars)
     return collection_path
 
 

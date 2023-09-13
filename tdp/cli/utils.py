@@ -125,17 +125,6 @@ def print_deployment(deployment: DeploymentLog) -> None:
     click.secho("Deployment details", bold=True)
     click.echo(print_object(deployment.to_dict()))
 
-    # Print related component version logs
-    if deployment.component_version:
-        click.secho("\nAffected components", bold=True)
-        print_table(
-            [
-                c.to_dict()
-                for c in deployment.component_version
-                if c.component is not None
-            ],
-        )
-
     # Print deployment operations
     click.secho("\nOperations", bold=True)
     print_table(

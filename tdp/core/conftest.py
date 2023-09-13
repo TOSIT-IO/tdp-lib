@@ -3,95 +3,101 @@
 
 import pytest
 
-from tdp.conftest import generate_collection
+from tdp.conftest import generate_collection_at_path
+from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
-from tdp.core.models import ComponentVersionLog
 from tdp.core.variables import ClusterVariables
 
 
 @pytest.fixture(scope="session")
-def minimal_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
-    collection_path = tmp_path_factory.mktemp("minimal_collection")
-    dag_service_operations = {
-        "mock": [
-            {"name": "mock_node_install", "depends_on": []},
-            {"name": "mock_node_config", "depends_on": ["mock_node_install"]},
-            {"name": "mock_node_start", "depends_on": ["mock_node_config"]},
-            {"name": "mock_node_init", "depends_on": ["mock_node_start"]},
-            {"name": "mock_install", "noop": True, "depends_on": ["mock_node_install"]},
+def mock_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
+    temp_collection_path = tmp_path_factory.mktemp("mock_collection")
+    # Mock dag composed of 1 service ("serv") and 1 component ("comp")
+    mock_dag = {
+        "serv": [
+            {"name": "serv_comp_install", "depends_on": []},
             {
-                "name": "mock_config",
-                "noop": True,
-                "depends_on": ["mock_install", "mock_node_config"],
+                "name": "serv_comp_config",
+                "depends_on": ["serv_comp_install"],
             },
             {
-                "name": "mock_start",
+                "name": "serv_comp_start",
+                "depends_on": ["serv_comp_config"],
+            },
+            {"name": "serv_comp_init", "depends_on": ["serv_comp_start"]},
+            {
+                "name": "serv_install",
                 "noop": True,
-                "depends_on": ["mock_config", "mock_node_start"],
+                "depends_on": ["serv_comp_install"],
             },
             {
-                "name": "mock_init",
+                "name": "serv_config",
                 "noop": True,
-                "depends_on": ["mock_start", "mock_node_init"],
+                "depends_on": ["serv_install", "serv_comp_config"],
+            },
+            {
+                "name": "serv_start",
+                "noop": True,
+                "depends_on": ["serv_config", "serv_comp_start"],
+            },
+            {
+                "name": "serv_init",
+                "noop": True,
+                "depends_on": ["serv_start", "serv_comp_init"],
             },
         ],
     }
-    service_vars = {
-        "mock": {
-            "mock": {
+    # Mock vars for the "serv" service
+    mock_vars = {
+        "serv": {
+            "serv": {
                 "key": "value",
                 "another_key": "another_value",
             },
         },
     }
-    generate_collection(collection_path, dag_service_operations, service_vars)
-    return Collections.from_collection_list([Collection.from_path(collection_path)])
-
-
-@pytest.fixture(scope="module")
-def cluster_variables(
-    tmp_path_factory: pytest.TempPathFactory, minimal_collections: Collections
-) -> ClusterVariables:
-    tdp_vars = tmp_path_factory.mktemp("tdp_vars")
-    cluster_variables = ClusterVariables.initialize_cluster_variables(
-        minimal_collections, tdp_vars
+    generate_collection_at_path(path=temp_collection_path, dag=mock_dag, vars=mock_vars)
+    return Collections.from_collection_list(
+        [Collection.from_path(temp_collection_path)]
     )
-
-    return cluster_variables
-
-
-@pytest.fixture(scope="function")
-def reconfigurable_cluster_variables(
-    tmp_path_factory: pytest.TempPathFactory, minimal_collections: Collections
-) -> tuple[ClusterVariables, list[ComponentVersionLog]]:
-    tdp_vars = tmp_path_factory.mktemp("tdp_vars")
-    cluster_variables = ClusterVariables.initialize_cluster_variables(
-        minimal_collections, tdp_vars
-    )
-    latest_success_component_version = [
-        ComponentVersionLog(
-            service="mock",
-            component=None,
-            host=None,
-            version=cluster_variables["mock"].version,
-        ),
-        ComponentVersionLog(
-            service="mock",
-            component="node",
-            host=None,
-            version=cluster_variables["mock"].version,
-        ),
-    ]
-
-    with cluster_variables["mock"].open_var_files(
-        "update service configuration", ["mock.yml"]
-    ) as configuration:
-        configuration["mock.yml"].merge({"test": 1})
-    return (cluster_variables, latest_success_component_version)
 
 
 @pytest.fixture(scope="session")
-def dag(minimal_collections: Collections) -> Dag:
-    return Dag(minimal_collections)
+def mock_dag(mock_collections: Collections) -> Dag:
+    dag = Dag(mock_collections)
+    # Validate the dag in case of declaration errors
+    dag.validate()
+    return dag
+
+
+@pytest.fixture
+def mock_cluster_variables(
+    tmp_path_factory: pytest.TempPathFactory, mock_collections: Collections
+) -> ClusterVariables:
+    return ClusterVariables.initialize_cluster_variables(
+        collections=mock_collections, tdp_vars=tmp_path_factory.mktemp("tdp_vars")
+    )
+
+
+@pytest.fixture
+def mock_cluster_status():
+    return ClusterStatus({})
+
+
+# TODO: returns tuple[ClusterVariables, ClusterStatus]
+# @pytest.fixture(scope="function")
+# def reconfigurable_cluster_variables(
+#     tmp_path_factory: pytest.TempPathFactory, mock_collections: Collections
+# ) -> ClusterVariables:
+#     tdp_vars = tmp_path_factory.mktemp("tdp_vars")
+#     cluster_variables = ClusterVariables.initialize_cluster_variables(
+#         mock_collections, tdp_vars
+#     )
+
+#     with cluster_variables["mock"].open_var_files(
+#         "update serv configuration", ["mock.yml"]
+#     ) as configuration:
+#         configuration["mock.yml"].merge({"test": 1})
+#     return cluster_variables

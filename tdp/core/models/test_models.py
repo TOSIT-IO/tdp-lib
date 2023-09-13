@@ -6,13 +6,12 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from tdp.core.models.component_version_log import ComponentVersionLog
-from tdp.core.models.deployment_log import DeploymentLog
-from tdp.core.models.operation_log import OperationLog
+from tdp.core.models import DeploymentLog, OperationLog, SCHStatusLog
 
 logger = logging.getLogger("tdp").getChild("test_db")
 
 
+# TODO: add some status logs
 def test_create_deployment_log(db_session: Session):
     deployment_log = DeploymentLog(
         options={
@@ -28,12 +27,12 @@ def test_create_deployment_log(db_session: Session):
         status="SUCCESS",
         deployment_type="Dag",
     )
-    component_version_log = ComponentVersionLog(
+    component_version_log = SCHStatusLog(
         deployment_id=deployment_log.id,
         service="service1",
         component="component1",
         host=None,
-        version="1.0.0",
+        running_version="1.0.0",
     )
     operation_log = OperationLog(
         operation_order=1,
@@ -46,7 +45,6 @@ def test_create_deployment_log(db_session: Session):
         logs=b"operation log",
     )
 
-    deployment_log.component_version.append(component_version_log)
     deployment_log.operations.append(operation_log)
 
     logger.info(deployment_log)
@@ -72,12 +70,6 @@ def test_create_deployment_log(db_session: Session):
     assert result.deployment_type == "Dag"
 
     logger.info(result.operations)
-    assert len(result.component_version) == 1
-    assert result.component_version[0].service == "service1"
-    assert result.component_version[0].component == "component1"
-    assert result.component_version[0].version == "1.0.0"
-
-    logger.info(result.component_version)
     assert len(result.operations) == 1
     assert result.operations[0].operation_order == 1
     assert result.operations[0].operation == "start_target1"

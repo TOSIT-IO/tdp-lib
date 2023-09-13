@@ -12,6 +12,7 @@ from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
+from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.models.base import Base
@@ -21,7 +22,6 @@ from tdp.core.utils import BaseEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.models import ComponentVersionLog, StaleComponent
 
 logger = logging.getLogger("tdp").getChild("deployment_log")
 
@@ -80,10 +80,6 @@ class DeploymentLog(Base):
         order_by="OperationLog.operation_order",
         cascade="all, delete-orphan",
         doc="List of operations.",
-    )
-    component_version: Mapped[list[ComponentVersionLog]] = relationship(
-        back_populates="deployment",
-        doc="List of component versions.",
     )
 
     def __str__(self):
@@ -245,61 +241,51 @@ class DeploymentLog(Base):
     @staticmethod
     def from_stale_components(
         collections: Collections,
-        stale_components: list[StaleComponent],
+        cluster_status: ClusterStatus,
         rolling_interval: Optional[int] = None,
     ) -> "DeploymentLog":
-        """Generate a deployment plan from a list of stale components.
+        """Generate a deployment plan for stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
-            stale_components: List of stale components to perform.
+            cluster_status: ClusterStatus object.
             rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_host_names: set[tuple[str, str]] = set()
-        for stale_component in stale_components:
-            # should not append as those components should have been filtered out
-            if not stale_component.to_reconfigure and not stale_component.to_restart:
-                continue
-            if stale_component.component_name:
-                base_operation_name = "_".join(
-                    [stale_component.service_name, stale_component.component_name]
-                )
-            else:
-                base_operation_name = stale_component.service_name
-            if stale_component.to_restart:
-                operation_host_names.add(
-                    (
-                        "_".join([base_operation_name, "start"]),
-                        stale_component.host_name,
-                    )
-                )
-            if stale_component.to_reconfigure:
-                operation_host_names.add(
-                    (
-                        "_".join([base_operation_name, "config"]),
-                        stale_component.host_name,
-                    )
-                )
-        if len(operation_host_names) == 0:
+        stale_sch_statuses = cluster_status.find_sch_statuses(stale=True)
+
+        # Associate config and/or restart operation with their host
+        operation_hosts: set[tuple[str, Optional[str]]] = set()
+        for stale_sch_status in stale_sch_statuses:
+            sch = stale_sch_status.get_sch_name()
+            if stale_sch_status.to_config:
+                operation_hosts.add((f"{sch.full_name}_config", sch.host_name))
+            if stale_sch_status.to_restart:
+                operation_hosts.add((f"{sch.full_name}_start", sch.host_name))
+        if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
-        # Sort the result in order to have host in lexicographical order.
-        operation_host_names_sorted = sorted(
-            operation_host_names, key=lambda x: f"{x[0]}_{x[1]}"
+
+        # Sort hosts in lexicographical order to improve readability
+        sch_and_operation_names_sorted = sorted(
+            operation_hosts,
+            key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
         )
+
+        # Sort operations using DAG topological sort. Convert operation name to
+        # Operation instance and replace "start" action by "restart".
         dag = Dag(collections)
-        # Sort operations with DAG topological sort, convert string operation to
-        # Operation instance and replace start action with restart action.
-        operation_hosts = list(
+        operation_hosts_sorted = list(
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
                 dag.topological_sort_key(
-                    operation_host_names_sorted, key=lambda x: x[0]
+                    sch_and_operation_names_sorted, key=lambda x: x[0]
                 ),
             )
         )
+
+        # Generate deployment log
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             options={
@@ -308,7 +294,7 @@ class DeploymentLog(Base):
             status=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation, host in operation_hosts:
+        for operation, host in operation_hosts_sorted:
             deployment_log.operations.append(
                 OperationLog(
                     operation=operation.name,

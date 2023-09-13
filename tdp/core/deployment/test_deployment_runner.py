@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Optional
 
 import pytest
 
+from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
@@ -23,15 +25,29 @@ if TYPE_CHECKING:
 
 
 class MockExecutor(Executor):
-    def execute(self, playbook, host=None, extra_vars=None):
+    """Mock executor for testing purposes."""
+
+    def execute(
+        self,
+        playbook: str,
+        host: Optional[str] = None,
+        extra_vars: Optional[Iterable[str]] = None,
+    ):
         return OperationStateEnum.SUCCESS, f"{playbook} LOG SUCCESS".encode("utf-8")
 
 
 class FailingExecutor(MockExecutor):
+    """Mock executor that fails for testing purposes."""
+
     def __init__(self):
         self.count = 0
 
-    def execute(self, playbook, host=None, extra_vars=None):
+    def execute(
+        self,
+        playbook: str,
+        host: Optional[str] = None,
+        extra_vars: Optional[Iterable[str]] = None,
+    ):
         if self.count > 0:
             return OperationStateEnum.FAILURE, f"{playbook} LOG FAILURE".encode("utf-8")
         self.count += 1
@@ -39,42 +55,61 @@ class FailingExecutor(MockExecutor):
 
 
 @pytest.fixture
-def deployment_runner(minimal_collections, cluster_variables):
+def mock_deployment_runner(
+    mock_collections: Collections,
+    mock_cluster_status: ClusterStatus,
+    mock_cluster_variables: ClusterVariables,
+):
     return DeploymentRunner(
-        minimal_collections, MockExecutor(), cluster_variables, stale_components=[]
+        executor=MockExecutor(),
+        collections=mock_collections,
+        cluster_variables=mock_cluster_variables,
+        cluster_status=mock_cluster_status,
     )
 
 
 @pytest.fixture
-def failing_deployment_runner(minimal_collections, cluster_variables):
+def mock_deployment_runner_failing(
+    mock_collections: Collections,
+    mock_cluster_status: ClusterStatus,
+    mock_cluster_variables: ClusterVariables,
+):
     return DeploymentRunner(
-        minimal_collections, FailingExecutor(), cluster_variables, stale_components=[]
+        executor=FailingExecutor(),
+        collections=mock_collections,
+        cluster_variables=mock_cluster_variables,
+        cluster_status=mock_cluster_status,
     )
 
 
-def test_deployment_plan_is_success(dag: Dag, deployment_runner: DeploymentRunner):
-    """nominal case, running a deployment with full dag"""
-    deployment_log = DeploymentLog.from_dag(dag)
-    deployment_iterator = deployment_runner.run(deployment_log)
+# TODO: add asserts on cluster status
 
-    for i, (_, _) in enumerate(deployment_iterator):
-        assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
+
+def test_deployment_plan_is_success(
+    mock_dag: Dag, mock_deployment_runner: DeploymentRunner
+):
+    """Nominal case, runs a deployment with full DAG."""
+    deployment_iterator = mock_deployment_runner.run(DeploymentLog.from_dag(mock_dag))
+
+    for _ in deployment_iterator:
+        pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 8
-    assert len(deployment_iterator.deployment_log.component_version) == 2
+    for operation in deployment_iterator.deployment_log.operations:
+        assert operation.state == OperationStateEnum.SUCCESS
 
 
 def test_deployment_plan_with_filter_is_success(
-    dag: Dag, deployment_runner: DeploymentRunner
+    mock_dag: Dag, mock_deployment_runner: DeploymentRunner
 ):
-    """executing deployment from filtered dag should be a success"""
+    """Executing deployment from filtered dag should be a success."""
     deployment_log = DeploymentLog.from_dag(
-        dag, targets=["mock_init"], filter_expression="*_install"
+        mock_dag, targets=["serv_init"], filter_expression="*_install"
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
-    for i, (_, _) in enumerate(deployment_iterator):
+    for i, _ in enumerate(deployment_iterator):
         assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
@@ -82,23 +117,25 @@ def test_deployment_plan_with_filter_is_success(
 
 
 def test_noop_deployment_plan_is_success(
-    minimal_collections: Collections, deployment_runner: DeploymentRunner
+    mock_collections: Collections, mock_deployment_runner: DeploymentRunner
 ):
-    """deployment plan containing only noop operation"""
-    deployment_log = DeploymentLog.from_operations(minimal_collections, ["mock_init"])
-    deployment_iterator = deployment_runner.run(deployment_log)
+    """Deployment plan containing only noop operation."""
+    deployment_log = DeploymentLog.from_operations(mock_collections, ["serv_init"])
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
-    for i, (_, _) in enumerate(deployment_iterator):
+    for i, _ in enumerate(deployment_iterator):
         assert deployment_log.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment_log.operations) == 1
 
 
-def test_failed_operation_stops(dag: Dag, failing_deployment_runner: DeploymentRunner):
-    """execution fails at the 2 task"""
-    deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
-    deployment_iterator = failing_deployment_runner.run(deployment_log)
+def test_failed_operation_stops(
+    mock_dag: Dag, mock_deployment_runner_failing: DeploymentRunner
+):
+    """Execution fails at the 2nd task."""
+    deployment_log = DeploymentLog.from_dag(mock_dag, targets=["serv_init"])
+    deployment_iterator = mock_deployment_runner_failing.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
@@ -106,119 +143,117 @@ def test_failed_operation_stops(dag: Dag, failing_deployment_runner: DeploymentR
     assert len(deployment_iterator.deployment_log.operations) == 8
 
 
-def test_service_log_is_emitted(dag: Dag, deployment_runner: DeploymentRunner):
-    """executing 2 * config and restart (1 on component, 1 on service)"""
-    deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
-    deployment_iterator = deployment_runner.run(deployment_log)
+def test_service_log_is_emitted(
+    mock_dag: Dag, mock_deployment_runner: DeploymentRunner
+):
+    """Executing 2 * config and restart (1 on component, 1 on service)."""
+    deployment_log = DeploymentLog.from_dag(mock_dag, targets=["serv_init"])
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 2
 
 
-def test_service_log_is_not_emitted(dag: Dag, deployment_runner: DeploymentRunner):
-    """executing only install tasks, therefore no service log"""
+def test_service_log_is_not_emitted(
+    mock_dag: Dag, mock_deployment_runner: DeploymentRunner
+):
+    """Executing only install tasks, therefore no service log."""
     deployment_log = DeploymentLog.from_dag(
-        dag, targets=["mock_init"], filter_expression="*_install"
+        mock_dag, targets=["serv_init"], filter_expression="*_install"
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
 def test_service_log_only_noop_is_emitted(
-    minimal_collections: Collections, deployment_runner: DeploymentRunner
+    mock_collections: Collections, mock_deployment_runner: DeploymentRunner
 ):
-    """deployment plan containing only noop config and start"""
+    """Deployment plan containing only noop config and start."""
     deployment_log = DeploymentLog.from_operations(
-        minimal_collections, ["mock_config", "mock_start"]
+        mock_collections, ["serv_config", "serv_start"]
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_service_log_not_emitted_when_config_start_wrong_order(
-    minimal_collections: Collections, deployment_runner: DeploymentRunner
+    mock_collections: Collections, mock_deployment_runner: DeploymentRunner
 ):
-    """deployment plan containing start then config should not emit service log"""
+    """Deployment plan containing start then config should not emit service log."""
     deployment_log = DeploymentLog.from_operations(
-        minimal_collections, ["mock_node_start", "mock_node_config"]
+        mock_collections, ["serv_comp_start", "serv_comp_config"]
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 0
 
 
 def test_service_log_emitted_once_with_start_and_restart(
-    minimal_collections: Collections, deployment_runner: DeploymentRunner
+    mock_collections: Collections, mock_deployment_runner: DeploymentRunner
 ):
-    """deployment plan containing config, start, and restart should emit only one service log"""
+    """Deployment plan containing config, start, and restart should emit only one service log."""
     deployment_log = DeploymentLog.from_operations(
-        minimal_collections, ["mock_config", "mock_start", "mock_restart"]
+        mock_collections, ["serv_config", "serv_start", "serv_restart"]
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_service_log_emitted_once_with_multiple_config_and_start_on_same_component(
-    minimal_collections: Collections, deployment_runner: DeploymentRunner
+    mock_collections: Collections, mock_deployment_runner: DeploymentRunner
 ):
-    """deployment plan containing multiple config, start, and restart should emit only one service log"""
+    """Deployment plan containing multiple config, start, and restart should emit only one service log."""
     deployment_log = DeploymentLog.from_operations(
-        minimal_collections,
+        mock_collections,
         [
-            "mock_node_config",
-            "mock_node_start",
-            "mock_node_config",
-            "mock_node_restart",
+            "serv_comp_config",
+            "serv_comp_start",
+            "serv_comp_config",
+            "serv_comp_restart",
         ],
     )
-    deployment_iterator = deployment_runner.run(deployment_log)
+    deployment_iterator = mock_deployment_runner.run(deployment_log)
 
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    assert len(deployment_iterator.deployment_log.component_version) == 1
 
 
 def test_deployment_dag_is_resumed(
-    dag: Dag,
-    failing_deployment_runner: DeploymentRunner,
-    deployment_runner: DeploymentRunner,
-    minimal_collections: Collections,
+    mock_dag: Dag,
+    mock_deployment_runner_failing: DeploymentRunner,
+    mock_deployment_runner: DeploymentRunner,
+    mock_collections: Collections,
 ):
-    deployment_log = DeploymentLog.from_dag(dag, targets=["mock_init"])
-    deployment_iterator = failing_deployment_runner.run(deployment_log)
+    deployment_log = DeploymentLog.from_dag(mock_dag, targets=["serv_init"])
+    deployment_iterator = mock_deployment_runner_failing.run(deployment_log)
     for _ in deployment_iterator:
         pass
 
     assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
 
     resume_log = DeploymentLog.from_failed_deployment(
-        minimal_collections, deployment_iterator.deployment_log
+        mock_collections, deployment_iterator.deployment_log
     )
-    resume_deployment_iterator = deployment_runner.run(resume_log)
+    resume_deployment_iterator = mock_deployment_runner.run(resume_log)
     for _ in resume_deployment_iterator:
         pass
 
@@ -248,50 +283,51 @@ def test_deployment_dag_is_resumed(
 
 @pytest.mark.skip(reason="from_reconfigure have been removed, to be reworked")
 def test_deployment_reconfigure_is_resumed(
-    dag: Dag,
+    mock_dag: Dag,
     reconfigurable_cluster_variables: ClusterVariables,
-    failing_deployment_runner: DeploymentRunner,
-    deployment_runner: DeploymentRunner,
-    minimal_collections: Collections,
+    mock_deployment_runner_failing: DeploymentRunner,
+    mock_deployment_runner: DeploymentRunner,
+    mock_collections: Collections,
 ):
-    (
-        cluster_variables,
-        component_version_deployed,
-    ) = reconfigurable_cluster_variables
-    deployment_log = DeploymentLog.from_reconfigure(
-        dag, cluster_variables, component_version_deployed
-    )
-    deployment_iterator = failing_deployment_runner.run(deployment_log)
-    for _ in deployment_iterator:
-        pass
+    pass
+    # (
+    #     cluster_variables,
+    #     component_version_deployed,
+    # ) = reconfigurable_cluster_variables
+    # deployment_log = DeploymentLog.from_reconfigure(
+    #     dag, cluster_variables, component_version_deployed
+    # )
+    # deployment_iterator = failing_deployment_runner.run(deployment_log)
+    # for _ in deployment_iterator:
+    #     pass
 
-    assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
-    resume_log = DeploymentLog.from_failed_deployment(
-        minimal_collections, deployment_iterator.deployment_log
-    )
-    resume_deployment_iterator = deployment_runner.run(resume_log)
-    for _ in resume_deployment_iterator:
-        pass
+    # assert deployment_iterator.deployment_log.status == DeploymentStateEnum.FAILURE
+    # resume_log = DeploymentLog.from_failed_deployment(
+    #     minimal_collections, deployment_iterator.deployment_log
+    # )
+    # resume_deployment_iterator = deployment_runner.run(resume_log)
+    # for _ in resume_deployment_iterator:
+    #     pass
 
-    assert (
-        resume_deployment_iterator.deployment_log.deployment_type
-        == DeploymentTypeEnum.RESUME
-    )
-    assert (
-        resume_deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
-    )
-    failed_operation = next(
-        filter(
-            lambda x: x.state == DeploymentStateEnum.FAILURE,
-            deployment_iterator.deployment_log.operations,
-        )
-    )
-    assert (
-        failed_operation.operation
-        == resume_deployment_iterator.deployment_log.operations[0].operation
-    )
-    assert len(
-        deployment_iterator.deployment_log.operations
-    ) - deployment_iterator.deployment_log.operations.index(failed_operation) == len(
-        resume_deployment_iterator.deployment_log.operations
-    )
+    # assert (
+    #     resume_deployment_iterator.deployment_log.deployment_type
+    #     == DeploymentTypeEnum.RESUME
+    # )
+    # assert (
+    #     resume_deployment_iterator.deployment_log.status == DeploymentStateEnum.SUCCESS
+    # )
+    # failed_operation = next(
+    #     filter(
+    #         lambda x: x.state == DeploymentStateEnum.FAILURE,
+    #         deployment_iterator.deployment_log.operations,
+    #     )
+    # )
+    # assert (
+    #     failed_operation.operation
+    #     == resume_deployment_iterator.deployment_log.operations[0].operation
+    # )
+    # assert len(
+    #     deployment_iterator.deployment_log.operations
+    # ) - deployment_iterator.deployment_log.operations.index(failed_operation) == len(
+    #     resume_deployment_iterator.deployment_log.operations
+    # )
