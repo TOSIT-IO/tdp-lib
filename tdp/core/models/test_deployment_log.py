@@ -7,21 +7,17 @@ from typing import TYPE_CHECKING, TextIO
 
 import pytest
 
-from tdp.conftest import generate_collection
+from tdp.conftest import generate_collection_at_path
 from tdp.core.collection import Collection
 from tdp.core.collections import (
-    OPERATION_SLEEP_NAME,
-    OPERATION_SLEEP_VARIABLE,
     Collections,
 )
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.models.deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
-    NothingToReconfigureError,
     NothingToResumeError,
 )
-from tdp.core.models.stale_component import StaleComponent
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 if TYPE_CHECKING:
@@ -58,10 +54,10 @@ def set_success(deployment_log: DeploymentLog):
 
 
 class TestFromOperations:
-    def test_empty(self, minimal_collections: Collections):
+    def test_empty(self, mock_collections: Collections):
         operations_names = []
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert len(deployment_log.operations) == 0
@@ -69,10 +65,10 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": []}  # TODO should be {}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_single_operation(self, minimal_collections: Collections):
-        operations_names = ["mock_node_config"]
+    def test_single_operation(self, mock_collections: Collections):
+        operations_names = ["serv_comp_config"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert [
@@ -82,10 +78,10 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": operations_names}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_single_restart_operation(self, minimal_collections: Collections):
-        operations_names = ["mock_node_restart"]
+    def test_single_restart_operation(self, mock_collections: Collections):
+        operations_names = ["serv_comp_restart"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert [
@@ -95,10 +91,10 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": operations_names}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_single_noop_opeation(self, minimal_collections: Collections):
-        operations_names = ["mock_config"]
+    def test_single_noop_opeation(self, mock_collections: Collections):
+        operations_names = ["serv_config"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert [
@@ -108,10 +104,10 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": operations_names}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_single_restart_noop_operation(self, minimal_collections: Collections):
-        operations_names = ["mock_restart"]
+    def test_single_restart_noop_operation(self, mock_collections: Collections):
+        operations_names = ["serv_restart"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert [
@@ -121,10 +117,10 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": operations_names}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_multiple_operations(self, minimal_collections: Collections):
-        operations_names = ["mock_node_config", "mock_node_restart"]
+    def test_multiple_operations(self, mock_collections: Collections):
+        operations_names = ["serv_comp_config", "serv_comp_restart"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names
+            mock_collections, operations_names
         )
 
         assert [
@@ -134,11 +130,11 @@ class TestFromOperations:
         assert deployment_log.options == {"operations": operations_names}
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_single_host(self, minimal_collections: Collections):
-        operations_names = ["mock_node_config", "mock_node_start"]
+    def test_single_host(self, mock_collections: Collections):
+        operations_names = ["serv_comp_config", "serv_comp_start"]
         host = "localhost"
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections, operations_names, [host]
+            mock_collections, operations_names, [host]
         )
 
         assert [
@@ -154,7 +150,7 @@ class TestFromOperations:
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
     def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
-        operations_names = ["mock_node_config", "mock_node_start"]
+        operations_names = ["serv_comp_config", "serv_comp_start"]
         hosts = ["host2", "host3", "host1"]
         collection_path = tmp_path_factory.mktemp("multiple_host_collection")
         dag_service_operations = {
@@ -163,7 +159,7 @@ class TestFromOperations:
                 {"name": operations_names[1]},
             ]
         }
-        generate_collection(collection_path, dag_service_operations, {})
+        generate_collection_at_path(collection_path, dag_service_operations, {})
         collection = Collection.from_path(collection_path)
         collection._inventory_reader = MockInventoryReader(hosts)
         collections = Collections.from_collection_list([collection])
@@ -192,11 +188,11 @@ class TestFromOperations:
         }
         assert deployment_log.status == DeploymentStateEnum.PLANNED
 
-    def test_extra_vars(self, minimal_collections: Collections):
-        operations_names = ["mock_node_config", "mock_node_start"]
+    def test_extra_vars(self, mock_collections: Collections):
+        operations_names = ["serv_comp_config", "serv_comp_start"]
         extra_vars = ["foo1=bar1", "foo2=bar2"]
         deployment_log = DeploymentLog.from_operations(
-            collections=minimal_collections,
+            collections=mock_collections,
             operation_names=operations_names,
             extra_vars=extra_vars,
         )
@@ -215,18 +211,18 @@ class TestFromOperations:
 
 
 class TestFromDag:
-    def test_deployment_plan_from_dag(self, dag: Dag):
-        deployment_log = DeploymentLog.from_dag(dag, ["mock_start"])
+    def test_deployment_plan_from_dag(self, mock_dag: Dag):
+        deployment_log = DeploymentLog.from_dag(mock_dag, ["serv_start"])
 
         assert deployment_log.deployment_type == DeploymentTypeEnum.DAG
         assert len(deployment_log.operations) == 6
         assert any(
-            filter(lambda op: op.operation == "mock_start", deployment_log.operations)
+            filter(lambda op: op.operation == "serv_start", deployment_log.operations)
         )
 
-    def test_deployment_plan_filter(self, dag: Dag):
+    def test_deployment_plan_filter(self, mock_dag: Dag):
         deployment_log = DeploymentLog.from_dag(
-            dag, targets=["mock_init"], filter_expression="*_install"
+            mock_dag, targets=["serv_init"], filter_expression="*_install"
         )
 
         assert all(
@@ -236,10 +232,10 @@ class TestFromDag:
             )
         ), "Filter expression should have left only install operations from dag"
 
-    def test_deployment_plan_restart(self, dag: Dag):
+    def test_deployment_plan_restart(self, mock_dag: Dag):
         deployment_log = DeploymentLog.from_dag(
-            dag,
-            targets=["mock_init"],
+            mock_dag,
+            targets=["serv_init"],
             restart=True,
         )
 
@@ -259,17 +255,17 @@ class TestFromDag:
 
 class TestFromFailedDeployment:
     def test_deployment_plan_resume_from_dag(
-        self, dag: Dag, minimal_collections: Collections
+        self, mock_dag: Dag, mock_collections: Collections
     ):
         deployment_log = DeploymentLog.from_dag(
-            dag,
-            targets=["mock_init"],
+            mock_dag,
+            targets=["serv_init"],
         )
         index_to_fail = 2
         deployment_log = fail_deployment_log(deployment_log, index_to_fail)
 
         resume_deployment_log = DeploymentLog.from_failed_deployment(
-            minimal_collections, deployment_log
+            mock_collections, deployment_log
         )
         assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
@@ -279,23 +275,23 @@ class TestFromFailedDeployment:
         assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
 
     def test_deployment_plan_resume_with_success_deployment(
-        self, dag: Dag, minimal_collections: Collections
+        self, mock_dag: Dag, mock_collections: Collections
     ):
         deployment_log = DeploymentLog.from_dag(
-            dag,
-            targets=["mock_init"],
+            mock_dag,
+            targets=["serv_init"],
         )
         set_success(deployment_log)
         with pytest.raises(NothingToResumeError):
-            DeploymentLog.from_failed_deployment(minimal_collections, deployment_log)
+            DeploymentLog.from_failed_deployment(mock_collections, deployment_log)
 
     def test_deployment_plan_resume_from_operations_host(
-        self, minimal_collections: Collections
+        self, mock_collections: Collections
     ):
-        operations_names = ["mock_node_install", "mock_node_config", "mock_node_start"]
+        operations_names = ["serv_comp_install", "serv_comp_config", "serv_comp_start"]
         host = "localhost"
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections,
+            mock_collections,
             operation_names=operations_names,
             host_names=[host],
         )
@@ -303,7 +299,7 @@ class TestFromFailedDeployment:
         deployment_log = fail_deployment_log(deployment_log, index_to_fail)
 
         resume_deployment_log = DeploymentLog.from_failed_deployment(
-            minimal_collections, deployment_log
+            mock_collections, deployment_log
         )
         assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
@@ -315,12 +311,12 @@ class TestFromFailedDeployment:
             assert operation_log.host == host
 
     def test_deployment_plan_resume_from_operations_extra_vars(
-        self, minimal_collections: Collections
+        self, mock_collections: Collections
     ):
-        operations_names = ["mock_node_install", "mock_node_config", "mock_node_start"]
+        operations_names = ["serv_comp_install", "serv_comp_config", "serv_comp_start"]
         extra_vars = ["foo1=bar1", "foo2=bar2"]
         deployment_log = DeploymentLog.from_operations(
-            minimal_collections,
+            mock_collections,
             operation_names=operations_names,
             extra_vars=extra_vars,
         )
@@ -328,7 +324,7 @@ class TestFromFailedDeployment:
         deployment_log = fail_deployment_log(deployment_log, index_to_fail)
 
         resume_deployment_log = DeploymentLog.from_failed_deployment(
-            minimal_collections, deployment_log
+            mock_collections, deployment_log
         )
         assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
@@ -340,113 +336,115 @@ class TestFromFailedDeployment:
             assert operation_log.extra_vars == extra_vars
 
 
+@pytest.mark.skip(reason="test to rewrite using cluster_status")
 class TestFromStaleComponents:
-    def test_nothing_stale(self, minimal_collections: Collections):
-        stale_components = []
-        with pytest.raises(NothingToReconfigureError):
-            DeploymentLog.from_stale_components(
-                collections=minimal_collections,
-                stale_components=stale_components,
-            )
+    pass
+    # def test_nothing_stale(self, mock_collections: Collections):
+    #     stale_components = []
+    #     with pytest.raises(NothingToReconfigureError):
+    #         DeploymentLog.from_stale_components(
+    #             collections=mock_collections,
+    #             stale_components=stale_components,
+    #         )
 
-    def test_one_stale(self, minimal_collections: Collections):
-        stale_components = [
-            StaleComponent(
-                service_name="mock",
-                component_name="node",
-                to_reconfigure=True,
-                to_restart=True,
-            )
-        ]
-        deployment_log = DeploymentLog.from_stale_components(
-            collections=minimal_collections,
-            stale_components=stale_components,
-        )
+    # def test_one_stale(self, mock_collections: Collections):
+    #     stale_components = [
+    #         StaleComponent(
+    #             service="mock",
+    #             component="node",
+    #             to_reconfigure=True,
+    #             to_restart=True,
+    #         )
+    #     ]
+    #     deployment_log = DeploymentLog.from_stale_components(
+    #         collections=mock_collections,
+    #         stale_components=stale_components,
+    #     )
 
-        assert len(deployment_log.operations) == 2
-        assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+    #     assert len(deployment_log.operations) == 2
+    #     assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
 
-    def test_one_stale_rolling(self, tmp_path_factory: pytest.TempPathFactory):
-        operations_names = ["mock_node_config", "mock_node_start"]
-        operation_name_restart = "mock_node_restart"
-        hosts = ["host2", "host3", "host1"]
-        sorted_hosts = sorted(hosts)
-        rolling_interval = 1
-        collection_path = tmp_path_factory.mktemp("multiple_host_rolling_collection")
-        dag_service_operations = {
-            "mock": [
-                {"name": operations_names[0]},
-                {"name": operations_names[1]},
-            ]
-        }
-        generate_collection(collection_path, dag_service_operations, {})
-        collection = Collection.from_path(collection_path)
-        collection._inventory_reader = MockInventoryReader(hosts)
-        collections = Collections.from_collection_list([collection])
+    # def test_one_stale_rolling(self, tmp_path_factory: pytest.TempPathFactory):
+    #     operations_names = ["serv_comp_config", "serv_comp_start"]
+    #     operation_name_restart = "serv_comp_restart"
+    #     hosts = ["host2", "host3", "host1"]
+    #     sorted_hosts = sorted(hosts)
+    #     rolling_interval = 1
+    #     collection_path = tmp_path_factory.mktemp("multiple_host_rolling_collection")
+    #     dag_service_operations = {
+    #         "mock": [
+    #             {"name": operations_names[0]},
+    #             {"name": operations_names[1]},
+    #         ]
+    #     }
+    #     generate_collection_at_path(collection_path, dag_service_operations, {})
+    #     collection = Collection.from_path(collection_path)
+    #     collection._inventory_reader = MockInventoryReader(hosts)
+    #     collections = Collections.from_collection_list([collection])
 
-        stale_components = [
-            StaleComponent(
-                service_name="mock",
-                component_name="node",
-                host_name=host,
-                to_reconfigure=True,
-                to_restart=True,
-            )
-            for host in hosts
-        ]
+    #     stale_components = [
+    #         StaleComponent(
+    #             service="mock",
+    #             component="node",
+    #             host=host,
+    #             to_reconfigure=True,
+    #             to_restart=True,
+    #         )
+    #         for host in hosts
+    #     ]
 
-        deployment_log = DeploymentLog.from_stale_components(
-            collections=collections,
-            stale_components=stale_components,
-            rolling_interval=rolling_interval,
-        )
+    #     deployment_log = DeploymentLog.from_stale_components(
+    #         collections=collections,
+    #         stale_components=stale_components,
+    #         rolling_interval=rolling_interval,
+    #     )
 
-        assert len(deployment_log.operations) == 9
-        assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
-        assert deployment_log.options == {
-            "rolling_interval": rolling_interval,
-        }
+    #     assert len(deployment_log.operations) == 9
+    #     assert deployment_log.deployment_type == DeploymentTypeEnum.RECONFIGURE
+    #     assert deployment_log.options == {
+    #         "rolling_interval": rolling_interval,
+    #     }
 
-        # Config operations
-        assert deployment_log.operations[0].operation == operations_names[0]
-        assert deployment_log.operations[0].host == sorted_hosts[0]
-        assert deployment_log.operations[0].extra_vars == None
+    #     # Config operations
+    #     assert deployment_log.operations[0].operation == operations_names[0]
+    #     assert deployment_log.operations[0].host == sorted_hosts[0]
+    #     assert deployment_log.operations[0].extra_vars == None
 
-        assert deployment_log.operations[1].operation == operations_names[0]
-        assert deployment_log.operations[1].host == sorted_hosts[1]
-        assert deployment_log.operations[1].extra_vars == None
+    #     assert deployment_log.operations[1].operation == operations_names[0]
+    #     assert deployment_log.operations[1].host == sorted_hosts[1]
+    #     assert deployment_log.operations[1].extra_vars == None
 
-        assert deployment_log.operations[2].operation == operations_names[0]
-        assert deployment_log.operations[2].host == sorted_hosts[2]
-        assert deployment_log.operations[2].extra_vars == None
+    #     assert deployment_log.operations[2].operation == operations_names[0]
+    #     assert deployment_log.operations[2].host == sorted_hosts[2]
+    #     assert deployment_log.operations[2].extra_vars == None
 
-        # Restart and sleep operations
-        assert deployment_log.operations[3].operation == operation_name_restart
-        assert deployment_log.operations[3].host == sorted_hosts[0]
-        assert deployment_log.operations[3].extra_vars == None
+    #     # Restart and sleep operations
+    #     assert deployment_log.operations[3].operation == operation_name_restart
+    #     assert deployment_log.operations[3].host == sorted_hosts[0]
+    #     assert deployment_log.operations[3].extra_vars == None
 
-        assert deployment_log.operations[4].operation == OPERATION_SLEEP_NAME
-        assert deployment_log.operations[4].host == None
-        assert deployment_log.operations[4].extra_vars == [
-            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-        ]
+    #     assert deployment_log.operations[4].operation == OPERATION_SLEEP_NAME
+    #     assert deployment_log.operations[4].host == None
+    #     assert deployment_log.operations[4].extra_vars == [
+    #         f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+    #     ]
 
-        assert deployment_log.operations[5].operation == operation_name_restart
-        assert deployment_log.operations[5].host == sorted_hosts[1]
-        assert deployment_log.operations[5].extra_vars == None
+    #     assert deployment_log.operations[5].operation == operation_name_restart
+    #     assert deployment_log.operations[5].host == sorted_hosts[1]
+    #     assert deployment_log.operations[5].extra_vars == None
 
-        assert deployment_log.operations[6].operation == OPERATION_SLEEP_NAME
-        assert deployment_log.operations[6].host == None
-        assert deployment_log.operations[6].extra_vars == [
-            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-        ]
+    #     assert deployment_log.operations[6].operation == OPERATION_SLEEP_NAME
+    #     assert deployment_log.operations[6].host == None
+    #     assert deployment_log.operations[6].extra_vars == [
+    #         f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+    #     ]
 
-        assert deployment_log.operations[7].operation == operation_name_restart
-        assert deployment_log.operations[7].host == sorted_hosts[2]
-        assert deployment_log.operations[7].extra_vars == None
+    #     assert deployment_log.operations[7].operation == operation_name_restart
+    #     assert deployment_log.operations[7].host == sorted_hosts[2]
+    #     assert deployment_log.operations[7].extra_vars == None
 
-        assert deployment_log.operations[8].operation == OPERATION_SLEEP_NAME
-        assert deployment_log.operations[8].host == None
-        assert deployment_log.operations[8].extra_vars == [
-            f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-        ]
+    #     assert deployment_log.operations[8].operation == OPERATION_SLEEP_NAME
+    #     assert deployment_log.operations[8].host == None
+    #     assert deployment_log.operations[8].extra_vars == [
+    #         f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+    #     ]

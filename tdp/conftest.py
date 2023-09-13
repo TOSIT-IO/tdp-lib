@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Generator, Mapping
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -13,7 +13,7 @@ from tdp.core.collection import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
-    SCHEMA_VARS_DIRECTORY_NAME,
+    YML_EXTENSION,
 )
 from tdp.core.collections import OPERATION_SLEEP_NAME
 from tdp.core.models import Base
@@ -40,44 +40,46 @@ def db_session() -> Generator[Session, None, None]:
     engine.dispose()
 
 
-def generate_collection(
-    directory: Path,
-    dag_service_operations: Mapping[str, list],
-    service_vars: Mapping[str, Mapping[str, dict]],
+def generate_collection_at_path(
+    path: Path,
+    dag: dict[str, list],
+    vars: dict[str, dict[str, dict]],
 ) -> None:
-    tdp_lib_dag = directory / DAG_DIRECTORY_NAME
-    playbooks = directory / PLAYBOOKS_DIRECTORY_NAME
-    tdp_vars_defaults = directory / DEFAULT_VARS_DIRECTORY_NAME
-    tdp_vars_schema = directory / SCHEMA_VARS_DIRECTORY_NAME
+    """Generate a collection at a given path."""
+    (dag_dir := path / DAG_DIRECTORY_NAME).mkdir()
+    (playbooks_dir := path / PLAYBOOKS_DIRECTORY_NAME).mkdir()
+    (tdp_vars_defaults_dir := path / DEFAULT_VARS_DIRECTORY_NAME).mkdir()
 
-    tdp_lib_dag.mkdir()
-    playbooks.mkdir()
-    tdp_vars_defaults.mkdir()
-    tdp_vars_schema.mkdir()
-
+    # Minimal playbook which will be used for operations
     minimal_playbook = [
         {"hosts": "localhost"},
     ]
 
-    for service, operations in dag_service_operations.items():
-        service_filename = service + ".yml"
-        with (tdp_lib_dag / service_filename).open("w") as fd:
+    for service_name, operations in dag.items():
+        # Save the dag
+        with (dag_dir / (service_name + YML_EXTENSION)).open("w") as fd:
             yaml.dump(operations, fd)
 
+        # Save playbooks
         for operation in operations:
+            # Generate and save a restart playbook for each start operation
             if operation["name"].endswith("_start") and "noop" not in operation:
                 with (
-                    playbooks / (operation["name"].rstrip("_start") + "_restart.yml")
+                    playbooks_dir
+                    / (operation["name"].rstrip("_start") + "_restart" + YML_EXTENSION)
                 ).open("w") as fd:
                     yaml.dump(minimal_playbook, fd)
-            with (playbooks / (operation["name"] + ".yml")).open("w") as fd:
+            # Save the playbook
+            with (playbooks_dir / (operation["name"] + YML_EXTENSION)).open("w") as fd:
                 yaml.dump(minimal_playbook, fd)
 
-    with (playbooks / (OPERATION_SLEEP_NAME + ".yml")).open("w") as fd:
+    # Save the sleep playbook
+    with (playbooks_dir / (OPERATION_SLEEP_NAME + YML_EXTENSION)).open("w") as fd:
         yaml.dump(minimal_playbook, fd)
 
-    for service_name, file_vars in service_vars.items():
-        service_dir = tdp_vars_defaults / service_name
+    # Save the vars
+    for service_name, file_vars in vars.items():
+        service_dir = tdp_vars_defaults_dir / service_name
         service_dir.mkdir()
         for filename, vars in file_vars.items():
             with (service_dir / filename).open("w") as fd:

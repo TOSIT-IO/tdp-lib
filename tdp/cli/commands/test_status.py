@@ -6,22 +6,24 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from tdp.cli.commands.init import init
-from tdp.cli.commands.service_versions import service_versions
+from tdp.cli.commands.status import status
 
 
-def test_tdp_service_versions(
-    collection_path: Path, database_dsn_path: str, vars: Path
-):
-    args = [
+def test_tdp_status(collection_path: Path, database_dsn_path: str, vars: Path):
+    base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
         database_dsn_path,
-        "--vars",
-        vars,
     ]
     runner = CliRunner()
-    result = runner.invoke(init, args)
+    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(service_versions, ["--database-dsn", database_dsn_path])
+    args = [
+        *base_args,
+        "--vars",
+        str(vars),
+    ]
+    runner = CliRunner()
+    result = runner.invoke(status, args)
     assert result.exit_code == 0, result.output

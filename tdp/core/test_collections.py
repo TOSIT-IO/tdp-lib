@@ -3,7 +3,7 @@
 
 import pytest
 
-from tdp.conftest import generate_collection
+from tdp.conftest import generate_collection_at_path
 from tdp.core.collection import Collection
 from tdp.core.collections import Collections
 
@@ -38,8 +38,12 @@ def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFacto
         },
     }
 
-    generate_collection(collection_path_1, dag_service_operations_1, service_vars_1)
-    generate_collection(collection_path_2, dag_service_operations_2, service_vars_2)
+    generate_collection_at_path(
+        collection_path_1, dag_service_operations_1, service_vars_1
+    )
+    generate_collection_at_path(
+        collection_path_2, dag_service_operations_2, service_vars_2
+    )
 
     collection1 = Collection.from_path(collection_path_1)
     collection2 = Collection.from_path(collection_path_2)

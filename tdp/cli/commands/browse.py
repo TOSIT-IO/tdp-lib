@@ -111,17 +111,6 @@ def _print_operation(operation: OperationLog) -> None:
     click.secho("Operation details", bold=True)
     click.echo(print_object(operation.to_dict()))
 
-    # Print related component version logs
-    if operation.deployment.component_version:
-        click.secho("\nAffected hosts", bold=True)
-        print_table(
-            [
-                c.to_dict()
-                for c in operation.deployment.component_version
-                if c.service == operation.operation.split("_")[0]
-            ],
-        )
-
     # Print operation logs
     if operation.logs:
         click.secho("\nOperation logs", bold=True)

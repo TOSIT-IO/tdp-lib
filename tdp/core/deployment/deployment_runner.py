@@ -12,9 +12,10 @@ from tdp.core.models import DeploymentStateEnum, OperationStateEnum
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
+    from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.deployment.executor import Executor
-    from tdp.core.models import DeploymentLog, OperationLog, StaleComponent
+    from tdp.core.models import DeploymentLog, OperationLog
 
 logger = logging.getLogger("tdp").getChild("deployment_runner")
 
@@ -24,10 +25,10 @@ class DeploymentRunner:
 
     def __init__(
         self,
-        collections: Collections,
         executor: Executor,
+        collections: Collections,
         cluster_variables: ClusterVariables,
-        stale_components: list[StaleComponent],
+        cluster_status: ClusterStatus,
     ):
         """Deployment runner.
 
@@ -40,9 +41,9 @@ class DeploymentRunner:
         self._collections = collections
         self._executor = executor
         self._cluster_variables = cluster_variables
-        self._stale_components = stale_components
+        self._cluster_status = cluster_status
 
-    def _run_operation(self, operation_log: OperationLog):
+    def _run_operation(self, operation_log: OperationLog) -> None:
         """Run operation.
 
         Args:
@@ -96,5 +97,5 @@ class DeploymentRunner:
             collections=self._collections,
             run_method=self._run_operation,
             cluster_variables=self._cluster_variables,
-            stale_components=self._stale_components,
+            cluster_status=self._cluster_status,
         )

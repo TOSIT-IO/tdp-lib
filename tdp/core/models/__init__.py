@@ -1,8 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Optional
+
+from sqlalchemy.engine.row import Row
+
 from tdp.core.models.base import Base
-from tdp.core.models.component_version_log import ComponentVersionLog
 from tdp.core.models.deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
@@ -12,8 +15,20 @@ from tdp.core.models.deployment_log import (
     NothingToResumeError,
 )
 from tdp.core.models.operation_log import OperationLog
-from tdp.core.models.stale_component import StaleComponent
+from tdp.core.models.sch_status_log import SCHStatusLog
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
+
+ServiceComponentHostStatus = tuple[
+    str,  # service
+    Optional[str],  # component
+    Optional[str],  # host
+    Optional[str],  # running_version
+    Optional[str],  # configured_version
+    Optional[bool],  # to_config
+    Optional[bool],  # to_restart
+]
+
+SCHStatusRow = Row[ServiceComponentHostStatus]
 
 
 def init_database(engine):

@@ -206,7 +206,7 @@ class ServiceVariables:
             stack.close()
             self.repository.add_for_validation(paths)
 
-    def is_service_component_modified_from_version(
+    def is_sc_modified_from_version(
         self, service_component: ServiceComponentName, version: str
     ) -> bool:
         """Check if a component has been modified since the given version.

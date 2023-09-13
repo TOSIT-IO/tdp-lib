@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log, get_stale_components
+from tdp.cli.queries import get_planned_deployment_log, get_sch_status
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
@@ -12,6 +12,7 @@ from tdp.cli.utils import (
     print_deployment,
     rolling_interval,
 )
+from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models import DeploymentLog
 
 
@@ -28,9 +29,10 @@ def reconfigure(
 ):
     click.echo("Creating a deployment plan to reconfigure services.")
     with get_session(database_dsn, commit_on_exit=True) as session:
-        stale_components = get_stale_components(session)
         deployment_log = DeploymentLog.from_stale_components(
-            collections, stale_components, rolling_interval
+            collections=collections,
+            cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
+            rolling_interval=rolling_interval,
         )
         if preview:
             print_deployment(deployment_log)
