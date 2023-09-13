@@ -139,18 +139,18 @@ class DeploymentLog(Base):
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
-                "restart": restart,
+                "restart": restart,  # ? should we store restart if it's False ?
+                **_filter_falsy_options(
+                    {
+                        "targets": targets,
+                        "sources": sources,
+                        "filter_expression": filter_expression,
+                        "filter_type": filter_type,
+                    }
+                ),
             },
             status=DeploymentStateEnum.PLANNED,
         )
-        if targets is not None:
-            deployment_log.options["targets"] = targets
-        if sources is not None:
-            deployment_log.options["sources"] = sources
-        if filter_expression is not None:
-            deployment_log.options["filter_expression"] = filter_expression
-        if filter_type is not None:
-            deployment_log.options["filter_type"] = filter_type
         deployment_log.operations = [
             OperationLog(
                 operation=operation.name,
@@ -194,15 +194,16 @@ class DeploymentLog(Base):
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             options={
                 "operations": operation_names,
+                **_filter_falsy_options(
+                    {
+                        "hosts": host_names,
+                        "extra_vars": extra_vars,
+                        "rolling_interval": rolling_interval,
+                    }
+                ),
             },
             status=DeploymentStateEnum.PLANNED,
         )
-        if host_names is not None:
-            deployment_log.options["hosts"] = list(host_names)
-        if extra_vars is not None:
-            deployment_log.options["extra_vars"] = list(extra_vars)
-        if rolling_interval is not None:
-            deployment_log.options["rolling_interval"] = rolling_interval
         i = 1
         for operation in operations:
             can_perform_rolling_restart = (
@@ -303,7 +304,11 @@ class DeploymentLog(Base):
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             options={
-                "rolling_interval": rolling_interval,
+                **_filter_falsy_options(
+                    {
+                        "rolling_interval": rolling_interval,
+                    }
+                ),
             },
             status=DeploymentStateEnum.PLANNED,
         )
@@ -394,3 +399,15 @@ class DeploymentLog(Base):
             )
         ]
         return deployment_log
+
+
+def _filter_falsy_options(options: dict) -> dict:
+    """Get options without falsy values.
+
+    Args:
+        options: Options to filter.
+
+    Returns:
+        Filtered options.
+    """
+    return {k: v for k, v in options.items() if v}
