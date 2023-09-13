@@ -47,8 +47,8 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     def initialize_cluster_variables(
         collections: Collections,
         tdp_vars: Union[str, os.PathLike],
-        override_folders: Iterable[Optional[Union[str, os.PathLike]]] = None,
-        repository_class: Repository = GitRepository,
+        override_folders: Optional[Iterable[Union[str, os.PathLike]]] = None,
+        repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ) -> "ClusterVariables":
         """Get an instance of ClusterVariables, initialize services repositories if needed.
@@ -135,7 +135,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     def get_cluster_variables(
         collections: Collections,
         tdp_vars: Union[str, os.PathLike],
-        repository_class: Repository = GitRepository,
+        repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ):
         """Get an instance of ClusterVariables.
