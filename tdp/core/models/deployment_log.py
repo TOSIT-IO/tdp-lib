@@ -376,8 +376,7 @@ class DeploymentLog(Base):
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.RESUME,
             options={
-                "operations": operations_names_to_resume,
-                # TODO: add from deployment id
+                "from": failed_deployment_log.id,
             },
             status=DeploymentStateEnum.PLANNED,
         )
