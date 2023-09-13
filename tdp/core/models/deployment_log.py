@@ -336,7 +336,7 @@ class DeploymentLog(Base):
 
     @staticmethod
     def from_failed_deployment(
-        collections: Collections, deployment_log: "DeploymentLog"
+        collections: Collections, failed_deployment_log: "DeploymentLog"
     ) -> "DeploymentLog":
         """Generate a deployment plan from a failed deployment.
 
@@ -348,28 +348,28 @@ class DeploymentLog(Base):
             NothingToResumeError: If the deployment was successful.
             UnsupportedDeploymentTypeError: If the deployment type is not supported.
         """
-        if deployment_log.status != DeploymentStateEnum.FAILURE:
+        if failed_deployment_log.status != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{deployment_log.id} "
-                + f"was {deployment_log.status}."
+                f"Nothing to resume, deployment #{failed_deployment_log.id} "
+                + f"was {failed_deployment_log.status}."
             )
 
-        if len(deployment_log.operations) == 0:
+        if len(failed_deployment_log.operations) == 0:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{deployment_log.id} has no operations."
+                f"Nothing to resume, deployment #{failed_deployment_log.id} has no operations."
             )
 
         failed_operation_id = next(
             (
                 i
-                for i, operation in enumerate(deployment_log.operations)
+                for i, operation in enumerate(failed_deployment_log.operations)
                 if operation.state == OperationStateEnum.FAILURE
             ),
             None,
         )
         operations_tuple_to_resume = [
             (operation.operation, operation.host, operation.extra_vars)
-            for operation in deployment_log.operations[failed_operation_id:]
+            for operation in failed_deployment_log.operations[failed_operation_id:]
         ]
         operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
         collections.check_operations_exist(operations_names_to_resume)
