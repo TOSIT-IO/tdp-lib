@@ -82,6 +82,17 @@ def collections(func: FC) -> FC:
     )(func)
 
 
+def hosts(func: FC) -> FC:
+    return click.option(
+        "--host",
+        "hosts",
+        envvar="TDP_HOSTS",
+        type=str,
+        multiple=True,
+        help="Hosts where operations are launched. Can be used multiple times.",
+    )(func)
+
+
 def database_dsn(func: FC) -> FC:
     return click.option(
         "--database-dsn",

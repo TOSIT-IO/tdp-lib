@@ -8,6 +8,7 @@ from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
     database_dsn,
+    hosts,
     preview,
     print_deployment,
     rolling_interval,
@@ -18,13 +19,6 @@ from tdp.core.models import DeploymentLog
 @click.command(short_help="Run single TDP operation.")
 @click.argument("operation_names", nargs=-1, required=True)
 @click.option(
-    "--host",
-    envvar="TDP_HOSTS",
-    type=str,
-    multiple=True,
-    help="Hosts where operations are launched. Can be used multiple times.",
-)
-@click.option(
     "-e",
     "--extra-vars",
     envvar="TDP_EXTRA_VARS",
@@ -32,14 +26,15 @@ from tdp.core.models import DeploymentLog
     multiple=True,
     help="Extra vars for operations (forwarded to ansible as is). Can be used multiple times.",
 )
+@hosts
 @collections
 @database_dsn
 @preview
 @rolling_interval
 def ops(
     operation_names,
-    host,
     extra_vars,
+    hosts,
     collections,
     database_dsn,
     preview,
@@ -49,7 +44,7 @@ def ops(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
     deployment_log = DeploymentLog.from_operations(
-        collections, operation_names, host, extra_vars, rolling_interval
+        collections, operation_names, hosts, extra_vars, rolling_interval
     )
     if preview:
         print_deployment(deployment_log)
