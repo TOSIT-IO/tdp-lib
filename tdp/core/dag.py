@@ -51,7 +51,7 @@ class IllegalNodeError(Exception):
 
 
 class Dag:
-    """Generate DAG with operations' dependencies"""
+    """Generate DAG with operations' dependencies."""
 
     def __init__(self, collections: Collections):
         """Initialize a DAG instance from a Collections.
@@ -137,7 +137,7 @@ class Dag:
             for dependency in operation.depends_on:
                 if dependency not in self.operations:
                     raise ValueError(
-                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
+                        f'Dependency "{dependency}" does not exist for operation "{operation_name}".'
                     )
                 DG.add_edge(dependency, operation_name)
 
@@ -145,7 +145,7 @@ class Dag:
             self._graph = DG
             return self._graph
         else:
-            raise ValueError("Not a DAG")
+            raise ValueError("Not a DAG.")
 
     @graph.setter
     def graph(self, value: nx.DiGraph) -> None:
@@ -265,7 +265,7 @@ class Dag:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
+                raise IllegalNodeError(f"{node} does not exists in the dag.")
             nodes_set.update(nx.ancestors(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
@@ -275,7 +275,7 @@ class Dag:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
+                raise IllegalNodeError(f"{node} does not exists in the dag.")
             nodes_set.update(nx.descendants(self.graph, node))
         return self.topological_sort(nodes_set, restart)
 
@@ -408,11 +408,11 @@ class Dag:
             if operation_name in self._collections[operation.collection_name].playbooks:
                 if operation.noop:
                     c_warning(
-                        f"Operation '{operation_name}' is noop and the playbook should not exist"
+                        f"Operation '{operation_name}' is noop and the playbook should not exist."
                     )
             else:
                 if not operation.noop:
-                    c_warning(f"Operation '{operation_name}' should have a playbook")
+                    c_warning(f"Operation '{operation_name}' should have a playbook.")
 
         # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
         # even if they are "empty" (tagged with noop)

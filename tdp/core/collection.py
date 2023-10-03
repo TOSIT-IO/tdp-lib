@@ -156,7 +156,7 @@ class Collection:
         """Get the set of hosts for a playbook.
 
         Args:
-            playbook: playbook name without extension
+            playbook: Playbook name without extension.
 
         Returns:
             Set of hosts
@@ -180,5 +180,5 @@ class Collection:
             mandatory_path = self._path / mandatory_directory
             if not mandatory_path.exists() or not mandatory_path.is_dir():
                 raise MissingMandatoryDirectoryError(
-                    f"{self._path} does not contain the mandatory directory {mandatory_directory}",
+                    f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
                 )

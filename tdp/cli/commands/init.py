@@ -10,7 +10,7 @@ from tdp.cli.utils import collections, database_dsn, validate, vars
 from tdp.core.variables import ClusterVariables
 
 
-@click.command(short_help="Init database / services in tdp vars")
+@click.command(short_help="Init database / services in tdp vars.")
 @click.option(
     "--overrides",
     envvar="TDP_OVERRIDES",

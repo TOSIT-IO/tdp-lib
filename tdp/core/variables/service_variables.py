@@ -130,7 +130,7 @@ class ServiceVariables:
             operation = operations_filtered[0]
             return self.name + "_" + operation.component
         raise ValueError(
-            f"Service {self.name} does not have a component {component_name}"
+            f"Service {self.name} does not have a component {component_name}."
         )
 
     def update_from_variables_folder(

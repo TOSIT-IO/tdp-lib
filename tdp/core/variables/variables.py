@@ -139,7 +139,7 @@ class _VariablesIOWrapper(VariablesDict):
         """
         if not self._file_descriptor or self._file_descriptor.closed:
             raise RuntimeError(
-                f"{self._file_path} is already closed, which shouldn't happen"
+                f"{self._file_path} is already closed, which shouldn't happen."
             )
 
         if not self._file_descriptor.writable():
@@ -166,5 +166,5 @@ class _VariablesIOWrapper(VariablesDict):
             self._content = None
         else:
             raise RuntimeError(
-                f"{self._file_path} is already closed, which shouldn't happen"
+                f"{self._file_path} is already closed, which shouldn't happen."
             )

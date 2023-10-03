@@ -12,7 +12,7 @@ from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 
-@click.command(short_help="Difference between tdp_vars and defaults")
+@click.command(short_help="Difference between tdp_vars and defaults.")
 @click.argument("service", required=False)
 @collections
 @vars
@@ -27,11 +27,11 @@ def default_diff(service, collections, vars):
 
 
 def service_diff(collections, service):
-    """computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars
+    """Computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars.
 
     Args:
-        collections (Collections): Collections object
-        service (ServiceManager): service to compare's manager
+        collections (Collections): Collections object.
+        service (ServiceManager): Service to compare's manager.
     """
     # key: filename with extension, value: PosixPath(filepath)
     default_service_vars_paths = OrderedDict()
@@ -101,15 +101,15 @@ def service_diff(collections, service):
 def compute_and_print_difference(
     service_name, filename, left_content, right_content, left_path, right_path
 ):
-    """computes differences between 2 files, and outputs them.
+    """Computes differences between 2 files, and outputs them.
 
     Args:
-        service_name (str): name of the service
-        filename (str): name of the file to display
-        left_content (Iterator[str]): content to compare from
-        right_content (Iterator[str]): content to compare to
-        left_path (str): filename to compare from, to use as contextual information
-        right_path (str): filename to compare to, to use as contextual information
+        service_name (str): Name of the service.
+        filename (str): Name of the file to display.
+        left_content (Iterator[str]): Content to compare from.
+        right_content (Iterator[str]): Content to compare to.
+        left_path (str): Filename to compare from, to use as contextual information.
+        right_path (str): Filename to compare to, to use as contextual information.
     """
     differences = difflib.context_diff(
         left_content,

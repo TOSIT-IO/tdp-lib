@@ -16,28 +16,28 @@ from tdp.cli.utils import database_dsn, print_deployment, print_object, print_ta
 from tdp.core.models import DeploymentLog, OperationLog
 
 
-@click.command(short_help="Browse deployment logs")
+@click.command(short_help="Browse deployment logs.")
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
 @click.option(
     "-p",
     "--plan",
     is_flag=True,
-    help="Print the planned deployment, if exist.",
+    help="Print the planned deployment, if exists.",
 )
 @click.option(
     "--limit",
     envvar="TDP_LIMIT",
     type=int,
     default=15,
-    help="Limit number of deployments returned",
+    help="Limit number of deployments returned.",
 )
 @click.option(
     "--offset",
     envvar="TDP_OFFSET",
     type=int,
     default=0,
-    help="At which offset should the database query should start",
+    help="At which offset should the database query should start.",
 )
 @database_dsn
 def browse(
@@ -55,8 +55,8 @@ def browse(
             if deployment_plan:
                 _print_deployment(deployment_plan)
             else:
-                click.echo("No planned deployment found")
-                click.echo("Create a deployment plan using the `tdp plan` command")
+                click.echo("No planned deployment found.")
+                click.echo("Create a deployment plan using the `tdp plan` command.")
             return
 
         # Print a specific operation
@@ -77,11 +77,11 @@ def _print_deployments(deployments: Iterable[DeploymentLog]) -> None:
     """Print a list of deployments in a human readable format.
 
     Args:
-        deployments: List of deployments to print
+        deployments: List of deployments to print.
     """
     if not deployments:
-        click.echo("No deployment found")
-        click.echo("Create a deployment plan using the `tdp plan` command")
+        click.echo("No deployment found.")
+        click.echo("Create a deployment plan using the `tdp plan` command.")
 
     print_table(
         [d.to_dict(filter_out=["options"]) for d in deployments],
@@ -92,7 +92,7 @@ def _print_deployment(deployment: DeploymentLog) -> None:
     """Print a deployment in a human readable format.
 
     Args:
-        deployment: Deployment to print
+        deployment: Deployment to print.
     """
     if not deployment:
         click.echo("Deployment does not exist.")
@@ -105,7 +105,7 @@ def _print_operation(operation: OperationLog) -> None:
     """Print an operation in a human readable format.
 
     Args:
-        operation: Operation to print
+        operation: Operation to print.
     """
     # Print general operation infos
     click.secho("Operation details", bold=True)

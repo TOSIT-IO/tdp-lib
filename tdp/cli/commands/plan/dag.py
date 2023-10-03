@@ -80,9 +80,9 @@ def dag(
         raise click.BadParameter(f"{set_difference} are not valid nodes.")
 
     if sources:
-        click.echo(f"Creating a deployment plan from: {sources}")
+        click.echo(f"Creating a deployment plan from: {sources}.")
     elif targets:
-        click.echo(f"Creating a deployment plan to: {targets}")
+        click.echo(f"Creating a deployment plan to: {targets}.")
     else:
         click.echo("Creating a deployment plan for the whole DAG.")
     deployment_log = DeploymentLog.from_dag(

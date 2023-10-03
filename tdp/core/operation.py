@@ -64,21 +64,21 @@ class Operation:
         self.host_names = host_names or set()
 
         if len(name) > OPERATION_NAME_MAX_LENGTH:
-            raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}")
+            raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}.")
 
         match = RE_GET_SERVICE.search(self.name)
         if not match:
-            raise ValueError(f"Fail to parse service name from '{self.name}'")
+            raise ValueError(f"Fail to parse service name from '{self.name}'.")
         self.service_name = match.group(1)
 
         if len(self.service_name) > SERVICE_NAME_MAX_LENGTH:
             raise ValueError(
-                f"service {self.service_name} is longer than {SERVICE_NAME_MAX_LENGTH}"
+                f"service {self.service_name} is longer than {SERVICE_NAME_MAX_LENGTH}."
             )
 
         match = RE_GET_ACTION.search(self.name)
         if not match:
-            raise ValueError(f"Fail to parse action name from '{self.name}'")
+            raise ValueError(f"Fail to parse action name from '{self.name}'.")
         self.action_name = match.group(1)
 
         if len(self.action_name) > ACTION_NAME_MAX_LENGTH:
@@ -106,7 +106,7 @@ class Operation:
                 )
 
     def is_service_operation(self) -> bool:
-        """Return True if the operation is about a service, False otherwise"""
+        """Return True if the operation is about a service, False otherwise."""
         return bool(RE_IS_SERVICE.search(self.name))
 
     def __repr__(self):

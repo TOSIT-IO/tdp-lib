@@ -23,4 +23,4 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 # 'application' code
-logger.debug("Logger initialized")
+logger.debug("Logger initialized.")

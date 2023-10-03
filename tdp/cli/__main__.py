@@ -27,7 +27,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default=".env",
     envvar="TDP_ENV",
     type=Path,
-    help="Path to environment configuration file",
+    help="Path to environment configuration file.",
 )
 def tdp(env):
     load_dotenv(env)

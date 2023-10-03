@@ -8,7 +8,7 @@ from tdp.cli.utils import collections
 from tdp.core.dag import Dag
 
 
-@click.command(short_help="List nodes from operations DAG")
+@click.command(short_help="List nodes from operations DAG.")
 @collections
 def nodes(collections):
     dag = Dag(collections)

@@ -13,20 +13,20 @@ from tdp.core.operation import Operation
 
 # TODO: Transform this to a script as it is not really a command (see #346).
 @click.command(
-    short_help="Generate meta playbooks in order to use a TDP like collection without tdp-lib"
+    short_help="Generate meta playbooks in order to use a TDP like collection without tdp-lib."
 )
 @click.argument("services", required=False, nargs=-1)
 @click.option(
     "--output-dir",
     type=Path,
-    help="Output dir where playbooks will be written",
+    help="Output directory where playbooks will be written.",
     required=False,
     default=".",
 )
 @click.option(
     "--for-collection",
     type=str,
-    help="Only write operation from this collection",
+    help="Only write operations from this collection.",
     required=False,
     multiple=True,
 )
@@ -48,7 +48,7 @@ def playbooks(services, output_dir, for_collection, collections):
         dag_service_operations.setdefault(operation.service_name, []).append(operation)
 
     if not nx.is_directed_acyclic_graph(dag_services):
-        raise RuntimeError("dag_services is not a DAG")
+        raise RuntimeError("dag_services is not a DAG.")
 
     def custom_key(node):
         operation_priority = SERVICE_PRIORITY.get(node, DEFAULT_SERVICE_PRIORITY)
@@ -62,7 +62,7 @@ def playbooks(services, output_dir, for_collection, collections):
         for service in services:
             if service not in dag_services.nodes:
                 raise ValueError(
-                    f"Service '{service}' is not in the DAG, services available: {dag_services.nodes}"
+                    f"Service '{service}' is not in a DAG, services available: {dag_services.nodes}."
                 )
         # Reorder services specified with services DAG topological_sort order
         services = [
