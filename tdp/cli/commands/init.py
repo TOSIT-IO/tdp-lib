@@ -24,9 +24,13 @@ from tdp.core.variables import ClusterVariables
 @validate
 @vars(exists=False)
 def init(overrides, collections, database_dsn, validate, vars):
-    init_db(database_dsn)
-    cluster_variables = ClusterVariables.initialize_cluster_variables(
-        collections, vars, overrides, validate=validate
-    )
-    for name, service_manager in cluster_variables.items():
-        click.echo(f"{name}: {service_manager.version}")
+    try:
+        init_db(database_dsn)
+        cluster_variables = ClusterVariables.initialize_cluster_variables(
+            collections, vars, overrides, validate=validate
+        )
+        for name, service_manager in cluster_variables.items():
+            click.echo(f"{name}: {service_manager.version}")
+    
+    except Exception as e:
+        raise click.ClickException(e)

@@ -25,21 +25,25 @@ def resume(
     database_dsn,
     preview,
 ):
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        if id is None:
-            deployment_log_to_resume = get_last_deployment(session)
-            click.echo("Creating a deployment plan to resume latest deployment.")
-        else:
-            deployment_log_to_resume = get_deployment(session, id)
-            click.echo(f"Creating a deployment plan to resume deployment #{id}.")
-        deployment_log = DeploymentLog.from_failed_deployment(
-            collections, deployment_log_to_resume
-        )
-        if preview:
-            print_deployment(deployment_log)
-            return
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
-    click.echo("Deployment plan successfully created.")
+    try:
+        with get_session(database_dsn, commit_on_exit=True) as session:
+            if id is None:
+                deployment_log_to_resume = get_last_deployment(session)
+                click.echo("Creating a deployment plan to resume latest deployment.")
+            else:
+                deployment_log_to_resume = get_deployment(session, id)
+                click.echo(f"Creating a deployment plan to resume deployment #{id}.")
+            deployment_log = DeploymentLog.from_failed_deployment(
+                collections, deployment_log_to_resume
+            )
+            if preview:
+                print_deployment(deployment_log)
+                return
+            planned_deployment_log = get_planned_deployment_log(session)
+            if planned_deployment_log:
+                deployment_log.id = planned_deployment_log.id
+            session.merge(deployment_log)
+        click.echo("Deployment plan successfully created.")
+
+    except Exception as e:
+        raise click.ClickException(e)

@@ -11,5 +11,9 @@ from tdp.core.variables import ClusterVariables
 @collections
 @vars
 def validate(collections, vars):
-    ClusterVariables.get_cluster_variables(collections, vars, validate=True)
-    click.echo("TDP Vars are valid")
+    try:
+        ClusterVariables.get_cluster_variables(collections, vars, validate=True)
+        click.echo("TDP Vars are valid")
+
+    except Exception as e:
+        click.ClickException(e)

@@ -38,30 +38,33 @@ if TYPE_CHECKING:
 def stale(
     collections: Collections, database_dsn: str, generate: bool, validate, vars: Path
 ):
-    dag = Dag(collections)
+    try:
+        dag = Dag(collections)
 
-    cluster_variables = ClusterVariables.get_cluster_variables(
-        collections=collections, tdp_vars=vars, validate=validate
-    )
-    check_services_cleanliness(cluster_variables)
+        cluster_variables = ClusterVariables.get_cluster_variables(
+            collections=collections, tdp_vars=vars, validate=validate
+        )
+        check_services_cleanliness(cluster_variables)
 
-    with get_session(database_dsn) as session:
-        if generate:
-            click.echo("Generating the list of stale components.")
-            deployed_component_version_logs = get_latest_success_component_version_log(
-                session
-            )
-            stale_components = StaleComponent.generate(
-                dag, cluster_variables, deployed_component_version_logs
-            )
-            # TODO: remove the deletion of stale component
-            session.query(StaleComponent).delete()
-            session.add_all(stale_components)
-            session.commit()
-        # Print stale components
-        stale_components = get_stale_components(session)
-        _print_stale_components(stale_components)
+        with get_session(database_dsn) as session:
+            if generate:
+                click.echo("Generating the list of stale components.")
+                deployed_component_version_logs = get_latest_success_component_version_log(
+                    session
+                )
+                stale_components = StaleComponent.generate(
+                    dag, cluster_variables, deployed_component_version_logs
+                )
+                # TODO: remove the deletion of stale component
+                session.query(StaleComponent).delete()
+                session.add_all(stale_components)
+                session.commit()
+            # Print stale components
+            stale_components = get_stale_components(session)
+            _print_stale_components(stale_components)
 
+    except Exception as e:
+        raise click.ClickException(e)
 
 def _print_stale_components(stale_components: list[StaleComponent]):
     """Print the list of stale components.

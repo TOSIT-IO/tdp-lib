@@ -64,48 +64,52 @@ def dag(
     cluster,
     collections,
 ):
-    show = import_show()
-    dag = Dag(collections)
-    graph = dag.graph
-    if nodes:
-        if pattern_format:
-            nodes_expanded = []
-            for node in nodes:
-                if pattern_format == "glob":
-                    nodes_expanded.extend(fnmatch.filter(graph.nodes, node))
-                elif pattern_format == "regex":
-                    compiled_regex = re.compile(node)
-                    nodes_expanded.extend(filter(compiled_regex.match, graph.nodes))
-                else:
-                    raise ValueError("pattern_format invalid")
-            if not nodes_expanded:
-                raise ValueError(f"No nodes found with {nodes}")
-            nodes = nodes_expanded
+    try:
+        show = import_show()
+        dag = Dag(collections)
+        graph = dag.graph
+        if nodes:
+            if pattern_format:
+                nodes_expanded = []
+                for node in nodes:
+                    if pattern_format == "glob":
+                        nodes_expanded.extend(fnmatch.filter(graph.nodes, node))
+                    elif pattern_format == "regex":
+                        compiled_regex = re.compile(node)
+                        nodes_expanded.extend(filter(compiled_regex.match, graph.nodes))
+                    else:
+                        raise ValueError("pattern_format invalid")
+                if not nodes_expanded:
+                    raise ValueError(f"No nodes found with {nodes}")
+                nodes = nodes_expanded
 
-        # Nx ancestors only returns the ancestor, and node the selected node
-        # Add them to simplify visualization
-        ancestors = set(nodes)
-        for node in nodes:
-            ancestors.update(nx.ancestors(graph, node))
-        graph = graph.subgraph(ancestors)
-    if transitive_reduction:
-        graph = nx.transitive_reduction(graph)
-    nodes_to_color = set()
-    if color_to:
-        nodes_to_color.update(
-            list(
-                map(lambda o: o.name, dag.get_operations_to_nodes(color_to.split(",")))
+            # Nx ancestors only returns the ancestor, and node the selected node
+            # Add them to simplify visualization
+            ancestors = set(nodes)
+            for node in nodes:
+                ancestors.update(nx.ancestors(graph, node))
+            graph = graph.subgraph(ancestors)
+        if transitive_reduction:
+            graph = nx.transitive_reduction(graph)
+        nodes_to_color = set()
+        if color_to:
+            nodes_to_color.update(
+                list(
+                    map(lambda o: o.name, dag.get_operations_to_nodes(color_to.split(",")))
+                )
             )
-        )
-    if color_from:
-        nodes_from = list(
-            map(lambda o: o.name, dag.get_operations_from_nodes(color_from.split(",")))
-        )
-        if nodes_to_color:
-            nodes_to_color = nodes_to_color.intersection(nodes_from)
-        else:
-            nodes_to_color = nodes_from
-    show(graph, nodes_to_color, cluster)
+        if color_from:
+            nodes_from = list(
+                map(lambda o: o.name, dag.get_operations_from_nodes(color_from.split(",")))
+            )
+            if nodes_to_color:
+                nodes_to_color = nodes_to_color.intersection(nodes_from)
+            else:
+                nodes_to_color = nodes_from
+        show(graph, nodes_to_color, cluster)
+    
+    except Exception as e:
+        raise click.ClickException(e)
 
 
 def import_show():

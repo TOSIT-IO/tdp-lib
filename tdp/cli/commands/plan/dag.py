@@ -79,26 +79,30 @@ def dag(
     if set_difference:
         raise click.BadParameter(f"{set_difference} are not valid nodes.")
 
-    if sources:
-        click.echo(f"Creating a deployment plan from: {sources}")
-    elif targets:
-        click.echo(f"Creating a deployment plan to: {targets}")
-    else:
-        click.echo("Creating a deployment plan for the whole DAG.")
-    deployment_log = DeploymentLog.from_dag(
-        dag,
-        sources=sources,
-        targets=targets,
-        filter_expression=filter,
-        filter_type=filter_type,
-        restart=restart,
-    )
-    if preview:
-        print_deployment(deployment_log)
-        return
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
-    click.echo("Deployment plan successfully created.")
+    try:
+        if sources:
+            click.echo(f"Creating a deployment plan from: {sources}")
+        elif targets:
+            click.echo(f"Creating a deployment plan to: {targets}")
+        else:
+            click.echo("Creating a deployment plan for the whole DAG.")
+        deployment_log = DeploymentLog.from_dag(
+            dag,
+            sources=sources,
+            targets=targets,
+            filter_expression=filter,
+            filter_type=filter_type,
+            restart=restart,
+        )
+        if preview:
+            print_deployment(deployment_log)
+            return
+        with get_session(database_dsn, commit_on_exit=True) as session:
+            planned_deployment_log = get_planned_deployment_log(session)
+            if planned_deployment_log:
+                deployment_log.id = planned_deployment_log.id
+            session.merge(deployment_log)
+        click.echo("Deployment plan successfully created.")
+    
+    except Exception as e:
+        raise click.ClickException(e)

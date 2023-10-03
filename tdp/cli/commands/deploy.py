@@ -42,49 +42,53 @@ def deploy(
     )
     check_services_cleanliness(cluster_variables)
 
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log is None:
-            raise click.ClickException(
-                "No planned deployment found, please run `tdp plan` first."
-            )
-        stale_components = get_stale_components(session)
-        deployment_runner = DeploymentRunner(
-            collections,
-            Executor(
-                run_directory=run_directory.absolute() if run_directory else None,
-                dry=dry or mock_deploy,
-            ),
-            cluster_variables,
-            stale_components,
-        )
-        deployment_iterator = deployment_runner.run(planned_deployment_log)
-        if dry:
-            for _ in deployment_iterator:
-                pass
-        else:
-            session.commit()  # Update deployment log to RUNNING
-            # TODO: check stale_component to delete without returning it.
-            for (
-                component_version_logs,
-                stale_components,
-            ) in deployment_iterator:
-                if component_version_logs and any(component_version_logs):
-                    session.add_all(component_version_logs)
-                if stale_components and any(stale_components):
-                    for stale_component in stale_components:
-                        if (
-                            not stale_component.to_reconfigure
-                            and not stale_component.to_restart
-                        ):
-                            session.delete(stale_component)
-                session.commit()
-        if deployment_iterator.deployment_log.status != DeploymentStateEnum.SUCCESS:
-            raise click.ClickException(
-                (
-                    "Deployment didn't finish with success: "
-                    f"final state {deployment_iterator.deployment_log.status}"
+    try:
+        with get_session(database_dsn, commit_on_exit=True) as session:
+            planned_deployment_log = get_planned_deployment_log(session)
+            if planned_deployment_log is None:
+                raise click.ClickException(
+                    "No planned deployment found, please run `tdp plan` first."
                 )
+            stale_components = get_stale_components(session)
+            deployment_runner = DeploymentRunner(
+                collections,
+                Executor(
+                    run_directory=run_directory.absolute() if run_directory else None,
+                    dry=dry or mock_deploy,
+                ),
+                cluster_variables,
+                stale_components,
             )
-        else:
-            click.echo("Deployment finished with success.")
+            deployment_iterator = deployment_runner.run(planned_deployment_log)
+            if dry:
+                for _ in deployment_iterator:
+                    pass
+            else:
+                session.commit()  # Update deployment log to RUNNING
+                # TODO: check stale_component to delete without returning it.
+                for (
+                    component_version_logs,
+                    stale_components,
+                ) in deployment_iterator:
+                    if component_version_logs and any(component_version_logs):
+                        session.add_all(component_version_logs)
+                    if stale_components and any(stale_components):
+                        for stale_component in stale_components:
+                            if (
+                                not stale_component.to_reconfigure
+                                and not stale_component.to_restart
+                            ):
+                                session.delete(stale_component)
+                    session.commit()
+            if deployment_iterator.deployment_log.status != DeploymentStateEnum.SUCCESS:
+                raise click.ClickException(
+                    (
+                        "Deployment didn't finish with success: "
+                        f"final state {deployment_iterator.deployment_log.status}"
+                    )
+                )
+            else:
+                click.echo("Deployment finished with success.")
+    
+    except Exception as e:
+        raise click.ClickException(e)

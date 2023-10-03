@@ -36,14 +36,18 @@ def _collections_from_paths(
         click.BadParameter: If the value is empty.
     """
     if not value:
-        raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
+        raise click.BadParameter("cannot be empty")
 
-    collections_list = [
-        Collection.from_path(split) for split in value.split(os.pathsep)
-    ]
-    collections = Collections.from_collection_list(collections_list)
+    try:
+        collections_list = [
+            Collection.from_path(split) for split in value.split(os.pathsep)
+        ]
+        collections = Collections.from_collection_list(collections_list)
 
-    return collections
+        return collections
+    
+    except Exception as e:
+        raise click.BadParameter(e)
 
 
 def check_services_cleanliness(cluster_variables: ClusterVariables) -> None:
@@ -77,6 +81,7 @@ def collections(func: FC) -> FC:
         "collections",
         envvar="TDP_COLLECTION_PATH",
         required=True,
+        type=click.STRING,
         callback=_collections_from_paths,
         help=f"List of paths separated by your os' path separator ({os.pathsep})",
     )(func)
@@ -185,7 +190,7 @@ def run_directory(func: FC) -> FC:
     return click.option(
         "--run-directory",
         envvar="TDP_RUN_DIRECTORY",
-        type=Path,
+        type=click.Path(resolve_path=True, path_type=Path, exists=True),
         help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
         required=True,
     )(func)

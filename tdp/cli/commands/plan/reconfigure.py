@@ -26,17 +26,21 @@ def reconfigure(
     preview,
     rolling_interval,
 ):
-    click.echo("Creating a deployment plan to reconfigure services.")
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        stale_components = get_stale_components(session)
-        deployment_log = DeploymentLog.from_stale_components(
-            collections, stale_components, rolling_interval
-        )
-        if preview:
-            print_deployment(deployment_log)
-            return
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
-    click.echo("Deployment plan successfully created.")
+    try:
+        click.echo("Creating a deployment plan to reconfigure services.")
+        with get_session(database_dsn, commit_on_exit=True) as session:
+            stale_components = get_stale_components(session)
+            deployment_log = DeploymentLog.from_stale_components(
+                collections, stale_components, rolling_interval
+            )
+            if preview:
+                print_deployment(deployment_log)
+                return
+            planned_deployment_log = get_planned_deployment_log(session)
+            if planned_deployment_log:
+                deployment_log.id = planned_deployment_log.id
+            session.merge(deployment_log)
+        click.echo("Deployment plan successfully created.")
+
+    except Exception as e:
+        raise click.ClickException(e)

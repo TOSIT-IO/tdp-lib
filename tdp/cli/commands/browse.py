@@ -48,29 +48,34 @@ def browse(
     offset: int,
     database_dsn: str,
 ):
-    with get_session(database_dsn) as session:
-        # Print last deployment plan
-        if plan:
-            deployment_plan = get_planned_deployment_log(session)
-            if deployment_plan:
-                _print_deployment(deployment_plan)
-            else:
-                click.echo("No planned deployment found")
-                click.echo("Create a deployment plan using the `tdp plan` command")
-            return
+    try:
+        with get_session(database_dsn) as session:
+        
+            # Print last deployment plan
+            if plan:
+                deployment_plan = get_planned_deployment_log(session)
+                if deployment_plan:
+                    _print_deployment(deployment_plan)
+                else:
+                    click.echo("No planned deployment found")
+                    click.echo("Create a deployment plan using the `tdp plan` command")
+                return
 
-        # Print a specific operation
-        if deployment_id and operation:
-            _print_operation(get_operation_log(session, deployment_id, operation))
-            return
+            # Print a specific operation
+            if deployment_id and operation:
+                _print_operation(get_operation_log(session, deployment_id, operation))
+                return
 
-        # Print a specific deployment
-        if deployment_id:
-            _print_deployment(get_deployment(session, deployment_id))
-            return
+            # Print a specific deployment
+            if deployment_id:
+                _print_deployment(get_deployment(session, deployment_id))
+                return
 
-        # Print all deployments
-        _print_deployments(get_deployments(session, limit, offset))
+            # Print all deployments
+            _print_deployments(get_deployments(session, limit, offset))
+
+    except Exception as e:
+        raise click.ClickException(e)
 
 
 def _print_deployments(deployments: Iterable[DeploymentLog]) -> None:

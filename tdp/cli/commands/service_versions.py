@@ -17,20 +17,24 @@ from tdp.cli.utils import database_dsn
 )
 @database_dsn
 def service_versions(database_dsn):
-    with get_session(database_dsn) as session:
-        latest_success_service_version_logs = get_latest_success_component_version_log(
-            session
-        )
-        if not any(latest_success_service_version_logs):
-            click.echo("No service has been deployed.")
-            return
-
-        click.echo(
-            tabulate(
-                [
-                    c.to_dict(filter_out=["id"])
-                    for c in latest_success_service_version_logs
-                ],
-                headers="keys",
+    try:
+        with get_session(database_dsn) as session:
+            latest_success_service_version_logs = get_latest_success_component_version_log(
+                session
             )
-        )
+            if not any(latest_success_service_version_logs):
+                click.echo("No service has been deployed.")
+                return
+
+            click.echo(
+                tabulate(
+                    [
+                        c.to_dict(filter_out=["id"])
+                        for c in latest_success_service_version_logs
+                    ],
+                    headers="keys",
+                )
+            )
+
+    except Exception as e:
+        raise click.ClickException(e)
