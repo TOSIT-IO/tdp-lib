@@ -19,8 +19,8 @@ from tdp.cli.utils import database_dsn
 def service_versions(database_dsn):
     try:
         with get_session(database_dsn) as session:
-            latest_success_service_version_logs = get_latest_success_component_version_log(
-                session
+            latest_success_service_version_logs = (
+                get_latest_success_component_version_log(session)
             )
             if not any(latest_success_service_version_logs):
                 click.echo("No service has been deployed.")

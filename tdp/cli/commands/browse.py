@@ -50,7 +50,6 @@ def browse(
 ):
     try:
         with get_session(database_dsn) as session:
-        
             # Print last deployment plan
             if plan:
                 deployment_plan = get_planned_deployment_log(session)

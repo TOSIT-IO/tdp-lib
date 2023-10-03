@@ -19,6 +19,6 @@ def nodes(collections):
             for operation in dag.get_all_operations()
         )
         click.echo(f"Operation list:{endline}{operations}")
-    
+
     except Exception as e:
         raise click.ClickException(e)

@@ -8,7 +8,7 @@ from collections import OrderedDict
 import click
 
 from tdp.cli.utils import collections, vars
-from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME, PathDoesNotExistsError
+from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 
@@ -28,6 +28,7 @@ def default_diff(service, collections, vars):
 
     except Exception as e:
         raise click.ClickException(e)
+
 
 def service_diff(collections, service):
     """computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars

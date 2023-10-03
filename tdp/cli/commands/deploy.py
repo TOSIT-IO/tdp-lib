@@ -89,6 +89,6 @@ def deploy(
                 )
             else:
                 click.echo("Deployment finished with success.")
-    
+
     except Exception as e:
         raise click.ClickException(e)

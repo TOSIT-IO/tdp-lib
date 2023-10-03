@@ -49,8 +49,8 @@ def stale(
         with get_session(database_dsn) as session:
             if generate:
                 click.echo("Generating the list of stale components.")
-                deployed_component_version_logs = get_latest_success_component_version_log(
-                    session
+                deployed_component_version_logs = (
+                    get_latest_success_component_version_log(session)
                 )
                 stale_components = StaleComponent.generate(
                     dag, cluster_variables, deployed_component_version_logs
@@ -65,6 +65,7 @@ def stale(
 
     except Exception as e:
         raise click.ClickException(e)
+
 
 def _print_stale_components(stale_components: list[StaleComponent]):
     """Print the list of stale components.

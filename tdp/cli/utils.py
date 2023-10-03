@@ -45,7 +45,7 @@ def _collections_from_paths(
         collections = Collections.from_collection_list(collections_list)
 
         return collections
-    
+
     except Exception as e:
         raise click.BadParameter(e)
 

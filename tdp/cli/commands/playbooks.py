@@ -46,7 +46,9 @@ def playbooks(services, output_dir, for_collection, collections):
                     dag_services.add_edge(
                         dependency_operation.service_name, operation.service_name
                     )
-            dag_service_operations.setdefault(operation.service_name, []).append(operation)
+            dag_service_operations.setdefault(operation.service_name, []).append(
+                operation
+            )
 
         if not nx.is_directed_acyclic_graph(dag_services):
             raise RuntimeError("dag_services is not a DAG")
@@ -55,7 +57,9 @@ def playbooks(services, output_dir, for_collection, collections):
             operation_priority = SERVICE_PRIORITY.get(node, DEFAULT_SERVICE_PRIORITY)
             return f"{operation_priority:02d}_{node}"
 
-        dag_services_order = nx.lexicographical_topological_sort(dag_services, custom_key)
+        dag_services_order = nx.lexicographical_topological_sort(
+            dag_services, custom_key
+        )
 
         if services:
             services = set(services)
@@ -67,7 +71,9 @@ def playbooks(services, output_dir, for_collection, collections):
                     )
             # Reorder services specified with services DAG topological_sort order
             services = [
-                dag_service for dag_service in dag_services_order if dag_service in services
+                dag_service
+                for dag_service in dag_services_order
+                if dag_service in services
             ]
         else:
             services = dag_services_order
@@ -122,6 +128,6 @@ def playbooks(services, output_dir, for_collection, collections):
                     )
                 else:
                     all_fd.write(f"# {operation.name}\n")
-    
+
     except Exception as e:
         raise click.ClickException(e)

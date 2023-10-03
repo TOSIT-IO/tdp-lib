@@ -103,6 +103,6 @@ def dag(
                 deployment_log.id = planned_deployment_log.id
             session.merge(deployment_log)
         click.echo("Deployment plan successfully created.")
-    
+
     except Exception as e:
         raise click.ClickException(e)

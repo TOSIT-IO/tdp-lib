@@ -31,6 +31,6 @@ def init(overrides, collections, database_dsn, validate, vars):
         )
         for name, service_manager in cluster_variables.items():
             click.echo(f"{name}: {service_manager.version}")
-    
+
     except Exception as e:
         raise click.ClickException(e)
