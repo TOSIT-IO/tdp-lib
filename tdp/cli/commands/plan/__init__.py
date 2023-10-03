@@ -13,7 +13,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.group(
     context_settings=CONTEXT_SETTINGS,
-    invoke_without_command=True,
     short_help="Generate a deployment plan.",
 )
 def plan():
