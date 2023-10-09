@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.cluster_status import ClusterStatus
+from tdp.core.collections import OPERATION_SLEEP_NAME
 from tdp.core.models import (
     DeploymentLog,
     DeploymentStateEnum,
@@ -122,6 +123,10 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                     return
 
                 # ===== Update the cluster status if success =====
+
+                # Skip sleep operation
+                if operation.name == OPERATION_SLEEP_NAME:
+                    return
 
                 sch_status_logs: list[SCHStatusLog] = []
                 sc_name = ServiceComponentName(
