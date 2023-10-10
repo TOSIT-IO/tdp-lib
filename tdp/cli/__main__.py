@@ -11,7 +11,7 @@ from tdp.cli.commands.dag import dag
 from tdp.cli.commands.default_diff import default_diff
 from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.init import init
-from tdp.cli.commands.nodes import nodes
+from tdp.cli.commands.operations import operations
 from tdp.cli.commands.plan import plan
 from tdp.cli.commands.playbooks import playbooks
 from tdp.cli.commands.status import status
@@ -37,7 +37,7 @@ tdp.add_command(dag)
 tdp.add_command(default_diff)
 tdp.add_command(deploy)
 tdp.add_command(init)
-tdp.add_command(nodes)
+tdp.add_command(operations)
 tdp.add_command(plan)
 tdp.add_command(playbooks)
 tdp.add_command(status)
