@@ -6,7 +6,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from tdp.cli.commands.init import init
-from tdp.cli.commands.plan.run import run
+from tdp.cli.commands.plan.ops import ops
 
 
 def test_tdp_plan_run(collection_path: Path, database_dsn_path: str, vars: Path):
@@ -19,5 +19,5 @@ def test_tdp_plan_run(collection_path: Path, database_dsn_path: str, vars: Path)
     runner = CliRunner()
     result = runner.invoke(init, [*base_args, "--vars", str(vars)])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(run, [*base_args, "service_install"])
+    result = runner.invoke(ops, [*base_args, "service_install"])
     assert result.exit_code == 0, result.output
