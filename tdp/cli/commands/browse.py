@@ -61,7 +61,7 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            _print_operation(get_operation_log(session, deployment_id, operation))
+            _print_operations(get_operation_log(session, deployment_id, operation))
             return
 
         # Print a specific deployment
@@ -101,18 +101,17 @@ def _print_deployment(deployment: DeploymentLog) -> None:
     print_deployment(deployment)
 
 
-def _print_operation(operation: OperationLog) -> None:
-    """Print an operation in a human readable format.
+def _print_operations(operations: list[OperationLog]) -> None:
+    """Print a list of operations in a human readable format.
 
     Args:
         operation: Operation to print
     """
     # Print general operation infos
-    click.secho("Operation details", bold=True)
-    click.echo(print_object(operation.to_dict()))
-
-    # Print operation logs
-    if operation.logs:
-        click.secho("\nOperation logs", bold=True)
-        click.echo(str(operation.logs, "utf-8"))
-    pass
+    click.secho("Operation(s) details", bold=True)
+    for operation in operations:
+        click.echo(print_object(operation.to_dict()))
+        # Print operation logs
+        if operation.logs:
+            click.secho("\nOperation logs", bold=True)
+            click.echo(str(operation.logs, "utf-8"))

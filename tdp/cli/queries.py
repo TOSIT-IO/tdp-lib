@@ -417,7 +417,7 @@ def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
 
 def get_operation_log(
     session: Session, deployment_id: int, operation_name: str
-) -> OperationLog:
+) -> list[OperationLog]:
     """Get an operation log.
 
     Args:
@@ -426,7 +426,7 @@ def get_operation_log(
         operation_name: The operation name.
 
     Returns:
-        The operation log.
+        List of matching operation logs.
 
     Raises:
         NoResultFound: If the operation does not exist.
@@ -435,7 +435,7 @@ def get_operation_log(
         return (
             session.query(OperationLog)
             .filter_by(deployment_id=deployment_id, operation=operation_name)
-            .one()
+            .all()
         )
     except NoResultFound as e:
         raise Exception(
