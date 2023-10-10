@@ -4,9 +4,9 @@
 import click
 
 from tdp.cli.commands.plan.dag import dag
+from tdp.cli.commands.plan.ops import ops
 from tdp.cli.commands.plan.reconfigure import reconfigure
 from tdp.cli.commands.plan.resume import resume
-from tdp.cli.commands.plan.run import run
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -20,7 +20,7 @@ def plan():
     pass
 
 
-plan.add_command(run)
-plan.add_command(resume)
-plan.add_command(reconfigure)
 plan.add_command(dag)
+plan.add_command(ops)
+plan.add_command(reconfigure)
+plan.add_command(resume)

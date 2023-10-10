@@ -36,7 +36,7 @@ from tdp.core.models import DeploymentLog
 @database_dsn
 @preview
 @rolling_interval
-def run(
+def ops(
     operation_names,
     host,
     extra_vars,
