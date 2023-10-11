@@ -49,16 +49,6 @@ class DeploymentRunner:
         Args:
             operation_log: Operation to run, modified in place with the result.
         """
-        host_msg = ""
-        if operation_log.host is not None:
-            host_msg = f" on host {operation_log.host}"
-        extra_vars_msg = ""
-        if operation_log.extra_vars is not None:
-            extra_vars_msg = f" with extra vars {operation_log.extra_vars}"
-        logger.debug(
-            f"Running operation {operation_log.operation}{host_msg}{extra_vars_msg}"
-        )
-
         operation_log.start_time = datetime.utcnow()
 
         operation = self._collections.get_operation(operation_log.operation)
