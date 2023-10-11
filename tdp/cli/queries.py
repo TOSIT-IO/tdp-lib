@@ -44,7 +44,7 @@ def get_sch_status(
                 case(
                     (
                         SCHStatusLog.configured_version != None,
-                        SCHStatusLog.timestamp,
+                        SCHStatusLog.event_time,
                     )
                 )
             ).label("latest_configured_version_timestamp"),
@@ -66,7 +66,7 @@ def get_sch_status(
                 case(
                     (
                         SCHStatusLog.running_version != None,
-                        SCHStatusLog.timestamp,
+                        SCHStatusLog.event_time,
                     )
                 )
             ).label("latest_running_version_timestamp"),
@@ -85,7 +85,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             func.max(
-                case((SCHStatusLog.to_config != None, SCHStatusLog.timestamp))
+                case((SCHStatusLog.to_config != None, SCHStatusLog.event_time))
             ).label("latest_to_config_timestamp"),
         )
         .group_by(
@@ -102,7 +102,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             func.max(
-                case((SCHStatusLog.to_restart != None, SCHStatusLog.timestamp))
+                case((SCHStatusLog.to_restart != None, SCHStatusLog.event_time))
             ).label("latest_to_restart_timestamp"),
         )
         .group_by(
@@ -120,7 +120,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             SCHStatusLog.configured_version,
-            SCHStatusLog.timestamp,
+            SCHStatusLog.event_time,
         )
         .join(
             latest_configured_version_timestamp_subquery,
@@ -140,7 +140,7 @@ def get_sch_status(
                     == latest_configured_version_timestamp_subquery.c.host,
                 ),
                 # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLog.timestamp
+                SCHStatusLog.event_time
                 == latest_configured_version_timestamp_subquery.c.latest_configured_version_timestamp,
             ),
         )
@@ -153,7 +153,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             SCHStatusLog.running_version,
-            SCHStatusLog.timestamp,
+            SCHStatusLog.event_time,
         )
         .join(
             latest_running_version_timestamp_subquery,
@@ -173,7 +173,7 @@ def get_sch_status(
                     == latest_running_version_timestamp_subquery.c.host,
                 ),
                 # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLog.timestamp
+                SCHStatusLog.event_time
                 == latest_running_version_timestamp_subquery.c.latest_running_version_timestamp,
             ),
         )
@@ -186,7 +186,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             SCHStatusLog.to_config,
-            SCHStatusLog.timestamp,
+            SCHStatusLog.event_time,
         )
         .join(
             latest_to_config_timestamp_subquery,
@@ -204,7 +204,7 @@ def get_sch_status(
                     SCHStatusLog.host == latest_to_config_timestamp_subquery.c.host,
                 ),
                 # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLog.timestamp
+                SCHStatusLog.event_time
                 == latest_to_config_timestamp_subquery.c.latest_to_config_timestamp,
             ),
         )
@@ -217,7 +217,7 @@ def get_sch_status(
             SCHStatusLog.component,
             SCHStatusLog.host,
             SCHStatusLog.to_restart,
-            SCHStatusLog.timestamp,
+            SCHStatusLog.event_time,
         )
         .join(
             latest_to_restart_timestamp_subquery,
@@ -235,7 +235,7 @@ def get_sch_status(
                     SCHStatusLog.host == latest_to_restart_timestamp_subquery.c.host,
                 ),
                 # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLog.timestamp
+                SCHStatusLog.event_time
                 == latest_to_restart_timestamp_subquery.c.latest_to_restart_timestamp,
             ),
         )
@@ -267,8 +267,8 @@ def get_sch_status(
                     SCHStatusLog.host == None,
                     SCHStatusLog.host == latest_running_version_value_subquery.c.host,
                 ),
-                SCHStatusLog.timestamp
-                == latest_running_version_value_subquery.c.timestamp,
+                SCHStatusLog.event_time
+                == latest_running_version_value_subquery.c.event_time,
             ),
         )
         .outerjoin(
@@ -288,8 +288,8 @@ def get_sch_status(
                     SCHStatusLog.host
                     == latest_configured_version_value_subquery.c.host,
                 ),
-                SCHStatusLog.timestamp
-                == latest_configured_version_value_subquery.c.timestamp,
+                SCHStatusLog.event_time
+                == latest_configured_version_value_subquery.c.event_time,
             ),
         )
         .outerjoin(
@@ -307,7 +307,7 @@ def get_sch_status(
                     SCHStatusLog.host == None,
                     SCHStatusLog.host == latest_to_config_value_subquery.c.host,
                 ),
-                SCHStatusLog.timestamp == latest_to_config_value_subquery.c.timestamp,
+                SCHStatusLog.event_time == latest_to_config_value_subquery.c.event_time,
             ),
         )
         .outerjoin(
@@ -325,7 +325,8 @@ def get_sch_status(
                     SCHStatusLog.host == None,
                     SCHStatusLog.host == latest_to_restart_value_subquery.c.host,
                 ),
-                SCHStatusLog.timestamp == latest_to_restart_value_subquery.c.timestamp,
+                SCHStatusLog.event_time
+                == latest_to_restart_value_subquery.c.event_time,
             ),
         )
         .group_by(
