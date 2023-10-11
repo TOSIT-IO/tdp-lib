@@ -8,7 +8,7 @@ from collections.abc import Generator, Iterable, Mapping
 from typing import TYPE_CHECKING, Any, Optional
 
 from tdp.core.dag import Dag
-from tdp.core.models.sch_status_log import SCHStatusLog
+from tdp.core.models.sch_status_log import SCHStatusLog, SCHStatusLogSourceEnum
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
@@ -304,6 +304,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
                     service=sc.service_name,
                     component=sc.component_name,
                     host=sch.host_name,
+                    source=SCHStatusLogSourceEnum.STALE,
                 )
                 if config_operation:
                     stale_sch_log.to_config = True
@@ -335,6 +336,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
                         service=operation.service_name,
                         component=operation.component_name,
                         host=host,
+                        source=SCHStatusLogSourceEnum.STALE,
                     ),
                 )
                 if operation.action_name == "config":

@@ -14,6 +14,15 @@ from tdp.core.operation import (
     SERVICE_NAME_MAX_LENGTH,
 )
 from tdp.core.repository.repository import VERSION_MAX_LENGTH
+from tdp.core.utils import BaseEnum
+
+
+# TODO: add MANUAL source
+class SCHStatusLogSourceEnum(BaseEnum):
+    """Source of the status log."""
+
+    DEPLOYMENT = "Deployment"
+    STALE = "Stale"
 
 
 class SCHStatusLog(Base):
@@ -49,6 +58,9 @@ class SCHStatusLog(Base):
     )
     to_restart: Mapped[Optional[bool]] = mapped_column(
         doc="True if the component need to be restarted."
+    )
+    source: Mapped[SCHStatusLogSourceEnum] = mapped_column(
+        doc="Source of the status log.",
     )
     deployment_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("deployment_log.id"),

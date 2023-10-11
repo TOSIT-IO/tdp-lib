@@ -18,6 +18,7 @@ from tdp.core.models import (
     OperationLog,
     OperationStateEnum,
     SCHStatusLog,
+    SCHStatusLogSourceEnum,
 )
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
@@ -180,6 +181,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                     )
                     if sch_status_log:
                         sch_status_log.deployment_id = self.deployment_log.id
+                        sch_status_log.source = SCHStatusLogSourceEnum.DEPLOYMENT
                         sch_status_logs.append(sch_status_log)
 
                 # Update the reconfigure_operations dict
