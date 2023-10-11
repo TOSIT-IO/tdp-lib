@@ -179,6 +179,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                         can_update_stale=can_update_stale,
                     )
                     if sch_status_log:
+                        sch_status_log.deployment_id = self.deployment_log.id
                         sch_status_logs.append(sch_status_log)
 
                 # Update the reconfigure_operations dict
