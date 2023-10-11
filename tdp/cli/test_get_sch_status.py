@@ -9,7 +9,11 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from tdp.cli.queries import get_sch_status
-from tdp.core.models import SCHStatusLog, ServiceComponentHostStatus
+from tdp.core.models import (
+    SCHStatusLog,
+    SCHStatusLogSourceEnum,
+    ServiceComponentHostStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +48,7 @@ def _mock_sch_status_log(
                 service=service,
                 component=component,
                 host=host,
+                source=SCHStatusLogSourceEnum.STALE,
                 running_version=_generate_version()
                 if random.choice([True, False])
                 else None,
