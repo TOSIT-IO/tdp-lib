@@ -82,3 +82,6 @@ class GitRepository(Repository):
                 if diff.a_path == path or diff.b_path == path:
                     return True
             return False
+
+    def restore_file(self, file_names: str) -> None:
+        self._repo.index.checkout(paths=[file_names], force=True)

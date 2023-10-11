@@ -131,3 +131,15 @@ class Repository(ABC):
             True if the file has been modified, False otherwise.
         """
         pass
+
+    @abstractmethod
+    def restore_file(self, file_names: str) -> None:
+        """Cancel the file_name modifications back to the last commit.
+
+        Args:
+            file_name: file name to cancel.
+
+        Returns:
+            None.
+        """
+        pass
