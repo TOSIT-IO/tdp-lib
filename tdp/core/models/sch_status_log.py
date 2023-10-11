@@ -33,7 +33,7 @@ class SCHStatusLog(Base):
     id: Mapped[int] = mapped_column(
         doc="Unique id of the cluster status log.", primary_key=True
     )
-    timestamp: Mapped[datetime] = mapped_column(
+    event_time: Mapped[datetime] = mapped_column(
         default=datetime.utcnow,
         doc="Timestamp of the component version log.",
     )
