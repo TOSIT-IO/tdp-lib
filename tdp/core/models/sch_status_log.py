@@ -17,13 +17,13 @@ from tdp.core.repository.repository import VERSION_MAX_LENGTH
 from tdp.core.utils import BaseEnum
 
 
-# TODO: add MANUAL source
 class SCHStatusLogSourceEnum(BaseEnum):
     """Source of the status log."""
 
     DEPLOYMENT = "Deployment"
     FORCED = "Forced"
     STALE = "Stale"
+    MANUAL = "Manual"
 
 
 class SCHStatusLog(Base):
