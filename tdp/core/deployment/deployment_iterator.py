@@ -71,6 +71,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
         run_method: Callable[[OperationLog], None],
         cluster_variables: ClusterVariables,
         cluster_status: ClusterStatus,
+        force_stale_update: bool,
     ):
         """Initialize the iterator.
 
@@ -87,6 +88,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
         self._collections = collections
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
+        self.force_stale_update = force_stale_update
         self._iter = iter(deployment_log.operations)
         try:
             self._reconfigure_operations = _group_hosts_by_operation(
@@ -150,7 +152,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                     else:
                         first_reconfigure_operation = None
 
-                    can_update_stale = (
+                    can_update_stale = self.force_stale_update or (
                         operation_log.operation == first_reconfigure_operation
                     )
 
@@ -181,7 +183,11 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                     )
                     if sch_status_log:
                         sch_status_log.deployment_id = self.deployment_log.id
-                        sch_status_log.source = SCHStatusLogSourceEnum.DEPLOYMENT
+                        sch_status_log.source = (
+                            SCHStatusLogSourceEnum.FORCED
+                            if self.force_stale_update
+                            else SCHStatusLogSourceEnum.DEPLOYMENT
+                        )
                         sch_status_logs.append(sch_status_log)
 
                 # Update the reconfigure_operations dict

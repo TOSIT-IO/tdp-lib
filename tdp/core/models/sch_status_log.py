@@ -22,6 +22,7 @@ class SCHStatusLogSourceEnum(BaseEnum):
     """Source of the status log."""
 
     DEPLOYMENT = "Deployment"
+    FORCED = "Forced"
     STALE = "Stale"
 
 

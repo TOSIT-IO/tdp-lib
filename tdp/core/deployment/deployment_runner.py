@@ -72,11 +72,17 @@ class DeploymentRunner:
         operation_log.state = state
         operation_log.logs = logs
 
-    def run(self, deployment_log: DeploymentLog) -> DeploymentIterator:
+    def run(
+        self,
+        deployment_log: DeploymentLog,
+        *,
+        force_stale_update: bool = False,
+    ) -> DeploymentIterator:
         """Provides an iterator to run a deployment plan.
 
         Args:
             deployment_log: Deployment log to run.
+            force_sch_update: Force SCH status update.
 
         Returns:
             DeploymentIterator object, to iterate over operations logs.
@@ -88,4 +94,5 @@ class DeploymentRunner:
             run_method=self._run_operation,
             cluster_variables=self._cluster_variables,
             cluster_status=self._cluster_status,
+            force_stale_update=force_stale_update,
         )
