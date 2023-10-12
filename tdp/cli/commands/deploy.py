@@ -25,6 +25,13 @@ from tdp.core.variables import ClusterVariables
 
 
 @click.command(short_help="Execute a TDP deployment plan.")
+@click.option(
+    "--force-stale-update",
+    "--fsu",
+    "force_stale_update",
+    is_flag=True,
+    help="Force stale status update.",
+)
 @dry
 @collections
 @database_dsn
@@ -36,6 +43,7 @@ def deploy(
     dry,
     collections,
     database_dsn,
+    force_stale_update: bool,
     mock_deploy,
     run_directory,
     validate,
@@ -61,7 +69,7 @@ def deploy(
             ),
             cluster_variables=cluster_variables,
             cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
-        ).run(planned_deployment_log)
+        ).run(planned_deployment_log, force_stale_update=force_stale_update)
 
         if dry:
             for _ in deployment_iterator:
