@@ -22,7 +22,7 @@ except ImportError:
 if TYPE_CHECKING:
     from tdp.core.collection import Collection
 
-logger = logging.getLogger("tdp").getChild("collections")
+logger = logging.getLogger(__name__)
 
 OPERATION_SLEEP_NAME = "wait_sleep"
 OPERATION_SLEEP_VARIABLE = "wait_sleep_seconds"

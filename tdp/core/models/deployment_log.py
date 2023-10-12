@@ -23,7 +23,7 @@ from tdp.core.utils import BaseEnum
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
 
-logger = logging.getLogger("tdp").getChild("deployment_log")
+logger = logging.getLogger(__name__)
 
 
 class NoOperationMatchError(Exception):

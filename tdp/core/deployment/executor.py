@@ -9,7 +9,7 @@ from typing import Optional
 
 from tdp.core.models import OperationStateEnum
 
-logger = logging.getLogger("tdp").getChild("ansible_executor")
+logger = logging.getLogger(__name__)
 
 
 class Executor:

@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from tdp.core.collections import Collections
     from tdp.core.variables import ClusterVariables
 
-logger = logging.getLogger("tdp").getChild("deployment_iterator")
+logger = logging.getLogger(__name__)
 
 
 def _group_hosts_by_operation(

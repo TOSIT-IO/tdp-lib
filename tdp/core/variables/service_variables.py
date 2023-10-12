@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from tdp.core.repository.repository import Repository
     from tdp.core.service_component_name import ServiceComponentName
 
-logger = logging.getLogger("tdp").getChild("service_variables")
+logger = logging.getLogger(__name__)
 
 
 class InvalidSchema(Exception):

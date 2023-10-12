@@ -22,7 +22,7 @@ from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
 from tdp.core.variables.service_variables import InvalidSchema
 
-logger = logging.getLogger("tdp").getChild("edit_vars")
+logger = logging.getLogger(__name__)
 
 
 @click.command(short_help="Edit variables files.")

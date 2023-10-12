@@ -1,7 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import logging
 from pathlib import Path
+from typing import Optional
 
 import click
 from dotenv import load_dotenv
@@ -17,8 +19,20 @@ from tdp.cli.commands.playbooks import playbooks
 from tdp.cli.commands.status import status
 from tdp.cli.commands.validate import validate
 from tdp.cli.commands.vars_edit import vars_edit
+from tdp.cli.logger import setup_logging
 
+# Add `-h` shortcut to print the help for the whole cli.
+# Click only uses `--help` by default.
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optional[Path]:
+    """Click callback to load the environment file."""
+    if value.exists():
+        load_dotenv(value)
+        return value
+    else:
+        logging.warning(f"Environment file {value} does not exist.")
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -26,11 +40,20 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "--env",
     default=".env",
     envvar="TDP_ENV",
+    callback=load_env,
     type=Path,
     help="Path to environment configuration file",
 )
-def tdp(env):
-    load_dotenv(env)
+@click.option(
+    "--log-level",
+    default="INFO",
+    envvar="TDP_LOG_LEVEL",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    help="Set the level of log output.",
+)
+def tdp(env: Path, log_level: str):
+    setup_logging(log_level)
+    logging.info("Logging is configured.")
 
 
 tdp.add_command(browse)

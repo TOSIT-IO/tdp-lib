@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from tdp.core.models import DeploymentLog, OperationLog, SCHStatusLog
 
-logger = logging.getLogger("tdp").getChild("test_db")
+logger = logging.getLogger(__name__)
 
 
 # TODO: add some status logs
