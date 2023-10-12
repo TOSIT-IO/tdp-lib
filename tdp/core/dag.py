@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
-logger = logging.getLogger("tdp").getChild("dag")
+logger = logging.getLogger(__name__)
 
 SERVICE_PRIORITY = {
     "exporter": 1,

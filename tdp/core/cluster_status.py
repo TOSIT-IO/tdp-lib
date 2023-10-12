@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tdp.core.models import SCHStatusRow
     from tdp.core.variables import ClusterVariables
 
-logger = logging.getLogger("tdp").getChild("cluster_status")
+logger = logging.getLogger(__name__)
 
 
 # TODO: add latest_update column

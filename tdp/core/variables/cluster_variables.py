@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from tdp.core.repository.repository import Repository
     from tdp.core.service_component_host_name import ServiceComponentHostName
 
-logger = logging.getLogger("tdp").getChild("cluster_variables")
+logger = logging.getLogger(__name__)
 
 
 class ClusterVariables(Mapping[str, ServiceVariables]):

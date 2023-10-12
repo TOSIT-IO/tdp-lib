@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tdp.core.deployment.executor import Executor
     from tdp.core.models import DeploymentLog, OperationLog
 
-logger = logging.getLogger("tdp").getChild("deployment_runner")
+logger = logging.getLogger(__name__)
 
 
 class DeploymentRunner:

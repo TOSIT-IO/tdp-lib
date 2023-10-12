@@ -18,7 +18,7 @@ from tdp.core.repository.repository import (
     Repository,
 )
 
-logger = logging.getLogger("tdp").getChild("git_repository")
+logger = logging.getLogger(__name__)
 
 
 class GitRepository(Repository):
