@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import click
+from click.decorators import FC
 
 from tdp.cli.queries import (
     get_sch_status,
@@ -29,58 +30,175 @@ if TYPE_CHECKING:
     from tdp.core.collections import Collections
 
 
-@click.command(short_help="List stale components.")
-@click.argument("service", nargs=1, required=False)
-@click.argument("component", nargs=1, required=False)
-@collections
-@database_dsn
-@click.option(
-    "--generate-stales", is_flag=True, help="Update the list of stale components."
-)
-@click.option(
-    "--host",
-    "hosts",
-    envvar="TDP_HOSTS",
-    type=str,
-    multiple=True,
-    help="Hosts where components are defined. Can be used multiple times.",
-)
-@click.option("--override", "-O", is_flag=True, help="Override the stale status.")
+def _check_service(
+    ctx: click.Context, param: click.Parameter, value: Optional[str]
+) -> Optional[str]:
+    """Click callback that check if the service exists."""
+    collections: Collections = ctx.params["collections"]
+    vars: Path = ctx.params["vars"]
+    # TODO: would be nice if services can be retrieved from the collections
+    cluster_variables = ClusterVariables.get_cluster_variables(
+        collections=collections, tdp_vars=vars, validate=False
+    )
+    if value and value not in cluster_variables.keys():
+        raise click.UsageError(f"Service '{value}' does not exists.")
+    return value
+
+
+def _check_component(
+    ctx: click.Context, param: click.Parameter, value: Optional[str]
+) -> Optional[str]:
+    """Click callback that check if the component exists."""
+    collections: Collections = ctx.params["collections"]
+    service: str = ctx.params["service"]
+    if value and value not in [
+        sc_name.component_name
+        for sc_name in collections.get_components_from_service(service)
+    ]:
+        raise click.UsageError(
+            f"Component '{value}' does not exists in service '{service}'."
+        )
+    return value
+
+
+def _hosts(func: FC) -> FC:
+    return click.option(
+        "--host",
+        "hosts",
+        envvar="TDP_HOSTS",
+        type=str,
+        multiple=True,
+        help="Host to filter. Can be used multiple times.",
+    )(func)
+
+
+def _common_status_options(func: FC) -> FC:
+    """Add common status options to the command."""
+    for option in reversed(
+        [
+            click.argument("service", nargs=1, required=False, callback=_check_service),
+            click.argument(
+                "component", nargs=1, required=False, callback=_check_component
+            ),
+            collections,
+            database_dsn,
+            validate,
+            vars,
+        ]
+    ):
+        func = option(func)  # type: ignore
+    return func
+
+
+@click.group()
+def status() -> None:
+    """Manage the status of the cluster."""
+    pass
+
+
+@status.command()
+@_common_status_options
+@_hosts
 @click.option("--stale", is_flag=True, help="Only print stale components.")
-@click.option(
-    "--to-config",
-    type=bool,
-    help="To be used with --override. Override to_config value.",
-)
-@click.option(
-    "--to-restart",
-    type=bool,
-    help="To be used with --override. Override to_restart value.",
-)
-@validate
-@vars
-def status(
+def show(
     service: Optional[str],
     component: Optional[str],
     collections: Collections,
     database_dsn: str,
-    generate_stales: bool,
     hosts: Optional[Iterable[str]],
-    override: bool,
     stale: bool,
+    validate: bool,
+    vars: Path,
+) -> None:
+    """Print the status of the cluster.
+
+    Provide a SERVICE and a COMPONENT to filter the results.
+    """
+    cluster_variables = ClusterVariables.get_cluster_variables(
+        collections=collections, tdp_vars=vars, validate=validate
+    )
+    check_services_cleanliness(cluster_variables)
+
+    with get_session(database_dsn) as session:
+        _print_sch_status_logs(
+            ClusterStatus.from_sch_status_rows(
+                get_sch_status(session)
+            ).find_sch_statuses(
+                service=service, component=component, hosts=hosts, stale=stale
+            )
+        )
+
+
+@status.command()
+@_common_status_options
+def generate_stales(
+    service: Optional[str],
+    component: Optional[str],
+    collections: Collections,
+    database_dsn: str,
+    hosts: Optional[Iterable[str]],
+    validate: bool,
+    vars: Path,
+) -> None:
+    """Generate stale components.
+
+    Stales components are components that have been modified and need to be
+    reconfigured and/or restarted.
+    """
+    cluster_variables = ClusterVariables.get_cluster_variables(
+        collections=collections, tdp_vars=vars, validate=validate
+    )
+    check_services_cleanliness(cluster_variables)
+
+    with get_session(database_dsn) as session:
+        stale_status_logs = ClusterStatus.from_sch_status_rows(
+            get_sch_status(session)
+        ).generate_stale_sch_logs(
+            cluster_variables=cluster_variables, collections=collections
+        )
+        session.add_all(stale_status_logs)
+        session.commit()
+
+        _print_sch_status_logs(
+            ClusterStatus.from_sch_status_rows(
+                get_sch_status(session)
+            ).find_sch_statuses(
+                service=service, component=component, hosts=hosts, stale=True
+            )
+        )
+
+
+@status.command()
+@_common_status_options
+@_hosts
+@click.option(
+    "--to-config",
+    type=bool,
+    help="Manually set the 'to_config' value.",
+)
+@click.option(
+    "--to-restart",
+    type=bool,
+    help="Manually set the 'to_restart' value.",
+)
+def edit(
+    service: Optional[str],
+    component: Optional[str],
+    collections: Collections,
+    database_dsn: str,
+    hosts: Optional[Iterable[str]],
     to_config: Optional[bool],
     to_restart: Optional[bool],
     validate: bool,
     vars: Path,
-):
-    # Check if the options are valid
-    if override and generate_stales:
+) -> None:
+    """Edit the status of the cluster.
+
+    Provide a SERVICE and a COMPONENT (optional) to edit.
+    """
+    if to_config is not None and to_restart is not None:
         raise click.UsageError(
-            "The --override and --generate-stales options are mutually exclusive."
-        )
-    if (to_config is not None or to_restart is not None) and not override:
-        raise click.UsageError(
-            "The --to-config and --to-restart options require --override option."
+            "You must provide either --to-config or --to-restart option."
         )
 
     cluster_variables = ClusterVariables.get_cluster_variables(
@@ -88,72 +206,44 @@ def status(
     )
     check_services_cleanliness(cluster_variables)
 
-    # Check if the service exist
-    if service and service not in cluster_variables.keys():
-        raise click.UsageError(f"Service '{service}' does not exists.")
-
-    # Check if the component exist
-    if (
-        service
-        and component
-        and component in collections.get_components_from_service(service)
-    ):
-        raise click.UsageError(
-            f"Component '{component}' does not exists in service '{service}'."
-        )
-
     with get_session(database_dsn) as session:
-        if override:
-            # Check if the options are valid
-            if not service or not hosts:
-                raise click.UsageError(
-                    "The --override option requires at least a service."
+        if not service:
+            raise click.UsageError("SERVICE argument is required.")
+
+        # TODO: would be nice if host is optional and we can edit all hosts at once
+        if not hosts:
+            raise click.UsageError("At least one --host is required.")
+
+        # Create a new SCHStatusLog for each host
+        for host in hosts:
+            session.add(
+                SCHStatusLog(
+                    service=service,
+                    component=component,
+                    host=host,
+                    source=SCHStatusLogSourceEnum.MANUAL,
+                    to_config=to_config,
+                    to_restart=to_restart,
                 )
-            if to_config is None and to_restart is None:
-                raise click.UsageError(
-                    "Nothing to override. Use --to-config and/or --to-restart options."
-                )
-
-            # Create a new SCHStatusLog for each host
-            for host in hosts:
-                session.add(
-                    SCHStatusLog(
-                        service=service,
-                        component=component,
-                        host=host,
-                        to_config=to_config,
-                        to_restart=to_restart,
-                        source=SCHStatusLogSourceEnum.MANUAL,
-                    )
-                )
-
-                # Print the override message
-                override_msg = "Setting"
-                if to_config is not None:
-                    override_msg += f" to_config to {to_config}"
-                if to_restart is not None:
-                    override_msg += " and" if to_config is not None else ""
-                    override_msg += f" to_restart to {to_restart}"
-                override_msg += f" for {service}_{component} on {host}."
-                click.echo(override_msg)
-
-            session.commit()
-
-        elif generate_stales:
-            click.echo("Updating the list of stale components.")
-            stale_status_logs = ClusterStatus.from_sch_status_rows(
-                get_sch_status(session)
-            ).generate_stale_sch_logs(
-                cluster_variables=cluster_variables, collections=collections
             )
-            session.add_all(stale_status_logs)
-            session.commit()
+
+            # Print the override message
+            override_msg = "Setting"
+            if to_config is not None:
+                override_msg += f" to_config to {to_config}"
+            if to_restart is not None:
+                override_msg += " and" if to_config is not None else ""
+                override_msg += f" to_restart to {to_restart}"
+            override_msg += f" for {service}_{component} on {host}."
+            click.echo(override_msg)
+
+        session.commit()
 
         _print_sch_status_logs(
             ClusterStatus.from_sch_status_rows(
                 get_sch_status(session)
             ).find_sch_statuses(
-                service=service, component=component, hosts=hosts, stale=stale
+                service=service, component=component, hosts=hosts, stale=False
             )
         )
 
