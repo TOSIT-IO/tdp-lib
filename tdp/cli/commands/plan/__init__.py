@@ -9,14 +9,10 @@ from tdp.cli.commands.plan.ops import ops
 from tdp.cli.commands.plan.reconfigure import reconfigure
 from tdp.cli.commands.plan.resume import resume
 
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
-
-@click.group(
-    context_settings=CONTEXT_SETTINGS,
-    short_help="Generate a deployment plan.",
-)
+@click.group()
 def plan():
+    """Generate a deployment plan."""
     pass
 
 
