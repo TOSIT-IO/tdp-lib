@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -79,6 +80,7 @@ def collections(func: FC) -> FC:
         required=True,
         callback=_collections_from_paths,
         help=f"List of paths separated by your os' path separator ({os.pathsep})",
+        is_eager=True,  # This option is used by other options, so we need to parse it first
     )(func)
 
 
@@ -199,7 +201,7 @@ def validate(func: FC) -> FC:
     )(func)
 
 
-def vars(func=None, *, exists=True):
+def vars(func=None, *, exists=True) -> Callable[[FC], FC]:
     def decorator(fn: FC) -> FC:
         return click.option(
             "--vars",
@@ -207,6 +209,7 @@ def vars(func=None, *, exists=True):
             required=True,
             type=click.Path(resolve_path=True, path_type=Path, exists=exists),
             help="Path to the tdp vars",
+            is_eager=True,  # This option is used by other options, so we need to parse it first
         )(fn)
 
     # Checks if the decorator was used without parentheses.
