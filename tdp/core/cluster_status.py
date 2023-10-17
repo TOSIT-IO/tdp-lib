@@ -88,8 +88,8 @@ class SCHStatus:
             host=host,
             running_version=running_version,
             configured_version=configured_version,
-            to_config=to_config,
-            to_restart=to_restart,
+            to_config=bool(to_config),
+            to_restart=bool(to_restart),
         )
 
     # ? transform into a property if we keep it?

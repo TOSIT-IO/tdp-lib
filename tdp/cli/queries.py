@@ -242,15 +242,35 @@ def get_sch_status(
         .subquery()
     )
 
+    # Individual query components
+    max_running_version = func.max(
+        latest_running_version_value_subquery.c.running_version
+    )
+    max_configured_version = func.max(
+        latest_configured_version_value_subquery.c.configured_version
+    )
+
+    bool_map = {True: 1, False: 0}
+    case_to_config = case(
+        bool_map, value=latest_to_config_value_subquery.c.to_config, else_=0
+    )
+
+    case_to_restart = case(
+        bool_map, value=latest_to_restart_value_subquery.c.to_restart, else_=0
+    )
+
+    max_to_config = func.max(case_to_config).label("max_to_config")
+    max_to_restart = func.max(case_to_restart).label("max_to_restart")
+
     return (
         session.query(
             SCHStatusLog.service,
             SCHStatusLog.component,
             SCHStatusLog.host,
-            func.max(latest_running_version_value_subquery.c.running_version),
-            func.max(latest_configured_version_value_subquery.c.configured_version),
-            func.max(latest_to_config_value_subquery.c.to_config),
-            func.max(latest_to_restart_value_subquery.c.to_restart),
+            max_running_version,
+            max_configured_version,
+            max_to_config,
+            max_to_restart,
         )
         .outerjoin(
             latest_running_version_value_subquery,

@@ -24,8 +24,8 @@ ServiceComponentHostStatus = tuple[
     Optional[str],  # host
     Optional[str],  # running_version
     Optional[str],  # configured_version
-    Optional[bool],  # to_config
-    Optional[bool],  # to_restart
+    Optional[int],  # to_config
+    Optional[int],  # to_restart
 ]
 
 SCHStatusRow = Row[ServiceComponentHostStatus]
