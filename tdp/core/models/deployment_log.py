@@ -102,6 +102,7 @@ class DeploymentLog(Base):
         filter_expression: Optional[str] = None,
         filter_type: Optional[FilterTypeEnum] = None,
         restart: bool = False,
+        reverse: bool = False,
         stop: bool = False,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a DAG.
@@ -137,6 +138,9 @@ class DeploymentLog(Base):
                 "Combination of parameters resulted into an empty list of Operations."
             )
 
+        if reverse:
+            operations = reversed(operations)
+
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
@@ -148,6 +152,7 @@ class DeploymentLog(Base):
                         "sources": sources,
                         "filter_expression": filter_expression,
                         "filter_type": filter_type,
+                        "reverse": reverse,
                     }
                 ),
             },
