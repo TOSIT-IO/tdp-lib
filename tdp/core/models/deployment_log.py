@@ -144,14 +144,14 @@ class DeploymentLog(Base):
         deployment_log = DeploymentLog(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
-                "restart": restart,  # ? should we store restart if it's False ?
-                "stop": stop,
                 **_filter_falsy_options(
                     {
-                        "targets": targets,
                         "sources": sources,
-                        "filter_expression": filter_expression,
+                        "targets": targets,
                         "filter_type": filter_type,
+                        "filter_expression": filter_expression,
+                        "restart": restart,
+                        "stop": stop,
                         "reverse": reverse,
                     }
                 ),
