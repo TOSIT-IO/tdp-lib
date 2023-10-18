@@ -55,11 +55,18 @@ def _validate_filtertype(ctx, param, value):
     help="Replace 'start' operations by 'restart' operations.",
 )
 @click.option(
+    "--reverse",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Reverse the final list of operations.",
+)
+@click.option(
     "--stop",
     is_flag=True,
     show_default=True,
     default=False,
-    help="Replace 'start' operations by 'stop' operations.",
+    help="Replace 'start' operations by 'stop' operations. This option should be used with --reversed.",
 )
 @preview
 @collections
@@ -73,6 +80,7 @@ def dag(
     preview,
     collections,
     database_dsn,
+    reverse: bool = False,
     stop: bool = False,
 ):
     if stop and restart:
@@ -102,6 +110,7 @@ def dag(
         filter_expression=filter,
         filter_type=filter_type,
         restart=restart,
+        reverse=reverse,
         stop=stop,
     )
     if preview:
