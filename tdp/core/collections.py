@@ -144,13 +144,18 @@ class Collections(Mapping):
                             host_names=host_names,
                             **operation,
                         )
-                        # Restart operations are not defined in the DAG for noop,
+                        # 'restart' and 'stop' operations are not defined in the DAG for noop,
                         # they are generated from the start operations.
                         if (
                             "noop" in operation
                             and operation["noop"]
                             and "_start" in operation_name
                         ):
+                            logger.debug(
+                                f"DAG Operation '{operation_name}' is noop, "
+                                f"creating the associated restart and stop operations."
+                            )
+
                             restart_operation_name = operation_name.replace(
                                 "_start", "_restart"
                             )
@@ -159,12 +164,21 @@ class Collections(Mapping):
                                     "name": restart_operation_name,
                                 }
                             )
-                            logger.debug(
-                                f"DAG Operation '{operation_name}' is noop, "
-                                f"creating the associated restart operation."
-                            )
                             self._other_operations[restart_operation_name] = Operation(
                                 collection_name="replace_restart_noop",
+                                **operation,
+                            )
+
+                            stop_operation_name = operation_name.replace(
+                                "_start", "_stop"
+                            )
+                            operation.update(
+                                {
+                                    "name": stop_operation_name,
+                                }
+                            )
+                            self._other_operations[stop_operation_name] = Operation(
+                                collection_name="replace_stop_noop",
                                 **operation,
                             )
 

@@ -52,7 +52,14 @@ def _validate_filtertype(ctx, param, value):
     is_flag=True,
     show_default=True,
     default=False,
-    help="Whether start operations should be replaced by restart operations.",
+    help="Replace 'start' operations by 'restart' operations.",
+)
+@click.option(
+    "--stop",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Replace 'start' operations by 'stop' operations.",
 )
 @preview
 @collections
@@ -66,7 +73,10 @@ def dag(
     preview,
     collections,
     database_dsn,
+    stop: bool = False,
 ):
+    if stop and restart:
+        click.UsageError("Cannot use --restart and --stop at the same time.")
     dag = Dag(collections)
     set_nodes = set()
     if sources:
@@ -92,6 +102,7 @@ def dag(
         filter_expression=filter,
         filter_type=filter_type,
         restart=restart,
+        stop=stop,
     )
     if preview:
         print_deployment(deployment_log)
