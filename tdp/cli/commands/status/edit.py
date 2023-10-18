@@ -29,6 +29,12 @@ if TYPE_CHECKING:
 @_common_status_options
 @_hosts
 @click.option(
+    "--message",
+    "-m",
+    type=str,
+    help="Description of the change.",
+)
+@click.option(
     "--to-config",
     type=bool,
     help="Manually set the 'to_config' value.",
@@ -44,6 +50,7 @@ def edit(
     collections: Collections,
     database_dsn: str,
     hosts: Optional[Iterable[str]],
+    message: Optional[str],
     to_config: Optional[bool],
     to_restart: Optional[bool],
     validate: bool,
@@ -81,6 +88,7 @@ def edit(
                     source=SCHStatusLogSourceEnum.MANUAL,
                     to_config=to_config,
                     to_restart=to_restart,
+                    message=message,
                 )
             )
 

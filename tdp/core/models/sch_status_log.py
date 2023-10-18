@@ -67,6 +67,9 @@ class SCHStatusLog(Base):
         ForeignKey("deployment_log.id"),
         doc="Related deployment log id (if applicable).",
     )
+    message: Mapped[Optional[str]] = mapped_column(
+        doc="Description of the change when manually edited.",
+    )
 
     def _formater(self, key: str, value: Any):
         """Format a value for printing."""
