@@ -102,6 +102,7 @@ class DeploymentLog(Base):
         filter_expression: Optional[str] = None,
         filter_type: Optional[FilterTypeEnum] = None,
         restart: bool = False,
+        stop: bool = False,
     ) -> "DeploymentLog":
         """Generate a deployment plan from a DAG.
 
@@ -117,7 +118,10 @@ class DeploymentLog(Base):
             EmptyDeploymentPlanError: If the deployment plan is empty.
         """
         operations = dag.get_operations(
-            sources=sources, targets=targets, restart=restart
+            sources=sources,
+            targets=targets,
+            restart=restart,
+            stop=stop,
         )
 
         if filter_expression is not None:
@@ -137,6 +141,7 @@ class DeploymentLog(Base):
             deployment_type=DeploymentTypeEnum.DAG,
             options={
                 "restart": restart,  # ? should we store restart if it's False ?
+                "stop": stop,
                 **_filter_falsy_options(
                     {
                         "targets": targets,

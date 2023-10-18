@@ -155,12 +155,16 @@ class Dag:
     def graph(self) -> None:
         self.graph = None
 
-    def node_to_operation(self, node: str, restart: bool = False) -> Operation:
+    def node_to_operation(
+        self, node: str, restart: bool = False, stop: bool = False
+    ) -> Operation:
         # ? Restart operations are now stored in collections.operations they can be
         # ? directly retrieved using the collections.get_operation method.
         # ? This method could be removed in the future.
         if restart and node.endswith("_start"):
             node = node.replace("_start", "_restart")
+        elif stop and node.endswith("_start"):
+            node = node.replace("_start", "_stop")
         return self.collections.get_operation(node)
 
     def topological_sort_key(
@@ -227,7 +231,10 @@ class Dag:
         return topo_sorted
 
     def topological_sort(
-        self, nodes: Optional[list[str]] = None, restart: bool = False
+        self,
+        nodes: Optional[list[str]] = None,
+        restart: bool = False,
+        stop: bool = False,
     ) -> list[Operation]:
         """Perform a topological sort on the DAG.
 
@@ -240,7 +247,7 @@ class Dag:
         """
         return list(
             map(
-                lambda node: self.node_to_operation(node, restart),
+                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
                 self.topological_sort_key(nodes),
             )
         )
@@ -250,45 +257,48 @@ class Dag:
         sources: Optional[list[str]] = None,
         targets: Optional[list[str]] = None,
         restart: bool = False,
+        stop: bool = False,
     ) -> list[Operation]:
         if sources and targets:
             raise NotImplementedError("Cannot specify both sources and targets.")
         if sources:
-            return self.get_operations_from_nodes(sources, restart)
+            return self.get_operations_from_nodes(sources, restart=restart, stop=stop)
         elif targets:
-            return self.get_operations_to_nodes(targets, restart)
-        return self.get_all_operations(restart)
+            return self.get_operations_to_nodes(targets, restart=restart, stop=stop)
+        return self.get_all_operations(restart=restart, stop=stop)
 
     def get_operations_to_nodes(
-        self, nodes: list[str], restart: bool = False
+        self, nodes: list[str], restart: bool = False, stop: bool = False
     ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
                 raise IllegalNodeError(f"{node} does not exists in the dag")
             nodes_set.update(nx.ancestors(self.graph, node))
-        return self.topological_sort(nodes_set, restart)
+        return self.topological_sort(nodes_set, restart=restart, stop=stop)
 
     def get_operations_from_nodes(
-        self, nodes: list[str], restart: bool = False
+        self, nodes: list[str], restart: bool = False, stop: bool = False
     ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
                 raise IllegalNodeError(f"{node} does not exists in the dag")
             nodes_set.update(nx.descendants(self.graph, node))
-        return self.topological_sort(nodes_set, restart)
+        return self.topological_sort(nodes_set, restart=restart, stop=stop)
 
-    def get_all_operations(self, restart: bool = False) -> list[Operation]:
+    def get_all_operations(
+        self, restart: bool = False, stop: bool = False
+    ) -> list[Operation]:
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
         :rtype: List[str]
         """
-        return self.topological_sort(self.graph, restart)
+        return self.topological_sort(self.graph, restart=restart, stop=stop)
 
     def get_operation_descendants(
-        self, nodes: list[str], restart: bool = False
+        self, nodes: list[str], restart: bool = False, stop: bool = False
     ) -> list[Operation]:
         """
         Retrieve all descendant operations for the specified nodes in the DAG.
@@ -318,7 +328,10 @@ class Dag:
         # Remove input nodes from the set to exclude them from the result.
         nodes_filtered = filter(lambda node: node not in nodes, nodes_set)
         return list(
-            map(lambda node: self.node_to_operation(node, restart), nodes_filtered)
+            map(
+                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
+                nodes_filtered,
+            )
         )
 
     def filter_operations_glob(
