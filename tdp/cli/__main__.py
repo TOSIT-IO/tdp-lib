@@ -18,7 +18,7 @@ from tdp.cli.commands.plan import plan
 from tdp.cli.commands.playbooks import playbooks
 from tdp.cli.commands.status import status
 from tdp.cli.commands.validate import validate
-from tdp.cli.commands.vars_edit import vars_edit
+from tdp.cli.commands.vars import vars
 from tdp.cli.logger import setup_logging
 
 # Add `-h` shortcut to print the help for the whole cli.
@@ -66,4 +66,4 @@ tdp.add_command(plan)
 tdp.add_command(playbooks)
 tdp.add_command(status)
 tdp.add_command(validate)
-tdp.add_command(vars_edit)
+tdp.add_command(vars)

@@ -25,7 +25,7 @@ from tdp.core.variables.service_variables import InvalidSchema
 logger = logging.getLogger(__name__)
 
 
-@click.command(short_help="Edit variables files.")
+@click.command()
 @click.argument("service_name", nargs=1, required=True)
 @click.argument("service_component_parameter", nargs=1, required=False)
 @click.option(
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 @database_dsn
 @validate
 @vars
-def vars_edit(
+def edit(
     service_name: str,
     service_component_parameter: str,
     commit_message: str,
@@ -48,7 +48,7 @@ def vars_edit(
     validate: bool,
     vars: Path,
 ):
-    """Edit a variables file for a service.
+    """Edit a variables file.
 
     SERVICE_NAME: Name of the service to edit variables for.
     SERVICE_COMPONENT_PARAMETER: Name or path of the component to edit variables for. If not specified, edit the service variables file.
