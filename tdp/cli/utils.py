@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -21,14 +20,14 @@ if TYPE_CHECKING:
 
 
 def _collections_from_paths(
-    ctx: click.Context, param: click.Parameter, value: str
+    ctx: click.Context, param: click.Parameter, value: list[Path]
 ) -> Collections:
     """Transforms a list of paths into a Collections object.
 
     Args:
         ctx: Click context.
         param: Click parameter.
-        value: List of collections path separated by os.pathsep.
+        value: List of collections paths.
 
     Returns:
         Collections object from the paths.
@@ -39,9 +38,7 @@ def _collections_from_paths(
     if not value:
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
-    collections_list = [
-        Collection.from_path(split) for split in value.split(os.pathsep)
-    ]
+    collections_list = [Collection.from_path(path) for path in value]
     collections = Collections.from_collection_list(collections_list)
 
     return collections
@@ -78,8 +75,10 @@ def collections(func: FC) -> FC:
         "collections",
         envvar="TDP_COLLECTION_PATH",
         required=True,
+        multiple=True,
+        type=click.Path(resolve_path=True, path_type=Path),
         callback=_collections_from_paths,
-        help=f"List of paths separated by your os' path separator ({os.pathsep})",
+        help="Path to the collection. Can be used multiple times.",
         is_eager=True,  # This option is used by other options, so we need to parse it first
     )(func)
 
