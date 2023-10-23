@@ -15,13 +15,13 @@ Developer Quick Start (sqlite backend)
    .. code-block:: shell
 
      # this folder is local repo of tdp-collection
-     user@yourmachine:export TDP_COLLECTION_PATH=~/tdp-collection
+     user@yourmachine:export TDP_COLLECTIONS=~/tdp-collection
      # this folder is working directory of tdp deployment in which you put ansible.cfg, inventory.ini and topology.ini.
      user@yourmachine:export TDP_RUN_DIRECTORY=~/working-dir
      # this folder is to store sqlite db file
      user@yourmachine:export TDP_DATABASE_DSN=sqlite:////data/sqlite-data/tdp.db
-     # this folder is to store tdp service configuration, please find default values at $TDP_COLLECTION_PATH/tdp_vars_defaults
-     # you must NOT set TDP_VARS to $TDP_COLLECTION_PATH/tdp_vars_defaults
+     # this folder is to store tdp service configuration, please find default values at $TDP_COLLECTIONS/tdp_vars_defaults
+     # you must NOT set TDP_VARS to $TDP_COLLECTIONS/tdp_vars_defaults
      # the path must contain the string `tdp_vars`
      user@yourmachine:export TDP_VARS=~/tdp_vars
 

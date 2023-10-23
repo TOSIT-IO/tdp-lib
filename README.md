@@ -37,7 +37,7 @@ poetry install
 
 Export the following environment variables:
 
-- `TDP_COLLECTION_PATH`: path(s) to the collection(s). [`tdp-collection`](https://github.com/TOSIT-IO/tdp-collection) is mandatory. Other collections can be added, separated by a colon `:` (such as [`tdp-collection-extras`](https://github.com/TOSIT-IO/tdp-collection-extras), [`tdp-observability`](https://github.com/TOSIT-IO/tdp-observability)).
+- `TDP_COLLECTIONS`: path(s) to the collection(s). [`tdp-collection`](https://github.com/TOSIT-IO/tdp-collection) is mandatory. Other collections can be added, separated by a colon `:` (such as [`tdp-collection-extras`](https://github.com/TOSIT-IO/tdp-collection-extras), [`tdp-observability`](https://github.com/TOSIT-IO/tdp-observability)).
 - `TDP_RUN_DIRECTORY`: path to the working directory of TDP deployment (where `ansible.cfg`, `inventory.ini` and `topology.ini` are located).
 - `TDP_DATABASE_DSN`: DSN of the database to use.
 - `TDP_VARS`: path to the folder containing the variables.

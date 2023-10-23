@@ -74,9 +74,9 @@ def check_services_cleanliness(cluster_variables: ClusterVariables) -> None:
 
 def collections(func: FC) -> FC:
     return click.option(
-        "--collection-path",
+        "--collection",
         "collections",
-        envvar="TDP_COLLECTION_PATH",
+        envvar="TDP_COLLECTIONS",
         required=True,
         callback=_collections_from_paths,
         help=f"List of paths separated by your os' path separator ({os.pathsep})",

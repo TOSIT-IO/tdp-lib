@@ -11,7 +11,7 @@ from tdp.cli.commands.init import init
 
 def test_tdp_init(collection_path: Path, database_dsn: str, vars: Path):
     args = [
-        "--collection-path",
+        "--collection",
         collection_path,
         "--database-dsn",
         database_dsn,
@@ -26,7 +26,7 @@ def test_tdp_init(collection_path: Path, database_dsn: str, vars: Path):
 def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Path):
     db_path = tmp_path / "sqlite.db"
     args = [
-        "--collection-path",
+        "--collection",
         collection_path,
         "--database-dsn",
         "sqlite:///" + str(db_path),

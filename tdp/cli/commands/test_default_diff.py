@@ -10,7 +10,7 @@ from tdp.cli.commands.default_diff import default_diff
 
 def test_tdp_default_diff(collection_path: Path, vars: Path):
     args = [
-        "--collection-path",
+        "--collection",
         collection_path,
         "--vars",
         vars,

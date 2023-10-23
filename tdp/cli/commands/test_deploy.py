@@ -14,7 +14,7 @@ def test_tdp_deploy_mock(
     collection_path: Path, database_dsn_path: str, vars: Path, tmp_path: Path
 ):
     base_args = [
-        "--collection-path",
+        "--collection",
         collection_path,
         "--database-dsn",
         database_dsn_path,

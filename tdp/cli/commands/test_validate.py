@@ -9,7 +9,7 @@ from tdp.cli.commands.validate import validate
 
 
 def test_tdp_validate(collection_path: Path, vars: Path):
-    args = ["--collection-path", collection_path, "--vars", vars]
+    args = ["--collection", collection_path, "--vars", vars]
     runner = CliRunner()
     result = runner.invoke(validate, args)
     assert result.exit_code == 0, result.output
