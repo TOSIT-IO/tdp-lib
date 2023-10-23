@@ -21,7 +21,7 @@ from tdp.core.operation import Operation
     is_flag=True,
     help="Only shows operations from the DAG.",
 )
-@hosts
+@hosts(help="Hosts where operations are launched. Can be used multiple times.")
 @click.option(
     "--topo-sort",
     is_flag=True,

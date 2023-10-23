@@ -26,7 +26,7 @@ from tdp.core.models import DeploymentModel
     multiple=True,
     help="Extra vars for operations (forwarded to ansible as is). Can be used multiple times.",
 )
-@hosts
+@hosts(help="Hosts where operations are launched. Can be used multiple times.")
 @collections
 @database_dsn
 @preview
