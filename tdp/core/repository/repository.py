@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-import os
 from abc import ABC, abstractmethod
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
-from typing import Union
 from weakref import proxy
+
+from tdp.core.types import PathLike
 
 # Version string length isn't checked before inserting into database
 VERSION_MAX_LENGTH = 40
@@ -42,7 +42,7 @@ class Repository(ABC):
     It uses Git as a versionning engine.
     """
 
-    def __init__(self, path: Union[str, os.PathLike]):
+    def __init__(self, path: PathLike):
         """Initialize a Repository instance.
 
         Args:
@@ -63,7 +63,7 @@ class Repository(ABC):
 
     @classmethod
     @abstractmethod
-    def init(cls, path: Union[str, os.PathLike[str]]) -> Repository:
+    def init(cls, path: PathLike) -> Repository:
         """Initialize a new repository.
 
         Args:
@@ -74,7 +74,7 @@ class Repository(ABC):
         """
 
     @abstractmethod
-    def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
+    def add_for_validation(self, paths: list[PathLike]) -> None:
         """Add files to the index for validation.
 
         Args:
@@ -120,7 +120,7 @@ class Repository(ABC):
         pass
 
     @abstractmethod
-    def is_file_modified(self, commit: str, path: Union[str, os.PathLike]) -> bool:
+    def is_file_modified(self, commit: str, path: PathLike) -> bool:
         """Check if a file has been modified in a commit.
 
         Args:

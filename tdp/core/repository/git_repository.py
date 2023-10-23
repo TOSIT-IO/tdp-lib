@@ -4,10 +4,8 @@
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Union
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
 
@@ -17,6 +15,7 @@ from tdp.core.repository.repository import (
     NoVersionYet,
     Repository,
 )
+from tdp.core.types import PathLike
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 class GitRepository(Repository):
     """Local Git repository to manage files with versionning."""
 
-    def __init__(self, path: Union[str, os.PathLike]):
+    def __init__(self, path: PathLike):
         super().__init__(path)
         try:
             self._repo = Repo(self.path)
@@ -36,7 +35,7 @@ class GitRepository(Repository):
             self._repo.close()
 
     @staticmethod
-    def init(path: Union[str, os.PathLike]) -> GitRepository:
+    def init(path: PathLike) -> GitRepository:
         """Initialize a new Git repository at the given path."""
         try:
             with Repo(path):
@@ -61,7 +60,7 @@ class GitRepository(Repository):
             commit = self._repo.index.commit(msg)
             logger.info(f"commit: [{commit.hexsha}] {msg}")
 
-    def add_for_validation(self, paths: list[Union[str, os.PathLike]]) -> None:
+    def add_for_validation(self, paths: list[PathLike]) -> None:
         with self._lock:
             self._repo.index.add(paths)
             logger.debug(f"{', '.join([str(p) for p in paths])} staged")
@@ -75,7 +74,7 @@ class GitRepository(Repository):
     def is_clean(self) -> bool:
         return not self._repo.is_dirty(untracked_files=True)
 
-    def is_file_modified(self, commit: str, path: Union[str, os.PathLike]) -> bool:
+    def is_file_modified(self, commit: str, path: PathLike) -> bool:
         with self._lock:
             diff_index = self._repo.head.commit.diff(commit)
             for diff in diff_index:

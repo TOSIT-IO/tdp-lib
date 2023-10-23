@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import logging
-import os
 from collections import OrderedDict
 from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import jsonschema
 from jsonschema import exceptions
 
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
+from tdp.core.types import PathLike
 from tdp.core.variables.variables import Variables, VariablesDict
 
 if TYPE_CHECKING:
@@ -134,7 +134,7 @@ class ServiceVariables:
         )
 
     def update_from_variables_folder(
-        self, message: str, tdp_vars_overrides: Union[str, os.PathLike]
+        self, message: str, tdp_vars_overrides: PathLike
     ) -> None:
         """Update the variables repository from an overrides file.
 
@@ -152,7 +152,7 @@ class ServiceVariables:
 
     @contextmanager
     def _open_var_file(
-        self, path: Union[str, os.PathLike], fail_if_does_not_exist: bool = False
+        self, path: PathLike, fail_if_does_not_exist: bool = False
     ) -> Variables:
         """Context manager to facilitate the opening a variables file.
 

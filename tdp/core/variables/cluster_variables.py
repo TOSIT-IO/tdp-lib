@@ -4,13 +4,13 @@
 from __future__ import annotations
 
 import logging
-import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
+from tdp.core.types import PathLike
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:
@@ -45,8 +45,8 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     @staticmethod
     def initialize_cluster_variables(
         collections: Collections,
-        tdp_vars: Union[str, os.PathLike],
-        override_folders: Optional[Iterable[Union[str, os.PathLike]]] = None,
+        tdp_vars: PathLike,
+        override_folders: Optional[Iterable[PathLike]] = None,
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ) -> "ClusterVariables":
@@ -133,7 +133,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     @staticmethod
     def get_cluster_variables(
         collections: Collections,
-        tdp_vars: Union[str, os.PathLike],
+        tdp_vars: PathLike,
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ):
