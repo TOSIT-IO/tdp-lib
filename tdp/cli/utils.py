@@ -83,15 +83,22 @@ def collections(func: FC) -> FC:
     )(func)
 
 
-def hosts(func: FC) -> FC:
-    return click.option(
-        "--host",
-        "hosts",
-        envvar="TDP_HOSTS",
-        type=str,
-        multiple=True,
-        help="Hosts where operations are launched. Can be used multiple times.",
-    )(func)
+def hosts(func: Optional[FC] = None, *, help: str) -> Callable[[FC], FC]:
+    def decorator(fn: FC) -> FC:
+        return click.option(
+            "--host",
+            "hosts",
+            envvar="TDP_HOSTS",
+            type=str,
+            multiple=True,
+            help=help,
+        )(fn)
+
+    # Checks if the decorator was used without parentheses.
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)
 
 
 def database_dsn(func: FC) -> FC:
