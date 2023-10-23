@@ -19,16 +19,18 @@ def _validate_filtertype(ctx, param, value):
 
 @click.command(short_help="Deploy from the DAG.")
 @click.option(
-    "--sources",
+    "--source",
+    "sources",
     type=str,
-    metavar="s1,s2,...",
-    help="Nodes where the run start (separate with comma).",
+    multiple=True,
+    help="Nodes where the run start. Can be used multiple times.",
 )
 @click.option(
-    "--targets",
+    "--target",
+    "targets",
     type=str,
-    metavar="t1,t2,...",
-    help="Nodes where the run stop (separate with comma).",
+    multiple=True,
+    help="Nodes where the run stop. Can be used multiple times.",
 )
 @click.option("--filter", type=str, help="Match filter expression on dag result.")
 @click.option(
@@ -88,10 +90,8 @@ def dag(
     dag = Dag(collections)
     set_nodes = set()
     if sources:
-        sources = sources.split(",")
         set_nodes.update(sources)
     if targets:
-        targets = targets.split(",")
         set_nodes.update(targets)
     set_difference = set_nodes.difference(dag.operations)
     if set_difference:
