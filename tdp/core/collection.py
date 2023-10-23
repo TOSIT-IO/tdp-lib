@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
-import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from tdp.core.inventory_reader import InventoryReader
+from tdp.core.types import PathLike
 
 DAG_DIRECTORY_NAME = "tdp_lib_dag"
 DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
@@ -47,7 +47,7 @@ class Collection:
 
     def __init__(
         self,
-        path: Union[str, os.PathLike],
+        path: PathLike,
         inventory_reader: Optional[InventoryReader] = None,
     ):
         """Initialize a collection.
@@ -68,7 +68,7 @@ class Collection:
         self._playbooks: Optional[dict[str, Path]] = None
 
     @staticmethod
-    def from_path(path: Union[str, os.PathLike]) -> "Collection":
+    def from_path(path: PathLike) -> "Collection":
         """Factory method to create a collection from a path.
 
         Args:

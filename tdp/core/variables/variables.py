@@ -4,13 +4,15 @@
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 from weakref import proxy
 
 import yaml
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.vars import merge_hash
+
+from tdp.core.types import PathLike
 
 
 class Variables:
@@ -24,7 +26,7 @@ class Variables:
             del variables["key1"] # deletes value at key `key1`
     """
 
-    def __init__(self, file_path: Union[str, os.PathLike]):
+    def __init__(self, file_path: PathLike):
         """Initializes a Variables instance.
 
         Args:
