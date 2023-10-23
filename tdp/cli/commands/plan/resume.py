@@ -14,7 +14,7 @@ from tdp.cli.utils import collections, database_dsn, preview, print_deployment
 from tdp.core.models import DeploymentModel
 
 
-@click.command(short_help="Resume a failed deployment.")
+@click.command()
 @click.argument("id", required=False)
 @collections
 @database_dsn
@@ -25,6 +25,7 @@ def resume(
     database_dsn,
     preview,
 ):
+    """Resume a failed deployment."""
     with get_session(database_dsn, commit_on_exit=True) as session:
         if id is None:
             deployment_to_resume = get_last_deployment(session)

@@ -12,7 +12,7 @@ from tdp.core.dag import Dag
 from tdp.core.operation import Operation
 
 
-@click.command(short_help="Display all available operations.")
+@click.command()
 @click.option(
     "--dag",
     "--dag-operations",
@@ -34,6 +34,7 @@ def ops(
     hosts: list[str],
     topo_sort: bool,
 ):
+    """Display all available operations."""
     if topo_sort and not display_dag_operations:
         click.echo(
             "Warning: '--topo-sort' can only be used with '--dag' or '--dag-operations'."

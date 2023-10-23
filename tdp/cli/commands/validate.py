@@ -7,9 +7,10 @@ from tdp.cli.utils import collections, vars
 from tdp.core.variables import ClusterVariables
 
 
-@click.command(short_help="Validate tdp vars against the loaded collections schemas")
+@click.command()
 @collections
 @vars
 def validate(collections, vars):
+    """Validate tdp vars against the loaded collections schemas."""
     ClusterVariables.get_cluster_variables(collections, vars, validate=True)
     click.echo("TDP Vars are valid")

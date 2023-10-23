@@ -24,7 +24,7 @@ from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
 
-@click.command(short_help="Execute a TDP deployment plan.")
+@click.command()
 @click.option(
     "--force-stale-update",
     "--fsu",
@@ -49,6 +49,7 @@ def deploy(
     validate,
     vars,
 ):
+    """Execute a planned deployment."""
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
     )

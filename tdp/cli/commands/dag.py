@@ -11,11 +11,8 @@ import networkx as nx
 from tdp.cli.utils import collections
 from tdp.core.dag import Dag
 
-SHORT_DAG_SUMMARY = "Compute and display a graph."
-DAG_SUMMARY = SHORT_DAG_SUMMARY + " Add node names to get a subgraph to the nodes."
 
-
-@click.command(help=DAG_SUMMARY, short_help=SHORT_DAG_SUMMARY)
+@click.command()
 @click.argument("nodes", nargs=-1)
 @click.option(
     "-t",
@@ -64,6 +61,10 @@ def dag(
     cluster,
     collections,
 ):
+    """Compute and display a graph of the DAG.
+
+    Add node names to get a subgraph.
+    """
     show = import_show()
     dag = Dag(collections)
     graph = dag.graph
