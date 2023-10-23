@@ -38,7 +38,7 @@ docs = ["Sphinx", "sphinx_rtd_theme"]
 visualization = ["matplotlib", "pydot"]
 
 [tool.poetry.scripts]
-tdp = "tdp.cli.__main__:tdp"
+tdp = "tdp.cli.__main__:main"
 
 [tool.taskipy.variables]
 docs_path = "docs"

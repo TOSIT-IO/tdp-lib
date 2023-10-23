@@ -35,7 +35,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
         logging.warning(f"Environment file {value} does not exist.")
 
 
-@click.group(context_settings=CONTEXT_SETTINGS)
+@click.group("tdp", context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--env",
     default=".env",
@@ -51,19 +51,26 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     help="Set the level of log output.",
 )
-def tdp(env: Path, log_level: str):
+def cli(env: Path, log_level: str):
     setup_logging(log_level)
     logging.info("Logging is configured.")
 
 
-tdp.add_command(browse)
-tdp.add_command(dag)
-tdp.add_command(default_diff)
-tdp.add_command(deploy)
-tdp.add_command(init)
-tdp.add_command(operations)
-tdp.add_command(plan)
-tdp.add_command(playbooks)
-tdp.add_command(status)
-tdp.add_command(validate)
-tdp.add_command(vars)
+def main():
+    cli.add_command(browse)
+    cli.add_command(dag)
+    cli.add_command(default_diff)
+    cli.add_command(deploy)
+    cli.add_command(init)
+    cli.add_command(operations)
+    cli.add_command(plan)
+    cli.add_command(playbooks)
+    cli.add_command(status)
+    cli.add_command(validate)
+    cli.add_command(vars)
+
+    cli()
+
+
+if __name__ == "__main__":
+    main()
