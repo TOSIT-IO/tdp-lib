@@ -17,7 +17,7 @@ def _validate_filtertype(ctx, param, value):
     return value
 
 
-@click.command(short_help="Deploy from the DAG.")
+@click.command()
 @click.option(
     "--source",
     "sources",
@@ -85,6 +85,7 @@ def dag(
     reverse: bool = False,
     stop: bool = False,
 ):
+    """Deploy from the DAG."""
     if stop and restart:
         click.UsageError("Cannot use --restart and --stop at the same time.")
     dag = Dag(collections)

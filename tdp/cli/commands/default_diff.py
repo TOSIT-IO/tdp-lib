@@ -12,11 +12,12 @@ from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 
-@click.command(short_help="Difference between tdp_vars and defaults")
+@click.command()
 @click.argument("service", required=False)
 @collections
 @vars
 def default_diff(service, collections, vars):
+    """Difference between tdp_vars and defaults."""
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
 
     if service:

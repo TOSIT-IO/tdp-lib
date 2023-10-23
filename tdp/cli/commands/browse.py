@@ -16,7 +16,7 @@ from tdp.cli.utils import database_dsn, print_deployment, print_object, print_ta
 from tdp.core.models import DeploymentModel, OperationModel
 
 
-@click.command(short_help="Browse deployments")
+@click.command()
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
 @click.option(
@@ -48,6 +48,7 @@ def browse(
     offset: int,
     database_dsn: str,
 ):
+    """Browse deployments."""
     with get_session(database_dsn) as session:
         # Print last deployment plan
         if plan:

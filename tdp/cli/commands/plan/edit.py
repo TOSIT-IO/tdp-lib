@@ -132,13 +132,14 @@ def _managed_temp_file(**kwargs):
         os.unlink(tmp.name)
 
 
-@click.command(short_help="Edit Deployment plan.")
+@click.command()
 @collections
 @database_dsn
 def edit(
     collections,
     database_dsn,
 ):
+    """Edit the planned deployment."""
     with get_session(database_dsn, commit_on_exit=True) as session:
         planned_deployment = get_planned_deployment(session)
         if planned_deployment is None:

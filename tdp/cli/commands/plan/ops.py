@@ -16,7 +16,7 @@ from tdp.cli.utils import (
 from tdp.core.models import DeploymentModel
 
 
-@click.command(short_help="Run single TDP operation.")
+@click.command()
 @click.argument("operation_names", nargs=-1, required=True)
 @click.option(
     "-e",
@@ -40,6 +40,7 @@ def ops(
     preview,
     rolling_interval,
 ):
+    """Run a list of operations."""
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )

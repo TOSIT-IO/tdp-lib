@@ -16,7 +16,7 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models import DeploymentModel
 
 
-@click.command(short_help="Restart required TDP services.")
+@click.command()
 @collections
 @database_dsn
 @preview
@@ -27,6 +27,7 @@ def reconfigure(
     preview,
     rolling_interval,
 ):
+    """Reconfigure required TDP services."""
     click.echo("Creating a deployment plan to reconfigure services.")
     with get_session(database_dsn, commit_on_exit=True) as session:
         deployment = DeploymentModel.from_stale_components(
