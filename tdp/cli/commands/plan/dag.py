@@ -61,22 +61,16 @@ def _validate_filtertype(
 @click.option(
     "--restart",
     is_flag=True,
-    show_default=True,
-    default=False,
     help="Replace 'start' operations by 'restart' operations.",
 )
 @click.option(
     "--reverse",
     is_flag=True,
-    show_default=True,
-    default=False,
     help="Reverse the final list of operations.",
 )
 @click.option(
     "--stop",
     is_flag=True,
-    show_default=True,
-    default=False,
     help="Replace 'start' operations by 'stop' operations. This option should be used with --reversed.",
 )
 @preview
