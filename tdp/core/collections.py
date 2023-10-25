@@ -81,16 +81,6 @@ class Collections(Mapping):
         return Collections(collections)
 
     @property
-    def collections(self) -> "Collections":
-        """Mapping of collection name to Collection instance."""
-        return self._collections
-
-    @collections.setter
-    def collections(self, collections: "Collections"):
-        self._collections = collections
-        self._init_operations()
-
-    @property
     def dag_operations(self) -> dict[str, Operation]:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
