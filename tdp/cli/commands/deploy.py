@@ -12,9 +12,6 @@ from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
     database_dsn,
-    dry,
-    mock_deploy,
-    run_directory,
     validate,
     vars,
 )
@@ -32,11 +29,22 @@ from tdp.core.variables import ClusterVariables
     is_flag=True,
     help="Force stale status update.",
 )
-@dry
+@click.option("--dry", is_flag=True, help="Execute dag without running any action")
 @collections
 @database_dsn
-@mock_deploy
-@run_directory
+@click.option(
+    "--mock-deploy",
+    envvar="TDP_MOCK_DEPLOY",
+    is_flag=True,
+    help="Mock the deploy, do not actually run the ansible playbook",
+)
+@click.option(
+    "--run-directory",
+    envvar="TDP_RUN_DIRECTORY",
+    type=Path,
+    help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
+    required=True,
+)
 @validate
 @vars
 def deploy(

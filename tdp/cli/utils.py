@@ -116,21 +116,6 @@ def database_dsn(func: FC) -> FC:
     )(func)
 
 
-def dry(func: FC) -> FC:
-    return click.option(
-        "--dry", is_flag=True, help="Execute dag without running any action"
-    )(func)
-
-
-def mock_deploy(func: FC) -> FC:
-    return click.option(
-        "--mock-deploy",
-        envvar="TDP_MOCK_DEPLOY",
-        is_flag=True,
-        help="Mock the deploy, do not actually run the ansible playbook",
-    )(func)
-
-
 def preview(func: FC) -> FC:
     return click.option(
         "--preview",
@@ -188,16 +173,6 @@ def rolling_interval(func: FC) -> FC:
         envvar="TDP_ROLLING_INTERVAL",
         type=int,
         help="Enable rolling restart with specific waiting time (in seconds) between component restart.",
-    )(func)
-
-
-def run_directory(func: FC) -> FC:
-    return click.option(
-        "--run-directory",
-        envvar="TDP_RUN_DIRECTORY",
-        type=Path,
-        help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
-        required=True,
     )(func)
 
 

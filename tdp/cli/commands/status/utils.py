@@ -55,17 +55,6 @@ def _check_component(
     return value
 
 
-def _hosts(func: FC) -> FC:
-    return click.option(
-        "--host",
-        "hosts",
-        envvar="TDP_HOSTS",
-        type=str,
-        multiple=True,
-        help="Host to filter. Can be used multiple times.",
-    )(func)
-
-
 def _common_status_options(func: FC) -> FC:
     """Add common status options to the command."""
     for option in reversed(
