@@ -6,10 +6,11 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import yaml
 
+from tdp.core.collection import Collection
 from tdp.core.operation import Operation
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
@@ -18,9 +19,6 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
-
-if TYPE_CHECKING:
-    from tdp.core.collection import Collection
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ class MissingHostForOperationError(Exception):
     pass
 
 
-class Collections(Mapping):
+class Collections(Mapping[str, Collection]):
     """A mapping of collection name to Collection instance.
 
     This class also gather operations from all collections and filter them by their
@@ -45,8 +43,8 @@ class Collections(Mapping):
 
     def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
-        self._dag_operations = None
-        self._other_operations = None
+        self._dag_operations: dict[str, Operation] = {}
+        self._other_operations: dict[str, Operation] = {}
         self._init_operations()
 
     def __getitem__(self, key):
@@ -74,11 +72,9 @@ class Collections(Mapping):
         Raises:
             ValueError: If a collection name is duplicated.
         """
-        collections = OrderedDict(
-            (collection.name, collection) for collection in collections
+        return Collections(
+            OrderedDict((collection.name, collection) for collection in collections)
         )
-
-        return Collections(collections)
 
     @property
     def dag_operations(self) -> dict[str, Operation]:
