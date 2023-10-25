@@ -31,7 +31,7 @@ from tdp.core.operation import Operation
 def ops(
     collections: Collections,
     display_dag_operations: bool,
-    hosts: list[str],
+    hosts: tuple[str],
     topo_sort: bool,
 ):
     """Display all available operations."""

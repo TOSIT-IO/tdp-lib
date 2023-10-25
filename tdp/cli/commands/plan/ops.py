@@ -1,6 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
 import click
 
 from tdp.cli.queries import get_planned_deployment
@@ -14,6 +18,9 @@ from tdp.cli.utils import (
     rolling_interval,
 )
 from tdp.core.models import DeploymentModel
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 
 @click.command()
@@ -32,13 +39,13 @@ from tdp.core.models import DeploymentModel
 @preview
 @rolling_interval
 def ops(
-    operation_names,
-    extra_vars,
-    hosts,
-    collections,
-    database_dsn,
-    preview,
-    rolling_interval,
+    operation_names: tuple[str],
+    extra_vars: tuple[str],
+    hosts: tuple[str],
+    collections: Collections,
+    database_dsn: str,
+    preview: bool,
+    rolling_interval: Optional[int] = None,
 ):
     """Run a list of operations."""
     click.echo(

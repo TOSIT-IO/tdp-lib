@@ -3,6 +3,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -40,13 +41,13 @@ logger = logging.getLogger(__name__)
 @validate
 @vars
 def edit(
-    service_name: str,
-    service_component_parameter: str,
     commit_message: str,
     collections: Collections,
     database_dsn: str,
     validate: bool,
     vars: Path,
+    service_name: str,
+    service_component_parameter: Optional[str] = None,
 ):
     """Edit a variables file.
 

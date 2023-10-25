@@ -1,6 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 import click
 
@@ -13,6 +16,9 @@ from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, preview, print_deployment
 from tdp.core.models import DeploymentModel
 
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+
 
 @click.command()
 @click.argument("id", required=False)
@@ -20,10 +26,10 @@ from tdp.core.models import DeploymentModel
 @database_dsn
 @preview
 def resume(
-    id,
-    collections,
-    database_dsn,
-    preview,
+    collections: Collections,
+    database_dsn: str,
+    preview: bool,
+    id: Optional[int] = None,
 ):
     """Resume a failed deployment."""
     with get_session(database_dsn, commit_on_exit=True) as session:

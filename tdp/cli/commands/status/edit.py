@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
 
@@ -47,16 +47,16 @@ if TYPE_CHECKING:
     help="Manually set the 'to_restart' value.",
 )
 def edit(
-    service: Optional[str],
-    component: Optional[str],
     collections: Collections,
     database_dsn: str,
-    hosts: Optional[Iterable[str]],
-    message: Optional[str],
-    to_config: Optional[bool],
-    to_restart: Optional[bool],
-    validate: bool,
     vars: Path,
+    validate: bool,
+    hosts: tuple[str],
+    service: Optional[str] = None,
+    component: Optional[str] = None,
+    message: Optional[str] = None,
+    to_config: Optional[bool] = None,
+    to_restart: Optional[bool] = None,
 ) -> None:
     """Edit the status of the cluster.
 

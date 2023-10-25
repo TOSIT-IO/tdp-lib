@@ -26,12 +26,12 @@ if TYPE_CHECKING:
 @click.command()
 @_common_status_options
 def generate_stales(
-    service: Optional[str],
-    component: Optional[str],
     collections: Collections,
     database_dsn: str,
     validate: bool,
     vars: Path,
+    service: Optional[str] = None,
+    component: Optional[str] = None,
 ) -> None:
     """Generate stale components.
 

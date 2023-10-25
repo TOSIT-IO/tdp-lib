@@ -1,15 +1,21 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import fnmatch
 import importlib.util
 import re
+from typing import TYPE_CHECKING, Optional
 
 import click
 import networkx as nx
 
 from tdp.cli.utils import collections
 from tdp.core.dag import Dag
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 
 @click.command()
@@ -53,13 +59,13 @@ from tdp.core.dag import Dag
 )
 @collections
 def dag(
-    nodes,
-    transitive_reduction,
-    pattern_format,
-    color_to,
-    color_from,
-    cluster,
-    collections,
+    collections: Collections,
+    cluster: bool,
+    transitive_reduction: bool,
+    pattern_format: Optional[str] = None,  # TODO use enum
+    color_to: Optional[str] = None,
+    color_from: Optional[str] = None,
+    nodes: Optional[str] = None,
 ):
     """Compute and display a graph of the DAG.
 

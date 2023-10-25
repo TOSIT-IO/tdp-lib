@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections.abc import Iterable
+from typing import Optional
 
 import click
 
@@ -41,12 +42,12 @@ from tdp.core.models import DeploymentModel, OperationModel
 )
 @database_dsn
 def browse(
-    deployment_id: int,
-    operation: str,
     plan: bool,
     limit: int,
     offset: int,
     database_dsn: str,
+    deployment_id: Optional[int] = None,
+    operation: Optional[str] = None,
 ):
     """Browse deployments."""
     with get_session(database_dsn) as session:
