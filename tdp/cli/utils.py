@@ -184,7 +184,7 @@ def validate(func: FC) -> FC:
     )(func)
 
 
-def vars(func=None, *, exists=True) -> Callable[[FC], FC]:
+def vars(func: Optional[FC] = None, *, exists=True) -> Callable[[FC], FC]:
     def decorator(fn: FC) -> FC:
         return click.option(
             "--vars",

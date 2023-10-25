@@ -1,6 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
 
 import click
 
@@ -10,13 +13,19 @@ from tdp.cli.utils import collections, database_dsn, preview, print_deployment
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentModel, FilterTypeEnum
 
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
-def _validate_filtertype(ctx, param, value):
+
+def _validate_filtertype(
+    ctx: click.Context, param: click.Parameter, value: FilterTypeEnum
+):
     if value is not None:
         return FilterTypeEnum[value]
     return value
 
 
+# TODO: remove glob filter type (see https://github.com/TOSIT-IO/tdp-lib/issues/478)
 @click.command()
 @click.option(
     "--source",
@@ -74,16 +83,16 @@ def _validate_filtertype(ctx, param, value):
 @collections
 @database_dsn
 def dag(
-    sources,
-    targets,
-    filter,
-    filter_type,
-    restart,
-    preview,
-    collections,
-    database_dsn,
-    reverse: bool = False,
-    stop: bool = False,
+    sources: tuple[str],
+    targets: tuple[str],
+    restart: bool,
+    preview: bool,
+    collections: Collections,
+    database_dsn: str,
+    reverse: bool,
+    stop: bool,
+    filter: Optional[str] = None,
+    filter_type: Optional[FilterTypeEnum] = None,
 ):
     """Deploy from the DAG."""
     if stop and restart:

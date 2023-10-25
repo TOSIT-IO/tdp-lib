@@ -1,6 +1,10 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
 import click
 
 from tdp.cli.queries import get_planned_deployment, get_sch_status
@@ -15,6 +19,9 @@ from tdp.cli.utils import (
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models import DeploymentModel
 
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+
 
 @click.command()
 @collections
@@ -22,10 +29,10 @@ from tdp.core.models import DeploymentModel
 @preview
 @rolling_interval
 def reconfigure(
-    collections,
-    database_dsn,
-    preview,
-    rolling_interval,
+    collections: Collections,
+    database_dsn: str,
+    preview: bool,
+    rolling_interval: Optional[int] = None,
 ):
     """Reconfigure required TDP services."""
     click.echo("Creating a deployment plan to reconfigure services.")

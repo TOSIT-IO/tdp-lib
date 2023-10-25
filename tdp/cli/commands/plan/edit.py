@@ -1,12 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 import os
 import re
 import tempfile
 from contextlib import contextmanager
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
 
@@ -14,6 +16,9 @@ from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn
 from tdp.core.models.deployment_model import DeploymentModel
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 logger = logging.getLogger("tdp").getChild("edit")
 
@@ -136,8 +141,8 @@ def _managed_temp_file(**kwargs):
 @collections
 @database_dsn
 def edit(
-    collections,
-    database_dsn,
+    collections: Collections,
+    database_dsn: str,
 ):
     """Edit the planned deployment."""
     with get_session(database_dsn, commit_on_exit=True) as session:

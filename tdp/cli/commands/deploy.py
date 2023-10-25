@@ -1,6 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import click
 
 from tdp.cli.queries import (
@@ -19,6 +24,9 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 
 @click.command()
@@ -48,14 +56,14 @@ from tdp.core.variables import ClusterVariables
 @validate
 @vars
 def deploy(
-    dry,
-    collections,
-    database_dsn,
+    dry: bool,
+    collections: Collections,
+    database_dsn: str,
     force_stale_update: bool,
-    mock_deploy,
-    run_directory,
-    validate,
-    vars,
+    mock_deploy: bool,
+    run_directory: Path,
+    validate: bool,
+    vars: Path,
 ):
     """Execute a planned deployment."""
     cluster_variables = ClusterVariables.get_cluster_variables(

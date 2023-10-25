@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
 
@@ -28,14 +28,14 @@ if TYPE_CHECKING:
 @hosts(help="Host to filter. Can be used multiple times.")
 @click.option("--stale", is_flag=True, help="Only print stale components.")
 def show(
-    service: Optional[str],
-    component: Optional[str],
     collections: Collections,
     database_dsn: str,
-    hosts: Optional[Iterable[str]],
+    hosts: tuple[str],
     stale: bool,
     validate: bool,
     vars: Path,
+    service: Optional[str] = None,
+    component: Optional[str] = None,
 ) -> None:
     """Print the status of the cluster.
 

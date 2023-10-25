@@ -1,13 +1,19 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
 from tdp.cli.session import init_db
 from tdp.cli.utils import collections, database_dsn, validate, vars
 from tdp.core.variables import ClusterVariables
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
 
 
 @click.command()
@@ -23,7 +29,13 @@ from tdp.core.variables import ClusterVariables
 @database_dsn
 @validate
 @vars(exists=False)
-def init(overrides, collections, database_dsn, validate, vars):
+def init(
+    overrides: tuple[Path],
+    collections: Collections,
+    database_dsn: str,
+    validate: bool,
+    vars: Path,
+):
     """Initialize the database and the tdp vars."""
     init_db(database_dsn)
     cluster_variables = ClusterVariables.initialize_cluster_variables(
