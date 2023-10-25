@@ -1,6 +1,15 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+"""TDP collections.
+
+TDP services are split accross different collections. A core, extras and observability
+collections are provided by the maintainers.
+
+The core collection which contains the core services (hdfs, hive, ....) is mandatory. It
+can be extended by other collections.
+"""
+
 from __future__ import annotations
 
 import logging
