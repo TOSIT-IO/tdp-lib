@@ -9,12 +9,11 @@ import click
 
 from tdp.cli.commands.status.utils import (
     _common_status_options,
-    _hosts,
     _print_sch_status_logs,
 )
 from tdp.cli.queries import get_sch_status
 from tdp.cli.session import get_session
-from tdp.cli.utils import check_services_cleanliness
+from tdp.cli.utils import check_services_cleanliness, hosts
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.variables import ClusterVariables
 
@@ -26,7 +25,7 @@ if TYPE_CHECKING:
 
 @click.command()
 @_common_status_options
-@_hosts
+@hosts(help="Host to filter. Can be used multiple times.")
 @click.option("--stale", is_flag=True, help="Only print stale components.")
 def show(
     service: Optional[str],
