@@ -1,6 +1,20 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+"""
+Generate meta playbooks in order to use a TDP like collection without tdp-lib.
+
+It checks the ansible playbooks which are given as input and returns a meta folder with the following yaml files:
+
+- all_per_service.yml listing all service.
+- all.yml listing the location of all yaml files of every service.
+- yaml file for each specified service containing the location of every yaml file concerning this service.
+
+The command `python path/to/playbooks.py` will execute the script with all collections defined in the `TDP_COLLECTION_PATH` including every service.
+
+Use the `-h` or `--help` option to get further information about the options.
+"""
+
 from pathlib import Path
 
 import click
@@ -11,7 +25,6 @@ from tdp.core.dag import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY, Dag
 from tdp.core.operation import Operation
 
 
-# TODO: Transform this to a script as it is not really a command (see #346).
 @click.command()
 @click.argument("services", required=False, nargs=-1)
 @click.option(
@@ -120,3 +133,7 @@ def playbooks(services, output_dir, for_collection, collections):
                 )
             else:
                 all_fd.write(f"# {operation.name}\n")
+
+
+if __name__ == "__main__":
+    playbooks()
