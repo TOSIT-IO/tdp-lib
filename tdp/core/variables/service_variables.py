@@ -7,17 +7,19 @@ from collections import OrderedDict
 from collections.abc import Generator
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import jsonschema
 from jsonschema import exceptions
 
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
+from tdp.core.repository.repository import NoVersionYet
 from tdp.core.types import PathLike
 from tdp.core.variables.variables import Variables, VariablesDict
 
 if TYPE_CHECKING:
+    from tdp.core.collections import Collections
     from tdp.core.dag import Dag
     from tdp.core.repository.repository import Repository
     from tdp.core.service_component_name import ServiceComponentName
@@ -43,7 +45,7 @@ class InvalidSchema(Exception):
 class ServiceVariables:
     """Variables of a service."""
 
-    def __init__(self, service_name: str, repository: Repository, schema: dict):
+    def __init__(self, service_name: str, repository: Repository):
         """Initialize a ServiceVariables object.
 
         Args:
@@ -58,7 +60,6 @@ class ServiceVariables:
             raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._name = service_name
         self._repo = repository
-        self._schema = schema
 
     @property
     def name(self) -> str:
@@ -71,14 +72,12 @@ class ServiceVariables:
         return self._repo
 
     @property
-    def schema(self) -> dict:
-        """Schema of the service."""
-        return self._schema
-
-    @property
-    def version(self) -> str:
+    def version(self) -> Optional[str]:
         """Version of the service configuration."""
-        return self.repository.current_version()
+        try:
+            return self.repository.current_version()
+        except NoVersionYet:
+            return None
 
     @property
     def clean(self) -> bool:
@@ -146,7 +145,7 @@ class ServiceVariables:
         service_files_to_open = [override_file.name for override_file in override_files]
         with self.open_var_files(f"{message}", service_files_to_open) as configurations:
             for file in override_files:
-                logger.info(f"Updating {self.name} with variables from {file}")
+                logger.info(f"updating '{self.name}' with variables from {file}")
                 with Variables(file).open("r") as variables:
                     configurations[file.name].merge(variables)
 
@@ -227,7 +226,7 @@ class ServiceVariables:
             commit=version, path=service_component.service_name + YML_EXTENSION
         )
 
-    def validate_schema(self, variables: Variables, schema: dict) -> None:
+    def validate_schema(self, variables: VariablesDict, schema: dict) -> None:
         """Validate variables against a schema.
 
         Args:
@@ -242,26 +241,21 @@ class ServiceVariables:
         except exceptions.ValidationError as e:
             raise InvalidSchema("Schema is invalid", variables.name) from e
 
-    def validate(self) -> None:
+    def validate(self, collections: Collections) -> None:
         """Validates the service schema.
 
         Raises:
             InvalidSchema: If the schema is invalid.
         """
-        service_variables = VariablesDict({})
-        sorted_paths = sorted(self.path.glob("*" + YML_EXTENSION))
-        for path in sorted_paths:
+        schema = collections.get_service_schema(self.name)
+
+        vars_paths = collections.get_default_vars_paths(self.name)
+        vars_paths = sorted(vars_paths) if vars_paths else []
+        vars_paths.extend(sorted(self.path.glob("*" + YML_EXTENSION)))
+
+        service_variables = VariablesDict({}, self.name)
+        for path in vars_paths:
             with Variables(path).open("r") as variables:
-                if path.stem == self.name:
-                    # create a copy of the dict (not to outlive the context manager)
-                    service_variables = VariablesDict(variables.copy(), variables.name)
-                    test_variables = service_variables
-                else:
-                    # merge on a copy of service_vars because merge is inplace
-                    test_variables = VariablesDict(
-                        service_variables.copy(), variables.name
-                    )
-                    test_variables.merge(variables)
-            self.validate_schema(test_variables, self.schema)
-            logger.debug(f"{path.stem} is valid")
-        logger.debug(f"Service {self.name} is valid")
+                service_variables.merge(variables.copy())
+        self.validate_schema(service_variables, schema)
+        logger.debug(f"'{self.name}' variables are valid")

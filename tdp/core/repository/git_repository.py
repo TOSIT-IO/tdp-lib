@@ -39,26 +39,32 @@ class GitRepository(Repository):
         """Initialize a new Git repository at the given path."""
         try:
             with Repo(path):
+                logger.debug(f"{path} is already a git repository")
                 return GitRepository(path)
         except (InvalidGitRepositoryError, NoSuchPathError):
             with Repo.init(path, mkdir=True):
+                logger.debug(f"git repository initialized at {path}")
                 return GitRepository(path)
 
     @contextmanager
     def validate(self, msg: str) -> Generator[GitRepository, None, None]:
         with self._lock:
             yield self
+            commit = None
             try:
-                if len(self._repo.index.diff("HEAD")) == 0:
-                    raise EmptyCommit(
-                        "validating these changes would produce no difference"
-                    )
+                if len(self._repo.heads) == 0:
+                    # Empty repository
+                    commit = self._repo.index.commit(msg)
+                    logger.info(f"initial commit: [{commit.hexsha}] {msg}")
+                else:
+                    if len(self._repo.index.diff("HEAD")) == 0:
+                        raise EmptyCommit(
+                            "validating these changes would produce no difference"
+                        )
+                    commit = self._repo.index.commit(msg)
+                    logger.info(f"commit: [{commit.hexsha}] {msg}")
             except BadName as e:
-                logger.debug(
-                    f"error during diff: {e}. Probably because the repo is still empty."
-                )
-            commit = self._repo.index.commit(msg)
-            logger.info(f"commit: [{commit.hexsha}] {msg}")
+                logger.debug(f"error during diff: {e}.")
 
     def add_for_validation(self, paths: list[PathLike]) -> None:
         with self._lock:

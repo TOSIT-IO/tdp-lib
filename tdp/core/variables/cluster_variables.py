@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import EmptyCommit, NoVersionYet
+from tdp.core.repository.repository import EmptyCommit
 from tdp.core.types import PathLike
 from tdp.core.variables.service_variables import ServiceVariables
 
@@ -43,92 +43,63 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         return self._service_variables_dict.__iter__()
 
     @staticmethod
-    def initialize_cluster_variables(
+    def initialize_tdp_vars(
         collections: Collections,
         tdp_vars: PathLike,
-        override_folders: Optional[Iterable[PathLike]] = None,
+        input_vars: Optional[Iterable[PathLike]] = None,
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ) -> "ClusterVariables":
-        """Get an instance of ClusterVariables, initialize services repositories if needed.
+        """Intialize the tdp_vars directory.
+
+        Create a ServiceVariables instance for each service in the collections.
+        Initialize the repository of each service with the content given as input_vars.
 
         Args:
-            collections: instance of Collections.
+            collections: Collections instance.
             tdp_vars: Path to the tdp_vars directory.
-            override_folders: list of path(s) of tdp vars overrides.
-            repository_class: instance of the type of Repository used.
-            validate: Whether or not to validate the services schemas.
+            input_vars: Variables folders to be added to the repositories.
+            repository_class: Type of Repository to use to store the variables.
+            validate: Whether or not to validate the variables against the schema.
 
         Returns:
-            Mapping of service names with their ServiceVariables instance.
+            ClusterVariables instance.
         """
-        if override_folders is None:
-            override_folders = []
-
         tdp_vars = Path(tdp_vars)
-
         cluster_variables = {}
 
-        collections_and_overrides = [
-            (collection_name, collection.default_vars_directory.iterdir())
-            for collection_name, collection in collections.items()
-        ]
+        for service_name in collections.get_services():
+            tdp_vars_service = tdp_vars / service_name
 
-        for i, override_folder in enumerate(override_folders):
-            override_folder = Path(override_folder)
-            collections_and_overrides.append(
-                (f"overrides_path_{i}", override_folder.iterdir())
+            service_variables = ServiceVariables(
+                service_name=service_name,
+                repository=repository_class.init(tdp_vars_service),
             )
+            cluster_variables[service_name] = service_variables
 
-        # If the service was already initialized, we do not touch it
-        services_initialized_by_this_function = set()
-        for collection_name, folder_iterator in collections_and_overrides:
-            for path in folder_iterator:
-                if not path.is_dir():
+            # Add variables from input vars to the repository
+            for vars_folder in input_vars or []:
+                if not Path(vars_folder).is_dir():
                     continue
-                service = path.name
-                service_tdp_vars = tdp_vars / service
-                try:
-                    service_tdp_vars.mkdir(parents=True)
-                    logger.info(
-                        f"{service_tdp_vars.absolute()} does not exist, created"
-                    )
-                except FileExistsError:
-                    if not service_tdp_vars.is_dir():
-                        raise ValueError(
-                            f"{service_tdp_vars.absolute()} should be a directory"
-                        )
+                for service_folder in Path(vars_folder).iterdir():
+                    if not service_folder.is_dir():
+                        continue
+                    if service_folder.name == service_name:
+                        try:
+                            service_variables.update_from_variables_folder(
+                                "add variables from " + str(vars_folder), service_folder
+                            )
+                        except EmptyCommit:
+                            logger.warning(
+                                f"override file {tdp_vars_service.absolute()} will"
+                                " not cause any change, no commit has been made"
+                            )
+                        break
 
-                if service in cluster_variables:
-                    service_variables = cluster_variables[service]
-                else:
-                    repo = repository_class.init(service_tdp_vars)
-                    schemas = collections.get_service_schema(service)
-                    service_variables = ServiceVariables(service, repo, schemas)
-                    cluster_variables[service] = service_variables
+            if validate:
+                service_variables.validate(collections)
 
-                try:
-                    logger.info(
-                        f"{service_variables.name} is already initialized at {service_variables.version}"
-                    )
-                except NoVersionYet:
-                    services_initialized_by_this_function.add(service)
-
-                if service in services_initialized_by_this_function:
-                    try:
-                        service_variables.update_from_variables_folder(
-                            "add variables from " + collection_name, path
-                        )
-                    except EmptyCommit:
-                        logger.warning(
-                            f"override file {service_tdp_vars.absolute()} will not cause any change, no commit has been made"
-                        )
-
-        cluster_variables = ClusterVariables(cluster_variables)
-        if validate:
-            cluster_variables._validate_services_schemas()
-
-        return cluster_variables
+        return ClusterVariables(cluster_variables)
 
     @staticmethod
     def get_cluster_variables(
@@ -154,22 +125,19 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         for path in tdp_vars.iterdir():
             if path.is_dir():
                 repo = repository_class(tdp_vars / path.name)
-                schemas = collections.get_service_schema(path.stem)
-                cluster_variables[path.name] = ServiceVariables(
-                    path.name, repo, schemas
-                )
+                cluster_variables[path.name] = ServiceVariables(path.name, repo)
 
         cluster_variables = ClusterVariables(cluster_variables)
 
         if validate:
-            cluster_variables._validate_services_schemas()
+            cluster_variables._validate_services_schemas(collections)
 
         return cluster_variables
 
-    def _validate_services_schemas(self):
+    def _validate_services_schemas(self, collections: Collections):
         """Validate all services schemas."""
         for service in self.values():
-            service.validate()
+            service.validate(collections)
 
     def get_modified_sch(
         self,

@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import logging
 from collections import OrderedDict
-from collections.abc import Iterable, Mapping, Sequence
-from typing import Optional
+from collections.abc import Generator, Iterable, Mapping, Sequence
+from itertools import chain
+from pathlib import Path
+from typing import Optional, cast
 
 import yaml
 
@@ -194,6 +196,20 @@ class Collections(Mapping[str, Collection]):
                     host_names=collection.get_hosts_from_playbook(operation_name),
                     collection_name=collection_name,
                 )
+
+    def get_services(self) -> set[str]:
+        """Get the list of services names."""
+        return {operation.service_name for operation in self.operations.values()}
+
+    def get_default_vars_paths(self, service_name: str) -> Generator[Path, None, None]:
+        """Get the default vars paths for a service."""
+        generators = (
+            collection.get_service_default_vars(service_name)
+            for collection in self._collections.values()
+        )
+        return cast(
+            Generator[Path, None, None], chain.from_iterable(filter(None, generators))
+        )
 
     def get_service_schema(self, service_name: str) -> dict:
         """Get the service's schema.

@@ -64,7 +64,9 @@ class Repository(ABC):
     @classmethod
     @abstractmethod
     def init(cls, path: PathLike) -> Repository:
-        """Initialize a new repository.
+        """Get a repository object.
+
+        Initialize a new repository at the given path if it does not exist yet.
 
         Args:
             path: Path to the repository.

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import json
+from collections.abc import Generator
 from pathlib import Path
 from typing import Optional
 
@@ -125,19 +126,12 @@ class Collection:
             }
         return self._playbooks
 
-    def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
-        """Get the default variables for a service.
-
-        Args:
-            service_name: The name of the service.
-
-        Returns:
-            A list of tuples (name, path) of the default variables.
-        """
+    def get_service_default_vars(
+        self, service_name: str
+    ) -> Generator[Path, None, None]:
+        """Get the default vars paths for a service."""
         service_path = self.default_vars_directory / service_name
-        if not service_path.exists():
-            return []
-        return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
+        return service_path.glob("*" + YML_EXTENSION)
 
     def get_service_schema(self, service_name: str) -> dict:
         """Get the variables schema of a service.
