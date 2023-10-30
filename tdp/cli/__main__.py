@@ -20,6 +20,7 @@ from tdp.cli.commands.status import status
 from tdp.cli.commands.validate import validate
 from tdp.cli.commands.vars import vars
 from tdp.cli.logger import setup_logging
+from tdp.cli.utils import CatchGroup
 
 # Add `-h` shortcut to print the help for the whole cli.
 # Click only uses `--help` by default.
@@ -35,7 +36,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
         logging.warning(f"Environment file {value} does not exist.")
 
 
-@click.group("tdp", context_settings=CONTEXT_SETTINGS)
+@click.group("tdp", context_settings=CONTEXT_SETTINGS, cls=CatchGroup)
 @click.option(
     "--env",
     default=".env",
