@@ -217,3 +217,14 @@ def vars(func=None, *, exists=True) -> Callable[[FC], FC]:
         return decorator
     else:
         return decorator(func)
+
+
+class CatchGroup(click.Group):
+    """Catch exceptions and print them to stderr."""
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.main(*args, **kwargs)
+
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
