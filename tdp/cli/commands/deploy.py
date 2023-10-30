@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 @click.option(
     "--run-directory",
     envvar="TDP_RUN_DIRECTORY",
-    type=Path,
+    type=click.Path(resolve_path=True, path_type=Path, exists=True),
     help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
     required=True,
 )
