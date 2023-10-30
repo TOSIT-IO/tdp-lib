@@ -52,6 +52,20 @@ class DeploymentRunner:
         operation_log.start_time = datetime.utcnow()
 
         operation = self._collections.get_operation(operation_log.operation)
+
+        # Check if the operation is available for the given host
+        if operation_log.host and operation_log.host not in operation.host_names:
+            logs = (
+                f"Operation '{operation_log.operation}' not available for host "
+                + f"'{operation_log.host}'"
+            )
+            logger.error(logs)
+            operation_log.state = OperationStateEnum.FAILURE
+            operation_log.logs = logs.encode("utf-8")
+            operation_log.end_time = datetime.utcnow()
+            return
+
+        # Execute the operation
         playbook_file = self._collections[operation.collection_name].playbooks[
             operation.name
         ]
@@ -62,6 +76,7 @@ class DeploymentRunner:
         )
         operation_log.end_time = datetime.utcnow()
 
+        # ? This case shouldn't happen as the executor should return a valid state
         if state not in OperationStateEnum:
             logger.error(
                 f"Invalid state ({state}) returned by {self._executor.__class__.__name__}.run('{playbook_file}'))"
