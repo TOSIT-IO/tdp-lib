@@ -3,6 +3,7 @@
 
 import io
 import logging
+import shutil
 import subprocess
 from collections.abc import Iterable
 from typing import Optional
@@ -77,13 +78,21 @@ class Executor:
         Returns:
             A tuple with the state of the command and the output of the command in UTF-8.
         """
-        command = ["ansible-playbook"]
+        # Check if ansible is available
+        ansible_path = shutil.which("ansible-playbook")
+        if ansible_path is None:
+            logger.error("'ansible-playbook' not found in PATH")
+            return OperationStateEnum.FAILURE, b""
+        # Build command
+        command = [ansible_path]
         command += [str(playbook)]
         if host is not None:
             command += ["--limit", host]
         for extra_var in extra_vars or []:
             command += ["--extra-vars", extra_var]
+        # Execute command
         if self._dry:
+            # Operation always succeed in dry mode
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return OperationStateEnum.SUCCESS, b""
         logger.debug("Ansible command: " + " ".join(command))
