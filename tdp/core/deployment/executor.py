@@ -3,12 +3,12 @@
 
 import io
 import logging
-import shutil
 import subprocess
 from collections.abc import Iterable
 from typing import Optional
 
 from tdp.core.models import OperationStateEnum
+from tdp.utils import ExecutableNotFoundError, resolve_executable
 
 logger = logging.getLogger(__name__)
 
@@ -78,11 +78,18 @@ class Executor:
         Returns:
             A tuple with the state of the command and the output of the command in UTF-8.
         """
-        # Check if ansible is available
-        ansible_path = shutil.which("ansible-playbook")
-        if ansible_path is None:
-            logger.error("'ansible-playbook' not found in PATH")
-            return OperationStateEnum.FAILURE, b""
+        ansible_playbook_command = "ansible-playbook"
+        if self._dry:
+            # In dry mode, we don't want to execute the ansible-playbook command
+            ansible_path = ansible_playbook_command
+        else:
+            # Check if the ansible-playbook command is available in PATH
+            try:
+                ansible_path = resolve_executable(ansible_playbook_command)
+            except ExecutableNotFoundError:
+                logs = f"'{ansible_playbook_command}' not found in PATH"
+                logger.error(logs)
+                return OperationStateEnum.FAILURE, logs.encode("utf-8")
         # Build command
         command = [ansible_path]
         command += [str(playbook)]
