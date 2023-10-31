@@ -28,7 +28,7 @@ from tdp.core.operation import Operation
     help="Display DAG operations in topological order.",
 )
 @collections
-def operations(
+def ops(
     collections: Collections,
     display_dag_operations: bool,
     hosts: list[str],
@@ -54,11 +54,13 @@ def operations(
             sorted_operations = sorted(operations, key=lambda operation: operation.name)
         _print_operations(sorted_operations)
     else:
-        _print_operations(
-            sorted(
-                collections.operations.values(), key=lambda operation: operation.name
-            )
-        )
+        operations = [
+            operation
+            for operation in collections.operations.values()
+            if len(hosts) == 0 or bool(set(operation.host_names) & set(hosts))
+        ]
+        sorted_operations = sorted(operations, key=lambda operation: operation.name)
+        _print_operations(sorted_operations)
 
 
 def _print_operations(operations: Iterable[Operation], /):
