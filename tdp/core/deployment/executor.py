@@ -77,12 +77,12 @@ class Executor:
         Returns:
             A tuple with the state of the command and the output of the command in UTF-8.
         """
-        command = ["ansible-playbook", str(playbook)]
+        command = ["ansible-playbook"]
+        command += [str(playbook)]
         if host is not None:
-            command.extend(["--limit", host])
-        if extra_vars is not None:
-            for extra_var in extra_vars:
-                command.extend(["--extra-vars", extra_var])
+            command += ["--limit", host]
+        for extra_var in extra_vars or []:
+            command += ["--extra-vars", extra_var]
         if self._dry:
             logger.info("[DRY MODE] Ansible command: " + " ".join(command))
             return OperationStateEnum.SUCCESS, b""
