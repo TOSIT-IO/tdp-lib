@@ -16,7 +16,10 @@ from tdp.cli.queries import get_sch_status
 from tdp.cli.session import get_session
 from tdp.cli.utils import check_services_cleanliness
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.models.sch_status_log import SCHStatusLog, SCHStatusLogSourceEnum
+from tdp.core.models.sch_status_log_model import (
+    SCHStatusLogModel,
+    SCHStatusLogSourceEnum,
+)
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -81,7 +84,7 @@ def edit(
         # Create a new SCHStatusLog for each host
         for host in hosts:
             session.add(
-                SCHStatusLog(
+                SCHStatusLogModel(
                     service=service,
                     component=component,
                     host=host,

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from tdp.core.models import DeploymentModel, OperationLog, SCHStatusLog
+from tdp.core.models import DeploymentModel, OperationLog, SCHStatusLogModel
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def test_create_deployment(db_session: Session):
         status="SUCCESS",
         deployment_type="Dag",
     )
-    component_version_log = SCHStatusLog(
+    component_version_log = SCHStatusLogModel(
         deployment_id=deployment.id,
         service="service1",
         component="component1",

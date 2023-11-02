@@ -15,7 +15,10 @@ from tdp.core.models.deployment_model import (
     NothingToResumeError,
 )
 from tdp.core.models.operation_log import OperationLog
-from tdp.core.models.sch_status_log import SCHStatusLog, SCHStatusLogSourceEnum
+from tdp.core.models.sch_status_log_model import (
+    SCHStatusLogModel,
+    SCHStatusLogSourceEnum,
+)
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 ServiceComponentHostStatus = tuple[
