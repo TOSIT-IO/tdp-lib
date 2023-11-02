@@ -122,7 +122,7 @@ def edit(
 
         # Check schema
         try:
-            service_variables.validate()
+            service_variables.validate(collections)
         except InvalidSchema:
             click.echo(f"Variables does not match '{service_name}' schema")
             continue
