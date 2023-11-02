@@ -23,10 +23,10 @@ class OperationLog(Base):
     Hold past and current operation information linked to a deployment.
     """
 
-    __tablename__ = "operation_log"
+    __tablename__ = "operation"
 
     deployment_id: Mapped[int] = mapped_column(
-        ForeignKey("deployment_log.id"), primary_key=True, doc="Deployment log id."
+        ForeignKey("deployment.id"), primary_key=True, doc="Deployment log id."
     )
     operation_order: Mapped[int] = mapped_column(
         primary_key=True, doc="Operation order."
