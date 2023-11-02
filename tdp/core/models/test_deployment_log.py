@@ -13,8 +13,8 @@ from tdp.core.collections import (
     Collections,
 )
 from tdp.core.inventory_reader import InventoryReader
-from tdp.core.models.deployment_log import (
-    DeploymentLog,
+from tdp.core.models.deployment_model import (
+    DeploymentModel,
     DeploymentTypeEnum,
     NothingToResumeError,
 )
@@ -35,119 +35,107 @@ class MockInventoryReader(InventoryReader):
         return set(self.hosts)
 
 
-def fail_deployment_log(deployment_log: DeploymentLog, index_to_fail: int):
-    deployment_log.status = DeploymentStateEnum.FAILURE
-    for operation in deployment_log.operations:
+def fail_deployment(deployment: DeploymentModel, index_to_fail: int):
+    deployment.status = DeploymentStateEnum.FAILURE
+    for operation in deployment.operations:
         if operation.operation_order < index_to_fail:
             operation.state = OperationStateEnum.SUCCESS
         elif operation.operation_order == index_to_fail:
             operation.state = OperationStateEnum.FAILURE
         else:
             operation.state = OperationStateEnum.HELD
-    return deployment_log
+    return deployment
 
 
-def set_success(deployment_log: DeploymentLog):
-    deployment_log.status = DeploymentStateEnum.SUCCESS
-    for operation in deployment_log.operations:
+def set_success(deployment: DeploymentModel):
+    deployment.status = DeploymentStateEnum.SUCCESS
+    for operation in deployment.operations:
         operation.state = OperationStateEnum.SUCCESS
 
 
 class TestFromOperations:
     def test_empty(self, mock_collections: Collections):
         operations_names = []
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
-        assert len(deployment_log.operations) == 0
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": []}  # TODO should be {}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert len(deployment.operations) == 0
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": []}  # TODO should be {}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_single_operation(self, mock_collections: Collections):
         operations_names = ["serv_comp_config"]
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": operations_names}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": operations_names}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_single_restart_operation(self, mock_collections: Collections):
         operations_names = ["serv_comp_restart"]
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": operations_names}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": operations_names}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_single_noop_opeation(self, mock_collections: Collections):
         operations_names = ["serv_config"]
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": operations_names}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": operations_names}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_single_restart_noop_operation(self, mock_collections: Collections):
         operations_names = ["serv_restart"]
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": operations_names}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": operations_names}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_multiple_operations(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_restart"]
-        deployment_log = DeploymentLog.from_operations(
-            mock_collections, operations_names
-        )
+        deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {"operations": operations_names}
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {"operations": operations_names}
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_single_host(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_start"]
         host = "localhost"
-        deployment_log = DeploymentLog.from_operations(
+        deployment = DeploymentModel.from_operations(
             mock_collections, operations_names, [host]
         )
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        for operation_log in deployment_log.operations:
+        for operation_log in deployment.operations:
             assert operation_log.host == host
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {
             "operations": operations_names,
             "hosts": [host],
         }
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
         operations_names = ["serv_comp_config", "serv_comp_start"]
@@ -164,76 +152,76 @@ class TestFromOperations:
         collection._inventory_reader = MockInventoryReader(hosts)
         collections = Collections.from_collection_list([collection])
 
-        deployment_log = DeploymentLog.from_operations(
+        deployment = DeploymentModel.from_operations(
             collections, operations_names, hosts
         )
 
-        assert deployment_log.operations[0].operation == operations_names[0]
-        assert deployment_log.operations[0].host == hosts[0]
-        assert deployment_log.operations[1].operation == operations_names[0]
-        assert deployment_log.operations[1].host == hosts[1]
-        assert deployment_log.operations[2].operation == operations_names[0]
-        assert deployment_log.operations[2].host == hosts[2]
+        assert deployment.operations[0].operation == operations_names[0]
+        assert deployment.operations[0].host == hosts[0]
+        assert deployment.operations[1].operation == operations_names[0]
+        assert deployment.operations[1].host == hosts[1]
+        assert deployment.operations[2].operation == operations_names[0]
+        assert deployment.operations[2].host == hosts[2]
 
-        assert deployment_log.operations[3].operation == operations_names[1]
-        assert deployment_log.operations[3].host == hosts[0]
-        assert deployment_log.operations[4].operation == operations_names[1]
-        assert deployment_log.operations[4].host == hosts[1]
-        assert deployment_log.operations[5].operation == operations_names[1]
-        assert deployment_log.operations[5].host == hosts[2]
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {
+        assert deployment.operations[3].operation == operations_names[1]
+        assert deployment.operations[3].host == hosts[0]
+        assert deployment.operations[4].operation == operations_names[1]
+        assert deployment.operations[4].host == hosts[1]
+        assert deployment.operations[5].operation == operations_names[1]
+        assert deployment.operations[5].host == hosts[2]
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {
             "operations": operations_names,
             "hosts": hosts,
         }
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
     def test_extra_vars(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_start"]
         extra_vars = ["foo1=bar1", "foo2=bar2"]
-        deployment_log = DeploymentLog.from_operations(
+        deployment = DeploymentModel.from_operations(
             collections=mock_collections,
             operation_names=operations_names,
             extra_vars=extra_vars,
         )
 
         assert [
-            operation_log.operation for operation_log in deployment_log.operations
+            operation_log.operation for operation_log in deployment.operations
         ] == operations_names
-        for operation_log in deployment_log.operations:
+        for operation_log in deployment.operations:
             assert operation_log.extra_vars == extra_vars
-        assert deployment_log.deployment_type == DeploymentTypeEnum.OPERATIONS
-        assert deployment_log.options == {
+        assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
+        assert deployment.options == {
             "operations": operations_names,
             "extra_vars": extra_vars,
         }
-        assert deployment_log.status == DeploymentStateEnum.PLANNED
+        assert deployment.status == DeploymentStateEnum.PLANNED
 
 
 class TestFromDag:
     def test_deployment_plan_from_dag(self, mock_dag: Dag):
-        deployment_log = DeploymentLog.from_dag(mock_dag, ["serv_start"])
+        deployment = DeploymentModel.from_dag(mock_dag, ["serv_start"])
 
-        assert deployment_log.deployment_type == DeploymentTypeEnum.DAG
-        assert len(deployment_log.operations) == 6
+        assert deployment.deployment_type == DeploymentTypeEnum.DAG
+        assert len(deployment.operations) == 6
         assert any(
-            filter(lambda op: op.operation == "serv_start", deployment_log.operations)
+            filter(lambda op: op.operation == "serv_start", deployment.operations)
         )
 
     def test_deployment_plan_filter(self, mock_dag: Dag):
-        deployment_log = DeploymentLog.from_dag(
+        deployment = DeploymentModel.from_dag(
             mock_dag, targets=["serv_init"], filter_expression="*_install"
         )
 
         assert all(
             filter(
                 lambda operation: operation.operation.endswith("_install"),
-                deployment_log.operations,
+                deployment.operations,
             )
         ), "Filter expression should have left only install operations from dag"
 
     def test_deployment_plan_restart(self, mock_dag: Dag):
-        deployment_log = DeploymentLog.from_dag(
+        deployment = DeploymentModel.from_dag(
             mock_dag,
             targets=["serv_init"],
             restart=True,
@@ -242,13 +230,13 @@ class TestFromDag:
         assert any(
             filter(
                 lambda operation: operation.operation.endswith("_restart"),
-                deployment_log.operations,
+                deployment.operations,
             )
         ), "A restart operation should be present"
         assert not any(
             filter(
                 lambda operation: "_start" in operation.operation,
-                deployment_log.operations,
+                deployment.operations,
             )
         ), "The restart flag should have removed every start operations from dag"
 
@@ -257,57 +245,57 @@ class TestFromFailedDeployment:
     def test_deployment_plan_resume_from_dag(
         self, mock_dag: Dag, mock_collections: Collections
     ):
-        deployment_log = DeploymentLog.from_dag(
+        deployment = DeploymentModel.from_dag(
             mock_dag,
             targets=["serv_init"],
         )
         index_to_fail = 2
-        deployment_log = fail_deployment_log(deployment_log, index_to_fail)
+        deployment = fail_deployment(deployment, index_to_fail)
 
-        resume_deployment_log = DeploymentLog.from_failed_deployment(
-            mock_collections, deployment_log
+        resume_deployment = DeploymentModel.from_failed_deployment(
+            mock_collections, deployment
         )
-        assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
+        assert resume_deployment.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
-        assert len(deployment_log.operations) - index_to_fail + 1 == len(
-            resume_deployment_log.operations
+        assert len(deployment.operations) - index_to_fail + 1 == len(
+            resume_deployment.operations
         )
-        assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
+        assert len(deployment.operations) >= len(resume_deployment.operations)
 
     def test_deployment_plan_resume_with_success_deployment(
         self, mock_dag: Dag, mock_collections: Collections
     ):
-        deployment_log = DeploymentLog.from_dag(
+        deployment = DeploymentModel.from_dag(
             mock_dag,
             targets=["serv_init"],
         )
-        set_success(deployment_log)
+        set_success(deployment)
         with pytest.raises(NothingToResumeError):
-            DeploymentLog.from_failed_deployment(mock_collections, deployment_log)
+            DeploymentModel.from_failed_deployment(mock_collections, deployment)
 
     def test_deployment_plan_resume_from_operations_host(
         self, mock_collections: Collections
     ):
         operations_names = ["serv_comp_install", "serv_comp_config", "serv_comp_start"]
         host = "localhost"
-        deployment_log = DeploymentLog.from_operations(
+        deployment = DeploymentModel.from_operations(
             mock_collections,
             operation_names=operations_names,
             host_names=[host],
         )
         index_to_fail = 2
-        deployment_log = fail_deployment_log(deployment_log, index_to_fail)
+        deployment = fail_deployment(deployment, index_to_fail)
 
-        resume_deployment_log = DeploymentLog.from_failed_deployment(
-            mock_collections, deployment_log
+        resume_deployment = DeploymentModel.from_failed_deployment(
+            mock_collections, deployment
         )
-        assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
+        assert resume_deployment.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
-        assert len(deployment_log.operations) - index_to_fail + 1 == len(
-            resume_deployment_log.operations
+        assert len(deployment.operations) - index_to_fail + 1 == len(
+            resume_deployment.operations
         )
-        assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
-        for operation_log in resume_deployment_log.operations:
+        assert len(deployment.operations) >= len(resume_deployment.operations)
+        for operation_log in resume_deployment.operations:
             assert operation_log.host == host
 
     def test_deployment_plan_resume_from_operations_extra_vars(
@@ -315,24 +303,24 @@ class TestFromFailedDeployment:
     ):
         operations_names = ["serv_comp_install", "serv_comp_config", "serv_comp_start"]
         extra_vars = ["foo1=bar1", "foo2=bar2"]
-        deployment_log = DeploymentLog.from_operations(
+        deployment = DeploymentModel.from_operations(
             mock_collections,
             operation_names=operations_names,
             extra_vars=extra_vars,
         )
         index_to_fail = 2
-        deployment_log = fail_deployment_log(deployment_log, index_to_fail)
+        deployment = fail_deployment(deployment, index_to_fail)
 
-        resume_deployment_log = DeploymentLog.from_failed_deployment(
-            mock_collections, deployment_log
+        resume_deployment = DeploymentModel.from_failed_deployment(
+            mock_collections, deployment
         )
-        assert resume_deployment_log.deployment_type == DeploymentTypeEnum.RESUME
+        assert resume_deployment.deployment_type == DeploymentTypeEnum.RESUME
         # index starts at 1
-        assert len(deployment_log.operations) - index_to_fail + 1 == len(
-            resume_deployment_log.operations
+        assert len(deployment.operations) - index_to_fail + 1 == len(
+            resume_deployment.operations
         )
-        assert len(deployment_log.operations) >= len(resume_deployment_log.operations)
-        for operation_log in resume_deployment_log.operations:
+        assert len(deployment.operations) >= len(resume_deployment.operations)
+        for operation_log in resume_deployment.operations:
             assert operation_log.extra_vars == extra_vars
 
 

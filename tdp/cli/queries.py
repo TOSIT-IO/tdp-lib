@@ -9,7 +9,7 @@ from sqlalchemy import and_, case, func, or_
 from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
-    DeploymentLog,
+    DeploymentModel,
     OperationLog,
     SCHStatusLog,
 )
@@ -363,7 +363,7 @@ def get_sch_status(
     )
 
 
-def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentLog]:
+def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:
     """Get deployments.
 
     Args:
@@ -375,15 +375,15 @@ def get_deployments(session: Session, limit: int, offset: int) -> list[Deploymen
         The deployments.
     """
     return (
-        session.query(DeploymentLog)
-        .order_by(DeploymentLog.id.desc())
+        session.query(DeploymentModel)
+        .order_by(DeploymentModel.id.desc())
         .limit(limit)
         .offset(offset)
         .all()
     )
 
 
-def get_deployment(session: Session, deployment_id: int) -> DeploymentLog:
+def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
     """Get a deployment by id.
 
     Args:
@@ -396,12 +396,12 @@ def get_deployment(session: Session, deployment_id: int) -> DeploymentLog:
     Raises:
         NoResultFound: If the deployment does not exist."""
     try:
-        return session.query(DeploymentLog).filter_by(id=deployment_id).one()
+        return session.query(DeploymentModel).filter_by(id=deployment_id).one()
     except NoResultFound as e:
         raise Exception(f"Deployment id {deployment_id} does not exist.") from e
 
 
-def get_last_deployment(session: Session) -> DeploymentLog:
+def get_last_deployment(session: Session) -> DeploymentModel:
     """Get the last deployment.
 
     Args:
@@ -415,8 +415,8 @@ def get_last_deployment(session: Session) -> DeploymentLog:
     """
     try:
         return (
-            session.query(DeploymentLog)
-            .order_by(DeploymentLog.id.desc())
+            session.query(DeploymentModel)
+            .order_by(DeploymentModel.id.desc())
             .limit(1)
             .one()
         )
@@ -424,7 +424,7 @@ def get_last_deployment(session: Session) -> DeploymentLog:
         raise Exception("No deployments.") from e
 
 
-def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
+def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     """Get the planned deployment.
 
     Args:
@@ -433,7 +433,7 @@ def get_planned_deployment_log(session: Session) -> Optional[DeploymentLog]:
     Returns:
         The planned deployment or None if there is no planned deployment.
     """
-    return session.query(DeploymentLog).filter_by(status="PLANNED").one_or_none()
+    return session.query(DeploymentModel).filter_by(status="PLANNED").one_or_none()
 
 
 def get_operation_log(

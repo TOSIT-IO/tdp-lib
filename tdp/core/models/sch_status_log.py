@@ -65,7 +65,7 @@ class SCHStatusLog(BaseModel):
     )
     deployment_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("deployment.id"),
-        doc="Related deployment log id (if applicable).",
+        doc="Related deployment id (if applicable).",
     )
     message: Mapped[Optional[str]] = mapped_column(
         doc="Description of the change when manually edited.",

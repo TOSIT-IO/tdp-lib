@@ -9,14 +9,14 @@ from tdp.cli.queries import (
     get_deployment,
     get_deployments,
     get_operation_log,
-    get_planned_deployment_log,
+    get_planned_deployment,
 )
 from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
-from tdp.core.models import DeploymentLog, OperationLog
+from tdp.core.models import DeploymentModel, OperationLog
 
 
-@click.command(short_help="Browse deployment logs")
+@click.command(short_help="Browse deployments")
 @click.argument("deployment_id", required=False)
 @click.argument("operation", required=False)
 @click.option(
@@ -51,7 +51,7 @@ def browse(
     with get_session(database_dsn) as session:
         # Print last deployment plan
         if plan:
-            deployment_plan = get_planned_deployment_log(session)
+            deployment_plan = get_planned_deployment(session)
             if deployment_plan:
                 _print_deployment(deployment_plan)
             else:
@@ -73,7 +73,7 @@ def browse(
         _print_deployments(get_deployments(session, limit, offset))
 
 
-def _print_deployments(deployments: Iterable[DeploymentLog]) -> None:
+def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
     """Print a list of deployments in a human readable format.
 
     Args:
@@ -88,7 +88,7 @@ def _print_deployments(deployments: Iterable[DeploymentLog]) -> None:
     )
 
 
-def _print_deployment(deployment: DeploymentLog) -> None:
+def _print_deployment(deployment: DeploymentModel) -> None:
     """Print a deployment in a human readable format.
 
     Args:

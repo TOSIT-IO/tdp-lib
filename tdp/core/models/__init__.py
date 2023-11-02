@@ -6,8 +6,8 @@ from typing import Optional
 from sqlalchemy.engine.row import Row
 
 from tdp.core.models.base_model import BaseModel
-from tdp.core.models.deployment_log import (
-    DeploymentLog,
+from tdp.core.models.deployment_model import (
+    DeploymentModel,
     DeploymentTypeEnum,
     FilterTypeEnum,
     NoOperationMatchError,

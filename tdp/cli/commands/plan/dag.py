@@ -4,11 +4,11 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, preview, print_deployment
 from tdp.core.dag import Dag
-from tdp.core.models import DeploymentLog, FilterTypeEnum
+from tdp.core.models import DeploymentModel, FilterTypeEnum
 
 
 def _validate_filtertype(ctx, param, value):
@@ -103,7 +103,7 @@ def dag(
         click.echo(f"Creating a deployment plan to: {targets}")
     else:
         click.echo("Creating a deployment plan for the whole DAG.")
-    deployment_log = DeploymentLog.from_dag(
+    deployment = DeploymentModel.from_dag(
         dag,
         sources=sources,
         targets=targets,
@@ -114,11 +114,11 @@ def dag(
         stop=stop,
     )
     if preview:
-        print_deployment(deployment_log)
+        print_deployment(deployment)
         return
     with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
+        planned_deployment = get_planned_deployment(session)
+        if planned_deployment:
+            deployment.id = planned_deployment.id
+        session.merge(deployment)
     click.echo("Deployment plan successfully created.")

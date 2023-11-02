@@ -17,7 +17,7 @@ from tdp.core.collections import Collections
 from tdp.core.variables.cluster_variables import ClusterVariables
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentLog
+    from tdp.core.models import DeploymentModel
 
 
 def _collections_from_paths(
@@ -134,7 +134,7 @@ def preview(func: FC) -> FC:
 
 
 def print_deployment(
-    deployment: DeploymentLog, /, *, filter_out: Optional[list[str]] = None
+    deployment: DeploymentModel, /, *, filter_out: Optional[list[str]] = None
 ) -> None:
     # Print general deployment infos
     click.secho("Deployment details", bold=True)

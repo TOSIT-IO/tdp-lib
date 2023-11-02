@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.deployment.executor import Executor
-    from tdp.core.models import DeploymentLog, OperationLog
+    from tdp.core.models import DeploymentModel, OperationLog
 
 logger = logging.getLogger(__name__)
 
@@ -89,22 +89,22 @@ class DeploymentRunner:
 
     def run(
         self,
-        deployment_log: DeploymentLog,
+        deployment: DeploymentModel,
         *,
         force_stale_update: bool = False,
     ) -> DeploymentIterator:
         """Provides an iterator to run a deployment plan.
 
         Args:
-            deployment_log: Deployment log to run.
+            deployment: deployment to run.
             force_sch_update: Force SCH status update.
 
         Returns:
             DeploymentIterator object, to iterate over operations logs.
         """
-        deployment_log.status = DeploymentStateEnum.RUNNING
+        deployment.status = DeploymentStateEnum.RUNNING
         return DeploymentIterator(
-            deployment_log=deployment_log,
+            deployment=deployment,
             collections=self._collections,
             run_method=self._run_operation,
             cluster_variables=self._cluster_variables,
