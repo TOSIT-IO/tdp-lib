@@ -5,7 +5,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.operations import ops
+from tdp.cli.commands.ops import ops
 
 
 def test_tdp_nodes(collection_path: Path):
