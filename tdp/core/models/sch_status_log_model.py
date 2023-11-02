@@ -26,7 +26,7 @@ class SCHStatusLogSourceEnum(BaseEnum):
     MANUAL = "Manual"
 
 
-class SCHStatusLog(BaseModel):
+class SCHStatusLogModel(BaseModel):
     """Hold what component version are deployed."""
 
     __tablename__ = "sch_status_log"

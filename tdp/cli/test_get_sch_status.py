@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from tdp.cli.queries import get_sch_status
 from tdp.core.models import (
-    SCHStatusLog,
+    SCHStatusLogModel,
     SCHStatusLogSourceEnum,
     ServiceComponentHostStatus,
 )
@@ -38,13 +38,13 @@ def _mock_sch_status_log(
     host: Optional[str],
     n: int = 50,
     seed: Optional[str] = None,
-) -> List["SCHStatusLog"]:
+) -> List["SCHStatusLogModel"]:
     """Generate n mock SCHStatusLog entries."""
     _set_seed(seed)
     logs = []
     for _ in range(n):
         logs.append(
-            SCHStatusLog(
+            SCHStatusLogModel(
                 service=service,
                 component=component,
                 host=host,
@@ -63,7 +63,7 @@ def _mock_sch_status_log(
 
 
 def _last_values(
-    logs: List["SCHStatusLog"],
+    logs: List["SCHStatusLogModel"],
 ) -> ServiceComponentHostStatus:
     """Return an SCHStatusLog holding the last non None value for each column from a list of logs."""
     return (

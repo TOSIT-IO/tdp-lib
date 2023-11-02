@@ -17,7 +17,7 @@ from tdp.core.models import (
     NothingToReconfigureError,
     OperationLog,
     OperationStateEnum,
-    SCHStatusLog,
+    SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
 from tdp.core.service_component_host_name import ServiceComponentHostName
@@ -56,7 +56,7 @@ def _group_hosts_by_operation(
     return operation_to_hosts_set
 
 
-class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
+class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -99,7 +99,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
         except NothingToReconfigureError:
             self._reconfigure_operations = None
 
-    def __next__(self) -> Optional[list[SCHStatusLog]]:
+    def __next__(self) -> Optional[list[SCHStatusLogModel]]:
         try:
             while True:
                 operation_log: OperationLog = next(self._iter)
@@ -131,7 +131,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                 if operation.name == OPERATION_SLEEP_NAME:
                     return
 
-                sch_status_logs: list[SCHStatusLog] = []
+                sch_status_logs: list[SCHStatusLogModel] = []
                 sc_name = ServiceComponentName(
                     service_name=operation.service_name,
                     component_name=operation.component_name,

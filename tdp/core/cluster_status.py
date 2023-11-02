@@ -8,7 +8,10 @@ from collections.abc import Generator, Iterable, Mapping
 from typing import TYPE_CHECKING, Any, Optional
 
 from tdp.core.dag import Dag
-from tdp.core.models.sch_status_log import SCHStatusLog, SCHStatusLogSourceEnum
+from tdp.core.models.sch_status_log_model import (
+    SCHStatusLogModel,
+    SCHStatusLogSourceEnum,
+)
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
@@ -106,7 +109,7 @@ class SCHStatus:
         configured_version: Optional[str] = None,
         to_config: Optional[bool] = None,
         to_restart: Optional[bool] = None,
-    ) -> Optional[SCHStatusLog]:
+    ) -> Optional[SCHStatusLogModel]:
         """Update the status of a service component host, returns a SCHStatusLog if the status was updated.
 
         Args:
@@ -128,7 +131,7 @@ class SCHStatus:
             return
 
         # Base log
-        log = SCHStatusLog(
+        log = SCHStatusLogModel(
             service=self.service,
             component=self.component,
             host=self.host,
@@ -259,7 +262,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         *,
         cluster_variables: ClusterVariables,
         collections: Collections,
-    ) -> set[SCHStatusLog]:
+    ) -> set[SCHStatusLogModel]:
         """Generate SCHStatusLog(s) for components that need to be configured or restarted.
 
         This method identifies components that have undergone changes in their
@@ -275,7 +278,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             Set of SCHStatusLog.
         """
-        stale_sch_logs_dict: dict[ServiceComponentHostName, SCHStatusLog] = {}
+        stale_sch_logs_dict: dict[ServiceComponentHostName, SCHStatusLogModel] = {}
         source_reconfigure_operations: set[str] = set()
 
         modified_sch = cluster_variables.get_modified_sch(self.values())
@@ -300,7 +303,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
             # Create SCHStatusLog for modified sch
             if config_operation or restart_operation:
-                stale_sch_log = stale_sch_logs_dict[sch] = SCHStatusLog(
+                stale_sch_log = stale_sch_logs_dict[sch] = SCHStatusLogModel(
                     service=sc.service_name,
                     component=sc.component_name,
                     host=sch.host_name,
@@ -332,7 +335,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
                         ),
                         host_name=host,
                     ),
-                    SCHStatusLog(
+                    SCHStatusLogModel(
                         service=operation.service_name,
                         component=operation.component_name,
                         host=host,
@@ -390,7 +393,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         action_name: str,
         version: Optional[str] = None,
         can_update_stale: bool = False,
-    ) -> Optional[SCHStatusLog]:
+    ) -> Optional[SCHStatusLogModel]:
         """Update the status of a sch, returns a log if the status was updated.
 
         Args:
