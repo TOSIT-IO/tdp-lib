@@ -55,15 +55,15 @@ class FilterTypeEnum(BaseEnum):
     GLOB = "glob"
 
 
-class DeploymentLog(BaseModel):
-    """Deployment log model.
+class DeploymentModel(BaseModel):
+    """deployment model.
 
     Hold past and current deployment information.
     """
 
     __tablename__ = "deployment"
 
-    id: Mapped[int] = mapped_column(primary_key=True, doc="Deployment log id.")
+    id: Mapped[int] = mapped_column(primary_key=True, doc="deployment id.")
     options: Mapped[Optional[dict]] = mapped_column(
         JSON(none_as_null=True), doc="Deployment options."
     )
@@ -104,7 +104,7 @@ class DeploymentLog(BaseModel):
         restart: bool = False,
         reverse: bool = False,
         stop: bool = False,
-    ) -> "DeploymentLog":
+    ) -> "DeploymentModel":
         """Generate a deployment plan from a DAG.
 
         Args:
@@ -141,7 +141,7 @@ class DeploymentLog(BaseModel):
         if reverse:
             operations = reversed(operations)
 
-        deployment_log = DeploymentLog(
+        deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
                 **_filter_falsy_options(
@@ -158,7 +158,7 @@ class DeploymentLog(BaseModel):
             },
             status=DeploymentStateEnum.PLANNED,
         )
-        deployment_log.operations = [
+        deployment.operations = [
             OperationLog(
                 operation=operation.name,
                 operation_order=i,
@@ -168,7 +168,7 @@ class DeploymentLog(BaseModel):
             )
             for i, operation in enumerate(operations, 1)
         ]
-        return deployment_log
+        return deployment
 
     @staticmethod
     def from_operations(
@@ -177,7 +177,7 @@ class DeploymentLog(BaseModel):
         host_names: Optional[Iterable[str]] = None,
         extra_vars: Optional[Iterable[str]] = None,
         rolling_interval: Optional[int] = None,
-    ) -> "DeploymentLog":
+    ) -> "DeploymentModel":
         """Generate a deployment plan from a list of operations.
 
         Args:
@@ -197,7 +197,7 @@ class DeploymentLog(BaseModel):
                 operation_names,
                 host_names,
             )
-        deployment_log = DeploymentLog(
+        deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             options={
                 "operations": operation_names,
@@ -225,7 +225,7 @@ class DeploymentLog(BaseModel):
                 if can_perform_rolling_restart
                 else [None]
             ):
-                deployment_log.operations.append(
+                deployment.operations.append(
                     OperationLog(
                         operation=operation.name,
                         operation_order=i,
@@ -236,7 +236,7 @@ class DeploymentLog(BaseModel):
                 )
                 if can_perform_rolling_restart:
                     i += 1
-                    deployment_log.operations.append(
+                    deployment.operations.append(
                         OperationLog(
                             operation=OPERATION_SLEEP_NAME,
                             operation_order=i,
@@ -248,13 +248,13 @@ class DeploymentLog(BaseModel):
                         )
                     )
                 i += 1
-        return deployment_log
+        return deployment
 
     @staticmethod
     def from_operations_hosts_vars(
         collections: Collections,
         operation_host_vars_names: list[tuple[str, Optional[str], Optional[list[str]]]],
-    ) -> "DeploymentLog":
+    ) -> "DeploymentModel":
         """Generate a deployment plan from a list of operations, hosts and extra vars.
 
         Args:
@@ -265,7 +265,7 @@ class DeploymentLog(BaseModel):
             MissingOperationError: If an operation is a noop.
             MissingHostForOperationError: If an operation is not found in the collections.
         """
-        deployment_log = DeploymentLog(
+        deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.CUSTOM,
             status=DeploymentStateEnum.PLANNED,
         )
@@ -282,7 +282,7 @@ class DeploymentLog(BaseModel):
                     [operation_name],
                 )
 
-            deployment_log.operations.append(
+            deployment.operations.append(
                 OperationLog(
                     operation=operation_name,
                     operation_order=order,
@@ -291,14 +291,14 @@ class DeploymentLog(BaseModel):
                     state=OperationStateEnum.PLANNED,
                 )
             )
-        return deployment_log
+        return deployment
 
     @staticmethod
     def from_stale_components(
         collections: Collections,
         cluster_status: ClusterStatus,
         rolling_interval: Optional[int] = None,
-    ) -> "DeploymentLog":
+    ) -> "DeploymentModel":
         """Generate a deployment plan for stale components.
 
         Args:
@@ -340,8 +340,8 @@ class DeploymentLog(BaseModel):
             )
         )
 
-        # Generate deployment log
-        deployment_log = DeploymentLog(
+        # Generate deployment
+        deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             options={
                 **_filter_falsy_options(
@@ -354,7 +354,7 @@ class DeploymentLog(BaseModel):
         )
         operation_order = 1
         for operation, host in operation_hosts_sorted:
-            deployment_log.operations.append(
+            deployment.operations.append(
                 OperationLog(
                     operation=operation.name,
                     operation_order=operation_order,
@@ -366,7 +366,7 @@ class DeploymentLog(BaseModel):
             # Add sleep operation after each "restart"
             if rolling_interval is not None and operation.action_name == "restart":
                 operation_order += 1
-                deployment_log.operations.append(
+                deployment.operations.append(
                     OperationLog(
                         operation=OPERATION_SLEEP_NAME,
                         operation_order=operation_order,
@@ -377,55 +377,55 @@ class DeploymentLog(BaseModel):
                 )
 
             operation_order += 1
-        return deployment_log
+        return deployment
 
     @staticmethod
     def from_failed_deployment(
-        collections: Collections, failed_deployment_log: "DeploymentLog"
-    ) -> "DeploymentLog":
+        collections: Collections, failed_deployment: "DeploymentModel"
+    ) -> "DeploymentModel":
         """Generate a deployment plan from a failed deployment.
 
         Args:
             collections: Collections to retrieve the operation from.
-            deployment_log: Deployment log.
+            deployment: deployment.
 
         Raises:
             NothingToResumeError: If the deployment was successful.
             UnsupportedDeploymentTypeError: If the deployment type is not supported.
         """
-        if failed_deployment_log.status != DeploymentStateEnum.FAILURE:
+        if failed_deployment.status != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{failed_deployment_log.id} "
-                + f"was {failed_deployment_log.status}."
+                f"Nothing to resume, deployment #{failed_deployment.id} "
+                + f"was {failed_deployment.status}."
             )
 
-        if len(failed_deployment_log.operations) == 0:
+        if len(failed_deployment.operations) == 0:
             raise NothingToResumeError(
-                f"Nothing to resume, deployment #{failed_deployment_log.id} has no operations."
+                f"Nothing to resume, deployment #{failed_deployment.id} has no operations."
             )
 
         failed_operation_id = next(
             (
                 i
-                for i, operation in enumerate(failed_deployment_log.operations)
+                for i, operation in enumerate(failed_deployment.operations)
                 if operation.state == OperationStateEnum.FAILURE
             ),
             None,
         )
         operations_tuple_to_resume = [
             (operation.operation, operation.host, operation.extra_vars)
-            for operation in failed_deployment_log.operations[failed_operation_id:]
+            for operation in failed_deployment.operations[failed_operation_id:]
         ]
         operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
         collections.check_operations_exist(operations_names_to_resume)
-        deployment_log = DeploymentLog(
+        deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RESUME,
             options={
-                "from": failed_deployment_log.id,
+                "from": failed_deployment.id,
             },
             status=DeploymentStateEnum.PLANNED,
         )
-        deployment_log.operations = [
+        deployment.operations = [
             OperationLog(
                 operation=operation,
                 operation_order=i,
@@ -437,7 +437,7 @@ class DeploymentLog(BaseModel):
                 operations_tuple_to_resume, 1
             )
         ]
-        return deployment_log
+        return deployment
 
 
 def _filter_falsy_options(options: dict) -> dict:

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Optional
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import OPERATION_SLEEP_NAME
 from tdp.core.models import (
-    DeploymentLog,
+    DeploymentModel,
     DeploymentStateEnum,
     NothingToReconfigureError,
     OperationLog,
@@ -31,12 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 def _group_hosts_by_operation(
-    deployment_log: DeploymentLog,
+    deployment: DeploymentModel,
 ) -> Optional[OrderedDict[str, set[str]]]:
     """Group hosts by operation.
 
     Example:
-        >>> _group_hosts_by_operation(DeploymentLog(
+        >>> _group_hosts_by_operation(DeploymentModel(
         ...     operations=[
         ...         OperationLog(operation="s_c_install", host="host1"),
         ...         OperationLog(operation="s_c_config", host="host1"),
@@ -45,11 +45,11 @@ def _group_hosts_by_operation(
         ... ))
         {'s_c_install': {'host1'}, 's_c_config': {'host1', 'host2'}}
     """
-    if not deployment_log.operations:
+    if not deployment.operations:
         return None
 
     operation_to_hosts_set = OrderedDict()
-    for operation_log in deployment_log.operations:
+    for operation_log in deployment.operations:
         operation_to_hosts_set.setdefault(operation_log.operation, set()).add(
             operation_log.host
         )
@@ -60,12 +60,12 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
-        deployment_log: DeploymentLog object to mutate.
+        deployment: DeploymentModel object to mutate.
     """
 
     def __init__(
         self,
-        deployment_log: DeploymentLog,
+        deployment: DeploymentModel,
         *,
         collections: Collections,
         run_method: Callable[[OperationLog], None],
@@ -76,23 +76,23 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
         """Initialize the iterator.
 
         Args:
-            deployment_log: DeploymentLog object to mutate.
+            deployment: DeploymentModel object to mutate.
             collections: Collections instance.
             run_method: Method to run the operation.
             cluster_variables: ClusterVariables instance.
             cluster_status: ClusterStatus instance.
         """
-        self.deployment_log = deployment_log
-        self.deployment_log.start_time = datetime.utcnow()
+        self.deployment = deployment
+        self.deployment.start_time = datetime.utcnow()
         self._cluster_status = cluster_status
         self._collections = collections
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
         self.force_stale_update = force_stale_update
-        self._iter = iter(deployment_log.operations)
+        self._iter = iter(deployment.operations)
         try:
             self._reconfigure_operations = _group_hosts_by_operation(
-                DeploymentLog.from_stale_components(
+                DeploymentModel.from_stale_components(
                     self._collections, self._cluster_status
                 )
             )
@@ -105,7 +105,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                 operation_log: OperationLog = next(self._iter)
 
                 # Return early if deployment failed
-                if self.deployment_log.status == DeploymentStateEnum.FAILURE:
+                if self.deployment.status == DeploymentStateEnum.FAILURE:
                     operation_log.state = OperationStateEnum.HELD
                     return
 
@@ -121,7 +121,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
 
                 # Set deployment status to failure if the operation failed
                 if operation_log.state != OperationStateEnum.SUCCESS:
-                    self.deployment_log.status = DeploymentStateEnum.FAILURE
+                    self.deployment.status = DeploymentStateEnum.FAILURE
                     # Return early as status is not updated
                     return
 
@@ -182,7 +182,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                         can_update_stale=can_update_stale,
                     )
                     if sch_status_log:
-                        sch_status_log.deployment_id = self.deployment_log.id
+                        sch_status_log.deployment_id = self.deployment.id
                         sch_status_log.source = (
                             SCHStatusLogSourceEnum.FORCED
                             if self.force_stale_update
@@ -207,12 +207,12 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLog]]]):
                 return sch_status_logs
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
-            self.deployment_log.end_time = datetime.utcnow()
-            if not self.deployment_log.status == DeploymentStateEnum.FAILURE:
-                self.deployment_log.status = DeploymentStateEnum.SUCCESS
+            self.deployment.end_time = datetime.utcnow()
+            if not self.deployment.status == DeploymentStateEnum.FAILURE:
+                self.deployment.status = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
-            self.deployment_log.end_time = datetime.utcnow()
-            self.deployment_log.status = DeploymentStateEnum.FAILURE
+            self.deployment.end_time = datetime.utcnow()
+            self.deployment.status = DeploymentStateEnum.FAILURE
             raise e

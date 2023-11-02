@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
@@ -13,7 +13,7 @@ from tdp.cli.utils import (
     print_deployment,
     rolling_interval,
 )
-from tdp.core.models import DeploymentLog
+from tdp.core.models import DeploymentModel
 
 
 @click.command(short_help="Run single TDP operation.")
@@ -43,15 +43,15 @@ def ops(
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
-    deployment_log = DeploymentLog.from_operations(
+    deployment = DeploymentModel.from_operations(
         collections, operation_names, hosts, extra_vars, rolling_interval
     )
     if preview:
-        print_deployment(deployment_log)
+        print_deployment(deployment)
         return
     with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
+        planned_deployment = get_planned_deployment(session)
+        if planned_deployment:
+            deployment.id = planned_deployment.id
+        session.merge(deployment)
     click.echo("Deployment plan successfully created.")

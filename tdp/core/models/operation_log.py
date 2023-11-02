@@ -14,7 +14,7 @@ from tdp.core.models.state_enum import OperationStateEnum
 from tdp.core.operation import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentLog
+    from tdp.core.models import DeploymentModel
 
 
 class OperationLog(BaseModel):
@@ -26,7 +26,7 @@ class OperationLog(BaseModel):
     __tablename__ = "operation"
 
     deployment_id: Mapped[int] = mapped_column(
-        ForeignKey("deployment.id"), primary_key=True, doc="Deployment log id."
+        ForeignKey("deployment.id"), primary_key=True, doc="deployment id."
     )
     operation_order: Mapped[int] = mapped_column(
         primary_key=True, doc="Operation order."
@@ -45,8 +45,8 @@ class OperationLog(BaseModel):
     state: Mapped[OperationStateEnum] = mapped_column(doc="Operation state.")
     logs: Mapped[Optional[bytes]] = mapped_column(doc="Operation logs.")
 
-    deployment: Mapped[DeploymentLog] = relationship(
-        back_populates="operations", doc="Deployment log."
+    deployment: Mapped[DeploymentModel] = relationship(
+        back_populates="operations", doc="deployment."
     )
 
     def _formater(self, key: str, value: Optional[Any]) -> str:

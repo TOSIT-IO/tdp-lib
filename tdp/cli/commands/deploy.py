@@ -4,7 +4,7 @@
 import click
 
 from tdp.cli.queries import (
-    get_planned_deployment_log,
+    get_planned_deployment,
     get_sch_status,
 )
 from tdp.cli.session import get_session
@@ -55,8 +55,8 @@ def deploy(
     check_services_cleanliness(cluster_variables)
 
     with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log is None:
+        planned_deployment = get_planned_deployment(session)
+        if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
             )
@@ -69,20 +69,20 @@ def deploy(
             ),
             cluster_variables=cluster_variables,
             cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
-        ).run(planned_deployment_log, force_stale_update=force_stale_update)
+        ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:
             for _ in deployment_iterator:
                 pass
             return
 
-        session.commit()  # Update deployment log status to RUNNING
+        session.commit()  # Update deployment status to RUNNING
         for cluster_status_logs in deployment_iterator:
             if cluster_status_logs and any(cluster_status_logs):
                 session.add_all(cluster_status_logs)
                 session.commit()
 
-        if deployment_iterator.deployment_log.status != DeploymentStateEnum.SUCCESS:
+        if deployment_iterator.deployment.status != DeploymentStateEnum.SUCCESS:
             raise click.ClickException("Deployment failed.")
         else:
             click.echo("Deployment finished with success.")

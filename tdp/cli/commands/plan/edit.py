@@ -10,22 +10,22 @@ from typing import Optional
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log
+from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn
-from tdp.core.models.deployment_log import DeploymentLog
+from tdp.core.models.deployment_model import DeploymentModel
 
 logger = logging.getLogger("tdp").getChild("edit")
 
 
-def _get_header_message(deployment_log_id: int, temp_file_name: str) -> str:
+def _get_header_message(deployment_id: int, temp_file_name: str) -> str:
     """Returns the header message to be displayed in the temporary file."""
     return f"""\
 # ------------------- DEPLOYMENT PLAN EDITOR --------------------------
 # Modify this file to edit the deployment plan.
 # Lines beginning with '#' are comments and will be ignored.
 #
-# Current planned deployment ID: {deployment_log_id}
+# Current planned deployment ID: {deployment_id}
 # Temporary file: {temp_file_name}
 #
 # Execution order:
@@ -140,15 +140,15 @@ def edit(
     database_dsn,
 ):
     with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log is None:
+        planned_deployment = get_planned_deployment(session)
+        if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
             )
 
         operation_list = [
             (operation.operation, operation.host, operation.extra_vars)
-            for operation in planned_deployment_log.operations
+            for operation in planned_deployment.operations
         ]
 
         operation_lines = [
@@ -159,14 +159,14 @@ def edit(
         ]
 
         with _managed_temp_file(mode="w", suffix=".csv") as temp_file:
-            header_text = _get_header_message(planned_deployment_log.id, temp_file.name)
+            header_text = _get_header_message(planned_deployment.id, temp_file.name)
 
             temp_file.write(header_text)
             temp_file.write("\n".join(operation_lines))
             temp_file.close()
 
             click.echo(
-                f"Current plan id: {planned_deployment_log.id}\nTemporary file: {temp_file.name}"
+                f"Current plan id: {planned_deployment.id}\nTemporary file: {temp_file.name}"
             )
 
             # Loop until plan has no error or if user wants to stop editing the plan
@@ -197,12 +197,12 @@ def edit(
                         if not new_operations_hosts_vars:
                             raise click.ClickException("Plan must not be empty.")
 
-                        deployment_log = DeploymentLog.from_operations_hosts_vars(
+                        deployment = DeploymentModel.from_operations_hosts_vars(
                             collections, new_operations_hosts_vars
                         )
 
-                        deployment_log.id = planned_deployment_log.id
-                        session.merge(deployment_log)
+                        deployment.id = planned_deployment.id
+                        session.merge(deployment)
                         session.commit()
                         click.echo("Deployment plan successfully modified.")
                         break

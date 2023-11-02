@@ -3,7 +3,7 @@
 
 import click
 
-from tdp.cli.queries import get_planned_deployment_log, get_sch_status
+from tdp.cli.queries import get_planned_deployment, get_sch_status
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
@@ -13,7 +13,7 @@ from tdp.cli.utils import (
     rolling_interval,
 )
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.models import DeploymentLog
+from tdp.core.models import DeploymentModel
 
 
 @click.command(short_help="Restart required TDP services.")
@@ -29,16 +29,16 @@ def reconfigure(
 ):
     click.echo("Creating a deployment plan to reconfigure services.")
     with get_session(database_dsn, commit_on_exit=True) as session:
-        deployment_log = DeploymentLog.from_stale_components(
+        deployment = DeploymentModel.from_stale_components(
             collections=collections,
             cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
             rolling_interval=rolling_interval,
         )
         if preview:
-            print_deployment(deployment_log)
+            print_deployment(deployment)
             return
-        planned_deployment_log = get_planned_deployment_log(session)
-        if planned_deployment_log:
-            deployment_log.id = planned_deployment_log.id
-        session.merge(deployment_log)
+        planned_deployment = get_planned_deployment(session)
+        if planned_deployment:
+            deployment.id = planned_deployment.id
+        session.merge(deployment)
     click.echo("Deployment plan successfully created.")

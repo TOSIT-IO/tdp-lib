@@ -6,14 +6,14 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from tdp.core.models import DeploymentLog, OperationLog, SCHStatusLog
+from tdp.core.models import DeploymentModel, OperationLog, SCHStatusLog
 
 logger = logging.getLogger(__name__)
 
 
 # TODO: add some status logs
-def test_create_deployment_log(db_session: Session):
-    deployment_log = DeploymentLog(
+def test_create_deployment(db_session: Session):
+    deployment = DeploymentModel(
         options={
             "sources": ["source1", "source2"],
             "targets": ["target1", "target2"],
@@ -28,7 +28,7 @@ def test_create_deployment_log(db_session: Session):
         deployment_type="Dag",
     )
     component_version_log = SCHStatusLog(
-        deployment_id=deployment_log.id,
+        deployment_id=deployment.id,
         service="service1",
         component="component1",
         host=None,
@@ -36,7 +36,7 @@ def test_create_deployment_log(db_session: Session):
     )
     operation_log = OperationLog(
         operation_order=1,
-        deployment_id=deployment_log.id,
+        deployment_id=deployment.id,
         operation="start_target1",
         host="host1",
         start_time=datetime.utcnow(),
@@ -45,16 +45,16 @@ def test_create_deployment_log(db_session: Session):
         logs=b"operation log",
     )
 
-    deployment_log.operations.append(operation_log)
+    deployment.operations.append(operation_log)
 
-    logger.info(deployment_log)
+    logger.info(deployment)
     logger.info(operation_log)
     logger.info(component_version_log)
 
-    db_session.add(deployment_log)
+    db_session.add(deployment)
     db_session.commit()
 
-    result = db_session.get(DeploymentLog, deployment_log.id)
+    result = db_session.get(DeploymentModel, deployment.id)
 
     logger.info(result)
     assert result is not None
