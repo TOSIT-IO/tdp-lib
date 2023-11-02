@@ -15,7 +15,7 @@ from tabulate import tabulate
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
-from tdp.core.models.base import Base
+from tdp.core.models.base_model import BaseModel
 from tdp.core.models.operation_log import OperationLog
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.utils import BaseEnum
@@ -55,7 +55,7 @@ class FilterTypeEnum(BaseEnum):
     GLOB = "glob"
 
 
-class DeploymentLog(Base):
+class DeploymentLog(BaseModel):
     """Deployment log model.
 
     Hold past and current deployment information.

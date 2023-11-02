@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from tdp.core.models.base import Base
+from tdp.core.models.base_model import BaseModel
 from tdp.core.models.state_enum import OperationStateEnum
 from tdp.core.operation import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from tdp.core.models import DeploymentLog
 
 
-class OperationLog(Base):
+class OperationLog(BaseModel):
     """Operation log model.
 
     Hold past and current operation information linked to a deployment.

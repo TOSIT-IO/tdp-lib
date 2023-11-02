@@ -4,10 +4,10 @@
 import pytest
 from sqlalchemy import Column, Integer, String
 
-from tdp.core.models.base import Base
+from tdp.core.models.base_model import BaseModel
 
 
-class ExampleClass(Base):
+class ExampleClass(BaseModel):
     __tablename__ = "test"
 
     id = Column(Integer, primary_key=True)

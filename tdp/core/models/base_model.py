@@ -11,7 +11,7 @@ from tdp.core.utils import BaseEnum
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 
 
-class Base(DeclarativeBase):
+class BaseModel(DeclarativeBase):
     """Custom base class for SQLAlchemy models."""
 
     def to_dict(

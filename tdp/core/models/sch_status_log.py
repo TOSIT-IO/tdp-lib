@@ -7,7 +7,7 @@ from typing import Any, Optional
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from tdp.core.models.base import Base
+from tdp.core.models.base_model import BaseModel
 from tdp.core.operation import (
     COMPONENT_NAME_MAX_LENGTH,
     HOST_NAME_MAX_LENGTH,
@@ -26,7 +26,7 @@ class SCHStatusLogSourceEnum(BaseEnum):
     MANUAL = "Manual"
 
 
-class SCHStatusLog(Base):
+class SCHStatusLog(BaseModel):
     """Hold what component version are deployed."""
 
     __tablename__ = "sch_status_log"
