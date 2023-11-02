@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from tdp.core.models import DeploymentModel, OperationLog, SCHStatusLogModel
+from tdp.core.models import DeploymentModel, OperationModel, SCHStatusLogModel
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def test_create_deployment(db_session: Session):
         host=None,
         running_version="1.0.0",
     )
-    operation_log = OperationLog(
+    operation_rec = OperationModel(
         operation_order=1,
         deployment_id=deployment.id,
         operation="start_target1",
@@ -45,10 +45,10 @@ def test_create_deployment(db_session: Session):
         logs=b"operation log",
     )
 
-    deployment.operations.append(operation_log)
+    deployment.operations.append(operation_rec)
 
     logger.info(deployment)
-    logger.info(operation_log)
+    logger.info(operation_rec)
     logger.info(component_version_log)
 
     db_session.add(deployment)

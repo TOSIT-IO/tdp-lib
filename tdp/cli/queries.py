@@ -10,7 +10,7 @@ from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
     DeploymentModel,
-    OperationLog,
+    OperationModel,
     SCHStatusLogModel,
 )
 
@@ -447,10 +447,10 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     return session.query(DeploymentModel).filter_by(status="PLANNED").one_or_none()
 
 
-def get_operation_log(
+def get_operation_records(
     session: Session, deployment_id: int, operation_name: str
-) -> list[OperationLog]:
-    """Get an operation log.
+) -> list[OperationModel]:
+    """Get an operation records.
 
     Args:
         session: The database session.
@@ -458,14 +458,14 @@ def get_operation_log(
         operation_name: The operation name.
 
     Returns:
-        List of matching operation logs.
+        List of matching operation records.
 
     Raises:
         NoResultFound: If the operation does not exist.
     """
     try:
         return (
-            session.query(OperationLog)
+            session.query(OperationModel)
             .filter_by(deployment_id=deployment_id, operation=operation_name)
             .all()
         )

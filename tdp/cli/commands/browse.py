@@ -8,12 +8,12 @@ import click
 from tdp.cli.queries import (
     get_deployment,
     get_deployments,
-    get_operation_log,
+    get_operation_records,
     get_planned_deployment,
 )
 from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
-from tdp.core.models import DeploymentModel, OperationLog
+from tdp.core.models import DeploymentModel, OperationModel
 
 
 @click.command(short_help="Browse deployments")
@@ -61,7 +61,7 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            _print_operations(get_operation_log(session, deployment_id, operation))
+            _print_operations(get_operation_records(session, deployment_id, operation))
             return
 
         # Print a specific deployment
@@ -101,7 +101,7 @@ def _print_deployment(deployment: DeploymentModel) -> None:
     print_deployment(deployment, filter_out=["logs"])
 
 
-def _print_operations(operations: list[OperationLog]) -> None:
+def _print_operations(operations: list[OperationModel]) -> None:
     """Print a list of operations in a human readable format.
 
     Args:
@@ -111,7 +111,7 @@ def _print_operations(operations: list[OperationLog]) -> None:
     click.secho("Operation(s) details", bold=True)
     for operation in operations:
         click.echo(print_object(operation.to_dict()))
-        # Print operation logs
+        # Print operation records
         if operation.logs:
-            click.secho("\nOperation logs", bold=True)
+            click.secho("\nOperations", bold=True)
             click.echo(str(operation.logs, "utf-8"))
