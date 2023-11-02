@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import click
 from click.decorators import FC
@@ -133,15 +133,17 @@ def preview(func: FC) -> FC:
     )(func)
 
 
-def print_deployment(deployment: DeploymentLog) -> None:
+def print_deployment(
+    deployment: DeploymentLog, /, *, filter_out: Optional[list[str]] = None
+) -> None:
     # Print general deployment infos
     click.secho("Deployment details", bold=True)
-    click.echo(print_object(deployment.to_dict()))
+    click.echo(print_object(deployment.to_dict(filter_out=filter_out)))
 
     # Print deployment operations
     click.secho("\nOperations", bold=True)
     print_table(
-        [o.to_dict() for o in deployment.operations],
+        [o.to_dict(filter_out=filter_out) for o in deployment.operations],
     )
 
 
