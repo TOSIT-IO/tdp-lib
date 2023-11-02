@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.deployment.executor import Executor
-    from tdp.core.models import DeploymentModel, OperationLog
+    from tdp.core.models import DeploymentModel, OperationModel
 
 logger = logging.getLogger(__name__)
 
@@ -43,26 +43,26 @@ class DeploymentRunner:
         self._cluster_variables = cluster_variables
         self._cluster_status = cluster_status
 
-    def _run_operation(self, operation_log: OperationLog) -> None:
+    def _run_operation(self, operation_rec: OperationModel) -> None:
         """Run operation.
 
         Args:
-            operation_log: Operation to run, modified in place with the result.
+            operation_rec: Operation record to run, modified in place with the result.
         """
-        operation_log.start_time = datetime.utcnow()
+        operation_rec.start_time = datetime.utcnow()
 
-        operation = self._collections.get_operation(operation_log.operation)
+        operation = self._collections.get_operation(operation_rec.operation)
 
         # Check if the operation is available for the given host
-        if operation_log.host and operation_log.host not in operation.host_names:
+        if operation_rec.host and operation_rec.host not in operation.host_names:
             logs = (
-                f"Operation '{operation_log.operation}' not available for host "
-                + f"'{operation_log.host}'"
+                f"Operation '{operation_rec.operation}' not available for host "
+                + f"'{operation_rec.host}'"
             )
             logger.error(logs)
-            operation_log.state = OperationStateEnum.FAILURE
-            operation_log.logs = logs.encode("utf-8")
-            operation_log.end_time = datetime.utcnow()
+            operation_rec.state = OperationStateEnum.FAILURE
+            operation_rec.logs = logs.encode("utf-8")
+            operation_rec.end_time = datetime.utcnow()
             return
 
         # Execute the operation
@@ -71,10 +71,10 @@ class DeploymentRunner:
         ]
         state, logs = self._executor.execute(
             playbook=playbook_file,
-            host=operation_log.host,
-            extra_vars=operation_log.extra_vars,
+            host=operation_rec.host,
+            extra_vars=operation_rec.extra_vars,
         )
-        operation_log.end_time = datetime.utcnow()
+        operation_rec.end_time = datetime.utcnow()
 
         # ? This case shouldn't happen as the executor should return a valid state
         if state not in OperationStateEnum:
@@ -84,8 +84,8 @@ class DeploymentRunner:
             state = OperationStateEnum.FAILURE
         elif not isinstance(state, OperationStateEnum):
             state = OperationStateEnum(state)
-        operation_log.state = state
-        operation_log.logs = logs
+        operation_rec.state = state
+        operation_rec.logs = logs
 
     def run(
         self,

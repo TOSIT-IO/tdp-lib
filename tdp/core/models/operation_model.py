@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel
 
 
-class OperationLog(BaseModel):
-    """Operation log model.
+class OperationModel(BaseModel):
+    """Operation model.
 
     Hold past and current operation information linked to a deployment.
     """
@@ -43,7 +43,7 @@ class OperationLog(BaseModel):
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation end time.")
     state: Mapped[OperationStateEnum] = mapped_column(doc="Operation state.")
-    logs: Mapped[Optional[bytes]] = mapped_column(doc="Operation logs.")
+    logs: Mapped[Optional[bytes]] = mapped_column(doc="Operation.")
 
     deployment: Mapped[DeploymentModel] = relationship(
         back_populates="operations", doc="deployment."

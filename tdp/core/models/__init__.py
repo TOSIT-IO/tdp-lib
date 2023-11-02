@@ -14,7 +14,7 @@ from tdp.core.models.deployment_model import (
     NothingToReconfigureError,
     NothingToResumeError,
 )
-from tdp.core.models.operation_log import OperationLog
+from tdp.core.models.operation_model import OperationModel
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,

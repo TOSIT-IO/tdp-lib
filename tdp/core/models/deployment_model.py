@@ -16,7 +16,7 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.models.base_model import BaseModel
-from tdp.core.models.operation_log import OperationLog
+from tdp.core.models.operation_model import OperationModel
 from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.utils import BaseEnum
 
@@ -76,9 +76,9 @@ class DeploymentModel(BaseModel):
         doc="Deployment type."
     )
 
-    operations: Mapped[list[OperationLog]] = relationship(
+    operations: Mapped[list[OperationModel]] = relationship(
         back_populates="deployment",
-        order_by="OperationLog.operation_order",
+        order_by="OperationModel.operation_order",
         cascade="all, delete-orphan",
         doc="List of operations.",
     )
@@ -159,7 +159,7 @@ class DeploymentModel(BaseModel):
             status=DeploymentStateEnum.PLANNED,
         )
         deployment.operations = [
-            OperationLog(
+            OperationModel(
                 operation=operation.name,
                 operation_order=i,
                 host=None,
@@ -226,7 +226,7 @@ class DeploymentModel(BaseModel):
                 else [None]
             ):
                 deployment.operations.append(
-                    OperationLog(
+                    OperationModel(
                         operation=operation.name,
                         operation_order=i,
                         host=host_name,
@@ -237,7 +237,7 @@ class DeploymentModel(BaseModel):
                 if can_perform_rolling_restart:
                     i += 1
                     deployment.operations.append(
-                        OperationLog(
+                        OperationModel(
                             operation=OPERATION_SLEEP_NAME,
                             operation_order=i,
                             host=host_name,
@@ -283,7 +283,7 @@ class DeploymentModel(BaseModel):
                 )
 
             deployment.operations.append(
-                OperationLog(
+                OperationModel(
                     operation=operation_name,
                     operation_order=order,
                     host=host_name,
@@ -355,7 +355,7 @@ class DeploymentModel(BaseModel):
         operation_order = 1
         for operation, host in operation_hosts_sorted:
             deployment.operations.append(
-                OperationLog(
+                OperationModel(
                     operation=operation.name,
                     operation_order=operation_order,
                     host=host,
@@ -367,7 +367,7 @@ class DeploymentModel(BaseModel):
             if rolling_interval is not None and operation.action_name == "restart":
                 operation_order += 1
                 deployment.operations.append(
-                    OperationLog(
+                    OperationModel(
                         operation=OPERATION_SLEEP_NAME,
                         operation_order=operation_order,
                         host=None,
@@ -426,7 +426,7 @@ class DeploymentModel(BaseModel):
             status=DeploymentStateEnum.PLANNED,
         )
         deployment.operations = [
-            OperationLog(
+            OperationModel(
                 operation=operation,
                 operation_order=i,
                 host=host,

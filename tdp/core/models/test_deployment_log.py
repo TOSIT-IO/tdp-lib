@@ -68,7 +68,7 @@ class TestFromOperations:
         deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
@@ -79,7 +79,7 @@ class TestFromOperations:
         deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
@@ -90,7 +90,7 @@ class TestFromOperations:
         deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
@@ -101,7 +101,7 @@ class TestFromOperations:
         deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
@@ -112,7 +112,7 @@ class TestFromOperations:
         deployment = DeploymentModel.from_operations(mock_collections, operations_names)
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
@@ -126,10 +126,10 @@ class TestFromOperations:
         )
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
-        for operation_log in deployment.operations:
-            assert operation_log.host == host
+        for operation_rec in deployment.operations:
+            assert operation_rec.host == host
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {
             "operations": operations_names,
@@ -186,10 +186,10 @@ class TestFromOperations:
         )
 
         assert [
-            operation_log.operation for operation_log in deployment.operations
+            operation_rec.operation for operation_rec in deployment.operations
         ] == operations_names
-        for operation_log in deployment.operations:
-            assert operation_log.extra_vars == extra_vars
+        for operation_rec in deployment.operations:
+            assert operation_rec.extra_vars == extra_vars
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {
             "operations": operations_names,
@@ -295,8 +295,8 @@ class TestFromFailedDeployment:
             resume_deployment.operations
         )
         assert len(deployment.operations) >= len(resume_deployment.operations)
-        for operation_log in resume_deployment.operations:
-            assert operation_log.host == host
+        for operation_rec in resume_deployment.operations:
+            assert operation_rec.host == host
 
     def test_deployment_plan_resume_from_operations_extra_vars(
         self, mock_collections: Collections
@@ -320,8 +320,8 @@ class TestFromFailedDeployment:
             resume_deployment.operations
         )
         assert len(deployment.operations) >= len(resume_deployment.operations)
-        for operation_log in resume_deployment.operations:
-            assert operation_log.extra_vars == extra_vars
+        for operation_rec in resume_deployment.operations:
+            assert operation_rec.extra_vars == extra_vars
 
 
 @pytest.mark.skip(reason="test to rewrite using cluster_status")

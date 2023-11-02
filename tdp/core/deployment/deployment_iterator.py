@@ -15,7 +15,7 @@ from tdp.core.models import (
     DeploymentModel,
     DeploymentStateEnum,
     NothingToReconfigureError,
-    OperationLog,
+    OperationModel,
     OperationStateEnum,
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -38,9 +38,9 @@ def _group_hosts_by_operation(
     Example:
         >>> _group_hosts_by_operation(DeploymentModel(
         ...     operations=[
-        ...         OperationLog(operation="s_c_install", host="host1"),
-        ...         OperationLog(operation="s_c_config", host="host1"),
-        ...         OperationLog(operation="s_c_config", host="host2"),
+        ...         OperationModel(operation="s_c_install", host="host1"),
+        ...         OperationModel(operation="s_c_config", host="host1"),
+        ...         OperationModel(operation="s_c_config", host="host2"),
         ...     ]
         ... ))
         {'s_c_install': {'host1'}, 's_c_config': {'host1', 'host2'}}
@@ -49,9 +49,9 @@ def _group_hosts_by_operation(
         return None
 
     operation_to_hosts_set = OrderedDict()
-    for operation_log in deployment.operations:
-        operation_to_hosts_set.setdefault(operation_log.operation, set()).add(
-            operation_log.host
+    for operation in deployment.operations:
+        operation_to_hosts_set.setdefault(operation.operation, set()).add(
+            operation.host
         )
     return operation_to_hosts_set
 
@@ -68,7 +68,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
         deployment: DeploymentModel,
         *,
         collections: Collections,
-        run_method: Callable[[OperationLog], None],
+        run_method: Callable[[OperationModel], None],
         cluster_variables: ClusterVariables,
         cluster_status: ClusterStatus,
         force_stale_update: bool,
@@ -102,25 +102,25 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
     def __next__(self) -> Optional[list[SCHStatusLogModel]]:
         try:
             while True:
-                operation_log: OperationLog = next(self._iter)
+                operation_rec: OperationModel = next(self._iter)
 
                 # Return early if deployment failed
                 if self.deployment.status == DeploymentStateEnum.FAILURE:
-                    operation_log.state = OperationStateEnum.HELD
+                    operation_rec.state = OperationStateEnum.HELD
                     return
 
                 # Retrieve operation to access parsed attributes and playbook
-                operation = self._collections.get_operation(operation_log.operation)
+                operation = self._collections.get_operation(operation_rec.operation)
 
                 # Run the operation
                 if operation.noop:
                     # A noop operation is always successful
-                    operation_log.state = OperationStateEnum.SUCCESS
+                    operation_rec.state = OperationStateEnum.SUCCESS
                 else:
-                    self._run_operation(operation_log)
+                    self._run_operation(operation_rec)
 
                 # Set deployment status to failure if the operation failed
-                if operation_log.state != OperationStateEnum.SUCCESS:
+                if operation_rec.state != OperationStateEnum.SUCCESS:
                     self.deployment.status = DeploymentStateEnum.FAILURE
                     # Return early as status is not updated
                     return
@@ -153,13 +153,13 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
                         first_reconfigure_operation = None
 
                     can_update_stale = self.force_stale_update or (
-                        operation_log.operation == first_reconfigure_operation
+                        operation_rec.operation == first_reconfigure_operation
                     )
 
                     # Log a warning if the operation affect a stale SCH which is not the first reconfigure operation (if any)
                     if not can_update_stale:
                         logger.warning(
-                            f"can't update stale {sc_name} with {operation_log.operation}\n"
+                            f"can't update stale {sc_name} with {operation_rec.operation}\n"
                             + "first operation is {first_reconfigure_operation}"
                         )
                 else:
@@ -168,7 +168,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
                 # fmt: off
                 hosts = (
                     [None] if operation.noop  # A noop operation doesn't have any host
-                    else [operation_log.host] if operation_log.host  # Only one operation is launched on a single host
+                    else [operation_rec.host] if operation_rec.host  # Only one operation is launched on a single host
                     else operation.host_names  # Host is not specified, hence the operation is launched on all host
                 )
                 # fmt: on
@@ -193,16 +193,16 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
                 # Update the reconfigure_operations dict
                 if self._reconfigure_operations:
                     hosts = self._reconfigure_operations.get(
-                        operation_log.operation, set()
+                        operation_rec.operation, set()
                     )
                     # If host is defined and needed to be reconfigured,
                     # remove it from the reconfigure_operations dict
-                    if operation_log.host and operation_log.host in hosts:
-                        hosts.remove(operation_log.host)
+                    if operation_rec.host and operation_rec.host in hosts:
+                        hosts.remove(operation_rec.host)
                     # If no host is defined, or no host is left,
                     # remove the entire operation from the reconfigure_operations dict
-                    if not operation_log.host or len(hosts) == 0:
-                        self._reconfigure_operations.pop(operation_log.operation, None)
+                    if not operation_rec.host or len(hosts) == 0:
+                        self._reconfigure_operations.pop(operation_rec.operation, None)
 
                 return sch_status_logs
         # StopIteration is a "normal" exception raised when the iteration has stopped
