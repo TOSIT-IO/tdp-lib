@@ -98,7 +98,7 @@ def _print_deployment(deployment: DeploymentLog) -> None:
         click.echo("Deployment does not exist.")
         return
 
-    print_deployment(deployment)
+    print_deployment(deployment, filter_out=["logs"])
 
 
 def _print_operations(operations: list[OperationLog]) -> None:
