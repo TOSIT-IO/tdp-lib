@@ -16,7 +16,7 @@ from tdp.core.collection import (
     YML_EXTENSION,
 )
 from tdp.core.collections import OPERATION_SLEEP_NAME
-from tdp.core.models import Base
+from tdp.core.models import BaseModel
 
 DATABASE_URL = "sqlite:///:memory:"
 
@@ -27,7 +27,7 @@ def db_session() -> Generator[Session, None, None]:
     engine = create_engine(DATABASE_URL)
 
     # Create tables
-    Base.metadata.create_all(engine)
+    BaseModel.metadata.create_all(engine)
 
     # Create a session
     session_maker = sessionmaker(bind=engine)
@@ -36,7 +36,7 @@ def db_session() -> Generator[Session, None, None]:
 
     # Close and rollback for isolation
     session.close()
-    Base.metadata.drop_all(engine)
+    BaseModel.metadata.drop_all(engine)
     engine.dispose()
 
 

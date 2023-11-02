@@ -5,7 +5,7 @@ from typing import Optional
 
 from sqlalchemy.engine.row import Row
 
-from tdp.core.models.base import Base
+from tdp.core.models.base_model import BaseModel
 from tdp.core.models.deployment_log import (
     DeploymentLog,
     DeploymentTypeEnum,
@@ -32,4 +32,4 @@ SCHStatusRow = Row[ServiceComponentHostStatus]
 
 
 def init_database(engine):
-    Base.metadata.create_all(engine)
+    BaseModel.metadata.create_all(engine)
