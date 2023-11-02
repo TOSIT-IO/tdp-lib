@@ -61,7 +61,7 @@ class DeploymentLog(Base):
     Hold past and current deployment information.
     """
 
-    __tablename__ = "deployment_log"
+    __tablename__ = "deployment"
 
     id: Mapped[int] = mapped_column(primary_key=True, doc="Deployment log id.")
     options: Mapped[Optional[dict]] = mapped_column(

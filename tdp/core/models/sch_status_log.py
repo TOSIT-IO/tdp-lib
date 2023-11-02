@@ -64,7 +64,7 @@ class SCHStatusLog(Base):
         doc="Source of the status log.",
     )
     deployment_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("deployment_log.id"),
+        ForeignKey("deployment.id"),
         doc="Related deployment log id (if applicable).",
     )
     message: Mapped[Optional[str]] = mapped_column(
