@@ -82,8 +82,11 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
             cluster_variables: ClusterVariables instance.
             cluster_status: ClusterStatus instance.
         """
+        # Initialize the deployment state
         self.deployment = deployment
         self.deployment.start_time = datetime.utcnow()
+        for operation in deployment.operations:
+            operation.state = OperationStateEnum.PENDING
         # Initialize the iterator
         self._cluster_status = cluster_status
         self._collections = collections
@@ -112,6 +115,8 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
                 if self.deployment.status == DeploymentStateEnum.FAILURE:
                     operation_rec.state = OperationStateEnum.HELD
                     return
+                else:
+                    operation_rec.state = OperationStateEnum.RUNNING
 
                 # Retrieve operation to access parsed attributes and playbook
                 operation = self._collections.get_operation(operation_rec.operation)

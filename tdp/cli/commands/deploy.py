@@ -95,11 +95,12 @@ def deploy(
 
         # deployment and operations records are mutated by the iterator so we need to
         # commit them before iterating and at each iteration
-        session.commit()  # Update deployment status to RUNNING
+        session.commit()  # Update deployment status to RUNNING, operations to PENDING
         for cluster_status_logs in deployment_iterator:
+            session.commit()  # Update operation status to RUNNING
             if cluster_status_logs and any(cluster_status_logs):
                 session.add_all(cluster_status_logs)
-            session.commit()
+            session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
 
         if deployment_iterator.deployment.status != DeploymentStateEnum.SUCCESS:
             raise click.ClickException("Deployment failed.")
