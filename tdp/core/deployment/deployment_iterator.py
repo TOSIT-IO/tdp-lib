@@ -84,12 +84,16 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
         """
         self.deployment = deployment
         self.deployment.start_time = datetime.utcnow()
+        # Initialize the iterator
         self._cluster_status = cluster_status
         self._collections = collections
         self._run_operation = run_method
         self._cluster_variables = cluster_variables
         self.force_stale_update = force_stale_update
         self._iter = iter(deployment.operations)
+        # Initialize the reconfigure_operations dict
+        # This dict is used to keep track of the reconfigure operations that are left
+        # to run
         try:
             self._reconfigure_operations = _group_hosts_by_operation(
                 DeploymentModel.from_stale_components(
