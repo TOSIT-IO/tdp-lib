@@ -3,6 +3,7 @@
 
 import io
 import logging
+import os
 import shutil
 import subprocess
 from collections.abc import Iterable
@@ -46,6 +47,7 @@ class Executor:
                     stderr=subprocess.STDOUT,
                     cwd=self._rundir,
                     universal_newlines=True,
+                    env=os.environ | {"ANSIBLE_FORCE_COLOR": "true"},
                 )
                 if res.stdout is None:
                     raise Exception("Process has not stdout")
