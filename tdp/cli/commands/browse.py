@@ -27,6 +27,12 @@ from tdp.core.models import DeploymentModel, OperationModel
     help="Print the planned deployment, if exist.",
 )
 @click.option(
+    "-l",
+    "--last",
+    is_flag=True,
+    help="Print the last deployment.",
+)
+@click.option(
     "--limit",
     envvar="TDP_LIMIT",
     type=int,
@@ -43,6 +49,7 @@ from tdp.core.models import DeploymentModel, OperationModel
 @database_dsn
 def browse(
     plan: bool,
+    last: bool,
     limit: int,
     offset: int,
     database_dsn: str,
@@ -58,6 +65,14 @@ def browse(
                 _print_deployment(deployment_plan)
             else:
                 click.echo("No planned deployment found")
+                click.echo("Create a deployment plan using the `tdp plan` command")
+            return
+        elif last:
+            deployment = get_deployments(session, limit=1, offset=0)
+            if deployment:
+                _print_deployment(deployment[0])
+            else:
+                click.echo("No deployment found")
                 click.echo("Create a deployment plan using the `tdp plan` command")
             return
 
