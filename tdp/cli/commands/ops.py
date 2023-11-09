@@ -37,7 +37,7 @@ def ops(
     """Display all available operations."""
     if topo_sort and not display_dag_operations:
         click.echo(
-            "Warning: '--topo-sort' can only be used with '--dag' or '--dag-operations'."
+            "Warning: `--topo-sort` can only be used with `--dag` or `--dag-operations`."
         )
 
     if display_dag_operations:

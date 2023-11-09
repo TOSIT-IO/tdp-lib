@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     required=False,
     type=click.Path(exists=True, resolve_path=True, path_type=Path),
     multiple=True,
-    help="Path to tdp vars overrides. Can be used multiple times. Last one takes precedence.",
+    help="Path to TDP variables overrides. Can be used multiple times. Last one takes precedence.",
 )
 @collections
 @database_dsn
@@ -36,7 +36,7 @@ def init(
     validate: bool,
     vars: Path,
 ):
-    """Initialize the database and the tdp vars."""
+    """Initialize the database and the TDP variables."""
     init_db(database_dsn)
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         collections, vars, overrides, validate=validate

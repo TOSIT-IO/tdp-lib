@@ -111,7 +111,7 @@ def database_dsn(func: FC) -> FC:
             "Database Data Source Name, in sqlalchemy driver form "
             "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
             "You might need to install the relevant driver to your installation (such "
-            "as psycopg2 for postgresql)"
+            "as psycopg2 for postgresql)."
         ),
     )(func)
 
@@ -120,7 +120,7 @@ def preview(func: FC) -> FC:
     return click.option(
         "--preview",
         is_flag=True,
-        help="Preview the plan without running any action",
+        help="Preview the plan without running any action.",
     )(func)
 
 
@@ -142,7 +142,7 @@ def print_object(obj: dict) -> None:
     """Print an object in a human readable format.
 
     Args:
-        obj: Object to print
+        obj: Object to print.
     """
     click.echo(
         tabulate(
@@ -156,7 +156,7 @@ def print_table(rows) -> None:
     """Print a list of rows in a human readable format.
 
     Args:
-        rows: List of rows to print
+        rows: List of rows to print.
     """
     click.echo(
         tabulate(
@@ -180,7 +180,7 @@ def validate(func: FC) -> FC:
     return click.option(
         "--validate/--no-validate",
         default=True,
-        help="Should the command validate service variables against defined JSON schemas",
+        help="Should the command validate service variables against defined JSON schemas.",
     )(func)
 
 
@@ -191,7 +191,7 @@ def vars(func: Optional[FC] = None, *, exists=True) -> Callable[[FC], FC]:
             envvar="TDP_VARS",
             required=True,
             type=click.Path(resolve_path=True, path_type=Path, exists=exists),
-            help="Path to the tdp vars",
+            help="Path to the TDP variables.",
             is_eager=True,  # This option is used by other options, so we need to parse it first
         )(fn)
 

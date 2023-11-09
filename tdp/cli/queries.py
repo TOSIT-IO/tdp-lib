@@ -395,11 +395,11 @@ def get_deployments(session: Session, limit: int, offset: int) -> list[Deploymen
 
 
 def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
-    """Get a deployment by id.
+    """Get a deployment by ID.
 
     Args:
         session: The database session.
-        deployment_id: The deployment id.
+        deployment_id: The deployment ID.
 
     Returns:
         The deployment.
@@ -409,7 +409,7 @@ def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
     try:
         return session.query(DeploymentModel).filter_by(id=deployment_id).one()
     except NoResultFound as e:
-        raise Exception(f"Deployment id {deployment_id} does not exist.") from e
+        raise Exception(f"Deployment with ID {deployment_id} does not exist.") from e
 
 
 def get_last_deployment(session: Session) -> DeploymentModel:
@@ -454,7 +454,7 @@ def get_operation_records(
 
     Args:
         session: The database session.
-        deployment_id: The deployment id.
+        deployment_id: The deployment ID.
         operation_name: The operation name.
 
     Returns:

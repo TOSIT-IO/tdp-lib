@@ -38,7 +38,7 @@ def resume(
             click.echo("Creating a deployment plan to resume latest deployment.")
         else:
             deployment_to_resume = get_deployment(session, id)
-            click.echo(f"Creating a deployment plan to resume deployment #{id}.")
+            click.echo(f"Creating a deployment plan to resume deployment {id}.")
         deployment = DeploymentModel.from_failed_deployment(
             collections, deployment_to_resume
         )

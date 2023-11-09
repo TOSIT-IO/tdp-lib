@@ -43,7 +43,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     envvar="TDP_ENV",
     callback=load_env,
     type=Path,
-    help="Path to environment configuration file",
+    help="Path to environment configuration file.",
 )
 @click.option(
     "--log-level",
