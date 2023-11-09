@@ -51,7 +51,7 @@ class IllegalNodeError(Exception):
 
 
 class Dag:
-    """Generate DAG with operations' dependencies"""
+    """Generate DAG with operations' dependencies."""
 
     def __init__(self, collections: Collections):
         """Initialize a DAG instance from a Collections.

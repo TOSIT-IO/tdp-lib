@@ -36,7 +36,7 @@ custom_inventory_cli_instance = _CustomInventoryCLI()
 
 
 class InventoryReader:
-    """Represent an Ansible inventory reader"""
+    """Represent an Ansible inventory reader."""
 
     def __init__(self, inventory: Optional[InventoryManager] = None):
         self.inventory = inventory or custom_inventory_cli_instance.inventory
@@ -46,10 +46,10 @@ class InventoryReader:
         inventory host names, taking into account any active restrictions
         or applied subsets.
 
-        See ansible.inventory.manager.InventoryManager class
+        See ansible.inventory.manager.InventoryManager class.
 
         Returns:
-            List of hosts
+            List of hosts.
         """
         # "ansible.inventory.manager.InventoryManager.get_hosts()" returns a list of
         # "ansible.inventory.host.Host" instance and we need the name of each host
@@ -61,10 +61,10 @@ class InventoryReader:
         of matching host like "ansible-playbook --list-hosts playbook.yml".
 
         Args:
-            fd: file-like object from which the playbook content must be read
+            fd: file-like object from which the playbook content must be read.
 
         Returns:
-            Set of hosts
+            Set of hosts.
         """
         plays = yaml.load(fd, Loader=Loader)
         if not isinstance(plays, list):

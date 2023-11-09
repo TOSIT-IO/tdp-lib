@@ -64,7 +64,7 @@ def edit(
     """
     if to_config is not None and to_restart is not None:
         raise click.UsageError(
-            "You must provide either --to-config or --to-restart option."
+            "You must provide either `--to-config` or `--to-restart` option."
         )
 
     cluster_variables = ClusterVariables.get_cluster_variables(
@@ -78,7 +78,7 @@ def edit(
 
         # TODO: would be nice if host is optional and we can edit all hosts at once
         if not hosts:
-            raise click.UsageError("At least one --host is required.")
+            raise click.UsageError("At least one `--host` is required.")
 
         # Create a new SCHStatusLog for each host
         for host in hosts:

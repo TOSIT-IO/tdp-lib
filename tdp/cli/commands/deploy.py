@@ -37,20 +37,20 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Force stale status update.",
 )
-@click.option("--dry", is_flag=True, help="Execute dag without running any action")
+@click.option("--dry", is_flag=True, help="Execute dag without running any action.")
 @collections
 @database_dsn
 @click.option(
     "--mock-deploy",
     envvar="TDP_MOCK_DEPLOY",
     is_flag=True,
-    help="Mock the deploy, do not actually run the ansible playbook",
+    help="Mock the deploy, do not actually run the ansible playbook.",
 )
 @click.option(
     "--run-directory",
     envvar="TDP_RUN_DIRECTORY",
     type=click.Path(resolve_path=True, path_type=Path, exists=True),
-    help="Working directory where the executor is launched (`ansible-playbook` for Ansible)",
+    help="Working directory where the executor is launched (`ansible-playbook` for Ansible).",
     required=True,
 )
 @validate

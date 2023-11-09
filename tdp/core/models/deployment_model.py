@@ -56,7 +56,7 @@ class FilterTypeEnum(BaseEnum):
 
 
 class DeploymentModel(BaseModel):
-    """deployment model.
+    """Deployment model.
 
     Hold past and current deployment information.
     """

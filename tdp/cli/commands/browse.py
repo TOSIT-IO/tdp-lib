@@ -37,14 +37,14 @@ from tdp.core.models import DeploymentModel, OperationModel
     envvar="TDP_LIMIT",
     type=int,
     default=15,
-    help="Limit number of deployments returned",
+    help="Limit number of deployments returned.",
 )
 @click.option(
     "--offset",
     envvar="TDP_OFFSET",
     type=int,
     default=0,
-    help="At which offset should the database query should start",
+    help="At which offset the database query should start.",
 )
 @database_dsn
 def browse(
@@ -94,7 +94,7 @@ def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
     """Print a list of deployments in a human readable format.
 
     Args:
-        deployments: List of deployments to print
+        deployments: List of deployments to print.
     """
     if not deployments:
         click.echo("No deployment found")
@@ -109,7 +109,7 @@ def _print_deployment(deployment: DeploymentModel) -> None:
     """Print a deployment in a human readable format.
 
     Args:
-        deployment: Deployment to print
+        deployment: Deployment to print.
     """
     if not deployment:
         click.echo("Deployment does not exist.")
@@ -122,7 +122,7 @@ def _print_operations(operations: list[OperationModel]) -> None:
     """Print a list of operations in a human readable format.
 
     Args:
-        operation: Operation to print
+        operation: Operation to print.
     """
     # Print general operation infos
     click.secho("Operation(s) details", bold=True)

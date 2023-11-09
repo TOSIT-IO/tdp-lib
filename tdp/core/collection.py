@@ -156,19 +156,19 @@ class Collection:
         """Get the set of hosts for a playbook.
 
         Args:
-            playbook: playbook name without extension
+            playbook: Playbook name without extension.
 
         Returns:
-            Set of hosts
+            Set of hosts.
         """
         if playbook not in self.playbooks:
-            raise MissingPlaybookError(f"Playbook {playbook} not found")
+            raise MissingPlaybookError(f"Playbook {playbook} not found.")
         try:
             return self._inventory_reader.get_hosts_from_playbook(
                 self.playbooks[playbook].open()
             )
         except Exception as e:
-            raise ValueError(f"Can't parse playbook {self.playbooks[playbook]}") from e
+            raise ValueError(f"Can't parse playbook {self.playbooks[playbook]}.") from e
 
     def _check_path(self):
         """Validate the collection path content."""
@@ -180,5 +180,5 @@ class Collection:
             mandatory_path = self._path / mandatory_directory
             if not mandatory_path.exists() or not mandatory_path.is_dir():
                 raise MissingMandatoryDirectoryError(
-                    f"{self._path} does not contain the mandatory directory {mandatory_directory}",
+                    f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
                 )

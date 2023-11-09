@@ -24,38 +24,38 @@ if TYPE_CHECKING:
     "-t",
     "--transitive-reduction",
     is_flag=True,
-    help="Apply a transitive reduction on the DAG",
+    help="Apply a transitive reduction on the DAG.",
 )
 @click.option(
     "-g",
     "--glob",
     "pattern_format",
     flag_value="glob",
-    help="Each node argument will be process as glob pattern",
+    help="Each node argument will be process as glob pattern.",
 )
 @click.option(
     "-r",
     "--regex",
     "pattern_format",
     flag_value="regex",
-    help="Each node argument will be process as regex pattern",
+    help="Each node argument will be process as regex pattern.",
 )
 @click.option(
     "-ct",
     "--color-to",
-    help="List of node to color to, separated with a comma (,)",
+    help="List of nodes to color to, separated by commas (,).",
 )
 @click.option(
     "-cf",
     "--color-from",
-    help="Nodes that will be colored after applying get_operations_to_nodes, separed with a comma (,)",
+    help="List of nodes to color from after applying `--color-to`, separed by commas (,).",
     type=str,
 )
 @click.option(
     "-c",
     "--cluster",
     is_flag=True,
-    help="Group node into cluster inside each service",
+    help="Group nodes into cluster inside each service.",
 )
 @collections
 def dag(
@@ -86,7 +86,7 @@ def dag(
                 else:
                     raise ValueError("pattern_format invalid")
             if not nodes_expanded:
-                raise ValueError(f"No nodes found with {nodes}")
+                raise ValueError(f"No nodes found with {nodes}.")
             nodes = nodes_expanded
 
         # Nx ancestors only returns the ancestor, and node the selected node
@@ -120,7 +120,7 @@ def import_show():
         if importlib.util.find_spec(package) is None:
             raise click.ClickException(
                 "You need to install the 'visualization' extras to be able to use the "
-                + "dag command. Run 'poetry install --extras visualization'."
+                + "`tdp dag` command. Run `poetry install --extras visualization`."
             )
 
     from tdp.core.dag_dot import show

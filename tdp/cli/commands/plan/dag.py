@@ -71,7 +71,7 @@ def _validate_filtertype(
 @click.option(
     "--stop",
     is_flag=True,
-    help="Replace 'start' operations by 'stop' operations. This option should be used with --reversed.",
+    help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
 @preview
 @collections
@@ -90,7 +90,7 @@ def dag(
 ):
     """Deploy from the DAG."""
     if stop and restart:
-        click.UsageError("Cannot use --restart and --stop at the same time.")
+        click.UsageError("Cannot use `--restart` and `--stop` at the same time.")
     dag = Dag(collections)
     set_nodes = set()
     if sources:

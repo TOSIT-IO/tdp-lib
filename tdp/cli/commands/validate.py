@@ -19,6 +19,6 @@ if TYPE_CHECKING:
 @collections
 @vars
 def validate(collections: Collections, vars: Path):
-    """Validate tdp vars against the loaded collections schemas."""
+    """Validate TDP variables against the loaded collections schemas."""
     ClusterVariables.get_cluster_variables(collections, vars, validate=True)
-    click.echo("TDP Vars are valid")
+    click.echo("TDP variables are valid")

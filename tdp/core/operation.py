@@ -106,7 +106,7 @@ class Operation:
                 )
 
     def is_service_operation(self) -> bool:
-        """Return True if the operation is about a service, False otherwise"""
+        """Return True if the operation is about a service, False otherwise."""
         return bool(RE_IS_SERVICE.search(self.name))
 
     def __repr__(self):

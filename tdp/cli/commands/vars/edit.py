@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
     "--commit_message",
     "-c",
     type=str,
-    default="updated from tdp edit-vars command",
-    help="Validation message for the service repository",
+    default="updated from `tdp vars edit` command",
+    help="Validation message for the service repository.",
 )
 @collections
 @database_dsn
@@ -56,9 +56,9 @@ def edit(
 
     \b
     Examples:
-        tdp edit-vars hdfs
-        tdp edit-vars hdfs datanode --commit_message "updated datanode variables"
-        tdp edit-vars hdfs hdfs_datanode.yml
+        tdp vars edit hdfs
+        tdp vars edit hdfs datanode --commit_message "updated datanode variables"
+        tdp vars edit hdfs hdfs_datanode.yml
     """
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
@@ -80,13 +80,13 @@ def edit(
     # Get the variable file to edit
     base_path = vars / service_name
     if service_component_parameter is None:
-        # tdp edit-vars service
+        # tdp vars edit service
         variables_file = base_path / (service_name + YML_EXTENSION)
     elif service_component_parameter.endswith(YML_EXTENSION):
-        # tdp edit-vars service service.yml OR tdp edit-vars service service_component.yml
+        # tdp vars edit service service.yml OR tdp vars edit service service_component.yml
         variables_file = base_path / service_component_parameter
     else:
-        # tdp edit-vars service component
+        # tdp vars edit service component
         variables_file = base_path / (
             service_name + "_" + service_component_parameter + YML_EXTENSION
         )

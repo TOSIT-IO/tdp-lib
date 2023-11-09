@@ -96,7 +96,7 @@ class DeploymentRunner:
         """Provides an iterator to run a deployment plan.
 
         Args:
-            deployment: deployment to run.
+            deployment: Deployment to run.
             force_sch_update: Force SCH status update.
 
         Returns:
