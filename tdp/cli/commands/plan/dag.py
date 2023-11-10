@@ -25,7 +25,6 @@ def _validate_filtertype(
     return value
 
 
-# TODO: remove glob filter type (see https://github.com/TOSIT-IO/tdp-lib/issues/478)
 @click.command()
 @click.option(
     "--source",
@@ -42,14 +41,6 @@ def _validate_filtertype(
     help="Nodes where the run stop. Can be used multiple times.",
 )
 @click.option("--filter", type=str, help="Match filter expression on dag result.")
-@click.option(
-    "--glob",
-    "-g",
-    "filter_type",
-    callback=_validate_filtertype,
-    flag_value=FilterTypeEnum.REGEX.name,
-    help="Filter expression matched as a glob.",
-)
 @click.option(
     "--regex",
     "-r",
