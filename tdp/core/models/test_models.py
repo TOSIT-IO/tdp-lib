@@ -24,7 +24,7 @@ def test_create_deployment(db_session: Session):
         },
         start_time=datetime.utcnow(),
         end_time=datetime.utcnow() + timedelta(0, 1),
-        status="SUCCESS",
+        state="SUCCESS",
         deployment_type="Dag",
     )
     component_version_log = SCHStatusLogModel(
@@ -66,7 +66,7 @@ def test_create_deployment(db_session: Session):
         "hosts": ["host1", "host2"],
         "restart": False,
     }
-    assert result.status == "Success"
+    assert result.state == "Success"
     assert result.deployment_type == "Dag"
 
     logger.info(result.operations)

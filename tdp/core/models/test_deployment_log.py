@@ -36,7 +36,7 @@ class MockInventoryReader(InventoryReader):
 
 
 def fail_deployment(deployment: DeploymentModel, index_to_fail: int):
-    deployment.status = DeploymentStateEnum.FAILURE
+    deployment.state = DeploymentStateEnum.FAILURE
     for operation in deployment.operations:
         if operation.operation_order < index_to_fail:
             operation.state = OperationStateEnum.SUCCESS
@@ -48,7 +48,7 @@ def fail_deployment(deployment: DeploymentModel, index_to_fail: int):
 
 
 def set_success(deployment: DeploymentModel):
-    deployment.status = DeploymentStateEnum.SUCCESS
+    deployment.state = DeploymentStateEnum.SUCCESS
     for operation in deployment.operations:
         operation.state = OperationStateEnum.SUCCESS
 
@@ -61,7 +61,7 @@ class TestFromOperations:
         assert len(deployment.operations) == 0
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": []}  # TODO should be {}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_single_operation(self, mock_collections: Collections):
         operations_names = ["serv_comp_config"]
@@ -72,7 +72,7 @@ class TestFromOperations:
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_single_restart_operation(self, mock_collections: Collections):
         operations_names = ["serv_comp_restart"]
@@ -83,7 +83,7 @@ class TestFromOperations:
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_single_noop_opeation(self, mock_collections: Collections):
         operations_names = ["serv_config"]
@@ -94,7 +94,7 @@ class TestFromOperations:
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_single_restart_noop_operation(self, mock_collections: Collections):
         operations_names = ["serv_restart"]
@@ -105,7 +105,7 @@ class TestFromOperations:
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_multiple_operations(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_restart"]
@@ -116,7 +116,7 @@ class TestFromOperations:
         ] == operations_names
         assert deployment.deployment_type == DeploymentTypeEnum.OPERATIONS
         assert deployment.options == {"operations": operations_names}
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_single_host(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_start"]
@@ -135,7 +135,7 @@ class TestFromOperations:
             "operations": operations_names,
             "hosts": [host],
         }
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
         operations_names = ["serv_comp_config", "serv_comp_start"]
@@ -174,7 +174,7 @@ class TestFromOperations:
             "operations": operations_names,
             "hosts": hosts,
         }
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
     def test_extra_vars(self, mock_collections: Collections):
         operations_names = ["serv_comp_config", "serv_comp_start"]
@@ -195,7 +195,7 @@ class TestFromOperations:
             "operations": operations_names,
             "extra_vars": extra_vars,
         }
-        assert deployment.status == DeploymentStateEnum.PLANNED
+        assert deployment.state == DeploymentStateEnum.PLANNED
 
 
 class TestFromDag:

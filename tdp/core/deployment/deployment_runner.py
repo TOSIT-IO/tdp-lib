@@ -102,7 +102,7 @@ class DeploymentRunner:
         Returns:
             DeploymentIterator object, to iterate over operations logs.
         """
-        deployment.status = DeploymentStateEnum.RUNNING
+        deployment.state = DeploymentStateEnum.RUNNING
         return DeploymentIterator(
             deployment=deployment,
             collections=self._collections,

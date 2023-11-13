@@ -69,8 +69,8 @@ class DeploymentModel(BaseModel):
     )
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment end time.")
-    status: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
-        doc="Deployment status."
+    state: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
+        doc="Deployment state."
     )
     deployment_type: Mapped[Optional[DeploymentTypeEnum]] = mapped_column(
         doc="Deployment type."
@@ -89,7 +89,7 @@ class DeploymentModel(BaseModel):
                 ["id", self.id],
                 ["start_time", self.start_time],
                 ["end_time", self.end_time],
-                ["state", self.status],
+                ["state", self.state],
             ],
             tablefmt="plain",
         )
@@ -156,7 +156,7 @@ class DeploymentModel(BaseModel):
                     }
                 ),
             },
-            status=DeploymentStateEnum.PLANNED,
+            state=DeploymentStateEnum.PLANNED,
         )
         deployment.operations = [
             OperationModel(
@@ -209,7 +209,7 @@ class DeploymentModel(BaseModel):
                     }
                 ),
             },
-            status=DeploymentStateEnum.PLANNED,
+            state=DeploymentStateEnum.PLANNED,
         )
         i = 1
         for operation in operations:
@@ -267,7 +267,7 @@ class DeploymentModel(BaseModel):
         """
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.CUSTOM,
-            status=DeploymentStateEnum.PLANNED,
+            state=DeploymentStateEnum.PLANNED,
         )
 
         for order, operation_host_vars in enumerate(operation_host_vars_names, start=1):
@@ -350,7 +350,7 @@ class DeploymentModel(BaseModel):
                     }
                 ),
             },
-            status=DeploymentStateEnum.PLANNED,
+            state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
         for operation, host in operation_hosts_sorted:
@@ -393,10 +393,10 @@ class DeploymentModel(BaseModel):
             NothingToResumeError: If the deployment was successful.
             UnsupportedDeploymentTypeError: If the deployment type is not supported.
         """
-        if failed_deployment.status != DeploymentStateEnum.FAILURE:
+        if failed_deployment.state != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
                 f"Nothing to resume, deployment #{failed_deployment.id} "
-                + f"was {failed_deployment.status}."
+                + f"was {failed_deployment.state}."
             )
 
         if len(failed_deployment.operations) == 0:
@@ -423,7 +423,7 @@ class DeploymentModel(BaseModel):
             options={
                 "from": failed_deployment.id,
             },
-            status=DeploymentStateEnum.PLANNED,
+            state=DeploymentStateEnum.PLANNED,
         )
         deployment.operations = [
             OperationModel(

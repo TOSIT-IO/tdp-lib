@@ -112,7 +112,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
                 operation_rec: OperationModel = next(self._iter)
 
                 # Return early if deployment failed
-                if self.deployment.status == DeploymentStateEnum.FAILURE:
+                if self.deployment.state == DeploymentStateEnum.FAILURE:
                     operation_rec.state = OperationStateEnum.HELD
                     return
                 else:
@@ -130,7 +130,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
 
                 # Set deployment status to failure if the operation failed
                 if operation_rec.state != OperationStateEnum.SUCCESS:
-                    self.deployment.status = DeploymentStateEnum.FAILURE
+                    self.deployment.state = DeploymentStateEnum.FAILURE
                     # Return early as status is not updated
                     return
 
@@ -217,11 +217,11 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment.end_time = datetime.utcnow()
-            if not self.deployment.status == DeploymentStateEnum.FAILURE:
-                self.deployment.status = DeploymentStateEnum.SUCCESS
+            if not self.deployment.state == DeploymentStateEnum.FAILURE:
+                self.deployment.state = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
             self.deployment.end_time = datetime.utcnow()
-            self.deployment.status = DeploymentStateEnum.FAILURE
+            self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
