@@ -240,7 +240,7 @@ class DeploymentModel(BaseModel):
                         OperationModel(
                             operation=OPERATION_SLEEP_NAME,
                             operation_order=i,
-                            host=host_name,
+                            host=None,
                             extra_vars=[
                                 f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
                             ],
