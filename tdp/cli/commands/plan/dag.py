@@ -9,7 +9,13 @@ import click
 
 from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn, preview, print_deployment
+from tdp.cli.utils import (
+    collections,
+    database_dsn,
+    preview,
+    print_deployment,
+    rolling_interval,
+)
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentModel, FilterTypeEnum
 
@@ -73,6 +79,7 @@ def _validate_filtertype(
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
+@rolling_interval
 @preview
 @collections
 @database_dsn
@@ -87,6 +94,7 @@ def dag(
     stop: bool,
     filter: Optional[str] = None,
     filter_type: Optional[FilterTypeEnum] = None,
+    rolling_interval: Optional[int] = None,
 ):
     """Deploy from the DAG."""
     if stop and restart:
@@ -116,6 +124,7 @@ def dag(
         restart=restart,
         reverse=reverse,
         stop=stop,
+        rolling_interval=rolling_interval,
     )
     if preview:
         print_deployment(deployment)
