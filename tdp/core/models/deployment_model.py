@@ -104,6 +104,7 @@ class DeploymentModel(BaseModel):
         restart: bool = False,
         reverse: bool = False,
         stop: bool = False,
+        rolling_interval: Optional[int] = None,
     ) -> "DeploymentModel":
         """Generate a deployment plan from a DAG.
 
@@ -158,16 +159,34 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
-        deployment.operations = [
-            OperationModel(
-                operation=operation.name,
-                operation_order=i,
-                host=None,
-                extra_vars=None,
-                state=OperationStateEnum.PLANNED,
+        operation_order = 1
+        for operation in operations:
+            can_perform_rolling_restart = (
+                rolling_interval is not None
+                and operation.action_name == "restart"
+                and operation.host_names
             )
-            for i, operation in enumerate(operations, 1)
-        ]
+            deployment.operations.append(
+                OperationModel(
+                    operation=operation.name,
+                    operation_order=operation_order,
+                    host=None,
+                    extra_vars=None,
+                    state=OperationStateEnum.PLANNED,
+                )
+            )
+            operation_order += 1
+            if can_perform_rolling_restart:
+                deployment.operations.append(
+                    OperationModel(
+                        operation=OPERATION_SLEEP_NAME,
+                        operation_order=operation_order,
+                        host=None,
+                        extra_vars=[f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"],
+                        state=OperationStateEnum.PLANNED,
+                    )
+                )
+                operation_order += 1
         return deployment
 
     @staticmethod
