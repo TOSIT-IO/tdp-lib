@@ -232,7 +232,7 @@ class Dag:
 
     def topological_sort(
         self,
-        nodes: Optional[list[str]] = None,
+        nodes: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
     ) -> list[Operation]:
@@ -254,8 +254,8 @@ class Dag:
 
     def get_operations(
         self,
-        sources: Optional[list[str]] = None,
-        targets: Optional[list[str]] = None,
+        sources: Optional[Iterable[str]] = None,
+        targets: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
     ) -> list[Operation]:
@@ -268,7 +268,7 @@ class Dag:
         return self.get_all_operations(restart=restart, stop=stop)
 
     def get_operations_to_nodes(
-        self, nodes: list[str], restart: bool = False, stop: bool = False
+        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
     ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
@@ -278,7 +278,7 @@ class Dag:
         return self.topological_sort(nodes_set, restart=restart, stop=stop)
 
     def get_operations_from_nodes(
-        self, nodes: list[str], restart: bool = False, stop: bool = False
+        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
     ) -> list[Operation]:
         nodes_set = set(nodes)
         for node in nodes:
@@ -335,12 +335,12 @@ class Dag:
         )
 
     def filter_operations_glob(
-        self, operations: list[Operation], glob: str
+        self, operations: Iterable[Operation], glob: str
     ) -> list[Operation]:
         return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
 
     def filter_operations_regex(
-        self, operations: list[Operation], regex: str
+        self, operations: Iterable[Operation], regex: str
     ) -> list[Operation]:
         compiled_regex = re.compile(regex)
         return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore

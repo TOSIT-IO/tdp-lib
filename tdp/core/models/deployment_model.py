@@ -97,8 +97,8 @@ class DeploymentModel(BaseModel):
     @staticmethod
     def from_dag(
         dag: Dag,
-        targets: Optional[list[str]] = None,
-        sources: Optional[list[str]] = None,
+        targets: Optional[Iterable[str]] = None,
+        sources: Optional[Iterable[str]] = None,
         filter_expression: Optional[str] = None,
         filter_type: Optional[FilterTypeEnum] = None,
         restart: bool = False,
