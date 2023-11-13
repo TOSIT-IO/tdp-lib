@@ -230,7 +230,7 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
-        i = 1
+        operation_order = 1
         for operation in operations:
             can_perform_rolling_restart = (
                 rolling_interval is not None
@@ -247,18 +247,18 @@ class DeploymentModel(BaseModel):
                 deployment.operations.append(
                     OperationModel(
                         operation=operation.name,
-                        operation_order=i,
+                        operation_order=operation_order,
                         host=host_name,
                         extra_vars=list(extra_vars) if extra_vars else None,
                         state=OperationStateEnum.PLANNED,
                     )
                 )
                 if can_perform_rolling_restart:
-                    i += 1
+                    operation_order += 1
                     deployment.operations.append(
                         OperationModel(
                             operation=OPERATION_SLEEP_NAME,
-                            operation_order=i,
+                            operation_order=operation_order,
                             host=None,
                             extra_vars=[
                                 f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
@@ -266,7 +266,7 @@ class DeploymentModel(BaseModel):
                             state=OperationStateEnum.PLANNED,
                         )
                     )
-                i += 1
+                operation_order += 1
         return deployment
 
     @staticmethod
@@ -289,7 +289,9 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
 
-        for order, operation_host_vars in enumerate(operation_host_vars_names, start=1):
+        for operation_order, operation_host_vars in enumerate(
+            operation_host_vars_names, start=1
+        ):
             operation_name, host_name, var_names = operation_host_vars
             if host_name is not None:
                 collections.check_operations_hosts_exist(
@@ -304,7 +306,7 @@ class DeploymentModel(BaseModel):
             deployment.operations.append(
                 OperationModel(
                     operation=operation_name,
-                    operation_order=order,
+                    operation_order=operation_order,
                     host=host_name,
                     extra_vars=var_names,
                     state=OperationStateEnum.PLANNED,
@@ -425,8 +427,10 @@ class DeploymentModel(BaseModel):
 
         failed_operation_id = next(
             (
-                i
-                for i, operation in enumerate(failed_deployment.operations)
+                operation_order
+                for operation_order, operation in enumerate(
+                    failed_deployment.operations
+                )
                 if operation.state == OperationStateEnum.FAILURE
             ),
             None,
@@ -447,12 +451,12 @@ class DeploymentModel(BaseModel):
         deployment.operations = [
             OperationModel(
                 operation=operation,
-                operation_order=i,
+                operation_order=operation_order,
                 host=host,
                 extra_vars=extra_vars,
                 state=OperationStateEnum.PLANNED,
             )
-            for i, (operation, host, extra_vars) in enumerate(
+            for operation_order, (operation, host, extra_vars) in enumerate(
                 operations_tuple_to_resume, 1
             )
         ]
