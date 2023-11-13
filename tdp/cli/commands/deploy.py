@@ -102,7 +102,7 @@ def deploy(
                 session.add_all(cluster_status_logs)
             session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
 
-        if deployment_iterator.deployment.status != DeploymentStateEnum.SUCCESS:
+        if deployment_iterator.deployment.state != DeploymentStateEnum.SUCCESS:
             raise click.ClickException("Deployment failed.")
         else:
             click.echo("Deployment finished with success.")
