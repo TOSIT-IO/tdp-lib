@@ -130,6 +130,7 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
 
                 # Set deployment status to failure if the operation failed
                 if operation_rec.state != OperationStateEnum.SUCCESS:
+                    self.deployment.end_time = datetime.utcnow()
                     self.deployment.state = DeploymentStateEnum.FAILURE
                     # Return early as status is not updated
                     return
