@@ -5,6 +5,7 @@ import click
 
 from tdp.cli.commands.plan.dag import dag
 from tdp.cli.commands.plan.edit import edit
+from tdp.cli.commands.plan.import_file import import_file
 from tdp.cli.commands.plan.ops import ops
 from tdp.cli.commands.plan.reconfigure import reconfigure
 from tdp.cli.commands.plan.resume import resume
@@ -17,7 +18,8 @@ def plan():
 
 
 plan.add_command(dag)
-plan.add_command(ops)
 plan.add_command(edit)
+plan.add_command(import_file)
+plan.add_command(ops)
 plan.add_command(reconfigure)
 plan.add_command(resume)
