@@ -3,7 +3,7 @@
 
 import pytest
 
-from tdp.cli.commands.plan.edit import _parse_line
+from tdp.cli.utils import _parse_line
 
 
 def test_mandatory_operation_name():

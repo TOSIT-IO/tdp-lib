@@ -19,7 +19,7 @@ from tdp.core.models.deployment_model import DeploymentModel
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
 
-logger = logging.getLogger("tdp").getChild("edit")
+logger = logging.getLogger(__name__)
 
 
 def _get_header_message(deployment_id: int, temp_file_name: str) -> str:
