@@ -3,45 +3,34 @@
 
 # TDP Lib
 
-TDP lib is a [Python](https://www.python.org/) library built on top of [Ansible](https://www.ansible.com/) to manage clusters. It provides a set of tools to overcome the limitations of Ansible, such as:
+`tdp-lib` is a [Python](https://www.python.org/) library built on top of [Ansible](https://www.ansible.com/). It is designed for managing TDP clusters, offering advanced tools to extend Ansible's capabilities. Key features include:
 
-- Defining a DAG of tasks based on relations between services and components
-- Defining variables in a single place
+- Creating a Directed Acyclic Graph (DAG) of tasks to manage dependencies and relationships between services and components.
+- Centralized configuration management through a unified variable definition system.
 
-`tdp-lib` can be used as a Python library, through an admin [CLI](#cli-usage), a REST API (see [`tdp-server`](https://github.com/tOSIT-IO/tdp-server)) or a web interface (see [`tdp-ui`](https://github.com/tOSIT-IO/tdp-ui)).
+`tdp-lib` can be utilized in various ways: as a Python library, through an admin [CLI](#cli-usage), via a REST API (see [`tdp-server`](https://github.com/TOSIT-IO/tdp-server)), or through a web interface (see [`tdp-ui`](https://github.com/TOSIT-IO/tdp-ui)).
 
 ## Pre-requisites
 
-TDP lib requires:
+To use `tdp-lib`, ensure you have the following prerequisites:
 
-- Python 3.9+ with [Poetry](https://python-poetry.org/)
-- A RDBMS system (such as [PostgreSQL](https://www.postgresql.org/) or [SQLite](https://www.sqlite.org/index.html))
+- Python 3.9 or higher.
+- A relational database management system (RDBMS), such as [PostgreSQL](https://www.postgresql.org/) or [SQLite](https://www.sqlite.org/index.html).
 
-Optionally, you can install the following dependencies for DAG visualization:
+Optional dependencies for DAG visualization:
 
-- [graphviz](https://graphviz.org/)
-- Python `visualization` dependency (`poetry install -E visualization`)
-
-And to build the documentation:
-
-- Python `docs` dependency (`poetry install -E docs`)
+- [Graphviz](https://graphviz.org/) for graphical representation of DAGs.
 
 ## Installation
 
-Install dependencies and the package in a virtual environment:
+Set the following environment variables:
 
-```sh
-poetry install
-```
+- `TDP_COLLECTION_PATH`: Specifies the file path(s) to the necessary collection(s). [`tdp-collection`](https://github.com/TOSIT-IO/tdp-collection) is mandatory. Multiple collections can be specified, separated by a colon `:` (e.g., [`tdp-collection-extras`](https://github.com/TOSIT-IO/tdp-collection-extras), [`tdp-observability`](https://github.com/TOSIT-IO/tdp-observability)).
+- `TDP_RUN_DIRECTORY`: Path to the working directory of the TDP deployment (where `ansible.cfg`, `inventory.ini`, and `topology.ini` are located).
+- `TDP_DATABASE_DSN`: Database DSN (Data Source Name) for the chosen RDBMS.
+- `TDP_VARS`: Path to the folder containing configuration variables.
 
-Export the following environment variables:
-
-- `TDP_COLLECTION_PATH`: path(s) to the collection(s). [`tdp-collection`](https://github.com/TOSIT-IO/tdp-collection) is mandatory. Other collections can be added, separated by a colon `:` (such as [`tdp-collection-extras`](https://github.com/TOSIT-IO/tdp-collection-extras), [`tdp-observability`](https://github.com/TOSIT-IO/tdp-observability)).
-- `TDP_RUN_DIRECTORY`: path to the working directory of TDP deployment (where `ansible.cfg`, `inventory.ini` and `topology.ini` are located).
-- `TDP_DATABASE_DSN`: DSN of the database to use.
-- `TDP_VARS`: path to the folder containing the variables.
-
-Note: Ansible must be configured to use the `tosit.tdp.inventory` plugin. For example, in `ansible.cfg`:
+Ensure Ansible is configured to use the `tosit.tdp.inventory` plugin. Example `ansible.cfg`:
 
 ```ini
 [defaults]
@@ -51,39 +40,67 @@ inventory=your_inventory,..,~/tdp_vars
 enable_plugins = tosit.tdp.inventory,..,your_plugins
 ```
 
-Finally, initialize the database and default variables:
+Install the library:
 
 ```sh
-poetry shell
+# Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+# Install the dependencies
+pip install ".[visualization]"
+# Initialize the database and tdp_vars
 tdp init
 ```
 
-## CLI usage
+## CLI Usage
 
-Full documentation can be found inside [docs/cli](docs/developer/cli/index.rst).
+> [!NOTE]
+> This section is a work in progress.
 
-### Build the documentation
+```sh
+tdp --help
+```
 
-Documentation can be built with:
+## Contributing
+
+Contributions are welcome! Here are some guidelines specific to this project:
+
+- Use [Poetry](https://python-poetry.org/) for development:
+
+    ```sh
+    # Install Poetry
+    curl -sSL https://install.python-poetry.org | python3 -
+    # Install the dependencies
+    poetry install
+    ```
+
+- Commit messages must adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
+- Run tests before submitting a PR:
+
+    ```sh
+    poetry run pytest tdp
+    ```
+
+- Format and lint code using ([Black](https://black.readthedocs.io/en/stable/)) and ([Ruff](https://beta.ruff.rs/docs/)):
+
+    ```sh
+    poetry run task precommit-fix
+    ```
+
+### Developer Documentation
+
+Developer documentation is available here: [docs/Developer](docs/developer/index.rst)
+
+Docstrings are used to generate Sphinx documentation. Install the `docs`` extra dependency:
+
+```sh
+poetry install -E docs
+```
+
+Build the documentation:
 
 ```sh
 poetry run task docs
 ```
 
-Built doc is available at `docs/_build/html/index.html`.
-
-## Contributing
-
-Run the tests:
-
-```sh
-poetry run pytest tdp
-```
-
-A task is available to format ([Black](https://black.readthedocs.io/en/stable/)) and lint ([Ruff](https://beta.ruff.rs/docs/)) the code:
-
-```sh
-poetry run task precommit-fix
-```
-
-Developers documentation: [docs/Developer](docs/developer/index.rst)
+The built documentation is available at `docs/_build/html/index.html`.
