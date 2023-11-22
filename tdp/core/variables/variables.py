@@ -75,7 +75,7 @@ class VariablesDict(MutableMapping):
         """
         return self._content.copy()
 
-    def merge(self, mapping: dict) -> None:
+    def merge(self, mapping: MutableMapping) -> None:
         """Merges the provided mapping into the content.
 
         Args:
