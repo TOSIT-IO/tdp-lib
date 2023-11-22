@@ -118,7 +118,7 @@ class _VariablesIOWrapper(VariablesDict):
         return proxy(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        self._close()
 
     def _flush_on_disk(self) -> None:
         """Write the content of the variables file on disk.
@@ -126,14 +126,17 @@ class _VariablesIOWrapper(VariablesDict):
         Raises:
             RuntimeError: If the file descriptor is already closed.
         """
+        # Check if the file descriptor is already closed
         if not self._file_descriptor or self._file_descriptor.closed:
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
             )
 
+        # Check if the file is writable
         if not self._file_descriptor.writable():
-            return
+            raise RuntimeError(f"{self._file_path} is not writable")
 
+        # Write the content of the variables file on disk
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
             yaml.dump(self._content, Dumper=AnsibleDumper, sort_keys=False, width=1000)
@@ -143,17 +146,22 @@ class _VariablesIOWrapper(VariablesDict):
         # https://docs.python.org/3/library/os.html#os.fsync
         os.fsync(self._file_descriptor.fileno())
 
-    def close(self) -> None:
+    def _close(self) -> None:
         """Closes the file descriptor.
 
         Raises:
             RuntimeError: If the file descriptor is already closed.
         """
-        if self._file_descriptor and not self._file_descriptor.closed:
-            self._flush_on_disk()
-            self._file_descriptor.close()
-            self._content = None
-        else:
+        # Check if the file descriptor is already closed
+        if not self._file_descriptor or self._file_descriptor.closed:
             raise RuntimeError(
                 f"{self._file_path} is already closed, which shouldn't happen"
             )
+
+        # Flush to disk only if the file is writable
+        if self._file_descriptor.writable():
+            self._flush_on_disk()
+
+        # Close the file descriptor
+        self._file_descriptor.close()
+        self._content = None
