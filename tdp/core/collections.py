@@ -197,16 +197,6 @@ class Collections(Mapping[str, Collection]):
                     collection_name=collection_name,
                 )
 
-    def get_services(self) -> set[str]:
-        """Get the list of services names."""
-        # Filters out the sleep operation service as it is not a real service.
-        operation_sleep_name = ServiceComponentName(OPERATION_SLEEP_NAME)
-        return {
-            operation.service_name
-            for operation in self.operations.values()
-            if operation.service_name != operation_sleep_name.service_name
-        }
-
     def get_default_vars_paths(self, service_name: str) -> Generator[Path, None, None]:
         """Get the default vars paths for a service."""
         generators = (

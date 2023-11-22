@@ -9,13 +9,11 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-import jsonschema
-from jsonschema import exceptions
-
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.operation import SERVICE_NAME_MAX_LENGTH
 from tdp.core.repository.repository import NoVersionYet
 from tdp.core.types import PathLike
+from tdp.core.variables.helpers import validate_schema
 from tdp.core.variables.variables import Variables, VariablesDict
 
 if TYPE_CHECKING:
@@ -25,21 +23,6 @@ if TYPE_CHECKING:
     from tdp.core.service_component_name import ServiceComponentName
 
 logger = logging.getLogger(__name__)
-
-
-class InvalidSchema(Exception):
-    """Schema is invalid."""
-
-    def __init__(self, msg, filename, *args):
-        self.msg = msg
-        self.filename = filename
-        super().__init__(msg, filename, *args)
-
-    def __str__(self):
-        return f"{self.msg}: {self.filename}"
-
-    def __repr__(self):
-        return f"{self.msg}: {self.filename}"
 
 
 class ServiceVariables:
@@ -226,21 +209,6 @@ class ServiceVariables:
             commit=version, path=service_component.service_name + YML_EXTENSION
         )
 
-    def validate_schema(self, variables: VariablesDict, schema: dict) -> None:
-        """Validate variables against a schema.
-
-        Args:
-            variables: Variables to validate.
-            schema: Schema to validate against.
-
-        Raises:
-            InvalidSchema: If the schema is invalid.
-        """
-        try:
-            jsonschema.validate(dict(variables), schema, jsonschema.Draft7Validator)
-        except exceptions.ValidationError as e:
-            raise InvalidSchema("Schema is invalid", variables.name) from e
-
     def validate(self, collections: Collections) -> None:
         """Validates the service schema.
 
@@ -257,5 +225,5 @@ class ServiceVariables:
         for path in vars_paths:
             with Variables(path).open("r") as variables:
                 service_variables.merge(variables.copy())
-        self.validate_schema(service_variables, schema)
+        validate_schema(service_variables, schema)
         logger.debug(f"'{self.name}' variables are valid")

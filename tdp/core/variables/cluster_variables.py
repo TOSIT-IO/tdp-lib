@@ -45,7 +45,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     @staticmethod
     def initialize_tdp_vars(
         collections: Collections,
-        tdp_vars: PathLike,
+        tdp_vars_path: PathLike,
         input_vars: Optional[Iterable[PathLike]] = None,
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
@@ -65,11 +65,12 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         Returns:
             ClusterVariables instance.
         """
-        tdp_vars = Path(tdp_vars)
+        tdp_vars_path = Path(tdp_vars_path)
         cluster_variables = {}
 
+        # TODO: Construct the cluster variables from the var defaults
         for service_name in collections.get_services():
-            tdp_vars_service = tdp_vars / service_name
+            tdp_vars_service = tdp_vars_path / service_name
 
             service_variables = ServiceVariables(
                 service_name=service_name,
@@ -79,6 +80,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
             # Add variables from input vars to the repository
             for vars_folder in input_vars or []:
+                # Skip if the folder does not exist
                 if not Path(vars_folder).is_dir():
                     continue
                 for service_folder in Path(vars_folder).iterdir():
@@ -104,7 +106,8 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     @staticmethod
     def get_cluster_variables(
         collections: Collections,
-        tdp_vars: PathLike,
+        tdp_vars_path: PathLike,
+        # TODO: repository_class should be recovered from the repository itself
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
     ):
@@ -121,14 +124,17 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         """
         cluster_variables = {}
 
-        tdp_vars = Path(tdp_vars)
-        for path in tdp_vars.iterdir():
+        # Instanciate a ServiceVariable object for each service defined in the tdp_vars
+        # directory and register it in the cluster_variables dictionary.
+        tdp_vars_path = Path(tdp_vars_path)
+        for path in tdp_vars_path.iterdir():
             if path.is_dir():
-                repo = repository_class(tdp_vars / path.name)
+                repo = repository_class(tdp_vars_path / path.name)
                 cluster_variables[path.name] = ServiceVariables(path.name, repo)
 
         cluster_variables = ClusterVariables(cluster_variables)
 
+        # Validate the variable against the schema if needed.
         if validate:
             cluster_variables._validate_services_schemas(collections)
 

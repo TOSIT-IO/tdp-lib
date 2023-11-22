@@ -32,7 +32,7 @@ def _check_service(
     vars: Path = ctx.params["vars"]
     # TODO: would be nice if services can be retrieved from the collections
     cluster_variables = ClusterVariables.get_cluster_variables(
-        collections=collections, tdp_vars=vars, validate=False
+        collections=collections, tdp_vars_path=vars, validate=False
     )
     if value and value not in cluster_variables.keys():
         raise click.UsageError(f"Service '{value}' does not exists.")
