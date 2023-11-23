@@ -130,3 +130,10 @@ def test_variables_item_is_deletable(dummy_inventory: _DummyInventory):
     assert "hdfs_property" not in variable_manager.get_vars(
         host=inventory.get_host("master01")
     )
+
+
+def test_skip_if_file_not_writable(dummy_inventory: _DummyInventory):
+    (loader, inventory, variable_manager, hdfs_vars) = dummy_inventory
+
+    with Variables(hdfs_vars).open("r"):
+        pass

@@ -118,7 +118,7 @@ class _VariablesIOWrapper(VariablesDict):
         return proxy(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._close()
+        self.close()
 
     def _flush_on_disk(self) -> None:
         """Write the content of the variables file on disk.
@@ -146,7 +146,7 @@ class _VariablesIOWrapper(VariablesDict):
         # https://docs.python.org/3/library/os.html#os.fsync
         os.fsync(self._file_descriptor.fileno())
 
-    def _close(self) -> None:
+    def close(self) -> None:
         """Closes the file descriptor.
 
         Raises:
