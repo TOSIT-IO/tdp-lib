@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 
 from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
@@ -60,9 +60,11 @@ class GitRepository(Repository):
             commit = self._repo.index.commit(msg)
             logger.info(f"commit: [{commit.hexsha}] {msg}")
 
-    def add_for_validation(self, paths: list[PathLike]) -> None:
+    def add_for_validation(self, paths: Iterable[PathLike]) -> None:
+        logger.debug(paths)
+        logger.debug(list(paths))
         with self._lock:
-            self._repo.index.add(paths)
+            self._repo.index.add(list(paths))
             logger.debug(f"{', '.join([str(p) for p in paths])} staged")
 
     def current_version(self) -> str:

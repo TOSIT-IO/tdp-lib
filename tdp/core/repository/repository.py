@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 from pathlib import Path
 from threading import RLock
@@ -74,7 +74,7 @@ class Repository(ABC):
         """
 
     @abstractmethod
-    def add_for_validation(self, paths: list[PathLike]) -> None:
+    def add_for_validation(self, paths: Iterable[PathLike]) -> None:
         """Add files to the index for validation.
 
         Args:

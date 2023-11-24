@@ -26,13 +26,20 @@ class Variables:
             del variables["key1"] # deletes value at key `key1`
     """
 
-    def __init__(self, file_path: PathLike):
+    def __init__(self, file_path: PathLike, /, *, create_if_missing: bool = False):
         """Initializes a Variables instance.
 
         Args:
             file_path: Path to the file.
+            create_if_missing: Whether to create the file if it does not exist.
         """
         self._file_path = Path(file_path)
+        # Create the file if it does not exist
+        if not self._file_path.exists():
+            if not create_if_missing:
+                raise FileNotFoundError(f"'{file_path}' does not exist.")
+            self._file_path.parent.mkdir(parents=True, exist_ok=True)
+            self._file_path.touch()
 
     def open(self, mode: Optional[str] = None) -> "_VariablesIOWrapper":
         """Opens the file in the given mode.
@@ -114,7 +121,7 @@ class _VariablesIOWrapper(VariablesDict):
         self._content = from_yaml(self._file_descriptor) or {}
         self._name = path.name
 
-    def __enter__(self):
+    def __enter__(self) -> "_VariablesIOWrapper":
         return proxy(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
