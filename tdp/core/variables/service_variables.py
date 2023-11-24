@@ -10,7 +10,7 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
+from tdp.core.constants import YML_EXTENSION
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import validate_against_schema
 from tdp.core.variables.variables import (
@@ -29,22 +29,16 @@ logger = logging.getLogger(__name__)
 class ServiceVariables:
     """Variables of a service."""
 
-    def __init__(self, repository: Repository, schema: dict):
+    def __init__(self, repository: Repository):
         """Initialize a ServiceVariables object.
 
         Args:
-            service_name: Service name.
             repository: Repository of the service.
-            schema: Schema for the service.
 
         Raises:
             ValueError: If the service name is longer than SERVICE_NAME_MAX_LENGTH.
         """
         self._repo = repository
-        # Check that the service name is not too long
-        if len(self.name) > SERVICE_NAME_MAX_LENGTH:
-            raise ValueError(f"{self.name} is longer than {SERVICE_NAME_MAX_LENGTH}")
-        self._schema = schema
 
     @property
     def name(self) -> str:
@@ -55,11 +49,6 @@ class ServiceVariables:
     def repository(self) -> Repository:
         """Repository of the service."""
         return self._repo
-
-    @property
-    def schema(self) -> dict:
-        """Schema of the service."""
-        return self._schema
 
     @property
     def version(self) -> str:
@@ -177,7 +166,7 @@ class ServiceVariables:
             commit=version, path=service_component.service_name + YML_EXTENSION
         )
 
-    def validate(self) -> None:
+    def validate(self, schema: dict) -> None:
         """Validates the service variables against the schema.
 
         Raises:
@@ -197,5 +186,5 @@ class ServiceVariables:
                         service_variables.copy(), variables.name
                     )
                     test_variables.merge(variables)
-            validate_against_schema(test_variables, self.schema)
+            validate_against_schema(test_variables, schema)
         logger.debug(f"Service {self.name} is valid")

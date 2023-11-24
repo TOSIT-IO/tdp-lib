@@ -103,8 +103,8 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
                     service_variables = cluster_variables[service]
                 else:
                     repo = repository_class.init(service_tdp_vars)
-                    schemas = collections.get_service_schema(service)
-                    service_variables = ServiceVariables(repo, schemas)
+                    collections.get_service_schema(service)
+                    service_variables = ServiceVariables(repo)
                     cluster_variables[service] = service_variables
 
                 try:
@@ -127,7 +127,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
         cluster_variables = ClusterVariables(cluster_variables)
         if validate:
-            cluster_variables._validate_services_schemas()
+            cluster_variables._validate_services_schemas(collections)
 
         return cluster_variables
 
@@ -155,20 +155,20 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         for path in tdp_vars.iterdir():
             if path.is_dir():
                 repo = repository_class(tdp_vars / path.name)
-                schemas = collections.get_service_schema(path.stem)
-                cluster_variables[path.name] = ServiceVariables(repo, schemas)
+                cluster_variables[path.name] = ServiceVariables(repo)
 
         cluster_variables = ClusterVariables(cluster_variables)
 
         if validate:
-            cluster_variables._validate_services_schemas()
+            cluster_variables._validate_services_schemas(collections)
 
         return cluster_variables
 
-    def _validate_services_schemas(self):
+    def _validate_services_schemas(self, collections: Collections):
         """Validate all services schemas."""
         for service in self.values():
-            service.validate()
+            schema = collections.get_service_schema(service.name)
+            service.validate(schema)
 
     def get_modified_sch(
         self,
