@@ -21,7 +21,7 @@ from tdp.core.collections import Collections
 from tdp.core.repository.repository import EmptyCommit
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
-from tdp.core.variables.service_variables import InvalidSchema
+from tdp.core.variables.schema import InvalidSchema
 
 logger = logging.getLogger(__name__)
 
