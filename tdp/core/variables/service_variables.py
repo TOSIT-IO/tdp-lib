@@ -18,7 +18,6 @@ from tdp.core.types import PathLike
 from tdp.core.variables.variables import Variables, VariablesDict
 
 if TYPE_CHECKING:
-    from tdp.core.dag import Dag
     from tdp.core.repository.repository import Repository
     from tdp.core.service_component_name import ServiceComponentName
 
@@ -105,33 +104,6 @@ class ServiceVariables:
             return None
         with Variables(component_path).open("r") as variables:
             return variables.copy()
-
-    # TODO: move this function outside of this class, or move the dag part
-    def get_component_name(self, dag: Dag, component_name: str) -> str:
-        """Get the full component name.
-
-        Args:
-            dag: Dag instance.
-            component_name: Name of the component.
-
-        Returns:
-            <service_name>_<component_name>
-
-        Raises:
-            ValueError: If component does not exist.
-        """
-        operations_filtered = list(
-            filter(
-                lambda operation: operation.component == component_name,
-                dag.services_operations[self.name],
-            )
-        )
-        if operations_filtered:
-            operation = operations_filtered[0]
-            return self.name + "_" + operation.component
-        raise ValueError(
-            f"Service {self.name} does not have a component {component_name}"
-        )
 
     def update_from_variables_folder(
         self, message: str, tdp_vars_overrides: PathLike
