@@ -43,7 +43,7 @@ class InvalidSchema(Exception):
 class ServiceVariables:
     """Variables of a service."""
 
-    def __init__(self, service_name: str, repository: Repository, schema: dict):
+    def __init__(self, repository: Repository, schema: dict):
         """Initialize a ServiceVariables object.
 
         Args:
@@ -54,16 +54,16 @@ class ServiceVariables:
         Raises:
             ValueError: If the service name is longer than SERVICE_NAME_MAX_LENGTH.
         """
-        if len(service_name) > SERVICE_NAME_MAX_LENGTH:
-            raise ValueError(f"{service_name} is longer than {SERVICE_NAME_MAX_LENGTH}")
-        self._name = service_name
         self._repo = repository
+        # Check that the service name is not too long
+        if len(self.name) > SERVICE_NAME_MAX_LENGTH:
+            raise ValueError(f"{self.name} is longer than {SERVICE_NAME_MAX_LENGTH}")
         self._schema = schema
 
     @property
     def name(self) -> str:
         """Name of the service."""
-        return self._name
+        return self.path.name
 
     @property
     def repository(self) -> Repository:
