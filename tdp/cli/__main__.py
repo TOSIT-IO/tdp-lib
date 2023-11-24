@@ -46,14 +46,13 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     help="Path to environment configuration file.",
 )
 @click.option(
-    "--log-level",
-    default="INFO",
-    envvar="TDP_LOG_LEVEL",
-    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-    help="Set the level of log output.",
+    "-d",
+    "--debug",
+    envvar="TDP_LOG_CONF_FILE",
+    help="Set the config file for the logging.",
 )
-def cli(env: Path, log_level: str):
-    setup_logging(log_level)
+def cli(env: Path, debug: str):
+    setup_logging(debug)
     logging.info("Logging is configured.")
 
 
