@@ -116,8 +116,9 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
                 if service in services_initialized_by_this_function:
                     try:
-                        service_variables.update_from_variables_folder(
-                            "add variables from " + collection_name, path
+                        service_variables.update_from_dir(
+                            path,
+                            validation_message="add variables from " + collection_name,
                         )
                     except EmptyCommit:
                         logger.warning(
