@@ -38,8 +38,8 @@ def init(
 ):
     """Initialize the database and the TDP variables."""
     init_db(database_dsn)
-    cluster_variables = ClusterVariables.initialize_cluster_variables(
+    cluster_variables = ClusterVariables.initialize_tdp_vars(
         collections, vars, overrides, validate=validate
     )
     for name, service_manager in cluster_variables.items():
-        click.echo(f"{name}: {service_manager.version}")
+        click.echo(f"{name}: {service_manager.version or 'no version yet'}")

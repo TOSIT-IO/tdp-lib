@@ -7,7 +7,7 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
+from git import InvalidGitRepositoryError, NoSuchPathError, Repo
 
 from tdp.core.repository.repository import (
     EmptyCommit,
@@ -39,32 +39,35 @@ class GitRepository(Repository):
         """Initialize a new Git repository at the given path."""
         try:
             with Repo(path):
+                logger.debug(f"{path} is already a git repository")
                 return GitRepository(path)
         except (InvalidGitRepositoryError, NoSuchPathError):
             with Repo.init(path, mkdir=True):
+                logger.debug(f"git repository initialized at {path}")
                 return GitRepository(path)
 
     @contextmanager
     def validate(self, msg: str) -> Generator[GitRepository, None, None]:
         with self._lock:
+            # Yield control back to the calling context, allowing operations within the
+            # Git repository
             yield self
-            try:
-                if len(self._repo.index.diff("HEAD")) == 0:
-                    raise EmptyCommit(
-                        "validating these changes would produce no difference"
-                    )
-            except BadName as e:
-                logger.debug(
-                    f"error during diff: {e}. Probably because the repo is still empty."
-                )
+
+            # Check if the repository is not empty and if their are any changes to
+            # commit
+            if self._repo.head.is_valid() and not self._repo.index.diff("HEAD"):
+                raise EmptyCommit(f"No changes to commit in {self._repo}")
+
+            # Commit the changes to the index
             commit = self._repo.index.commit(msg)
-            logger.info(f"commit: [{commit.hexsha}] {msg}")
+            logger.debug(f"New commit {commit.hexsha} for '{self._repo}'.")
 
     def add_for_validation(self, paths: list[PathLike]) -> None:
         with self._lock:
             self._repo.index.add(paths)
             logger.debug(f"{', '.join([str(p) for p in paths])} staged")
 
+    # TODO: change this to a version property
     def current_version(self) -> str:
         try:
             return str(self._repo.head.commit)

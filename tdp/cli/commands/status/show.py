@@ -42,7 +42,7 @@ def show(
     Provide a SERVICE and a COMPONENT to filter the results.
     """
     cluster_variables = ClusterVariables.get_cluster_variables(
-        collections=collections, tdp_vars=vars, validate=validate
+        collections=collections, tdp_vars_path=vars, validate=validate
     )
     check_services_cleanliness(cluster_variables)
 

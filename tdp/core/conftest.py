@@ -76,8 +76,8 @@ def mock_dag(mock_collections: Collections) -> Dag:
 def mock_cluster_variables(
     tmp_path_factory: pytest.TempPathFactory, mock_collections: Collections
 ) -> ClusterVariables:
-    return ClusterVariables.initialize_cluster_variables(
-        collections=mock_collections, tdp_vars=tmp_path_factory.mktemp("tdp_vars")
+    return ClusterVariables.initialize_tdp_vars(
+        collections=mock_collections, tdp_vars_path=tmp_path_factory.mktemp("tdp_vars")
     )
 
 
