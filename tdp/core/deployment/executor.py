@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from typing import Optional
 
 from tdp.core.models import OperationStateEnum
-from tdp.utils import ExecutableNotFoundError, resolve_executable
+from tdp.utils import resolve_executable
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,22 @@ class Executor:
         Args:
             run_directory: Directory where to run the ansible command.
             dry: Whether or not to run the command in dry mode.
+
+        Raises:
+            ExecutableNotFoundError: If the ansible-playbook command is not found in PATH.
         """
         # TODO configurable via config file
         self._rundir = run_directory
         self._dry = dry
+
+        # Resolve ansible-playbook command
+        ansible_playbook_command = "ansible-playbook"
+        if self._dry:
+            # In dry mode, we don't want to execute the ansible-playbook command
+            self.ansible_path = ansible_playbook_command
+        else:
+            # Check if the ansible-playbook command is available in PATH
+            self.ansible_path = resolve_executable(ansible_playbook_command)
 
     def _execute_ansible_command(
         self, command: list[str]
@@ -78,20 +90,8 @@ class Executor:
         Returns:
             A tuple with the state of the command and the output of the command in UTF-8.
         """
-        ansible_playbook_command = "ansible-playbook"
-        if self._dry:
-            # In dry mode, we don't want to execute the ansible-playbook command
-            ansible_path = ansible_playbook_command
-        else:
-            # Check if the ansible-playbook command is available in PATH
-            try:
-                ansible_path = resolve_executable(ansible_playbook_command)
-            except ExecutableNotFoundError:
-                logs = f"'{ansible_playbook_command}' not found in PATH"
-                logger.error(logs)
-                return OperationStateEnum.FAILURE, logs.encode("utf-8")
         # Build command
-        command = [ansible_path]
+        command = [self.ansible_path]
         command += [str(playbook)]
         if host is not None:
             command += ["--limit", host]
