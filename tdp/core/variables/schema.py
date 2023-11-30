@@ -39,7 +39,7 @@ def validate_against_schema(variables: "VariablesDict", schema: dict) -> None:
         InvalidSchema: If the schema is invalid.
     """
     try:
-        jsonschema.validate(variables, schema, jsonschema.Draft7Validator)
+        jsonschema.validate(dict(variables), schema, jsonschema.Draft7Validator)
         logger.debug(f"{variables.name} is valid against service schema")
     except exceptions.ValidationError as e:
         raise InvalidSchema("Schema is invalid", variables.name) from e
