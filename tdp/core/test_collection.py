@@ -7,12 +7,12 @@ import pytest
 
 from tdp.conftest import generate_collection_at_path
 from tdp.core.collection import (
-    DAG_DIRECTORY_NAME,
     Collection,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
 )
+from tdp.core.constants import DAG_DIRECTORY_NAME
 
 
 def test_collection_from_path_does_not_exist():

@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from tdp.core.constants import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.state_enum import OperationStateEnum
-from tdp.core.operation import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 
 if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel

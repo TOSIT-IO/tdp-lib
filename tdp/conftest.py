@@ -9,13 +9,13 @@ import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from tdp.core.collection import (
+from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
+    OPERATION_SLEEP_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
-from tdp.core.collections import OPERATION_SLEEP_NAME
 from tdp.core.models import BaseModel
 
 DATABASE_URL = "sqlite:///:memory:"

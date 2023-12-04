@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Optional
 import click
 
 from tdp.cli.utils import collections, vars
-from tdp.core.collection import DEFAULT_VARS_DIRECTORY_NAME
+from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
 if TYPE_CHECKING:

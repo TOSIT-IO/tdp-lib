@@ -5,16 +5,16 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from tdp.core.constants import (
+    DAG_DIRECTORY_NAME,
+    DEFAULT_VARS_DIRECTORY_NAME,
+    JSON_EXTENSION,
+    PLAYBOOKS_DIRECTORY_NAME,
+    SCHEMA_VARS_DIRECTORY_NAME,
+    YML_EXTENSION,
+)
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
-
-DAG_DIRECTORY_NAME = "tdp_lib_dag"
-DEFAULT_VARS_DIRECTORY_NAME = "tdp_vars_defaults"
-PLAYBOOKS_DIRECTORY_NAME = "playbooks"
-SCHEMA_VARS_DIRECTORY_NAME = "tdp_vars_schema"
-
-JSON_EXTENSION = ".json"
-YML_EXTENSION = ".yml"
 
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,

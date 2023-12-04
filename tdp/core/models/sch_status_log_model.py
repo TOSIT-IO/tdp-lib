@@ -7,13 +7,13 @@ from typing import Any, Optional
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from tdp.core.models.base_model import BaseModel
-from tdp.core.operation import (
+from tdp.core.constants import (
     COMPONENT_NAME_MAX_LENGTH,
     HOST_NAME_MAX_LENGTH,
     SERVICE_NAME_MAX_LENGTH,
+    VERSION_MAX_LENGTH,
 )
-from tdp.core.repository.repository import VERSION_MAX_LENGTH
+from tdp.core.models.base_model import BaseModel
 from tdp.core.utils import BaseEnum
 
 

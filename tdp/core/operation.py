@@ -4,23 +4,20 @@
 import re
 from typing import Any, Optional
 
+from tdp.core.constants import (
+    ACTION_NAME_MAX_LENGTH,
+    COMPONENT_NAME_MAX_LENGTH,
+    HOST_NAME_MAX_LENGTH,
+    OPERATION_NAME_MAX_LENGTH,
+    SERVICE_NAME_MAX_LENGTH,
+)
+
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
 # component operation: <service>_<component>_<action>
 RE_GET_SERVICE = re.compile("^([^_]+)_.*")
 RE_GET_COMPONENT = re.compile("^[^_]+_(.*)_[^_]+$")
 RE_GET_ACTION = re.compile(".*_([^_]+)$")
-
-
-SERVICE_NAME_MAX_LENGTH = 20
-COMPONENT_NAME_MAX_LENGTH = 30
-ACTION_NAME_MAX_LENGTH = 20
-
-OPERATION_NAME_MAX_LENGTH = (
-    SERVICE_NAME_MAX_LENGTH + COMPONENT_NAME_MAX_LENGTH + ACTION_NAME_MAX_LENGTH
-)
-
-HOST_NAME_MAX_LENGTH = 255
 
 
 class Operation:
