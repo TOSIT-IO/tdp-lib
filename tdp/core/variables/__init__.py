@@ -4,7 +4,6 @@
 from tdp.core.variables.cluster_variables import ClusterVariables
 from tdp.core.variables.schema import InvalidSchema, validate_against_schema
 from tdp.core.variables.service_variables import (
-    SERVICE_NAME_MAX_LENGTH,
     ServiceVariables,
 )
 from tdp.core.variables.variables import Variables, VariablesDict, merge_hash

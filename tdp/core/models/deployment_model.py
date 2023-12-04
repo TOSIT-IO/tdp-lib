@@ -13,7 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collections import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
+from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.operation_model import OperationModel

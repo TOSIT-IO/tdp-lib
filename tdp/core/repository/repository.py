@@ -12,9 +12,6 @@ from weakref import proxy
 
 from tdp.core.types import PathLike
 
-# Version string length isn't checked before inserting into database
-VERSION_MAX_LENGTH = 40
-
 
 class NoVersionYet(Exception):
     """Raised when trying to get the version of a repository that has no version yet."""

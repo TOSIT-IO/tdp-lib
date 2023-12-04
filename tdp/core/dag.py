@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 
 import networkx as nx
 
+from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.operation import Operation
 
 if TYPE_CHECKING:
@@ -29,21 +30,6 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
-
-SERVICE_PRIORITY = {
-    "exporter": 1,
-    "zookeeper": 2,
-    "hadoop": 3,
-    "ranger": 4,
-    "hdfs": 5,
-    "yarn": 6,
-    "hive": 7,
-    "hbase": 8,
-    "spark": 9,
-    "spark3": 10,
-    "knox": 11,
-}
-DEFAULT_SERVICE_PRIORITY = 99
 
 
 class IllegalNodeError(Exception):

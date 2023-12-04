@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collections import OPERATION_SLEEP_NAME
+from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.models import (
     DeploymentModel,
     DeploymentStateEnum,

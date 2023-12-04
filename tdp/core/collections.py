@@ -31,9 +31,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-OPERATION_SLEEP_NAME = "wait_sleep"
-OPERATION_SLEEP_VARIABLE = "wait_sleep_seconds"
-
 
 class MissingOperationError(Exception):
     pass

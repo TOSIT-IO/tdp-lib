@@ -16,8 +16,8 @@ from tdp.cli.utils import (
     vars,
 )
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collection import YML_EXTENSION
 from tdp.core.collections import Collections
+from tdp.core.constants import YML_EXTENSION
 from tdp.core.repository.repository import EmptyCommit
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
