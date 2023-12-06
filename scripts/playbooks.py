@@ -104,7 +104,9 @@ def playbooks(services, output_dir, for_collection, collections):
             if all(map(is_noop, dag_service_operations[service])):
                 all_per_service_fd.write(f"# {service}\n")
                 continue
-            all_per_service_fd.write(f"- import_playbook: {service}.yml\n")
+            all_per_service_fd.write(
+                f"- ansible.builtin.import_playbook: {service}.yml\n"
+            )
             with Path(meta_dir, f"{service}.yml").open("w") as service_fd:
                 write_copyright_licence_headers(service_fd)
                 service_fd.write("---\n")
@@ -116,7 +118,7 @@ def playbooks(services, output_dir, for_collection, collections):
                         continue
                     if not operation.noop:
                         service_fd.write(
-                            f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                            f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                         )
                     else:
                         service_fd.write(f"# {operation.name}\n")
@@ -129,7 +131,7 @@ def playbooks(services, output_dir, for_collection, collections):
                 continue
             if not operation.noop:
                 all_fd.write(
-                    f"- import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                 )
             else:
                 all_fd.write(f"# {operation.name}\n")
