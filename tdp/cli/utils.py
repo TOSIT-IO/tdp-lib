@@ -180,7 +180,8 @@ def rolling_interval(func: FC) -> FC:
 def validate(func: FC) -> FC:
     return click.option(
         "--validate/--no-validate",
-        default=True,
+        # TODO: set default to True when schema validation is fully implemented
+        # default=True,
         help="Should the command validate service variables against defined JSON schemas.",
     )(func)
 
