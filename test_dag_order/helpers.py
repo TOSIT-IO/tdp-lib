@@ -165,7 +165,7 @@ class CollectionToTest(Collection):
 
 
 class append_collection_list_action(argparse.Action):
-    """argpase action to create a list of CollectionToTest from paths"""
+    """argparse action to create a list of CollectionToTest from paths"""
 
     def __call__(self, parser, namespace, values: pathlib.Path, option_string=None):
         # Initialize the attribute if it doesn't exist
@@ -199,10 +199,6 @@ def resolve_components(
         Tuple of the resolved components and the service component map.
 
     Examples:
-        >>> resolve_components(["service1", "service2"])
-        (frozenset({"service1", "service2"}), {})
-        >>> resolve_components(["service1", "service2_component1"])
-        (frozenset({"service1", "service2_component1"}), {"service2_component1": "service2"})
         >>> resolve_components(["service1", "service2"])
         (frozenset({"service1", "service2"}), {})
         >>> resolve_components(["service1", "service2_component1"])
