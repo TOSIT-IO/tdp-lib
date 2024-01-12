@@ -20,7 +20,7 @@ def _add_source_service(
     formatted_children = []
     for child in children:
         if child in service_component_map:
-            formatted_children.append(f"{child} ({service_component_map[child]})")
+            formatted_children.append(f"{child} (from {service_component_map[child]})")
         else:
             formatted_children.append(child)
     return formatted_children
