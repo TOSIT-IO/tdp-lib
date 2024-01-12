@@ -16,10 +16,8 @@ from sqlalchemy import create_engine
 
 from tdp.cli.queries import get_sch_status
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collection import (
-    YML_EXTENSION,
-)
 from tdp.core.collections import Collections
+from tdp.core.constants import YML_EXTENSION
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentRunner
 from tdp.core.deployment.test_deployment_runner import MockExecutor

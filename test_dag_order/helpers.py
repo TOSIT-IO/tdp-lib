@@ -14,13 +14,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.collection import (
-    YML_EXTENSION,
     Collection,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
 )
 from tdp.core.collections import Collections
+from tdp.core.constants import YML_EXTENSION
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.service_component_name import ServiceComponentName
 
