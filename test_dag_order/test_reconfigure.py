@@ -40,8 +40,8 @@ class MissingChildrenError(Exception):
         self.current = current
 
     def __str__(self):
-        current_children = "\n\t\t".join(sorted(self.current))
-        missing_children = "\n\t\t".join(sorted(self.missing))
+        current_children = "\n\t\t".join(self.current)
+        missing_children = "\n\t\t".join(self.missing)
         return (
             f"{self.short_msg}\n"
             f"\tMissing children:\n"
