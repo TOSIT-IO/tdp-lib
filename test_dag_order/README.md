@@ -33,8 +33,9 @@ Every `.yml` file placed in the `tdp_lib_dag_test_rules` of a TDP collection can
   - `must_include`: a list of components (or services) that must be reconfigured
   - `must_exclude`: a list of components (or services) that must not be reconfigured
 
+When a service is specified, script will look for all the components of the service.
 
-For example, the following rule will test that editing the `hdfs.yml` configuration will trigger a reconfigure that must include the `yarn` service and must exclude the `zookeeper` service:
+For example, the following rule will test that editing the `hdfs.yml` configuration will trigger a reconfigure that must include all components of the `yarn` service and must exclude all the components of the `zookeeper` service:
 
 ```yaml
 hdfs:
