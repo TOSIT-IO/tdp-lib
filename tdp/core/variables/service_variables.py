@@ -8,7 +8,7 @@ from collections import OrderedDict
 from collections.abc import Generator, Iterable
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
 from tdp.core.types import PathLike
@@ -112,7 +112,7 @@ class ServiceVariables:
         # Open corresponding files in the repository.
         files_to_open = (input_file_path.name for input_file_path in input_file_paths)
         with self.open_files(
-            files_to_open, validation_message=validation_message, create_if_missing=True
+            files_to_open, "w+", validation_message=validation_message
         ) as files:
             # Merge the input files into the repository files.
             for input_file_path in input_file_paths:
@@ -124,9 +124,9 @@ class ServiceVariables:
         self,
         file_names: Iterable[str],
         /,
+        mode: Optional[str] = None,
         *,
         validation_message: str,
-        create_if_missing: bool = False,
     ) -> Generator[OrderedDict[str, _VariablesIOWrapper], None, None]:
         """Open files in the service repository.
 
@@ -137,7 +137,7 @@ class ServiceVariables:
         Args:
             validation_message: Validation message to use for the repository.
             file_names: Names of the files to manage.
-            create_if_missing: Whether to create the file if it does not exist.
+            mode: Mode to open the files in.
 
         Yields:
             A dictionary of opened files.
@@ -147,9 +147,7 @@ class ServiceVariables:
         with ExitStack() as stack:
             for file_name in file_names:
                 open_files[file_name] = stack.enter_context(
-                    Variables(
-                        self.path / file_name, create_if_missing=create_if_missing
-                    ).open()
+                    Variables(self.path / file_name).open(mode)
                 )
             yield open_files
         # commit the files
