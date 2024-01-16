@@ -124,8 +124,10 @@ class _VariablesIOWrapper(VariablesDict):
         """
         self._file_path = path
         self._file_descriptor = open(self._file_path, mode or "r+")
-        self._content = from_yaml(self._file_descriptor) or {}
-        self._name = path.name
+        # Initialize the content of the variables file
+        content = from_yaml(self._file_descriptor) or {}
+        name = path.name
+        super().__init__(content, name)
 
     def __enter__(self) -> "_VariablesIOWrapper":
         return proxy(self)
