@@ -113,7 +113,11 @@ class VariablesDict(MutableMapping):
 
 
 class _VariablesIOWrapper(VariablesDict):
-    """Context manager for file IO operations."""
+    """VariablesDict wrapper for file IO operations.
+
+    This object can either be used as a context manager or as a regular object. In that
+    case, it is the responsibility of the user to call the `close` method.
+    """
 
     def __init__(self, path: Path, mode: Optional[str] = None):
         """Initializes the _VariablesIOWrapper instance.
@@ -125,9 +129,7 @@ class _VariablesIOWrapper(VariablesDict):
         self._file_path = path
         self._file_descriptor = open(self._file_path, mode or "r+")
         # Initialize the content of the variables file
-        content = from_yaml(self._file_descriptor) or {}
-        name = path.name
-        super().__init__(content, name)
+        super().__init__(content=from_yaml(self._file_descriptor) or {}, name=path.name)
 
     def __enter__(self) -> "_VariablesIOWrapper":
         return proxy(self)
@@ -136,20 +138,14 @@ class _VariablesIOWrapper(VariablesDict):
         self.close()
 
     def _flush_on_disk(self) -> None:
-        """Write the content of the variables file on disk.
-
-        Raises:
-            RuntimeError: If the file descriptor is already closed.
-        """
+        """Write the content of the variables file on disk."""
         # Check if the file descriptor is already closed
         if not self._file_descriptor or self._file_descriptor.closed:
-            raise RuntimeError(
-                f"{self._file_path} is already closed, which shouldn't happen"
-            )
+            raise RuntimeError(f"{self._file_path} is already closed.")
 
         # Check if the file is writable
         if not self._file_descriptor.writable():
-            raise RuntimeError(f"{self._file_path} is not writable")
+            raise RuntimeError(f"{self._file_path} is not writable.")
 
         # Write the content of the variables file on disk
         self._file_descriptor.seek(0)
@@ -162,16 +158,10 @@ class _VariablesIOWrapper(VariablesDict):
         os.fsync(self._file_descriptor.fileno())
 
     def close(self) -> None:
-        """Closes the file descriptor.
-
-        Raises:
-            RuntimeError: If the file descriptor is already closed.
-        """
+        """Closes the file."""
         # Check if the file descriptor is already closed
         if not self._file_descriptor or self._file_descriptor.closed:
-            raise RuntimeError(
-                f"{self._file_path} is already closed, which shouldn't happen"
-            )
+            raise RuntimeError(f"{self._file_path} is already closed.")
 
         # Flush to disk only if the file is writable
         if self._file_descriptor.writable():
