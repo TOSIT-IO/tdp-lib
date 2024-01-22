@@ -474,7 +474,7 @@ def get_running_deployment(session: Session) -> Optional[DeploymentModel]:
 def get_operation_records(
     session: Session, deployment_id: int, operation_name: str
 ) -> list[OperationModel]:
-    """Get an operation records.
+    """Get the records of an operation.
 
     Args:
         session: The database session.
@@ -496,4 +496,32 @@ def get_operation_records(
     except NoResultFound as e:
         raise Exception(
             f"Operation {operation_name} does not exist in deployment {deployment_id}."
+        ) from e
+
+
+def get_operation_from_order(
+    session: Session, deployment_id: int, operation_order: int
+) -> OperationModel:
+    """Get an operation from the order.
+
+    Args:
+        session: The database session.
+        deployment_id: The deployment ID.
+        operation_order: The operation order.
+
+    Returns:
+        The matching operation record.
+
+    Raises:
+        NoResultFound: If the operation order does not exist.
+    """
+    try:
+        return (
+            session.query(OperationModel)
+            .filter_by(deployment_id=deployment_id, operation_order=operation_order)
+            .one()
+        )
+    except NoResultFound as e:
+        raise Exception(
+            f"Operation {operation_order} does not exist in deployment {deployment_id}."
         ) from e
