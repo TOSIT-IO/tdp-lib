@@ -447,6 +447,30 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
 
 
+def get_running_deployment(session: Session) -> Optional[DeploymentModel]:
+    """Get the running deployment
+
+    Args:
+        session: The database session.
+
+    Returns:
+        The running deployment or NoResultFound if there is no running deployment.
+
+    Raises:
+        NoResultFound: If there is no running deployment.
+    """
+    try:
+        return (
+            session.query(DeploymentModel)
+            .where(DeploymentModel.state == "Running")
+            .order_by(DeploymentModel.id.desc())
+            .limit(1)
+            .one()
+        )
+    except NoResultFound as e:
+        raise Exception("No running deployment.") from e
+
+
 def get_operation_records(
     session: Session, deployment_id: int, operation_name: str
 ) -> list[OperationModel]:
