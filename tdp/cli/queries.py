@@ -444,7 +444,10 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     Returns:
         The planned deployment or None if there is no planned deployment.
     """
-    return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
+    try:
+        return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
+    except NoResultFound as e:
+        raise Exception("No planned deployment.") from e
 
 
 def get_operation_records(
