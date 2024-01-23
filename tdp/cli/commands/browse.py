@@ -6,15 +6,15 @@ from typing import Optional
 
 import click
 
-from tdp.cli.queries import (
+from tdp.cli.session import get_session
+from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
+from tdp.core.models import DeploymentModel, OperationModel
+from tdp.queries import (
     get_deployment,
     get_deployments,
     get_operation_records,
     get_planned_deployment,
 )
-from tdp.cli.session import get_session
-from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
-from tdp.core.models import DeploymentModel, OperationModel
 
 
 @click.command()

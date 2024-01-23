@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING
 
 import click
 
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, parse_file
 from tdp.core.models.deployment_model import DeploymentModel
+from tdp.queries import get_planned_deployment
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

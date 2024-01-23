@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
@@ -18,6 +17,7 @@ from tdp.cli.utils import (
 )
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentModel, FilterTypeEnum
+from tdp.queries import get_planned_deployment
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

@@ -7,7 +7,6 @@ from typing import Optional
 
 import click
 
-from tdp.cli.queries import get_sch_status
 from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
@@ -22,6 +21,7 @@ from tdp.core.repository.repository import EmptyCommit
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
 from tdp.core.variables.schema import InvalidSchema
+from tdp.queries import get_sch_status
 
 logger = logging.getLogger(__name__)
 

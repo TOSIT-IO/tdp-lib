@@ -11,11 +11,11 @@ from tdp.cli.commands.status.utils import (
     _common_status_options,
     _print_sch_status_logs,
 )
-from tdp.cli.queries import get_sch_status
 from tdp.cli.session import get_session
 from tdp.cli.utils import check_services_cleanliness, hosts
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.variables import ClusterVariables
+from tdp.queries import get_sch_status
 
 if TYPE_CHECKING:
     from pathlib import Path

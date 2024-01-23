@@ -8,12 +8,12 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from tdp.cli.queries import get_sch_status
 from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
     ServiceComponentHostStatus,
 )
+from tdp.queries import get_sch_status
 
 logger = logging.getLogger(__name__)
 

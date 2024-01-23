@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.queries import (
+from tdp.cli.session import get_session
+from tdp.cli.utils import collections, database_dsn, preview, print_deployment
+from tdp.core.models import DeploymentModel
+from tdp.queries import (
     get_deployment,
     get_last_deployment,
     get_planned_deployment,
 )
-from tdp.cli.session import get_session
-from tdp.cli.utils import collections, database_dsn, preview, print_deployment
-from tdp.core.models import DeploymentModel
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
