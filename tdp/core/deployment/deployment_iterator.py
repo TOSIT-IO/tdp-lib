@@ -226,3 +226,29 @@ class DeploymentIterator(Iterator[Optional[list[SCHStatusLogModel]]]):
             self.deployment.end_time = datetime.utcnow()
             self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
+
+    def get_ansible_commands(self) -> list[str]:
+        command_list = []
+        for operationM in self.deployment.operations:
+            operation = self._collections.get_operation(operationM.operation)
+            try:
+                operationM.start_time = datetime.utcnow()
+                operation = self._collections.get_operation(operationM.operation)
+                playbook = self._collections[operation.collection_name].playbooks[
+                    operation.name
+                ]
+                playbook = playbook
+                command = "ansible-playbook"
+                command += " " + str(playbook)
+                if operationM.host is not None:
+                    command += " --limit", operationM.host
+                for extra_var in operationM.extra_vars or []:
+                    command += f" --extra-vars {extra_var}"
+                command_list.append(command)
+                operationM.end_time = datetime.utcnow()
+                operationM.state = OperationStateEnum.SUCCESS
+            except:
+                continue
+        self.deployment.end_time = datetime.utcnow()
+        self.deployment.state = DeploymentStateEnum.SUCCESS
+        return command_list

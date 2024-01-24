@@ -88,10 +88,16 @@ def deploy(
             cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
+        command_list = deployment_iterator.get_ansible_commands()
+
         if dry:
-            for _ in deployment_iterator:
-                pass
+            for command in command_list:
+                click.echo("[DRY MODE] Ansible command: " + command)
             return
+
+        if mock_deploy:
+            for command in command_list:
+                click.echo("[MOCK DEPLOY] Ansible command: " + command)
 
         # deployment and operations records are mutated by the iterator so we need to
         # commit them before iterating and at each iteration
