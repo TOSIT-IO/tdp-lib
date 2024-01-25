@@ -10,7 +10,7 @@ from tdp.core.constants import ACTION_NAME_MAX_LENGTH
 from tdp.core.entities.hostable_entity_name import (
     ServiceComponentName,
     ServiceName,
-    create_hostable_entity_name,
+    parse_hostable_entity_name,
 )
 
 
@@ -90,9 +90,9 @@ class ServiceComponentOperationName(OperationName):
         return self.name
 
 
-def create_operation_name(name: str) -> OperationName:
+def parse_operation_name(name: str) -> OperationName:
     entity_name, action_name = name.rsplit("_", 1)
-    entity = create_hostable_entity_name(entity_name)
+    entity = parse_hostable_entity_name(entity_name)
     if isinstance(entity, ServiceName):
         return ServiceOperationName(entity, ActionName(action_name))
     elif isinstance(entity, ServiceComponentName):

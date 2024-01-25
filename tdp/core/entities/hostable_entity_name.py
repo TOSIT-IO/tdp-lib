@@ -72,7 +72,7 @@ class ServiceComponentName(HostableEntityName):
         return self.name
 
 
-def create_hostable_entity_name(name: str) -> HostableEntityName:
+def parse_hostable_entity_name(name: str) -> HostableEntityName:
     if "_" in name:
         return ServiceComponentName.from_name(name)
     return ServiceName(name)
