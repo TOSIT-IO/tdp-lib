@@ -1,26 +1,30 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 
-from tdp.core.entities import DataclassEnforcer, NamedEntity
-from tdp.core.entities.base.service_component_name import ServiceComponentName
-from tdp.core.entities.base.service_name import ServiceName
-
-
-class HostedEntity(NamedEntity, ABC, metaclass=DataclassEnforcer):
-    @property
-    @abstractmethod
-    def host(self) -> str:
-        pass
+from tdp.core.entities.hostable_entity_name import (
+    ComponentName,
+    HostableEntityName,
+    ServiceComponentName,
+    ServiceName,
+)
 
 
 @dataclass(frozen=True)
-class HostedService(ServiceName, HostedEntity):
+class HostedEntity(HostableEntityName, ABC):
     host: str
 
 
 @dataclass(frozen=True)
-class HostedServiceComponent(ServiceComponentName, HostedEntity):
-    host: str
+class HostedService(HostedEntity, ServiceName):
+    pass
+
+
+@dataclass(frozen=True)
+class HostedServiceComponent(HostedEntity, ServiceComponentName):
+    @classmethod
+    def from_name(cls, name: str, host: str) -> ServiceComponentName:
+        service_name, component_name = name.split("_", 1)
+        return cls(ServiceName(service_name), ComponentName(component_name), host)
