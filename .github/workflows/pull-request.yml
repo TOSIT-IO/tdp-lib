@@ -32,6 +32,7 @@ jobs:
         uses: psf/black@stable
         with:
           options: "--check --verbose"
+          version: 24.1.1
   
   ruff:
     name: Check linting with Ruff
