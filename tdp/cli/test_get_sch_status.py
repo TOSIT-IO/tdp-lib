@@ -49,12 +49,12 @@ def _mock_sch_status_log(
                 component=component,
                 host=host,
                 source=SCHStatusLogSourceEnum.STALE,
-                running_version=_generate_version()
-                if random.choice([True, False])
-                else None,
-                configured_version=_generate_version()
-                if random.choice([True, False])
-                else None,
+                running_version=(
+                    _generate_version() if random.choice([True, False]) else None
+                ),
+                configured_version=(
+                    _generate_version() if random.choice([True, False]) else None
+                ),
                 to_config=random.choice([True, False, None]),
                 to_restart=random.choice([True, False, None]),
             )

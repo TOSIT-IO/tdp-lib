@@ -31,9 +31,11 @@ class BaseModel(DeclarativeBase):
         """
         filter_out = filter_out or []
         return {
-            c.name: self._formater(c.name, getattr(self, c.name))
-            if format
-            else getattr(self, c.name)
+            c.name: (
+                self._formater(c.name, getattr(self, c.name))
+                if format
+                else getattr(self, c.name)
+            )
             for c in self.__table__.columns
             if c.name not in filter_out
         }
