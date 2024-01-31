@@ -20,7 +20,7 @@ from tdp.core.variables.variables import (
 
 if TYPE_CHECKING:
     from tdp.core.repository.repository import Repository
-    from tdp.core.service_component_name import ServiceComponentName
+    from tdp.core.service_component_name import OldServiceComponentName
     from tdp.core.variables.variables import _VariablesIOWrapper
 
 logger = logging.getLogger(__name__)
@@ -157,7 +157,7 @@ class ServiceVariables:
             repo.add_for_validation(open_files.keys())
 
     def is_sc_modified_from_version(
-        self, service_component: ServiceComponentName, version: str
+        self, service_component: OldServiceComponentName, version: str
     ) -> bool:
         """Check if a component has been modified since the given version.
 

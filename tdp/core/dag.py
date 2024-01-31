@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
-from tdp.core.operation import Operation
+from tdp.core.operation import OldOperation
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -63,7 +63,7 @@ class Dag:
         del self.operations
 
     @property
-    def operations(self) -> dict[str, Operation]:
+    def operations(self) -> dict[str, OldOperation]:
         """DAG operations dictionary."""
         if self._operations is not None:
             return self._operations
@@ -73,7 +73,7 @@ class Dag:
         return self._operations
 
     @operations.setter
-    def operations(self, value: dict[str, Operation]) -> None:
+    def operations(self, value: dict[str, OldOperation]) -> None:
         """Set operations and reset graph, services_operations and services."""
         self._operations = value
         del self.graph
@@ -85,7 +85,7 @@ class Dag:
         self.operations = None
 
     @property
-    def services_operations(self) -> dict[str, list[Operation]]:
+    def services_operations(self) -> dict[str, list[OldOperation]]:
         """DAG operations dictionary grouped by service."""
         if self._services_operations is None:
             self._services_operations = {}
@@ -143,7 +143,7 @@ class Dag:
 
     def node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
-    ) -> Operation:
+    ) -> OldOperation:
         # ? Restart operations are now stored in collections.operations they can be
         # ? directly retrieved using the collections.get_operation method.
         # ? This method could be removed in the future.
@@ -221,7 +221,7 @@ class Dag:
         nodes: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         """Perform a topological sort on the DAG.
 
         Args:
@@ -244,7 +244,7 @@ class Dag:
         targets: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         if sources and targets:
             raise NotImplementedError("Cannot specify both sources and targets.")
         if sources:
@@ -255,7 +255,7 @@ class Dag:
 
     def get_operations_to_nodes(
         self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -265,7 +265,7 @@ class Dag:
 
     def get_operations_from_nodes(
         self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -275,7 +275,7 @@ class Dag:
 
     def get_all_operations(
         self, restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
@@ -285,7 +285,7 @@ class Dag:
 
     def get_operation_descendants(
         self, nodes: list[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[OldOperation]:
         """
         Retrieve all descendant operations for the specified nodes in the DAG.
 
@@ -321,13 +321,13 @@ class Dag:
         )
 
     def filter_operations_glob(
-        self, operations: Iterable[Operation], glob: str
-    ) -> list[Operation]:
+        self, operations: Iterable[OldOperation], glob: str
+    ) -> list[OldOperation]:
         return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
 
     def filter_operations_regex(
-        self, operations: Iterable[Operation], regex: str
-    ) -> list[Operation]:
+        self, operations: Iterable[OldOperation], regex: str
+    ) -> list[OldOperation]:
         compiled_regex = re.compile(regex)
         return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
 

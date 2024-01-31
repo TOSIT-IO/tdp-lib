@@ -21,8 +21,8 @@ from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.service_component_host_name import OldServiceComponentHostName
+from tdp.core.service_component_name import OldServiceComponentName
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

@@ -5,7 +5,7 @@
 from typing import Any, Optional
 
 
-class ServiceComponentName:
+class OldServiceComponentName:
     """Represent a service or a component name."""
 
     def __init__(self, service_name: str, component_name: Optional[str] = None):
@@ -27,7 +27,7 @@ class ServiceComponentName:
         return self.component_name is None
 
     @staticmethod
-    def from_full_name(full_name: str) -> "ServiceComponentName":
+    def from_full_name(full_name: str) -> "OldServiceComponentName":
         """Factory method to build ServiceComponentName from a full name.
 
         Args:
@@ -38,7 +38,7 @@ class ServiceComponentName:
         """
         [service_name, *component_name] = full_name.split("_", 1)
         component_name = component_name[0] if component_name else None
-        return ServiceComponentName(service_name, component_name)
+        return OldServiceComponentName(service_name, component_name)
 
     def __repr__(self) -> str:
         return f"ServiceComponentName({self.service_name}, {self.component_name})"
@@ -47,7 +47,7 @@ class ServiceComponentName:
         return self.full_name
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ServiceComponentName):
+        if not isinstance(other, OldServiceComponentName):
             return NotImplemented
         return repr(self) == repr(other)
 

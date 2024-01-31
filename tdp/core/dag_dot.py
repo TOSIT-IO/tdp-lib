@@ -3,7 +3,7 @@
 
 import networkx as nx
 
-from tdp.core.operation import Operation
+from tdp.core.operation import OldOperation
 
 
 # Needed :
@@ -54,7 +54,7 @@ def to_pydot(
         for dot_node in dot_nodes:
             # Dot node name can be quoted, remove it
             operation_name = dot_node.get_name().strip('"')
-            operation = Operation(operation_name)
+            operation = OldOperation(operation_name)
             subgraphs.setdefault(
                 operation.service_name,
                 pydot.Cluster(

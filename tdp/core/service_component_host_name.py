@@ -5,15 +5,15 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.service_component_name import OldServiceComponentName
 
 
-class ServiceComponentHostName:
+class OldServiceComponentHostName:
     """Represent a service or a component name with an optional host."""
 
     def __init__(
         self,
-        service_component_name: ServiceComponentName,
+        service_component_name: OldServiceComponentName,
         host_name: Optional[str] = None,
     ):
         self.service_component_name = service_component_name
@@ -32,7 +32,7 @@ class ServiceComponentHostName:
     @staticmethod
     def from_full_host_name(
         full_name: str, host_name: Optional[str] = None
-    ) -> ServiceComponentHostName:
+    ) -> OldServiceComponentHostName:
         """Factory method to build ServiceComponentHostName from a full name and an optional host.
 
         Args:
@@ -42,8 +42,8 @@ class ServiceComponentHostName:
         Returns:
             ServiceComponentHostName instance.
         """
-        return ServiceComponentHostName(
-            service_component_name=ServiceComponentName.from_full_name(full_name),
+        return OldServiceComponentHostName(
+            service_component_name=OldServiceComponentName.from_full_name(full_name),
             host_name=host_name,
         )
 
@@ -59,7 +59,7 @@ class ServiceComponentHostName:
         return self.full_name
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, ServiceComponentHostName):
+        if not isinstance(other, OldServiceComponentHostName):
             return NotImplemented
         return repr(self) == repr(other)
 
