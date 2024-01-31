@@ -15,9 +15,11 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
+from pathlib import Path
 from typing import Optional
 
 import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from tdp.core.collection import Collection
 from tdp.core.operation import Operation
@@ -30,6 +32,39 @@ except ImportError:
     from yaml import Loader
 
 logger = logging.getLogger(__name__)
+
+
+class TDPLibDagOperationModel(BaseModel):
+    """Model for a TDP operation defined in a tdp_lib_dag file."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    depends_on: list[str] = []
+    noop: bool = False
+
+
+class TDPLibDagModel(BaseModel):
+    """Model for a TDP DAG defined in a tdp_lib_dag file."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    operations: list[TDPLibDagOperationModel]
+
+
+def read_tdp_lib_dag_file(tdp_lib_dag_file_path: Path) -> list[TDPLibDagOperationModel]:
+    """Read a tdp_lib_dag file and return a list of DAG operations."""
+    with tdp_lib_dag_file_path.open("r") as operations_file:
+        file_content = yaml.load(operations_file, Loader=Loader)
+
+    try:
+        tdp_lib_dag = TDPLibDagModel(operations=file_content)
+        return tdp_lib_dag.operations
+    except ValidationError as e:
+        logger.error(
+            f"Error while parsing tdp_lib_dag file {tdp_lib_dag_file_path}: {e}"
+        )
+        raise
 
 
 class MissingOperationError(Exception):
@@ -110,68 +145,60 @@ class Collections(Mapping[str, Collection]):
         for collection_name, collection in self._collections.items():
             for dag_yaml_file in collection.dag_yamls:
                 operations_list = None
-                with dag_yaml_file.open("r") as operations_file:
-                    operations_list = yaml.load(operations_file, Loader=Loader) or []
+                operations_list = read_tdp_lib_dag_file(dag_yaml_file)
 
                 for operation in operations_list:
-                    operation_name = operation["name"]
-                    if operation_name in self._dag_operations:
+                    if operation.name in self._dag_operations:
+                        # Merge the operation with the existing one
                         logger.debug(
-                            f"DAG Operation '{operation_name}' defined in collection "
-                            f"'{self._dag_operations[operation_name].collection_name}' "
+                            f"DAG Operation '{operation.name}' defined in collection "
+                            f"'{self._dag_operations[operation.name].collection_name}' "
                             f"is merged with collection '{collection_name}'"
                         )
-                        self._dag_operations[operation_name].depends_on.extend(
-                            operation["depends_on"]
+                        self._dag_operations[operation.name].depends_on.extend(
+                            operation.depends_on
                         )
                     else:
-                        host_names = None
-                        if not operation.get("noop", False):
-                            host_names = collection.get_hosts_from_playbook(
-                                operation_name
-                            )
-
-                        self._dag_operations[operation_name] = Operation(
-                            collection_name=collection_name,
-                            host_names=host_names,
-                            **operation,
+                        # Create the operation
+                        self._dag_operations[operation.name] = Operation(
+                            name=operation.name,
+                            collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
+                            depends_on=operation.depends_on,
+                            noop=operation.noop,
+                            host_names=(
+                                None
+                                if operation.noop
+                                else collection.get_hosts_from_playbook(operation.name)
+                            ),
                         )
-                        # 'restart' and 'stop' operations are not defined in the DAG for noop,
-                        # they are generated from the start operations.
-                        if (
-                            "noop" in operation
-                            and operation["noop"]
-                            and "_start" in operation_name
-                        ):
+                        # 'restart' and 'stop' operations are not defined in the DAG for
+                        # noop, they need to be generated from the start operations.
+                        if operation.noop and "_start" in operation.name:
                             logger.debug(
-                                f"DAG Operation '{operation_name}' is noop, "
+                                f"DAG Operation '{operation.name}' is noop, "
                                 f"creating the associated restart and stop operations."
                             )
-
-                            restart_operation_name = operation_name.replace(
+                            # Create and store the restart operation
+                            restart_operation_name = operation.name.replace(
                                 "_start", "_restart"
                             )
-                            operation.update(
-                                {
-                                    "name": restart_operation_name,
-                                }
-                            )
                             self._other_operations[restart_operation_name] = Operation(
+                                name=restart_operation_name,
                                 collection_name="replace_restart_noop",
-                                **operation,
+                                depends_on=operation.depends_on,
+                                noop=True,
+                                host_names=None,
                             )
-
-                            stop_operation_name = operation_name.replace(
+                            # Create and store the stop operation
+                            stop_operation_name = operation.name.replace(
                                 "_start", "_stop"
                             )
-                            operation.update(
-                                {
-                                    "name": stop_operation_name,
-                                }
-                            )
                             self._other_operations[stop_operation_name] = Operation(
+                                name=stop_operation_name,
                                 collection_name="replace_stop_noop",
-                                **operation,
+                                depends_on=operation.depends_on,
+                                noop=True,
+                                host_names=None,
                             )
 
         # Init Operations not in the DAG
