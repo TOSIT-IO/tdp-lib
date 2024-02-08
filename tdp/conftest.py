@@ -62,8 +62,11 @@ def generate_collection_at_path(
 
         # Save playbooks
         for operation in operations:
-            # Generate and save a restart playbook for each start operation
-            if operation["name"].endswith("_start") and "noop" not in operation:
+            # Do not generate playbooks for noop operations
+            if "noop" in operation:
+                continue
+            # Generate and save stop and restart playbooks for each start operation
+            if operation["name"].endswith("_start"):
                 with (
                     playbooks_dir
                     / (operation["name"].rstrip("_start") + "_restart" + YML_EXTENSION)
