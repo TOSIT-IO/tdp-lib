@@ -155,52 +155,49 @@ class Collections(Mapping[str, Collection]):
                         self._dag_operations[read_operation.name].depends_on.extend(
                             read_operation.depends_on
                         )
-                    else:
-                        # Create the operation
-                        self._dag_operations[read_operation.name] = Operation(
-                            name=read_operation.name,
-                            collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
-                            depends_on=read_operation.depends_on,
-                            noop=read_operation.noop,
-                            host_names=(
-                                None
-                                if read_operation.noop
-                                else collection.get_hosts_from_playbook(
-                                    read_operation.name
-                                )
-                            ),
+                        continue
+
+                    # Create the operation
+                    self._dag_operations[read_operation.name] = Operation(
+                        name=read_operation.name,
+                        collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
+                        depends_on=read_operation.depends_on,
+                        noop=read_operation.noop,
+                        host_names=(
+                            None
+                            if read_operation.noop
+                            else collection.get_hosts_from_playbook(read_operation.name)
+                        ),
+                    )
+                    # 'restart' and 'stop' operations are not defined in the DAG for
+                    # noop, they need to be generated from the start operations.
+                    if read_operation.noop and read_operation.name.endswith("_start"):
+                        logger.debug(
+                            f"DAG Operation '{read_operation.name}' is noop, "
+                            f"creating the associated restart and stop operations."
                         )
-                        # 'restart' and 'stop' operations are not defined in the DAG for
-                        # noop, they need to be generated from the start operations.
-                        if read_operation.noop and read_operation.name.endswith(
-                            "_start"
-                        ):
-                            logger.debug(
-                                f"DAG Operation '{read_operation.name}' is noop, "
-                                f"creating the associated restart and stop operations."
-                            )
-                            # Create and store the restart operation
-                            restart_operation_name = read_operation.name.replace(
-                                "_start", "_restart"
-                            )
-                            self._other_operations[restart_operation_name] = Operation(
-                                name=restart_operation_name,
-                                collection_name="replace_restart_noop",
-                                depends_on=read_operation.depends_on,
-                                noop=True,
-                                host_names=None,
-                            )
-                            # Create and store the stop operation
-                            stop_operation_name = read_operation.name.replace(
-                                "_start", "_stop"
-                            )
-                            self._other_operations[stop_operation_name] = Operation(
-                                name=stop_operation_name,
-                                collection_name="replace_stop_noop",
-                                depends_on=read_operation.depends_on,
-                                noop=True,
-                                host_names=None,
-                            )
+                        # Create and store the restart operation
+                        restart_operation_name = read_operation.name.replace(
+                            "_start", "_restart"
+                        )
+                        self._other_operations[restart_operation_name] = Operation(
+                            name=restart_operation_name,
+                            collection_name="replace_restart_noop",
+                            depends_on=read_operation.depends_on,
+                            noop=True,
+                            host_names=None,
+                        )
+                        # Create and store the stop operation
+                        stop_operation_name = read_operation.name.replace(
+                            "_start", "_stop"
+                        )
+                        self._other_operations[stop_operation_name] = Operation(
+                            name=stop_operation_name,
+                            collection_name="replace_stop_noop",
+                            depends_on=read_operation.depends_on,
+                            noop=True,
+                            host_names=None,
+                        )
 
         # Init Operations not in the DAG
         for collection_name, collection in self._collections.items():
