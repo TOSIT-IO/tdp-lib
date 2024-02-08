@@ -172,7 +172,9 @@ class Collections(Mapping[str, Collection]):
                         )
                         # 'restart' and 'stop' operations are not defined in the DAG for
                         # noop, they need to be generated from the start operations.
-                        if read_operation.noop and "_start" in read_operation.name:
+                        if read_operation.noop and read_operation.name.endswith(
+                            "_start"
+                        ):
                             logger.debug(
                                 f"DAG Operation '{read_operation.name}' is noop, "
                                 f"creating the associated restart and stop operations."
