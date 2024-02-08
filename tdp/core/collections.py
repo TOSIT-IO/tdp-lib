@@ -144,7 +144,7 @@ class Collections(Mapping[str, Collection]):
         other_operations: dict[str, Operation] = {}
 
         # Init DAG Operations
-        for collection_name, collection in collections.items():
+        for collection in collections.values():
             for dag_file in collection.dag_yamls:
                 for read_operation in read_tdp_lib_dag_file(dag_file):
                     if read_operation.name in dag_operations:
@@ -152,7 +152,7 @@ class Collections(Mapping[str, Collection]):
                         logger.debug(
                             f"DAG Operation '{read_operation.name}' defined in collection "
                             f"'{dag_operations[read_operation.name].collection_name}' "
-                            f"is merged with collection '{collection_name}'"
+                            f"is merged with collection '{collection.name}'"
                         )
                         dag_operations[read_operation.name].depends_on.extend(
                             read_operation.depends_on
@@ -162,7 +162,7 @@ class Collections(Mapping[str, Collection]):
                     # Create the operation
                     dag_operations[read_operation.name] = Operation(
                         name=read_operation.name,
-                        collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
+                        collection_name=collection.name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
                         depends_on=read_operation.depends_on,
                         noop=read_operation.noop,
                         host_names=(
@@ -202,7 +202,7 @@ class Collections(Mapping[str, Collection]):
                         )
 
         # Init Operations not in the DAG
-        for collection_name, collection in collections.items():
+        for collection in collections.values():
             for operation_name, _ in collection.playbooks.items():
                 if operation_name in dag_operations:
                     continue
@@ -210,13 +210,13 @@ class Collections(Mapping[str, Collection]):
                     logger.info(
                         f"Operation '{operation_name}' defined in collection "
                         f"'{other_operations[operation_name].collection_name}' "
-                        f"is overridden by collection '{collection_name}'"
+                        f"is overridden by collection '{collection.name}'"
                     )
 
                 other_operations[operation_name] = Operation(
                     name=operation_name,
                     host_names=collection.get_hosts_from_playbook(operation_name),
-                    collection_name=collection_name,
+                    collection_name=collection.name,
                 )
 
         return dag_operations, other_operations
