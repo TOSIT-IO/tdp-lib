@@ -72,6 +72,11 @@ def generate_collection_at_path(
                     / (operation["name"].rstrip("_start") + "_restart" + YML_EXTENSION)
                 ).open("w") as fd:
                     yaml.dump(minimal_playbook, fd)
+                with (
+                    playbooks_dir
+                    / (operation["name"].rstrip("_start") + "_stop" + YML_EXTENSION)
+                ).open("w") as fd:
+                    yaml.dump(minimal_playbook, fd)
             # Save the playbook
             with (playbooks_dir / (operation["name"] + YML_EXTENSION)).open("w") as fd:
                 yaml.dump(minimal_playbook, fd)
