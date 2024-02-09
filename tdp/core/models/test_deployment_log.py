@@ -148,8 +148,7 @@ class TestFromOperations:
             ]
         }
         generate_collection_at_path(collection_path, dag_service_operations, {})
-        collection = Collection.from_path(collection_path)
-        collection._inventory_reader = MockInventoryReader(hosts)
+        collection = Collection(collection_path, MockInventoryReader(hosts))
         collections = Collections.from_collection_list([collection])
 
         deployment = DeploymentModel.from_operations(
