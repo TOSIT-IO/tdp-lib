@@ -118,21 +118,26 @@ class DeploymentIterator(Iterator[Callable[[], Optional[list[SCHStatusLogModel]]
                 # Retrieve operation to access parsed attributes and playbook
                 operation = self._collections.get_operation(operation_rec.operation)
 
-                operation_rec.state = OperationStateEnum.RUNNING
-                if not operation.noop:
-                    operation_rec.start_time = datetime.utcnow()
+                if self.deployment.state == DeploymentStateEnum.RUNNING:
+                    operation_rec.state = OperationStateEnum.RUNNING
+                    if not operation.noop:
+                        operation_rec.start_time = datetime.utcnow()
+                    return partial(
+                        _process_operation_fn,
+                        self.deployment,
+                        operation,
+                        operation_rec,
+                        self._run_operation,
+                        self._cluster_status,
+                        self._cluster_variables,
+                        self._reconfigure_operations,
+                        self.force_stale_update,
+                    )
 
-                return partial(
-                    _process_operation_fn,
-                    self.deployment,
-                    operation,
-                    operation_rec,
-                    self._run_operation,
-                    self._cluster_status,
-                    self._cluster_variables,
-                    self._reconfigure_operations,
-                    self.force_stale_update,
-                )
+                if self.deployment.state == DeploymentStateEnum.FAILURE:
+                    operation_rec.state = OperationStateEnum.HELD
+                    return _empty_process_fn
+
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment.end_time = datetime.utcnow()
@@ -156,11 +161,6 @@ def _process_operation_fn(
     reconfigure_operations: OrderedDict[str, set[str]] | None,
     force_stale_update: bool,
 ) -> Optional[list[SCHStatusLogModel]]:
-
-    # Return early if deployment failed
-    if deployment.state == DeploymentStateEnum.FAILURE:
-        operation_rec.state = OperationStateEnum.HELD
-        return
 
     # Run the operation
     if operation.noop:
@@ -250,3 +250,7 @@ def _process_operation_fn(
             reconfigure_operations.pop(operation_rec.operation, None)
 
     return sch_status_logs
+
+
+def _empty_process_fn() -> None:
+    pass
