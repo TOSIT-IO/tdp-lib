@@ -30,6 +30,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+ProcessOperationFn = Callable[[], Optional[list[SCHStatusLogModel]]]
+
 
 def _group_hosts_by_operation(
     deployment: DeploymentModel,
@@ -57,9 +59,7 @@ def _group_hosts_by_operation(
     return operation_to_hosts_set
 
 
-class DeploymentIterator(
-    Iterator[Optional[Callable[[], Optional[list[SCHStatusLogModel]]]]]
-):
+class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -111,7 +111,7 @@ class DeploymentIterator(
 
     def __next__(
         self,
-    ) -> Optional[Callable[[], Optional[list[SCHStatusLogModel]]]]:
+    ) -> Optional[ProcessOperationFn]:
         try:
             while True:
                 operation_rec = next(self._iter)
