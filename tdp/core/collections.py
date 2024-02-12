@@ -84,9 +84,9 @@ class Collections(Mapping[str, Collection]):
 
     def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
-        self._dag_operations: dict[str, Operation] = {}
-        self._other_operations: dict[str, Operation] = {}
-        self._init_operations()
+        self._dag_operations, self._other_operations = self._init_operations(
+            self._collections
+        )
 
     def __getitem__(self, key):
         return self._collections.__getitem__(key)
@@ -137,28 +137,30 @@ class Collections(Mapping[str, Collection]):
             operations.update(self._other_operations)
         return operations
 
-    def _init_operations(self):
-        self._dag_operations = {}
-        self._other_operations = {}
+    def _init_operations(
+        self, collections: Mapping[str, Collection]
+    ) -> tuple[dict[str, Operation], dict[str, Operation]]:
+        dag_operations: dict[str, Operation] = {}
+        other_operations: dict[str, Operation] = {}
 
         # Init DAG Operations
-        for collection_name, collection in self._collections.items():
+        for collection_name, collection in collections.items():
             for dag_file in collection.dag_yamls:
                 for read_operation in read_tdp_lib_dag_file(dag_file):
-                    if read_operation.name in self._dag_operations:
+                    if read_operation.name in dag_operations:
                         # Merge the operation with the existing one
                         logger.debug(
                             f"DAG Operation '{read_operation.name}' defined in collection "
-                            f"'{self._dag_operations[read_operation.name].collection_name}' "
+                            f"'{dag_operations[read_operation.name].collection_name}' "
                             f"is merged with collection '{collection_name}'"
                         )
-                        self._dag_operations[read_operation.name].depends_on.extend(
+                        dag_operations[read_operation.name].depends_on.extend(
                             read_operation.depends_on
                         )
                         continue
 
                     # Create the operation
-                    self._dag_operations[read_operation.name] = Operation(
+                    dag_operations[read_operation.name] = Operation(
                         name=read_operation.name,
                         collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
                         depends_on=read_operation.depends_on,
@@ -180,7 +182,7 @@ class Collections(Mapping[str, Collection]):
                         restart_operation_name = read_operation.name.replace(
                             "_start", "_restart"
                         )
-                        self._other_operations[restart_operation_name] = Operation(
+                        other_operations[restart_operation_name] = Operation(
                             name=restart_operation_name,
                             collection_name="replace_restart_noop",
                             depends_on=read_operation.depends_on,
@@ -191,7 +193,7 @@ class Collections(Mapping[str, Collection]):
                         stop_operation_name = read_operation.name.replace(
                             "_start", "_stop"
                         )
-                        self._other_operations[stop_operation_name] = Operation(
+                        other_operations[stop_operation_name] = Operation(
                             name=stop_operation_name,
                             collection_name="replace_stop_noop",
                             depends_on=read_operation.depends_on,
@@ -200,22 +202,24 @@ class Collections(Mapping[str, Collection]):
                         )
 
         # Init Operations not in the DAG
-        for collection_name, collection in self._collections.items():
+        for collection_name, collection in collections.items():
             for operation_name, _ in collection.playbooks.items():
-                if operation_name in self._dag_operations:
+                if operation_name in dag_operations:
                     continue
-                if operation_name in self._other_operations:
+                if operation_name in other_operations:
                     logger.info(
                         f"Operation '{operation_name}' defined in collection "
-                        f"'{self._other_operations[operation_name].collection_name}' "
+                        f"'{other_operations[operation_name].collection_name}' "
                         f"is overridden by collection '{collection_name}'"
                     )
 
-                self._other_operations[operation_name] = Operation(
+                other_operations[operation_name] = Operation(
                     name=operation_name,
                     host_names=collection.get_hosts_from_playbook(operation_name),
                     collection_name=collection_name,
                 )
+
+        return dag_operations, other_operations
 
     def get_service_schema(self, service_name: str) -> dict:
         """Get the service's schema.
