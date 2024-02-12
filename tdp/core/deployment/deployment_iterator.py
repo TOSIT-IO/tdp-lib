@@ -21,7 +21,6 @@ from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.operation import Operation
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
@@ -58,7 +57,9 @@ def _group_hosts_by_operation(
     return operation_to_hosts_set
 
 
-class DeploymentIterator(Iterator[Callable[[], Optional[list[SCHStatusLogModel]]]]):
+class DeploymentIterator(
+    Iterator[Optional[Callable[[], Optional[list[SCHStatusLogModel]]]]]
+):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -110,33 +111,19 @@ class DeploymentIterator(Iterator[Callable[[], Optional[list[SCHStatusLogModel]]
 
     def __next__(
         self,
-    ) -> Callable[[], Optional[list[SCHStatusLogModel]]]:
+    ) -> Optional[Callable[[], Optional[list[SCHStatusLogModel]]]]:
         try:
             while True:
                 operation_rec = next(self._iter)
 
-                # Retrieve operation to access parsed attributes and playbook
-                operation = self._collections.get_operation(operation_rec.operation)
-
-                if self.deployment.state == DeploymentStateEnum.RUNNING:
-                    operation_rec.state = OperationStateEnum.RUNNING
-                    if not operation.noop:
-                        operation_rec.start_time = datetime.utcnow()
-                    return partial(
-                        _process_operation_fn,
-                        self.deployment,
-                        operation,
-                        operation_rec,
-                        self._run_operation,
-                        self._cluster_status,
-                        self._cluster_variables,
-                        self._reconfigure_operations,
-                        self.force_stale_update,
-                    )
-
+                # Return early if deployment failed
                 if self.deployment.state == DeploymentStateEnum.FAILURE:
                     operation_rec.state = OperationStateEnum.HELD
-                    return _empty_process_fn
+                    return
+
+                operation_rec.state = OperationStateEnum.RUNNING
+
+                return partial(self._process_operation_fn, operation_rec)
 
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
@@ -150,107 +137,99 @@ class DeploymentIterator(Iterator[Callable[[], Optional[list[SCHStatusLogModel]]
             self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
 
+    def _process_operation_fn(self, operation_rec) -> Optional[list[SCHStatusLogModel]]:
 
-def _process_operation_fn(
-    deployment: DeploymentModel,
-    operation: Operation,
-    operation_rec: OperationModel,
-    run_operation: Callable[[OperationModel], None],
-    cluster_status: ClusterStatus,
-    cluster_variables: ClusterVariables,
-    reconfigure_operations: OrderedDict[str, set[str]] | None,
-    force_stale_update: bool,
-) -> Optional[list[SCHStatusLogModel]]:
+        operation = self._collections.get_operation(operation_rec.operation)
 
-    # Run the operation
-    if operation.noop:
-        # A noop operation is always successful
-        operation_rec.state = OperationStateEnum.SUCCESS
-    else:
-        run_operation(operation_rec)
-
-    # Set deployment status to failure if the operation failed
-    if operation_rec.state != OperationStateEnum.SUCCESS:
-        deployment.end_time = datetime.utcnow()
-        deployment.state = DeploymentStateEnum.FAILURE
-        # Return early as status is not updated
-        return
-
-    # ===== Update the cluster status if success =====
-
-    # Skip sleep operation
-    if operation.name == OPERATION_SLEEP_NAME:
-        return
-
-    sch_status_logs: list[SCHStatusLogModel] = []
-    sc_name = ServiceComponentName(
-        service_name=operation.service_name,
-        component_name=operation.component_name,
-    )
-    is_sc_stale = cluster_status.is_sc_stale(sc_name, sc_hosts=operation.host_names)
-
-    if is_sc_stale:
-        # Get the first reconfigure operation if any
-        if reconfigure_operations:
-            try:
-                first_reconfigure_operation = next(iter(reconfigure_operations))
-            except StopIteration:
-                first_reconfigure_operation = None
+        # Run the operation
+        if operation.noop:
+            # A noop operation is always successful
+            operation_rec.state = OperationStateEnum.SUCCESS
         else:
-            first_reconfigure_operation = None
+            self._run_operation(operation_rec)
 
-        can_update_stale = force_stale_update or (
-            operation_rec.operation == first_reconfigure_operation
+        # Set deployment status to failure if the operation failed
+        if operation_rec.state != OperationStateEnum.SUCCESS:
+            self.deployment.end_time = datetime.utcnow()
+            self.deployment.state = DeploymentStateEnum.FAILURE
+            # Return early as status is not updated
+            return
+
+        # ===== Update the cluster status if success =====
+
+        # Skip sleep operation
+        if operation.name == OPERATION_SLEEP_NAME:
+            return
+
+        sch_status_logs: list[SCHStatusLogModel] = []
+        sc_name = ServiceComponentName(
+            service_name=operation.service_name,
+            component_name=operation.component_name,
+        )
+        is_sc_stale = self._cluster_status.is_sc_stale(
+            sc_name, sc_hosts=operation.host_names
         )
 
-        # Log a warning if the operation affect a stale SCH which is not the first reconfigure operation (if any)
-        if not can_update_stale:
-            logger.warning(
-                f"can't update stale {sc_name} with {operation_rec.operation}\n"
-                + "first operation is {first_reconfigure_operation}"
+        if is_sc_stale:
+            # Get the first reconfigure operation if any
+            if self._reconfigure_operations:
+                try:
+                    first_reconfigure_operation = next(
+                        iter(self._reconfigure_operations)
+                    )
+                except StopIteration:
+                    first_reconfigure_operation = None
+            else:
+                first_reconfigure_operation = None
+
+            can_update_stale = self.force_stale_update or (
+                operation_rec.operation == first_reconfigure_operation
             )
-    else:
-        can_update_stale = False
 
-    # fmt: off
-    hosts = (
-        [None] if operation.noop  # A noop operation doesn't have any host
-        else [operation_rec.host] if operation_rec.host  # Only one operation is launched on a single host
-        else operation.host_names  # Host is not specified, hence the operation is launched on all host
-    )
-    # fmt: on
+            # Log a warning if the operation affect a stale SCH which is not the first reconfigure operation (if any)
+            if not can_update_stale:
+                logger.warning(
+                    f"can't update stale {sc_name} with {operation_rec.operation}\n"
+                    + "first operation is {first_reconfigure_operation}"
+                )
+        else:
+            can_update_stale = False
 
-    # Update the cluster status for each host
-    for host in hosts:
-        sch_status_log = cluster_status.update_sch(
-            ServiceComponentHostName(sc_name, host),
-            action_name=operation.action_name,
-            version=cluster_variables[operation.service_name].version,
-            can_update_stale=can_update_stale,
+        # fmt: off
+        hosts = (
+            [None] if operation.noop  # A noop operation doesn't have any host
+            else [operation_rec.host] if operation_rec.host  # Only one operation is launched on a single host
+            else operation.host_names  # Host is not specified, hence the operation is launched on all host
         )
-        if sch_status_log:
-            sch_status_log.deployment_id = deployment.id
-            sch_status_log.source = (
-                SCHStatusLogSourceEnum.FORCED
-                if force_stale_update
-                else SCHStatusLogSourceEnum.DEPLOYMENT
+        # fmt: on
+
+        # Update the cluster status for each host
+        for host in hosts:
+            sch_status_log = self._cluster_status.update_sch(
+                ServiceComponentHostName(sc_name, host),
+                action_name=operation.action_name,
+                version=self._cluster_variables[operation.service_name].version,
+                can_update_stale=can_update_stale,
             )
-            sch_status_logs.append(sch_status_log)
+            if sch_status_log:
+                sch_status_log.deployment_id = self.deployment.id
+                sch_status_log.source = (
+                    SCHStatusLogSourceEnum.FORCED
+                    if self.force_stale_update
+                    else SCHStatusLogSourceEnum.DEPLOYMENT
+                )
+                sch_status_logs.append(sch_status_log)
 
-    # Update the reconfigure_operations dict
-    if reconfigure_operations:
-        hosts = reconfigure_operations.get(operation_rec.operation, set())
-        # If host is defined and needed to be reconfigured,
-        # remove it from the reconfigure_operations dict
-        if operation_rec.host and operation_rec.host in hosts:
-            hosts.remove(operation_rec.host)
-        # If no host is defined, or no host is left,
-        # remove the entire operation from the reconfigure_operations dict
-        if not operation_rec.host or len(hosts) == 0:
-            reconfigure_operations.pop(operation_rec.operation, None)
+        # Update the reconfigure_operations dict
+        if self._reconfigure_operations:
+            hosts = self._reconfigure_operations.get(operation_rec.operation, set())
+            # If host is defined and needed to be reconfigured,
+            # remove it from the reconfigure_operations dict
+            if operation_rec.host and operation_rec.host in hosts:
+                hosts.remove(operation_rec.host)
+            # If no host is defined, or no host is left,
+            # remove the entire operation from the reconfigure_operations dict
+            if not operation_rec.host or len(hosts) == 0:
+                self._reconfigure_operations.pop(operation_rec.operation, None)
 
-    return sch_status_logs
-
-
-def _empty_process_fn() -> None:
-    pass
+        return sch_status_logs
