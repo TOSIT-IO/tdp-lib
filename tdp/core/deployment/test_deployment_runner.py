@@ -93,9 +93,9 @@ def test_deployment_plan_is_success(
     """Nominal case, runs a deployment with full DAG."""
     deployment_iterator = mock_deployment_runner.run(DeploymentModel.from_dag(mock_dag))
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
     assert len(deployment_iterator.deployment.operations) == 8
@@ -113,8 +113,11 @@ def test_deployment_plan_with_filter_is_success(
     deployment_iterator = mock_deployment_runner.run(deployment)
 
     for i, _ in enumerate(deployment_iterator):
-        if _:
-            _()
+        op = _[0]
+        fn = _[1]
+        if fn:
+            fn(op)
+
         assert deployment.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
@@ -129,8 +132,10 @@ def test_noop_deployment_plan_is_success(
     deployment_iterator = mock_deployment_runner.run(deployment)
 
     for i, _ in enumerate(deployment_iterator):
-        if _:
-            _()
+        op = _[0]
+        fn = _[1]
+        if fn:
+            fn(op)
         assert deployment.operations[i].state == OperationStateEnum.SUCCESS
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
@@ -144,9 +149,9 @@ def test_failed_operation_stops(
     deployment = DeploymentModel.from_dag(mock_dag, targets=["serv_init"])
     deployment_iterator = mock_deployment_runner_failing.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
     assert deployment_iterator.deployment.state == DeploymentStateEnum.FAILURE
     assert len(deployment_iterator.deployment.operations) == 8
 
@@ -158,9 +163,9 @@ def test_service_log_is_emitted(
     deployment = DeploymentModel.from_dag(mock_dag, targets=["serv_init"])
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -174,9 +179,9 @@ def test_service_log_is_not_emitted(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -190,9 +195,9 @@ def test_service_log_only_noop_is_emitted(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -206,9 +211,12 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for (
+        op,
+        fn,
+    ) in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -222,9 +230,9 @@ def test_service_log_emitted_once_with_start_and_restart(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -244,9 +252,9 @@ def test_service_log_emitted_once_with_multiple_config_and_start_on_same_compone
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.SUCCESS
 
@@ -259,9 +267,9 @@ def test_deployment_dag_is_resumed(
 ):
     deployment = DeploymentModel.from_dag(mock_dag, targets=["serv_init"])
     deployment_iterator = mock_deployment_runner_failing.run(deployment)
-    for _ in deployment_iterator:
-        if _:
-            _()
+    for op, fn in deployment_iterator:
+        if fn:
+            fn(op)
 
     assert deployment_iterator.deployment.state == DeploymentStateEnum.FAILURE
 
@@ -269,9 +277,9 @@ def test_deployment_dag_is_resumed(
         mock_collections, deployment_iterator.deployment
     )
     resume_deployment_iterator = mock_deployment_runner.run(resume_log)
-    for _ in resume_deployment_iterator:
-        if _:
-            _()
+    for op, fn in resume_deployment_iterator:
+        if fn:
+            fn(op)
 
     assert (
         resume_deployment_iterator.deployment.deployment_type
