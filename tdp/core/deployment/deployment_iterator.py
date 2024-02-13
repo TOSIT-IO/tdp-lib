@@ -7,7 +7,6 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
 from datetime import datetime
-from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.cluster_status import ClusterStatus
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ProcessOperationFn = Callable[[], Optional[list[SCHStatusLogModel]]]
+ProcessOperationFn = Callable[[OperationModel], Optional[list[SCHStatusLogModel]]]
 
 
 def _group_hosts_by_operation(
@@ -59,7 +58,7 @@ def _group_hosts_by_operation(
     return operation_to_hosts_set
 
 
-class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
+class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperationFn]]]):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -114,7 +113,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
 
     def __next__(
         self,
-    ) -> Optional[ProcessOperationFn]:
+    ) -> tuple[OperationModel, Optional[ProcessOperationFn]]:
         try:
             while True:
                 operation_rec = next(self._iter)
@@ -122,12 +121,11 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
                 # Return early if deployment failed
                 if self.deployment.state == DeploymentStateEnum.FAILURE:
                     operation_rec.state = OperationStateEnum.HELD
-                    return
+                    return operation_rec, None
 
                 operation_rec.state = OperationStateEnum.RUNNING
 
-                return partial(self._process_operation_fn, operation_rec)
-
+                return operation_rec, self._process_operation_fn
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment.end_time = datetime.utcnow()
@@ -140,7 +138,9 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
             self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
 
-    def _process_operation_fn(self, operation_rec) -> Optional[list[SCHStatusLogModel]]:
+    def _process_operation_fn(
+        self, operation_rec: OperationModel
+    ) -> Optional[list[SCHStatusLogModel]]:
 
         operation = self._collections.operations[operation_rec.operation]
 
