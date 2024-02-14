@@ -17,6 +17,7 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ def _common_status_options(func: FC) -> FC:
     return func
 
 
-def _print_sch_status_logs(sch_status: Iterable[SCHStatus]) -> None:
+def _print_sch_status_logs(sch_status: Iterable[SCHStatus | SCHStatusLogModel]) -> None:
     print_table(
         [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],
     )
