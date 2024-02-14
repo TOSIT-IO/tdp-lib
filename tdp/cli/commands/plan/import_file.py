@@ -21,12 +21,18 @@ logger = logging.getLogger(__name__)
 
 @click.command("import")
 @click.argument("file_name", nargs=1, required=True)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Automatically overrides existing deployment plan.",
+)
 @collections
 @database_dsn
 def import_file(
     collections: Collections,
     database_dsn: str,
     file_name: str,
+    force: bool,
 ):
     """Import a deployment from a file."""
     with Dao(database_dsn, commit_on_exit=True) as dao:

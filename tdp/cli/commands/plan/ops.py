@@ -33,6 +33,11 @@ if TYPE_CHECKING:
     multiple=True,
     help="Extra vars for operations (forwarded to ansible as is). Can be used multiple times.",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Automatically overrides existing deployment plan.",
+)
 @hosts(help="Hosts where operations are launched. Can be used multiple times.")
 @collections
 @database_dsn
@@ -45,6 +50,7 @@ def ops(
     collections: Collections,
     database_dsn: str,
     preview: bool,
+    force: bool,
     rolling_interval: Optional[int] = None,
 ):
     """Run a list of operations."""

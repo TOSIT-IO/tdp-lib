@@ -71,6 +71,11 @@ def _validate_filtertype(
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Automatically overrides existing deployment plan.",
+)
 @rolling_interval
 @preview
 @collections
@@ -84,6 +89,7 @@ def dag(
     database_dsn: str,
     reverse: bool,
     stop: bool,
+    force: bool,
     filter: Optional[str] = None,
     filter_type: Optional[FilterTypeEnum] = None,
     rolling_interval: Optional[int] = None,
