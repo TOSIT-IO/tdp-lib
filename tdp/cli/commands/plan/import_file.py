@@ -42,7 +42,15 @@ def import_file(
             )
             # if a planned deployment is present, update it instead of creating it
             if planned_deployment:
-                deployment.id = planned_deployment.id
+                confirmed = click.confirm(
+                    "A deployment plan already exists, do you want to override it?"
+                )
+                if confirmed:
+                    dao.session.delete(planned_deployment)
+                    click.echo("Previous planned deployment has been overritten")
+                else:
+                    click.echo("No new deployment plan has been created")
+                    return
             dao.session.merge(deployment)
             dao.session.commit()
             click.echo("Deployment plan successfully imported.")
