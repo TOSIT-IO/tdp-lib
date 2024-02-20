@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--force",
     is_flag=True,
-    help="Automatically overrides existing deployment plan.",
+    help="Force overriding an existing deployment plan.",
 )
 @collections
 @database_dsn

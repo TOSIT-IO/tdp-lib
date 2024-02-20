@@ -74,7 +74,7 @@ def _validate_filtertype(
 @click.option(
     "--force",
     is_flag=True,
-    help="Automatically overrides existing deployment plan.",
+    help="Force overriding an existing deployment plan.",
 )
 @rolling_interval
 @preview
