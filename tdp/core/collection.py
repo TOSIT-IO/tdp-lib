@@ -13,6 +13,7 @@ from tdp.core.constants import (
     SCHEMA_VARS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
+from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
 
@@ -65,7 +66,7 @@ class Collection:
 
         self._inventory_reader = inventory_reader or InventoryReader()
         self._dag_yamls: Optional[list[Path]] = None
-        self._playbooks: Optional[dict[str, Path]] = None
+        self._playbooks: Optional[dict[str, Playbook]] = None
 
     @staticmethod
     def from_path(path: PathLike) -> "Collection":
@@ -116,12 +117,16 @@ class Collection:
         return self._dag_yamls
 
     @property
-    def playbooks(self) -> dict[str, Path]:
+    def playbooks(self) -> dict[str, Playbook]:
         """Dictionary of playbooks."""
         if not self._playbooks:
             self._playbooks = {
-                playbook.stem: playbook
-                for playbook in self.playbooks_directory.glob("*" + YML_EXTENSION)
+                playbook_path.stem: Playbook(
+                    playbook_path,
+                    self.name,
+                    read_hosts_from_playbook(playbook_path, self._inventory_reader),
+                )
+                for playbook_path in self.playbooks_directory.glob("*" + YML_EXTENSION)
             }
         return self._playbooks
 
@@ -163,9 +168,7 @@ class Collection:
         """
         if playbook not in self.playbooks:
             raise MissingPlaybookError(f"Playbook {playbook} not found.")
-        return read_hosts_from_playbook(
-            self.playbooks[playbook], self._inventory_reader
-        )
+        return self.playbooks[playbook].hosts
 
     def _check_path(self):
         """Validate the collection path content."""
