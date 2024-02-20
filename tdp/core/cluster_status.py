@@ -12,8 +12,8 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.service_component_host_name import OldServiceComponentHostName
+from tdp.core.service_component_name import OldServiceComponentName
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -96,10 +96,10 @@ class SCHStatus:
         )
 
     # ? transform into a property if we keep it?
-    def get_sch_name(self) -> ServiceComponentHostName:
+    def get_sch_name(self) -> OldServiceComponentHostName:
         """Get the service component host name."""
-        return ServiceComponentHostName(
-            ServiceComponentName(self.service, self.component), self.host
+        return OldServiceComponentHostName(
+            OldServiceComponentName(self.service, self.component), self.host
         )
 
     def update(
@@ -206,12 +206,12 @@ class SCHStatus:
         return self.__str__()
 
 
-class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
+class ClusterStatus(Mapping[OldServiceComponentHostName, SCHStatus]):
     """Hold what component version are deployed."""
 
     def __init__(
         self,
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus],
+        cluster_status_dict: dict[OldServiceComponentHostName, SCHStatus],
         /,
     ):
         """Initialize a ClusterStatus object.
@@ -251,7 +251,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             ClusterStatus instance.
         """
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
+        cluster_status_dict: dict[OldServiceComponentHostName, SCHStatus] = {}
         for row in sch_status_rows:
             sch_status = SCHStatus.from_sch_status_row(row)
             cluster_status_dict[sch_status.get_sch_name()] = sch_status
@@ -278,7 +278,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             Set of SCHStatusLog.
         """
-        stale_sch_logs_dict: dict[ServiceComponentHostName, SCHStatusLogModel] = {}
+        stale_sch_logs_dict: dict[OldServiceComponentHostName, SCHStatusLogModel] = {}
         source_reconfigure_operations: set[str] = set()
 
         modified_sch = cluster_variables.get_modified_sch(self.values())
@@ -328,8 +328,8 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
             for host in operation.host_names:
                 stale_sch_log = stale_sch_logs_dict.setdefault(
-                    ServiceComponentHostName(
-                        service_component_name=ServiceComponentName(
+                    OldServiceComponentHostName(
+                        service_component_name=OldServiceComponentName(
                             service_name=operation.service_name,
                             component_name=operation.component_name,
                         ),
@@ -387,7 +387,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
     def update_sch(
         self,
-        sch: ServiceComponentHostName,
+        sch: OldServiceComponentHostName,
         /,
         *,
         action_name: str,
@@ -437,7 +437,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
             )
 
     def is_sc_stale(
-        self, sc_name: ServiceComponentName, /, sc_hosts: Optional[Iterable[str]]
+        self, sc_name: OldServiceComponentName, /, sc_hosts: Optional[Iterable[str]]
     ) -> bool:
         """Whether a service or component is stale.
 
@@ -449,7 +449,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
             True if the service component is stale, False otherwise.
         """
         for host in sc_hosts or [None]:
-            sch_status = self.get(ServiceComponentHostName(sc_name, host), None)
+            sch_status = self.get(OldServiceComponentHostName(sc_name, host), None)
             if sch_status and sch_status.is_stale:
                 return True
         return False

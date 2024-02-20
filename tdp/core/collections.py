@@ -22,9 +22,9 @@ import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from tdp.core.collection import Collection
-from tdp.core.operation import Operation
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.operation import OldOperation
+from tdp.core.service_component_host_name import OldServiceComponentHostName
+from tdp.core.service_component_name import OldServiceComponentName
 
 try:
     from yaml import CLoader as Loader
@@ -84,8 +84,8 @@ class Collections(Mapping[str, Collection]):
 
     def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
-        self._dag_operations: dict[str, Operation] = {}
-        self._other_operations: dict[str, Operation] = {}
+        self._dag_operations: dict[str, OldOperation] = {}
+        self._other_operations: dict[str, OldOperation] = {}
         self._init_operations()
 
     def __getitem__(self, key):
@@ -118,17 +118,17 @@ class Collections(Mapping[str, Collection]):
         )
 
     @property
-    def dag_operations(self) -> dict[str, Operation]:
+    def dag_operations(self) -> dict[str, OldOperation]:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
 
     @property
-    def other_operations(self) -> dict[str, Operation]:
+    def other_operations(self) -> dict[str, OldOperation]:
         """Mapping of operation name that aren't in dag files to their Operation instance."""
         return self._other_operations
 
     @property
-    def operations(self) -> dict[str, Operation]:
+    def operations(self) -> dict[str, OldOperation]:
         """Mapping of all operation name to Operation instance."""
         operations = {}
         if self._dag_operations:
@@ -160,7 +160,7 @@ class Collections(Mapping[str, Collection]):
                         )
                     else:
                         # Create the operation
-                        self._dag_operations[operation.name] = Operation(
+                        self._dag_operations[operation.name] = OldOperation(
                             name=operation.name,
                             collection_name=collection_name,  # TODO: this is the collection that defines the DAG where the operation is defined, not the collection that defines the operation
                             depends_on=operation.depends_on,
@@ -182,18 +182,20 @@ class Collections(Mapping[str, Collection]):
                             restart_operation_name = operation.name.replace(
                                 "_start", "_restart"
                             )
-                            self._other_operations[restart_operation_name] = Operation(
-                                name=restart_operation_name,
-                                collection_name="replace_restart_noop",
-                                depends_on=operation.depends_on,
-                                noop=True,
-                                host_names=None,
+                            self._other_operations[restart_operation_name] = (
+                                OldOperation(
+                                    name=restart_operation_name,
+                                    collection_name="replace_restart_noop",
+                                    depends_on=operation.depends_on,
+                                    noop=True,
+                                    host_names=None,
+                                )
                             )
                             # Create and store the stop operation
                             stop_operation_name = operation.name.replace(
                                 "_start", "_stop"
                             )
-                            self._other_operations[stop_operation_name] = Operation(
+                            self._other_operations[stop_operation_name] = OldOperation(
                                 name=stop_operation_name,
                                 collection_name="replace_stop_noop",
                                 depends_on=operation.depends_on,
@@ -213,7 +215,7 @@ class Collections(Mapping[str, Collection]):
                         f"is overridden by collection '{collection_name}'"
                     )
 
-                self._other_operations[operation_name] = Operation(
+                self._other_operations[operation_name] = OldOperation(
                     name=operation_name,
                     host_names=collection.get_hosts_from_playbook(operation_name),
                     collection_name=collection_name,
@@ -241,7 +243,7 @@ class Collections(Mapping[str, Collection]):
 
     def get_components_from_service(
         self, service_name: str
-    ) -> set[ServiceComponentName]:
+    ) -> set[OldServiceComponentName]:
         """Retrieve the distinct components associated with a specific service.
 
         This method fetches and returns the unique component names tied to a given
@@ -256,7 +258,7 @@ class Collections(Mapping[str, Collection]):
               service.
         """
         return {
-            ServiceComponentName(
+            OldServiceComponentName(
                 service_name=service_name, component_name=operation.component_name
             )
             for operation in self.operations.values()
@@ -266,7 +268,7 @@ class Collections(Mapping[str, Collection]):
 
     def get_components_hosts_from_service(
         self, service_name: str
-    ) -> set[ServiceComponentHostName]:
+    ) -> set[OldServiceComponentHostName]:
         """Retrieve the distinct components with host associated with a specific
         service.
 
@@ -290,14 +292,14 @@ class Collections(Mapping[str, Collection]):
                 continue
             for host in operation.host_names:
                 result.add(
-                    ServiceComponentHostName(
-                        ServiceComponentName(service_name, operation.component_name),
+                    OldServiceComponentHostName(
+                        OldServiceComponentName(service_name, operation.component_name),
                         host,
                     )
                 )
         return result
 
-    def get_operation(self, operation_name: str) -> Operation:
+    def get_operation(self, operation_name: str) -> OldOperation:
         """Get an operation by its name.
 
         Args:
@@ -360,8 +362,8 @@ class Collections(Mapping[str, Collection]):
                     )
 
     def get_operation_or_none(
-        self, service_component_name: ServiceComponentName, action_name: str
-    ) -> Optional[Operation]:
+        self, service_component_name: OldServiceComponentName, action_name: str
+    ) -> Optional[OldOperation]:
         """Get an operation by its name.
 
         Args:

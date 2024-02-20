@@ -19,7 +19,7 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.repository.repository import EmptyCommit
-from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.service_component_name import OldServiceComponentName
 from tdp.core.variables import ClusterVariables
 from tdp.core.variables.schema import InvalidSchema
 
@@ -92,7 +92,7 @@ def edit(
         )
 
     # Check if component exists
-    service_component_name = ServiceComponentName.from_full_name(variables_file.stem)
+    service_component_name = OldServiceComponentName.from_full_name(variables_file.stem)
     if not service_component_name.is_service:
         components_of_service = collections.get_components_from_service(service_name)
         if service_component_name not in components_of_service:
