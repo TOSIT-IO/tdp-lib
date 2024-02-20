@@ -5,6 +5,7 @@ import io
 import logging
 import subprocess
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Optional
 
 from tdp.core.models import OperationStateEnum
@@ -77,7 +78,7 @@ class Executor:
 
     def execute(
         self,
-        playbook: str,
+        playbook: Path,
         host: Optional[str] = None,
         extra_vars: Optional[Iterable[str]] = None,
     ) -> tuple[OperationStateEnum, bytes]:
