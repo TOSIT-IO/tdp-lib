@@ -11,6 +11,7 @@ from tdp.core.collection import (
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
+    get_collection_playbooks,
     read_hosts_from_playbook,
 )
 from tdp.core.constants import DAG_DIRECTORY_NAME
@@ -70,3 +71,39 @@ def test_read_hosts_from_playbook(tmp_path: Path):
         playbook_path, MockInventoryReader(["host1", "host2"])
     )
     assert hosts == {"host1", "host2"}
+
+
+def test_init_collection_playbooks(tmp_path: Path):
+    collection_path = tmp_path / "collection"
+    playbook_directory = "playbooks"
+    (playbook_directory_path := collection_path / playbook_directory).mkdir(
+        parents=True, exist_ok=True
+    )
+    playbook_path_1 = playbook_directory_path / "playbook1.yml"
+    playbook_path_2 = playbook_directory_path / "playbook2.yml"
+    playbook_path_1.write_text(
+        """---
+- name: Play 1
+  hosts: host1, host2
+  tasks:
+    - name: Task 1
+      command: echo "Hello, World!"
+"""
+    )
+    playbook_path_2.write_text(
+        """---
+- name: Play 2
+  hosts: host3, host4
+  tasks:
+    - name: Task 2
+      command: echo "Hello, GitHub Copilot!"
+"""
+    )
+    playbooks = get_collection_playbooks(collection_path, playbook_directory)
+    assert len(playbooks) == 2
+    assert "playbook1" in playbooks
+    assert "playbook2" in playbooks
+    assert playbooks["playbook1"].path == playbook_path_1
+    assert playbooks["playbook1"].collection_name == collection_path.name
+    assert playbooks["playbook2"].path == playbook_path_2
+    assert playbooks["playbook2"].collection_name == collection_path.name

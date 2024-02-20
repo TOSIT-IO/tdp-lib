@@ -66,7 +66,10 @@ class Collection:
 
         self._inventory_reader = inventory_reader or InventoryReader()
         self._dag_yamls: Optional[list[Path]] = None
-        self._playbooks: Optional[dict[str, Playbook]] = None
+        self._playbooks = get_collection_playbooks(
+            self._path,
+            inventory_reader=self._inventory_reader,
+        )
 
     @staticmethod
     def from_path(path: PathLike) -> "Collection":
@@ -119,15 +122,6 @@ class Collection:
     @property
     def playbooks(self) -> dict[str, Playbook]:
         """Dictionary of playbooks."""
-        if not self._playbooks:
-            self._playbooks = {
-                playbook_path.stem: Playbook(
-                    playbook_path,
-                    self.name,
-                    read_hosts_from_playbook(playbook_path, self._inventory_reader),
-                )
-                for playbook_path in self.playbooks_directory.glob("*" + YML_EXTENSION)
-            }
         return self._playbooks
 
     def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
@@ -182,6 +176,36 @@ class Collection:
                 raise MissingMandatoryDirectoryError(
                     f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
                 )
+
+
+def get_collection_playbooks(
+    collection_path: Path,
+    playbooks_directory_name=PLAYBOOKS_DIRECTORY_NAME,
+    inventory_reader: Optional[InventoryReader] = None,
+) -> dict[str, Playbook]:
+    """Get the playbooks of a collection.
+
+    This function is meant to be used only once during the initialization of a
+    collection object.
+
+    Args:
+        collection_path: Path to the collection.
+        playbook_directory: Name of the playbook directory.
+        inventory_reader: Inventory reader.
+
+    Returns:
+        Dictionary of playbooks.
+    """
+    return {
+        playbook_path.stem: Playbook(
+            playbook_path,
+            collection_path.name,
+            read_hosts_from_playbook(playbook_path, inventory_reader),
+        )
+        for playbook_path in (collection_path / playbooks_directory_name).glob(
+            "*" + YML_EXTENSION
+        )
+    }
 
 
 def read_hosts_from_playbook(
