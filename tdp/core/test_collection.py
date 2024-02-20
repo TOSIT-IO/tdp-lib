@@ -11,10 +11,15 @@ from tdp.core.collection import (
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
+    check_collection_structure,
     get_collection_playbooks,
     read_hosts_from_playbook,
 )
-from tdp.core.constants import DAG_DIRECTORY_NAME
+from tdp.core.constants import (
+    DAG_DIRECTORY_NAME,
+    DEFAULT_VARS_DIRECTORY_NAME,
+    PLAYBOOKS_DIRECTORY_NAME,
+)
 from tdp.core.models.test_deployment_log import MockInventoryReader
 
 
@@ -107,3 +112,31 @@ def test_init_collection_playbooks(tmp_path: Path):
     assert playbooks["playbook1"].collection_name == collection_path.name
     assert playbooks["playbook2"].path == playbook_path_2
     assert playbooks["playbook2"].collection_name == collection_path.name
+
+
+def test_check_collection_structure_path_does_not_exist(tmp_path: Path):
+    with pytest.raises(PathDoesNotExistsError):
+        check_collection_structure(tmp_path / "nonexistent_directory")
+
+
+def test_check_collection_structure_path_is_not_a_directory(tmp_path: Path):
+    empty_file = tmp_path / "foo"
+    empty_file.touch()
+    with pytest.raises(PathIsNotADirectoryError):
+        check_collection_structure(empty_file)
+
+
+def test_check_collection_structure_missing_mandatory_directory(tmp_path: Path):
+    with pytest.raises(MissingMandatoryDirectoryError):
+        check_collection_structure(tmp_path)
+
+
+def test_check_collection_structure_valid_collection(tmp_path: Path):
+    collection_path = tmp_path / "collection"
+    for mandatory_directory in (
+        DAG_DIRECTORY_NAME,
+        DEFAULT_VARS_DIRECTORY_NAME,
+        PLAYBOOKS_DIRECTORY_NAME,
+    ):
+        (collection_path / mandatory_directory).mkdir(parents=True, exist_ok=True)
+    assert check_collection_structure(collection_path) is None
