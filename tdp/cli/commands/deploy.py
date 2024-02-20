@@ -89,7 +89,7 @@ def deploy(
         if dry:
             for op, fn in deployment_iterator:
                 if fn:
-                    fn(op)
+                    fn()
                 click.echo(op)
             return
 
@@ -98,10 +98,10 @@ def deploy(
         dao.session.commit()  # Update operation status to RUNNING
         for operation_rec, process_operation_fn in deployment_iterator:
             dao.session.commit()  # Update deployment and current operation status to RUNNING and next operations to PENDING
-            if process_operation_fn and (
-                cluster_status_logs := process_operation_fn(operation_rec)
-            ):
-                click.echo(operation_rec)
+            if process_operation_fn and (cluster_status_logs := process_operation_fn()):
+                click.echo(
+                    f"Operation {operation_rec.operation} is in state {operation_rec.state}"
+                )
                 dao.session.add_all(cluster_status_logs)
             dao.session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
 

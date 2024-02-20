@@ -7,6 +7,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
 from datetime import datetime
+from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.cluster_status import ClusterStatus
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ProcessOperationFn = Callable[[OperationModel], Optional[list[SCHStatusLogModel]]]
+ProcessOperationFn = Callable[[], Optional[list[SCHStatusLogModel]]]
 
 
 def _group_hosts_by_operation(
@@ -121,7 +122,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
                 operation_rec.state = OperationStateEnum.RUNNING
 
-                return operation_rec, self._process_operation_fn
+                return operation_rec, partial(self._process_operation_fn, operation_rec)
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment.end_time = datetime.utcnow()
