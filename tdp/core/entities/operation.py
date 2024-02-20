@@ -6,7 +6,6 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from tdp.core.constants import HOST_NAME_MAX_LENGTH
 from tdp.core.entities.operation_name import OperationName
@@ -20,22 +19,35 @@ class Operation(ABC):
 
 
 @dataclass(frozen=True)
-class DagOperation(Operation):
-    depends_on: set[str]
-    playbook: Optional[PlaybookOperation]
+class PlaybookOperation(Operation, ABC):
+    playbook: Playbook
 
 
 @dataclass(frozen=True)
-class OtherOperation(Operation):
-    playbook: PlaybookOperation
+class DagOperation(Operation, ABC):
+    depends_on: set[str]
+
+
+@dataclass(frozen=True)
+class DagOperationNoop(DagOperation):
     pass
 
 
 @dataclass(frozen=True)
-class PlaybookOperation:
+class DagOperationWithPlaybook(DagOperation, PlaybookOperation):
+    pass
+
+
+@dataclass(frozen=True)
+class OtherOperation(PlaybookOperation):
+    pass
+
+
+@dataclass(frozen=True)
+class Playbook:
     playbook_path: Path
     collection_name: str
-    host_names: set[str]
+    host_names: frozenset[str]
 
     def __post_init__(self):
         for host_name in self.host_names:
