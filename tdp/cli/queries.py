@@ -131,18 +131,24 @@ def create_get_sch_latest_status_statement(
 
 
 def get_sch_status_history(
-    session: Session, service: Optional[str], component: Optional[str]
+    session: Session, service: Optional[str], component: Optional[str], limit: int
 ) -> list[SCHStatusLogModel]:
     if service and component:
         return (
             session.query(SCHStatusLogModel)
             .filter_by(service=service, component=component)
+            .limit(limit)
             .all()
         )
     elif service:
-        return session.query(SCHStatusLogModel).filter_by(service=service).all()
+        return (
+            session.query(SCHStatusLogModel)
+            .filter_by(service=service)
+            .limit(limit)
+            .all()
+        )
     else:
-        return session.query(SCHStatusLogModel).all()
+        return session.query(SCHStatusLogModel).limit(limit).all()
 
 
 def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:

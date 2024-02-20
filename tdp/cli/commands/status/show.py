@@ -62,6 +62,13 @@ def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional
     is_flag=True,
     help="The history of editions for all or specific service and component.",
 )
+@click.option(
+    "--limit",
+    envvar="TDP_LIMIT",
+    type=int,
+    default=50,
+    help="Limit number of lines returned with option --history.",
+)
 def show(
     collections: Collections,
     database_dsn: str,
@@ -73,6 +80,7 @@ def show(
     validate: bool,
     history: bool,
     vars: Path,
+    limit: int,
     service: Optional[str] = None,
     component: Optional[str] = None,
 ) -> None:
@@ -94,7 +102,7 @@ def show(
     with Dao(database_dsn) as dao:
         if history:
             _print_sch_status_logs(
-                get_sch_status_history(dao.session, service, component)
+                get_sch_status_history(dao.session, service, component, limit)
             )
             return
         _print_sch_status_logs(
