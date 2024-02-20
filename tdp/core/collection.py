@@ -36,10 +36,6 @@ class MissingMandatoryDirectoryError(Exception):
     pass
 
 
-class MissingPlaybookError(Exception):
-    pass
-
-
 class Collection:
     """An enriched version of an Ansible collection.
 
@@ -150,19 +146,6 @@ class Collection:
             return {}
         with schema_path.open() as fd:
             return json.load(fd)
-
-    def get_hosts_from_playbook(self, playbook: str) -> set[str]:
-        """Get the set of hosts for a playbook.
-
-        Args:
-            playbook: Playbook name without extension.
-
-        Returns:
-            Set of hosts.
-        """
-        if playbook not in self.playbooks:
-            raise MissingPlaybookError(f"Playbook {playbook} not found.")
-        return self.playbooks[playbook].hosts
 
     def _check_path(self):
         """Validate the collection path content."""

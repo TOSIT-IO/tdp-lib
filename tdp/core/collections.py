@@ -151,14 +151,12 @@ class Collections(Mapping[str, Collection]):
 
                     # The read_operation is associated with a playbook defined in the
                     # current collection
-                    if _ := collection.playbooks.get(read_operation.name):
+                    if playbook := collection.playbooks.get(read_operation.name):
                         # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
                         dag_operation_to_register = Operation(
                             name=read_operation.name,
                             collection_name=collection.name,
-                            host_names=collection.get_hosts_from_playbook(
-                                read_operation.name
-                            ),
+                            host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
                             depends_on=read_operation.depends_on.copy(),
                         )
                         # If the operation is already registered, merge its dependencies
@@ -234,7 +232,7 @@ class Collections(Mapping[str, Collection]):
         for collection in collections.values():
             # Load playbook operations to complete the operations list with the
             # operations that are not defined in the DAG files
-            for operation_name in collection.playbooks:
+            for operation_name, playbook in collection.playbooks.items():
                 if operation_name in dag_operations:
                     continue
                 if operation_name in other_operations:
@@ -245,7 +243,7 @@ class Collections(Mapping[str, Collection]):
                     )
                 other_operations[operation_name] = Operation(
                     name=operation_name,
-                    host_names=collection.get_hosts_from_playbook(operation_name),
+                    host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
                     collection_name=collection.name,
                 )
 
