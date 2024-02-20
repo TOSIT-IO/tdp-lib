@@ -58,7 +58,7 @@ class Collection:
             MissingMandatoryDirectoryError: If the collection does not contain a mandatory directory.
         """
         self._path = Path(path)
-        self._check_path()
+        check_collection_structure(self._path)
 
         self._inventory_reader = inventory_reader or InventoryReader()
         self._dag_yamls: Optional[list[Path]] = None
@@ -159,6 +159,29 @@ class Collection:
                 raise MissingMandatoryDirectoryError(
                     f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
                 )
+
+
+def check_collection_structure(path: Path) -> None:
+    """Check the structure of a collection.
+
+    Args:
+        path: Path to the collection.
+
+    Raises:
+        PathDoesNotExistsError: If the path does not exists.
+        PathIsNotADirectoryError: If the path is not a directory.
+        MissingMandatoryDirectoryError: If the collection does not contain a mandatory directory.
+    """
+    if not path.exists():
+        raise PathDoesNotExistsError(f"{path} does not exists.")
+    if not path.is_dir():
+        raise PathIsNotADirectoryError(f"{path} is not a directory.")
+    for mandatory_directory in MANDATORY_DIRECTORIES:
+        mandatory_path = path / mandatory_directory
+        if not mandatory_path.exists() or not mandatory_path.is_dir():
+            raise MissingMandatoryDirectoryError(
+                f"{path} does not contain the mandatory directory {mandatory_directory}.",
+            )
 
 
 def get_collection_playbooks(
