@@ -11,8 +11,10 @@ from tdp.core.collection import (
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
+    read_hosts_from_playbook,
 )
 from tdp.core.constants import DAG_DIRECTORY_NAME
+from tdp.core.models.test_deployment_log import MockInventoryReader
 
 
 def test_collection_from_path_does_not_exist():
@@ -50,3 +52,21 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
     assert collection_path / DAG_DIRECTORY_NAME / "service.yml" in collection.dag_yamls
     assert "service_install" in collection.playbooks
     assert "service_config" in collection.playbooks
+
+
+def test_read_hosts_from_playbook(tmp_path: Path):
+    playbook_path = tmp_path / "playbook.yml"
+    playbook_path.write_text(
+        """---
+- name: Play 1
+  hosts: host1, host2
+  tasks:
+    - name: Task 1
+      command: echo "Hello, World!"
+
+"""
+    )
+    hosts = read_hosts_from_playbook(
+        playbook_path, MockInventoryReader(["host1", "host2"])
+    )
+    assert hosts == {"host1", "host2"}

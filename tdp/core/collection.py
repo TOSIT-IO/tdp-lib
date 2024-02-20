@@ -163,12 +163,9 @@ class Collection:
         """
         if playbook not in self.playbooks:
             raise MissingPlaybookError(f"Playbook {playbook} not found.")
-        try:
-            return self._inventory_reader.get_hosts_from_playbook(
-                self.playbooks[playbook].open()
-            )
-        except Exception as e:
-            raise ValueError(f"Can't parse playbook {self.playbooks[playbook]}.") from e
+        return read_hosts_from_playbook(
+            self.playbooks[playbook], self._inventory_reader
+        )
 
     def _check_path(self):
         """Validate the collection path content."""
@@ -182,3 +179,24 @@ class Collection:
                 raise MissingMandatoryDirectoryError(
                     f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
                 )
+
+
+def read_hosts_from_playbook(
+    playbook_path: Path, inventory_reader: Optional[InventoryReader]
+) -> set[str]:
+    """Read the hosts from a playbook.
+
+    Args:
+        playbook_path: Path to the playbook.
+        inventory_reader: Inventory reader.
+
+    Returns:
+        Set of hosts.
+    """
+    if not inventory_reader:
+        inventory_reader = InventoryReader()
+    try:
+        with playbook_path.open() as fd:
+            return inventory_reader.get_hosts_from_playbook(fd)
+    except Exception as e:
+        raise ValueError(f"Can't parse playbook {playbook_path}.") from e
