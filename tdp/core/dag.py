@@ -48,7 +48,6 @@ class Dag:
         self._operations = None
         self._graph = None
         self._yaml_files = None
-        self._services_operations = None
 
     @property
     def operations(self) -> dict[str, Operation]:
@@ -65,26 +64,10 @@ class Dag:
         """Set operations and reset graph, services_operations and services."""
         self._operations = value
         del self.graph
-        del self.services_operations
 
     @operations.deleter
     def operations(self) -> None:
         self.operations = None
-
-    @property
-    def services_operations(self) -> dict[str, list[Operation]]:
-        """DAG operations dictionary grouped by service."""
-        if self._services_operations is None:
-            self._services_operations = {}
-            for operation in self.operations.values():
-                self._services_operations.setdefault(operation.service_name, []).append(
-                    operation
-                )
-        return self._services_operations
-
-    @services_operations.deleter
-    def services_operations(self) -> None:
-        self._services_operations = None
 
     @property
     def graph(self) -> nx.DiGraph:
