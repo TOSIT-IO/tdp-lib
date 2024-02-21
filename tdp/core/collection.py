@@ -1,8 +1,15 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
+import logging
+from collections.abc import Generator
 from pathlib import Path
 from typing import Optional
+
+import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
@@ -17,11 +24,18 @@ from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
 
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
 ]
+
+logger = logging.getLogger(__name__)
 
 
 class PathDoesNotExistsError(Exception):
@@ -61,7 +75,7 @@ class Collection:
         check_collection_structure(self._path)
 
         self._inventory_reader = inventory_reader or InventoryReader()
-        self._dag_yamls: Optional[list[Path]] = None
+        self._dag_nodes = list(get_collection_dag_nodes(self._path))
         self._playbooks = get_collection_playbooks(
             self._path,
             inventory_reader=self._inventory_reader,
@@ -109,11 +123,9 @@ class Collection:
         return self._path / SCHEMA_VARS_DIRECTORY_NAME
 
     @property
-    def dag_yamls(self) -> list[Path]:
+    def dag_nodes(self) -> list[TDPLibDagNodeModel]:
         """List of DAG files in the YAML format."""
-        if not self._dag_yamls:
-            self._dag_yamls = list(self.dag_directory.glob("*" + YML_EXTENSION))
-        return self._dag_yamls
+        return self._dag_nodes  # TODO: should return a generator
 
     @property
     def playbooks(self) -> dict[str, Playbook]:
@@ -223,3 +235,52 @@ def read_hosts_from_playbook(
             return inventory_reader.get_hosts_from_playbook(fd)
     except Exception as e:
         raise ValueError(f"Can't parse playbook {playbook_path}.") from e
+
+
+def get_collection_dag_nodes(
+    collection_path: Path, dag_directory_name=DAG_DIRECTORY_NAME
+) -> Generator[TDPLibDagNodeModel, None, None]:
+    """Get the DAG nodes of a collection.
+
+    Args:
+        collection_path: Path to the collection.
+        dag_directory_name: Name of the DAG directory.
+
+    Returns:
+        List of DAG nodes.
+    """
+    for dag_file in (collection_path / dag_directory_name).glob("*" + YML_EXTENSION):
+        yield from read_dag_file(dag_file)
+
+
+class TDPLibDagNodeModel(BaseModel):
+    """Model for a TDP operation defined in a tdp_lib_dag file."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    depends_on: list[str] = []
+
+
+class TDPLibDagModel(BaseModel):
+    """Model for a TDP DAG defined in a tdp_lib_dag file."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    operations: list[TDPLibDagNodeModel]
+
+
+def read_dag_file(
+    dag_file_path: Path,
+) -> Generator[TDPLibDagNodeModel, None, None]:
+    """Read a tdp_lib_dag file and return a list of DAG operations."""
+    with dag_file_path.open("r") as operations_file:
+        file_content = yaml.load(operations_file, Loader=Loader)
+
+    try:
+        tdp_lib_dag = TDPLibDagModel(operations=file_content)
+        for operation in tdp_lib_dag.operations:
+            yield operation
+    except ValidationError as e:
+        logger.error(f"Error while parsing tdp_lib_dag file {dag_file_path}: {e}")
+        raise
