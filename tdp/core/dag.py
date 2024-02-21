@@ -48,7 +48,6 @@ class Dag:
         self._operations = None
         self._graph = None
         self._yaml_files = None
-        self._services = None
         self._services_operations = None
 
     @property
@@ -67,7 +66,6 @@ class Dag:
         self._operations = value
         del self.graph
         del self.services_operations
-        del self.services
 
     @operations.deleter
     def operations(self) -> None:
@@ -87,18 +85,6 @@ class Dag:
     @services_operations.deleter
     def services_operations(self) -> None:
         self._services_operations = None
-        del self.services
-
-    @property
-    def services(self) -> list[str]:
-        """List of services in the DAG."""
-        if self._services is None:
-            self._services = list(self.services_operations.keys())
-        return self._services
-
-    @services.deleter
-    def services(self) -> None:
-        self._services = None
 
     @property
     def graph(self) -> nx.DiGraph:
