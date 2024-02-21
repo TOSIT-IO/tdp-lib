@@ -9,10 +9,10 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from tdp.cli.queries import get_sch_status
-from tdp.core.models import (
+from tdp.core.models import ServiceComponentHostStatus
+from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
-    ServiceComponentHostStatus,
 )
 
 logger = logging.getLogger(__name__)

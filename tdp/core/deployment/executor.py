@@ -7,7 +7,7 @@ import subprocess
 from collections.abc import Iterable
 from typing import Optional
 
-from tdp.core.models import OperationStateEnum
+from tdp.core.models.state_enum import OperationStateEnum
 from tdp.utils import resolve_executable
 
 logger = logging.getLogger(__name__)

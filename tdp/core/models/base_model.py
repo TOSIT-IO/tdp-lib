@@ -66,3 +66,7 @@ class BaseModel(DeclarativeBase):
         elif value is None:
             return ""
         return str(value)
+
+
+def init_database(engine):
+    BaseModel.metadata.create_all(engine)

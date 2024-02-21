@@ -8,11 +8,9 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import and_, case, func, or_
 from sqlalchemy.exc import NoResultFound
 
-from tdp.core.models import (
-    DeploymentModel,
-    OperationModel,
-    SCHStatusLogModel,
-)
+from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.models.operation_model import OperationModel
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.session import Session

@@ -22,7 +22,7 @@ from tdp.cli.utils import (
 )
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment import DeploymentRunner, Executor
-from tdp.core.models import DeploymentStateEnum
+from tdp.core.models.deployment_model import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:

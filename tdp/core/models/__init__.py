@@ -5,22 +5,6 @@ from typing import Optional
 
 from sqlalchemy.engine.row import Row
 
-from tdp.core.models.base_model import BaseModel
-from tdp.core.models.deployment_model import (
-    DeploymentModel,
-    DeploymentTypeEnum,
-    FilterTypeEnum,
-    NoOperationMatchError,
-    NothingToReconfigureError,
-    NothingToResumeError,
-)
-from tdp.core.models.operation_model import OperationModel
-from tdp.core.models.sch_status_log_model import (
-    SCHStatusLogModel,
-    SCHStatusLogSourceEnum,
-)
-from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
-
 ServiceComponentHostStatus = tuple[
     str,  # service
     Optional[str],  # component
@@ -32,7 +16,3 @@ ServiceComponentHostStatus = tuple[
 ]
 
 SCHStatusRow = Row[ServiceComponentHostStatus]
-
-
-def init_database(engine):
-    BaseModel.metadata.create_all(engine)

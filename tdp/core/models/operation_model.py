@@ -14,7 +14,7 @@ from tdp.core.models.base_model import BaseModel
 from tdp.core.models.state_enum import OperationStateEnum
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentModel
+    from tdp.core.models.deployment_model import DeploymentModel
 
 
 class OperationModel(BaseModel):

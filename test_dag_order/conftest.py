@@ -21,7 +21,8 @@ from tdp.core.constants import YML_EXTENSION
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentRunner
 from tdp.core.deployment.test_deployment_runner import MockExecutor
-from tdp.core.models import DeploymentModel, init_database
+from tdp.core.models.base_model import init_database
+from tdp.core.models.deployment_model import DeploymentModel
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
 

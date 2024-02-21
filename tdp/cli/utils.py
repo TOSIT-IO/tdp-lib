@@ -17,7 +17,7 @@ from tdp.core.collections import Collections
 from tdp.core.variables.cluster_variables import ClusterVariables
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentModel
+    from tdp.core.models.deployment_model import DeploymentModel
 
 
 def _collections_from_paths(

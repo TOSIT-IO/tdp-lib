@@ -17,7 +17,7 @@ from tdp.cli.utils import (
     rolling_interval,
 )
 from tdp.core.dag import Dag
-from tdp.core.models import DeploymentModel, FilterTypeEnum
+from tdp.core.models.deployment_model import DeploymentModel, FilterTypeEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

@@ -16,7 +16,7 @@ from tdp.core.constants import (
     PLAYBOOKS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
-from tdp.core.models import BaseModel
+from tdp.core.models.base_model import BaseModel
 
 DATABASE_URL = "sqlite:///:memory:"
 

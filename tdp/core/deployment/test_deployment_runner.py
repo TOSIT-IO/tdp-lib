@@ -11,12 +11,8 @@ import pytest
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
-from tdp.core.models import (
-    DeploymentModel,
-    DeploymentStateEnum,
-    DeploymentTypeEnum,
-    OperationStateEnum,
-)
+from tdp.core.models.deployment_model import DeploymentModel, DeploymentTypeEnum
+from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

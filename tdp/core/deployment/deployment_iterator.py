@@ -12,15 +12,16 @@ from typing import TYPE_CHECKING, Optional
 
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME
-from tdp.core.models import (
+from tdp.core.models.deployment_model import (
     DeploymentModel,
-    DeploymentStateEnum,
     NothingToReconfigureError,
-    OperationModel,
-    OperationStateEnum,
+)
+from tdp.core.models.operation_model import OperationModel
+from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
+from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 

@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from tdp.core.models import DeploymentModel, OperationModel, SCHStatusLogModel
+from tdp.core.models.deployment_model import DeploymentModel, OperationModel
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 
 logger = logging.getLogger(__name__)
 

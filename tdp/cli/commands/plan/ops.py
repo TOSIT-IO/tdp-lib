@@ -17,7 +17,7 @@ from tdp.cli.utils import (
     print_deployment,
     rolling_interval,
 )
-from tdp.core.models import DeploymentModel
+from tdp.core.models.deployment_model import DeploymentModel
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections

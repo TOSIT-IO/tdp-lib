@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from tdp.core.models import init_database
+from tdp.core.models.base_model import init_database
 
 
 @contextmanager

@@ -14,7 +14,7 @@ from tdp.cli.queries import (
 )
 from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, preview, print_deployment
-from tdp.core.models import DeploymentModel
+from tdp.core.models.deployment_model import DeploymentModel
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
