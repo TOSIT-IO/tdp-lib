@@ -46,7 +46,7 @@ class Dag:
         """
         self._collections = collections
         self._operations = None
-        self._graph = None
+        self._graph = self._generate_graph(self.operations)
         self._yaml_files = None
 
     @property
@@ -62,24 +62,7 @@ class Dag:
     @property
     def graph(self) -> nx.DiGraph:
         """DAG graph."""
-        if self._graph is not None:
-            return self._graph
-
-        DG = nx.DiGraph()
-        for operation_name, operation in self.operations.items():
-            DG.add_node(operation_name)
-            for dependency in operation.depends_on:
-                if dependency not in self.operations:
-                    raise ValueError(
-                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
-                    )
-                DG.add_edge(dependency, operation_name)
-
-        if nx.is_directed_acyclic_graph(DG):
-            self._graph = DG
-            return self._graph
-        else:
-            raise ValueError("Not a DAG")
+        return self._graph
 
     def node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
@@ -352,3 +335,20 @@ class Dag:
                     f"Service '{service}' have these actions {actions} and at least one action is missing from "
                     f"{actions_for_service}"
                 )
+
+    # TODO: can take a list of operations instead of a dict
+    def _generate_graph(self, nodes: dict[str, Operation]) -> nx.DiGraph:
+        DG = nx.DiGraph()
+        for operation_name, operation in nodes.items():
+            DG.add_node(operation_name)
+            for dependency in operation.depends_on:
+                if dependency not in nodes:
+                    raise ValueError(
+                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
+                    )
+                DG.add_edge(dependency, operation_name)
+
+        if nx.is_directed_acyclic_graph(DG):
+            return DG
+        else:
+            raise ValueError("Not a DAG")
