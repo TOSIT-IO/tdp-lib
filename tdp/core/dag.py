@@ -37,6 +37,7 @@ class IllegalNodeError(Exception):
 class Dag:
     """Generate DAG with operations' dependencies."""
 
+    # TODO: init with dag operations only
     def __init__(self, collections: Collections):
         """Initialize a DAG instance from a Collections.
 
@@ -49,16 +50,6 @@ class Dag:
         self._yaml_files = None
         self._services = None
         self._services_operations = None
-
-    @property
-    def collections(self) -> Collections:
-        """Collections instance."""
-        return self._collections
-
-    @collections.setter
-    def collections(self, collections: Collections) -> None:
-        self._collections = collections
-        del self.operations
 
     @property
     def operations(self) -> dict[str, Operation]:
@@ -149,7 +140,7 @@ class Dag:
             node = node.replace("_start", "_restart")
         elif stop and node.endswith("_start"):
             node = node.replace("_start", "_stop")
-        return self.collections.operations[node]
+        return self._collections.operations[node]
 
     def topological_sort_key(
         self,
