@@ -67,8 +67,6 @@ def mock_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
 @pytest.fixture(scope="session")
 def mock_dag(mock_collections: Collections) -> Dag:
     dag = Dag(mock_collections)
-    # Validate the dag in case of declaration errors
-    dag.validate()
     return dag
 
 

@@ -45,18 +45,14 @@ class Dag:
             collections: Collections instance.
         """
         self._collections = collections
-        self._operations = None
+        self._operations = self._collections.dag_operations
+        self.validate()
         self._graph = self._generate_graph(self.operations)
         self._yaml_files = None
 
     @property
     def operations(self) -> dict[str, Operation]:
         """DAG operations dictionary."""
-        if self._operations is not None:
-            return self._operations
-
-        self._operations = self._collections.dag_operations
-        self.validate()
         return self._operations
 
     @property
