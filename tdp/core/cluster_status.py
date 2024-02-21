@@ -17,7 +17,6 @@ from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.models import SCHStatusRow
     from tdp.core.variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
@@ -68,11 +67,11 @@ class SCHStatus:
         return bool(self.to_config or self.to_restart)
 
     @staticmethod
-    def from_sch_status_row(row: SCHStatusRow, /) -> SCHStatus:
-        """Create a SCHStatus from a SCHStatusRow.
+    def from_sch_status_row(row, /) -> SCHStatus:
+        """Create a SCHStatus from a query Row.
 
         Args:
-            row: SCHStatusRow.
+            row: list[Row[tuple[str, str | None, str | None, Any, Any, Any, Any]]].
 
         Returns:
             SCHStatus instance."""
@@ -240,21 +239,18 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         return self._cluster_status_dict.setdefault(key, default)
 
     @staticmethod
-    def from_sch_status_rows(
-        sch_status_rows: Iterable[SCHStatusRow], /
-    ) -> ClusterStatus:
-        """Get an instance of ClusterStatus from a list of SCHStatusRow.
+    def from_sch_status_rows(sch_status_rows: Iterable[SCHStatus], /) -> ClusterStatus:
+        """Get an instance of ClusterStatus from a list of SCHStatus.
 
         Args:
-            cluster_status_log: List of SCHStatusRow.
+            cluster_status_log: List of SCHStatus.
 
         Returns:
             ClusterStatus instance.
         """
         cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
         for row in sch_status_rows:
-            sch_status = SCHStatus.from_sch_status_row(row)
-            cluster_status_dict[sch_status.get_sch_name()] = sch_status
+            cluster_status_dict[row.get_sch_name()] = row
         return ClusterStatus(cluster_status_dict)
 
     def generate_stale_sch_logs(

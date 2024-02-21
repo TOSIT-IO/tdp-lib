@@ -4,12 +4,11 @@
 import logging
 import random
 import string
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from sqlalchemy.orm import Session
 
 from tdp.cli.queries import get_sch_status
-from tdp.core.models import ServiceComponentHostStatus
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -64,7 +63,15 @@ def _mock_sch_status_log(
 
 def _last_values(
     logs: List["SCHStatusLogModel"],
-) -> ServiceComponentHostStatus:
+) -> tuple[
+    str,
+    Union[str, None],
+    Union[str, None],
+    Union[str, None],
+    Union[str, None],
+    Union[bool, None],
+    Union[bool, None],
+]:
     """Return an SCHStatusLog holding the last non None value for each column from a list of logs."""
     return (
         logs[-1].service,
@@ -106,7 +113,16 @@ def test_single_service_component_status(db_session: Session):
         db_session.add(log)
         db_session.commit()
 
-    assert get_sch_status(db_session) == [last_values]
+    session_values = get_sch_status(db_session)[0]
+    assert (
+        session_values.service,
+        session_values.component,
+        session_values.host,
+        session_values.running_version,
+        session_values.configured_version,
+        session_values.to_config,
+        session_values.to_restart,
+    ) == last_values
 
 
 def test_multiple_service_component_status(db_session: Session):
@@ -146,4 +162,16 @@ def test_multiple_service_component_status(db_session: Session):
         # Update the next log for the chosen list. 'None' if no more logs are left.
         next_logs[chosen_index] = next(iterators[chosen_index], None)
 
-    assert set(get_sch_status(db_session)) == last_values
+        session_rows = [
+            (
+                row.service,
+                row.component,
+                row.host,
+                row.running_version,
+                row.configured_version,
+                row.to_config,
+                row.to_restart,
+            )
+            for row in get_sch_status(db_session)
+        ]
+    assert set(session_rows) == last_values

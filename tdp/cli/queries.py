@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import and_, case, func, or_
 from sqlalchemy.exc import NoResultFound
 
+from tdp.core.cluster_status import SCHStatus
 from tdp.core.models.deployment_model import DeploymentModel
 from tdp.core.models.operation_model import OperationModel
 from tdp.core.models.sch_status_log_model import SCHStatusLogModel
@@ -15,12 +16,10 @@ from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 if TYPE_CHECKING:
     from sqlalchemy.orm.session import Session
 
-    from tdp.core.models import SCHStatusRow
-
 
 def get_sch_status(
     session: Session,
-) -> list[SCHStatusRow]:
+) -> list[SCHStatus]:
     """Get cluster status.
 
     Recover the latest values for each (service, component, host) combination.
@@ -268,7 +267,7 @@ def get_sch_status(
     max_to_config = func.max(case_to_config).label("max_to_config")
     max_to_restart = func.max(case_to_restart).label("max_to_restart")
 
-    return (
+    query = (
         session.query(
             SCHStatusLogModel.service,
             SCHStatusLogModel.component,
@@ -370,6 +369,8 @@ def get_sch_status(
         )
         .all()
     )
+
+    return [SCHStatus.from_sch_status_row(row) for row in query]
 
 
 def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:
