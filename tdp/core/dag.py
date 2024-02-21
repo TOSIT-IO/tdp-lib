@@ -59,16 +59,6 @@ class Dag:
         self.validate()
         return self._operations
 
-    @operations.setter
-    def operations(self, value: dict[str, Operation]) -> None:
-        """Set operations and reset graph, services_operations and services."""
-        self._operations = value
-        del self.graph
-
-    @operations.deleter
-    def operations(self) -> None:
-        self.operations = None
-
     @property
     def graph(self) -> nx.DiGraph:
         """DAG graph."""
