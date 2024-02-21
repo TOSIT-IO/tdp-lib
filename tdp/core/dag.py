@@ -81,14 +81,6 @@ class Dag:
         else:
             raise ValueError("Not a DAG")
 
-    @graph.setter
-    def graph(self, value: nx.DiGraph) -> None:
-        self._graph = value
-
-    @graph.deleter
-    def graph(self) -> None:
-        self.graph = None
-
     def node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
     ) -> Operation:
