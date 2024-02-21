@@ -46,7 +46,7 @@ class Dag:
         """
         self._collections = collections
         self._operations = self._collections.dag_operations
-        self.validate()
+        validate_dag_nodes(self._operations, self._collections)
         self._graph = self._generate_graph(self.operations)
         self._yaml_files = None
 
@@ -239,99 +239,6 @@ class Dag:
             )
         )
 
-    def validate(self) -> None:
-        r"""Validation rules :
-        - \*_start operations can only be required from within its own service
-        - \*_install operations should only depend on other \*_install operations
-        - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
-        - Operations tagged with the noop flag should not have a playbook defined in the collection
-        - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
-        """
-        # key: service_name
-        # value: set of available actions for the service
-        services_actions = {}
-
-        def warning(collection_name: str, message: str) -> None:
-            logger.warning(message + f", collection: {collection_name}")
-
-        for operation_name, operation in self.operations.items():
-            c_warning = functools.partial(warning, operation.collection_name)
-            for dependency in operation.depends_on:
-                # *_start operations can only be required from within its own service
-                dependency_service = self.operations[dependency].service_name
-                if (
-                    dependency.endswith("_start")
-                    and dependency_service != operation.service_name
-                ):
-                    c_warning(
-                        f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
-                        f"'{dependency}' which is a start action in service '{dependency_service}' and should "
-                        f"only depends on start action within its own service"
-                    )
-
-                # *_install operations should only depend on other *_install operations
-                if operation_name.endswith("_install") and not dependency.endswith(
-                    "_install"
-                ):
-                    c_warning(
-                        f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
-                        f"not an install action and should only depends on other install action"
-                    )
-
-            # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-            # even if they are "empty" (tagged with noop)
-            # Part 1
-            service_actions = services_actions.setdefault(operation.service_name, set())
-            if operation.is_service_operation():
-                service_actions.add(operation.action_name)
-
-                # Each service action (config, start, init) except the first (install) must have an explicit
-                # dependency with the previous service action within the same service
-                actions_order = ["install", "config", "start", "init"]
-                # Check only if the action is in actions_order and is not the first
-                if (
-                    operation.action_name in actions_order
-                    and operation.action_name != actions_order[0]
-                ):
-                    previous_action = actions_order[
-                        actions_order.index(operation.action_name) - 1
-                    ]
-                    previous_service_action = (
-                        f"{operation.service_name}_{previous_action}"
-                    )
-                    previous_service_action_found = False
-                    # Loop over dependency and check if the service previous action is found
-                    for dependency in operation.depends_on:
-                        if dependency == previous_service_action:
-                            previous_service_action_found = True
-                    if not previous_service_action_found:
-                        c_warning(
-                            f"Operation '{operation_name}' is a service action and has to depend on "
-                            f"'{operation.service_name}_{previous_action}'"
-                        )
-
-            # Operations tagged with the noop flag should not have a playbook defined in the collection
-
-            if operation_name in self._collections[operation.collection_name].playbooks:
-                if operation.noop:
-                    c_warning(
-                        f"Operation '{operation_name}' is noop and the playbook should not exist"
-                    )
-            else:
-                if not operation.noop:
-                    c_warning(f"Operation '{operation_name}' should have a playbook")
-
-        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-        # even if they are "empty" (tagged with noop)
-        # Part 2
-        actions_for_service = {"install", "config", "start", "init"}
-        for service, actions in services_actions.items():
-            if not actions.issuperset(actions_for_service):
-                logger.warning(
-                    f"Service '{service}' have these actions {actions} and at least one action is missing from "
-                    f"{actions_for_service}"
-                )
-
     # TODO: can take a list of operations instead of a dict
     def _generate_graph(self, nodes: dict[str, Operation]) -> nx.DiGraph:
         DG = nx.DiGraph()
@@ -348,3 +255,97 @@ class Dag:
             return DG
         else:
             raise ValueError("Not a DAG")
+
+
+# TODO: call this method inside of Collections._init_operations instead of the Dag constructor
+# TODO: remove Collections dependency
+def validate_dag_nodes(nodes: dict[str, Operation], collections: Collections) -> None:
+    r"""Validation rules :
+    - \*_start operations can only be required from within its own service
+    - \*_install operations should only depend on other \*_install operations
+    - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
+    - Operations tagged with the noop flag should not have a playbook defined in the collection
+    - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
+    """
+    # key: service_name
+    # value: set of available actions for the service
+    services_actions = {}
+
+    def warning(collection_name: str, message: str) -> None:
+        logger.warning(message + f", collection: {collection_name}")
+
+    for operation_name, operation in nodes.items():
+        c_warning = functools.partial(warning, operation.collection_name)
+        for dependency in operation.depends_on:
+            # *_start operations can only be required from within its own service
+            dependency_service = nodes[dependency].service_name
+            if (
+                dependency.endswith("_start")
+                and dependency_service != operation.service_name
+            ):
+                c_warning(
+                    f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
+                    f"'{dependency}' which is a start action in service '{dependency_service}' and should "
+                    f"only depends on start action within its own service"
+                )
+
+            # *_install operations should only depend on other *_install operations
+            if operation_name.endswith("_install") and not dependency.endswith(
+                "_install"
+            ):
+                c_warning(
+                    f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
+                    f"not an install action and should only depends on other install action"
+                )
+
+        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
+        # even if they are "empty" (tagged with noop)
+        # Part 1
+        service_actions = services_actions.setdefault(operation.service_name, set())
+        if operation.is_service_operation():
+            service_actions.add(operation.action_name)
+
+            # Each service action (config, start, init) except the first (install) must have an explicit
+            # dependency with the previous service action within the same service
+            actions_order = ["install", "config", "start", "init"]
+            # Check only if the action is in actions_order and is not the first
+            if (
+                operation.action_name in actions_order
+                and operation.action_name != actions_order[0]
+            ):
+                previous_action = actions_order[
+                    actions_order.index(operation.action_name) - 1
+                ]
+                previous_service_action = f"{operation.service_name}_{previous_action}"
+                previous_service_action_found = False
+                # Loop over dependency and check if the service previous action is found
+                for dependency in operation.depends_on:
+                    if dependency == previous_service_action:
+                        previous_service_action_found = True
+                if not previous_service_action_found:
+                    c_warning(
+                        f"Operation '{operation_name}' is a service action and has to depend on "
+                        f"'{operation.service_name}_{previous_action}'"
+                    )
+
+        # Operations tagged with the noop flag should not have a playbook defined in the collection
+
+        if operation_name in collections[operation.collection_name].playbooks:
+            if operation.noop:
+                c_warning(
+                    f"Operation '{operation_name}' is noop and the playbook should not exist"
+                )
+        else:
+            if not operation.noop:
+                c_warning(f"Operation '{operation_name}' should have a playbook")
+
+    # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
+    # even if they are "empty" (tagged with noop)
+    # Part 2
+    actions_for_service = {"install", "config", "start", "init"}
+    for service, actions in services_actions.items():
+        if not actions.issuperset(actions_for_service):
+            logger.warning(
+                f"Service '{service}' have these actions {actions} and at least one action is missing from "
+                f"{actions_for_service}"
+            )
