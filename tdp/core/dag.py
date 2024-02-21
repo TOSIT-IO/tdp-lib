@@ -48,7 +48,6 @@ class Dag:
         self._operations = self._collections.dag_operations
         validate_dag_nodes(self._operations, self._collections)
         self._graph = self._generate_graph(self.operations)
-        self._yaml_files = None
 
     @property
     def operations(self) -> dict[str, Operation]:
