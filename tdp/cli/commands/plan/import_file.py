@@ -46,7 +46,7 @@ def import_file(
             deployment = DeploymentModel.from_operations_hosts_vars(
                 collections, new_operations_hosts_vars
             )
-            # if a planned deployment is present, update it instead of creating it
+            # if a planned deployment is present, override it or keep it
             if planned_deployment:
                 confirmed = click.confirm(
                     "A deployment plan already exists, do you want to override it?"
