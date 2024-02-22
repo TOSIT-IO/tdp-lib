@@ -15,6 +15,7 @@ from tabulate import tabulate
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
+from tdp.core.filters import FilterFactory
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import (
     DeploymentStateEnum,
@@ -117,13 +118,13 @@ class DeploymentModel(BaseModel):
             stop=stop,
         )
 
-        if filter_expression is not None:
-            if filter_type == FilterTypeEnum.REGEX:
-                operations = dag.filter_operations_regex(operations, filter_expression)
-            else:
-                operations = dag.filter_operations_glob(operations, filter_expression)
-                # default behavior is glob
-                filter_type = FilterTypeEnum.GLOB
+        if filter_expression:
+            filter = FilterFactory.create_filter(
+                # Default to glob if no filter type is provided
+                filter_type or FilterTypeEnum.GLOB,
+                filter_expression,
+            )
+            operations = filter(operations)
 
         if len(operations) == 0:
             raise NoOperationMatchError(
