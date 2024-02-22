@@ -150,19 +150,6 @@ class Collection:
         schema_path = self.schema_directory / (service_name + JSON_EXTENSION)
         return ServiceCollectionSchema.from_path(schema_path)
 
-    def _check_path(self):
-        """Validate the collection path content."""
-        if not self._path.exists():
-            raise PathDoesNotExistsError(f"{self._path} does not exists.")
-        if not self._path.is_dir():
-            raise PathIsNotADirectoryError(f"{self._path} is not a directory.")
-        for mandatory_directory in MANDATORY_DIRECTORIES:
-            mandatory_path = self._path / mandatory_directory
-            if not mandatory_path.exists() or not mandatory_path.is_dir():
-                raise MissingMandatoryDirectoryError(
-                    f"{self._path} does not contain the mandatory directory {mandatory_directory}.",
-                )
-
 
 def check_collection_structure(path: Path) -> None:
     """Check the structure of a collection.
