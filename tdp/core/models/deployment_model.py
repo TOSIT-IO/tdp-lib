@@ -16,9 +16,13 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.models.base_model import BaseModel
+from tdp.core.models.enums import (
+    DeploymentStateEnum,
+    DeploymentTypeEnum,
+    FilterTypeEnum,
+    OperationStateEnum,
+)
 from tdp.core.models.operation_model import OperationModel
-from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
-from tdp.core.utils import BaseEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -40,19 +44,6 @@ class NothingToResumeError(Exception):
 
 class UnsupportedDeploymentTypeError(Exception):
     pass
-
-
-class DeploymentTypeEnum(BaseEnum):
-    DAG = "Dag"
-    OPERATIONS = "Operations"
-    RESUME = "Resume"
-    RECONFIGURE = "Reconfigure"
-    CUSTOM = "Custom"
-
-
-class FilterTypeEnum(BaseEnum):
-    REGEX = "regex"
-    GLOB = "glob"
 
 
 class DeploymentModel(BaseModel):

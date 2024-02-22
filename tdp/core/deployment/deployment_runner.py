@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
-from tdp.core.models import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:

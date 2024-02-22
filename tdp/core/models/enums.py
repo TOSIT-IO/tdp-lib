@@ -25,3 +25,25 @@ class DeploymentStateEnum(BaseEnum):
     RUNNING = _RUNNING_STATE
     SUCCESS = _SUCCESS_STATE
     FAILURE = _FAILURE_STATE
+
+
+class DeploymentTypeEnum(BaseEnum):
+    DAG = "Dag"
+    OPERATIONS = "Operations"
+    RESUME = "Resume"
+    RECONFIGURE = "Reconfigure"
+    CUSTOM = "Custom"
+
+
+class FilterTypeEnum(BaseEnum):
+    REGEX = "regex"
+    GLOB = "glob"
+
+
+class SCHStatusLogSourceEnum(BaseEnum):
+    """Source of the status log."""
+
+    DEPLOYMENT = "Deployment"
+    FORCED = "Forced"
+    STALE = "Stale"
+    MANUAL = "Manual"

@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Optional
 
-from tdp.core.models import OperationStateEnum
+from tdp.core.models.enums import OperationStateEnum
 from tdp.utils import resolve_executable
 
 logger = logging.getLogger(__name__)

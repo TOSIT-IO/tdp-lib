@@ -11,7 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from tdp.core.constants import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
 from tdp.core.models.base_model import BaseModel
-from tdp.core.models.state_enum import OperationStateEnum
+from tdp.core.models.enums import OperationStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel

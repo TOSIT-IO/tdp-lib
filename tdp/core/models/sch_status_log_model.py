@@ -14,16 +14,7 @@ from tdp.core.constants import (
     VERSION_MAX_LENGTH,
 )
 from tdp.core.models.base_model import BaseModel
-from tdp.core.utils import BaseEnum
-
-
-class SCHStatusLogSourceEnum(BaseEnum):
-    """Source of the status log."""
-
-    DEPLOYMENT = "Deployment"
-    FORCED = "Forced"
-    STALE = "Stale"
-    MANUAL = "Manual"
+from tdp.core.models.enums import SCHStatusLogSourceEnum
 
 
 class SCHStatusLogModel(BaseModel):
