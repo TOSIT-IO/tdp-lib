@@ -12,10 +12,8 @@ or on a subgraph of the DAG.
 
 from __future__ import annotations
 
-import fnmatch
 import functools
 import logging
-import re
 from collections.abc import Callable, Generator, Iterable
 from typing import TYPE_CHECKING, Optional, TypeVar
 
@@ -319,17 +317,6 @@ class Dag:
                 nodes_filtered,
             )
         )
-
-    def filter_operations_glob(
-        self, operations: Iterable[Operation], glob: str
-    ) -> list[Operation]:
-        return list(filter(lambda o: fnmatch.fnmatch(o.name, glob), operations))  # type: ignore
-
-    def filter_operations_regex(
-        self, operations: Iterable[Operation], regex: str
-    ) -> list[Operation]:
-        compiled_regex = re.compile(regex)
-        return list(filter(lambda o: compiled_regex.match(o.name), operations))  # type: ignore
 
     def validate(self) -> None:
         r"""Validation rules :
