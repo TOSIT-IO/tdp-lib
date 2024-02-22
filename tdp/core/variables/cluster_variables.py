@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Optional
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
 from tdp.core.types import PathLike
+from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:
@@ -61,6 +62,9 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
         Returns:
             Mapping of service names with their ServiceVariables instance.
+
+        Raises:
+            SchemaValidationError: If a service is invalid.
         """
         if override_folders is None:
             override_folders = []
@@ -148,6 +152,9 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
         Returns:
             Mapping of service names with their ServiceVariables instance.
+
+        Raises:
+            SchemaValidationError: If a service is invalid.
         """
         cluster_variables = {}
 
@@ -166,9 +173,19 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         return cluster_variables
 
     def _validate_services_schemas(self):
-        """Validate all services schemas."""
+        """Validate all services schemas.
+
+        Raises:
+            SchemaValidationError: If at least one service schema is invalid.
+        """
+        errors = []
         for service in self.values():
-            service.validate()
+            try:
+                service.validate()
+            except SchemaValidationError as e:
+                errors.extend(e.errors)
+        if errors:
+            raise SchemaValidationError(errors)
 
     def get_modified_sch(
         self,

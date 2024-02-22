@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from tdp.core.variables.cluster_variables import ClusterVariables
-from tdp.core.variables.schema import InvalidSchema, validate_against_schema
 from tdp.core.variables.service_variables import (
     ServiceVariables,
 )

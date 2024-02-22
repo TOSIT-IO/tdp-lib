@@ -1,7 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import json
 from pathlib import Path
 from typing import Optional
 
@@ -16,6 +15,7 @@ from tdp.core.constants import (
 from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
+from tdp.core.variables.schema import ServiceCollectionSchema
 
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
@@ -134,18 +134,21 @@ class Collection:
             return []
         return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
 
-    def get_service_schema(self, service_name: str) -> dict:
+    def get_service_schema(self, service_name: str) -> ServiceCollectionSchema:
         """Get the variables schema of a service.
 
-        Args: Name of the service to retrieve the schema for.
+        Args:
+            Name of the service to retrieve the schema for.
 
-        Returns: The service schema.
+        Returns:
+            The service schema.
+
+        Raises:
+            InvalidSchemaError: If the schema is not a dict or a bool.
+            SchemaNotFoundError: If the schema is not found.
         """
         schema_path = self.schema_directory / (service_name + JSON_EXTENSION)
-        if not schema_path.exists():
-            return {}
-        with schema_path.open() as fd:
-            return json.load(fd)
+        return ServiceCollectionSchema.from_path(schema_path)
 
     def _check_path(self):
         """Validate the collection path content."""

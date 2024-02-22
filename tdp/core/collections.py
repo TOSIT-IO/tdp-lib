@@ -25,6 +25,8 @@ from tdp.core.collection import Collection
 from tdp.core.operation import Operation
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
+from tdp.core.variables.schema.exceptions import InvalidSchemaError, SchemaNotFoundError
+from tdp.core.variables.schema.service_schema import ServiceSchema
 
 try:
     from yaml import CLoader as Loader
@@ -249,25 +251,26 @@ class Collections(Mapping[str, Collection]):
 
         return dag_operations, other_operations
 
-    def get_service_schema(self, service_name: str) -> dict:
-        """Get the service's schema.
+    def get_service_schema(self, service_name: str) -> ServiceSchema:
+        """Retrieve the schemas for a specific service.
 
         Args:
             service_name: Name of the service.
 
         Returns:
-            A dict with the JSON Schema of the service.
+            The schema for the service.
         """
-        schemas = list(
-            filter(
-                bool,
-                (
-                    collection.get_service_schema(service_name)
-                    for collection in self._collections.values()
-                ),
-            )
-        )
-        return dict(allOf=schemas) if schemas else {}
+        schema = ServiceSchema()
+        for collection in self._collections.values():
+            try:
+                schema.add_schema(collection.get_service_schema(service_name))
+            except InvalidSchemaError as e:
+                logger.warning(f"{e}. Ignoring schema.")
+            except SchemaNotFoundError:
+                logger.debug(
+                    f"Missing schema for {service_name} in collection {collection.name}"
+                )
+        return schema
 
     def get_components_from_service(
         self, service_name: str
