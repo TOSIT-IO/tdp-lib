@@ -10,9 +10,10 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
+from tdp.core.collection import YML_EXTENSION
+from tdp.core.constants import SERVICE_NAME_MAX_LENGTH
 from tdp.core.types import PathLike
-from tdp.core.variables.schema import validate_against_schema
+from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.variables import (
     Variables,
     VariablesDict,
@@ -21,6 +22,7 @@ from tdp.core.variables.variables import (
 if TYPE_CHECKING:
     from tdp.core.repository.repository import Repository
     from tdp.core.service_component_name import ServiceComponentName
+    from tdp.core.variables.schema.service_schema import ServiceSchema
     from tdp.core.variables.variables import _VariablesIOWrapper
 
 logger = logging.getLogger(__name__)
@@ -29,7 +31,7 @@ logger = logging.getLogger(__name__)
 class ServiceVariables:
     """Variables of a service."""
 
-    def __init__(self, repository: Repository, schema: dict):
+    def __init__(self, repository: Repository, schema: ServiceSchema):
         """Initialize a ServiceVariables object.
 
         Args:
@@ -57,7 +59,7 @@ class ServiceVariables:
         return self._repo
 
     @property
-    def schema(self) -> dict:
+    def schema(self) -> ServiceSchema:
         """Schema of the service."""
         return self._schema
 
@@ -181,10 +183,11 @@ class ServiceVariables:
         """Validates the service variables against the schema.
 
         Raises:
-            InvalidSchema: If the schema is invalid.
+            SchemaValidationError: If the schema is invalid.
         """
         service_variables = VariablesDict({})
         sorted_paths = sorted(self.path.glob("*" + YML_EXTENSION))
+        errors = []
         for path in sorted_paths:
             with Variables(path).open("r") as variables:
                 if path.stem == self.name:
@@ -197,5 +200,13 @@ class ServiceVariables:
                         service_variables.copy(), variables.name
                     )
                     test_variables.merge(variables)
-            validate_against_schema(test_variables, self.schema)
+            # Validate the variables against the schema
+            try:
+                self.schema.validate(test_variables)
+            except SchemaValidationError as e:
+                errors.append(e)
+        # Raise errors if any
+        if errors:
+            raise SchemaValidationError(errors)
+
         logger.debug(f"Service {self.name} is valid")

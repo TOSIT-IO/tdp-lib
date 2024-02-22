@@ -105,6 +105,12 @@ class VariablesDict(MutableMapping):
     def __iter__(self):
         return self._content.__iter__()
 
+    def __repr__(self):
+        return self._content.__repr__()
+
+    def __str__(self):
+        return self._content.__str__()
+
 
 class _VariablesIOWrapper(VariablesDict):
     """Context manager for file IO operations."""

@@ -21,7 +21,7 @@ from tdp.core.constants import YML_EXTENSION
 from tdp.core.repository.repository import EmptyCommit
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
-from tdp.core.variables.schema import InvalidSchema
+from tdp.core.variables.schema.exceptions import InvalidSchemaError
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ def edit(
         # Check schema
         try:
             service_variables.validate()
-        except InvalidSchema:
+        except InvalidSchemaError:
             click.echo(f"Variables does not match '{service_name}' schema")
             continue
 
