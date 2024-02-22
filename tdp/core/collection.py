@@ -23,6 +23,7 @@ from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
+from tdp.core.variables.schema.exceptions import InvalidSchemaError
 
 try:
     from yaml import CLoader as Loader
@@ -80,6 +81,7 @@ class Collection:
             self._path,
             inventory_reader=self._inventory_reader,
         )
+        self._schemas = get_collection_schemas(self._path)
 
     @staticmethod
     def from_path(path: PathLike) -> Collection:
@@ -132,6 +134,11 @@ class Collection:
         """Dictionary of playbooks."""
         return self._playbooks
 
+    @property
+    def schemas(self) -> list[ServiceCollectionSchema]:
+        """List of schemas."""
+        return self._schemas
+
     def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
         """Get the default variables for a service.
 
@@ -145,22 +152,6 @@ class Collection:
         if not service_path.exists():
             return []
         return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
-
-    def get_service_schema(self, service_name: str) -> ServiceCollectionSchema:
-        """Get the variables schema of a service.
-
-        Args:
-            Name of the service to retrieve the schema for.
-
-        Returns:
-            The service schema.
-
-        Raises:
-            InvalidSchemaError: If the schema is not a dict or a bool.
-            SchemaNotFoundError: If the schema is not found.
-        """
-        schema_path = self.schema_directory / (service_name + JSON_EXTENSION)
-        return ServiceCollectionSchema.from_path(schema_path)
 
 
 def check_collection_structure(path: Path) -> None:
@@ -184,6 +175,33 @@ def check_collection_structure(path: Path) -> None:
             raise MissingMandatoryDirectoryError(
                 f"{path} does not contain the mandatory directory {mandatory_directory}.",
             )
+
+
+def get_collection_schemas(
+    collection_path: Path, schemas_directory_name=SCHEMA_VARS_DIRECTORY_NAME
+) -> list[ServiceCollectionSchema]:
+    """Get the schemas of a collection.
+
+    This function is meant to be used only once during the initialization of a
+    collection object.
+
+    Invalid schemas are ignored.
+
+    Args:
+        collection_path: Path to the collection.
+
+    Returns:
+        Dictionary of schemas.
+    """
+    schemas: list[ServiceCollectionSchema] = []
+    for schema_path in (collection_path / schemas_directory_name).glob(
+        "*" + JSON_EXTENSION
+    ):
+        try:
+            schemas.append(ServiceCollectionSchema.from_path(schema_path))
+        except InvalidSchemaError as e:
+            logger.warning(f"{e}. Ignoring schema.")
+    return schemas
 
 
 def get_collection_playbooks(
