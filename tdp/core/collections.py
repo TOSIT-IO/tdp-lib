@@ -20,7 +20,6 @@ from tdp.core.collection import Collection
 from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
 from tdp.core.service_component_name import ServiceComponentName
-from tdp.core.variables.schema.exceptions import InvalidSchemaError, SchemaNotFoundError
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 logger = logging.getLogger(__name__)
@@ -38,6 +37,7 @@ class Collections(Mapping[str, Collection]):
         self._dag_operations, self._other_operations = self._init_operations(
             self._collections
         )
+        self._schemas = self._init_schemas(self._collections)
 
     def __getitem__(self, key):
         return self._collections.__getitem__(key)
@@ -87,6 +87,11 @@ class Collections(Mapping[str, Collection]):
         if self._other_operations:
             operations.update(self._other_operations)
         return operations
+
+    @property
+    def schemas(self) -> dict[str, ServiceSchema]:
+        """Mapping of service with their variable schemas."""
+        return self._schemas
 
     def _init_operations(
         self, collections: Mapping[str, Collection]
@@ -195,26 +200,14 @@ class Collections(Mapping[str, Collection]):
 
         return dag_operations, other_operations
 
-    def get_service_schema(self, service_name: str) -> ServiceSchema:
-        """Retrieve the schemas for a specific service.
-
-        Args:
-            service_name: Name of the service.
-
-        Returns:
-            The schema for the service.
-        """
-        schema = ServiceSchema()
-        for collection in self._collections.values():
-            try:
-                schema.add_schema(collection.get_service_schema(service_name))
-            except InvalidSchemaError as e:
-                logger.warning(f"{e}. Ignoring schema.")
-            except SchemaNotFoundError:
-                logger.debug(
-                    f"Missing schema for {service_name} in collection {collection.name}"
-                )
-        return schema
+    def _init_schemas(
+        self, collections: Mapping[str, Collection]
+    ) -> dict[str, ServiceSchema]:
+        schemas: dict[str, ServiceSchema] = {}
+        for collection in collections.values():
+            for schema in collection.schemas:
+                schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
+        return schemas
 
     def get_components_from_service(
         self, service_name: str
