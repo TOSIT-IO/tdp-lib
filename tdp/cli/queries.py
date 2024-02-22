@@ -449,7 +449,7 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
 
 def get_operation_records(
     session: Session, deployment_id: int, operation_name: str
-) -> list[OperationModel]:
+) -> list[OperationModel] | None:
     """Get an operation records.
 
     Args:
@@ -464,23 +464,18 @@ def get_operation_records(
         NoResultFound: If the operation or deployment ID does not exist.
     """
 
-    query = (
-        session.query(OperationModel)
-        .filter_by(deployment_id=deployment_id, operation=operation_name)
-        .all()
-    )
+    short_query = session.query(OperationModel).filter_by(deployment_id=deployment_id)
+    query = short_query.filter_by(operation=operation_name)
+    try:
+        if query.one():
+            return query.all()
 
-    if len(query) > 0:
-        return query
+    except NoResultFound as e:
 
-    elif (
-        session.query(DeploymentModel).filter_by(id=deployment_id).one_or_none() is None
-    ):
-        raise Exception(
-            f"deployment_id {deployment_id} does not exist"
-        ) from NoResultFound
+        if not short_query.first():
+            raise Exception(f"deployment id {deployment_id} does not exist") from e
 
-    else:
-        raise Exception(
-            f"Operation {operation_name} does not exist in deployment {deployment_id}."
-        ) from NoResultFound
+        else:
+            raise Exception(
+                f"operation {operation_name} does not exist in deployment {deployment_id}"
+            ) from e
