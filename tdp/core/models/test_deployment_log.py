@@ -18,7 +18,7 @@ from tdp.core.models.deployment_model import (
     DeploymentTypeEnum,
     NothingToResumeError,
 )
-from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag

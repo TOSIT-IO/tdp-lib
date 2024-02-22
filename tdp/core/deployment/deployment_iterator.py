@@ -14,13 +14,12 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.models import (
     DeploymentModel,
-    DeploymentStateEnum,
     NothingToReconfigureError,
     OperationModel,
-    OperationStateEnum,
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
+from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 

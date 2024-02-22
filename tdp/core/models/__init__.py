@@ -8,8 +8,6 @@ from sqlalchemy.engine.row import Row
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.deployment_model import (
     DeploymentModel,
-    DeploymentTypeEnum,
-    FilterTypeEnum,
     NoOperationMatchError,
     NothingToReconfigureError,
     NothingToResumeError,
@@ -19,7 +17,6 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.models.state_enum import DeploymentStateEnum, OperationStateEnum
 
 ServiceComponentHostStatus = tuple[
     str,  # service

@@ -13,6 +13,8 @@ from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
     DeploymentModel,
+)
+from tdp.core.models.enums import (
     DeploymentStateEnum,
     DeploymentTypeEnum,
     OperationStateEnum,
