@@ -112,8 +112,7 @@ def test_deployment_plan_with_filter_is_success(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for i, _ in enumerate(deployment_iterator):
-        fn = _[1]
+    for i, (op, fn) in enumerate(deployment_iterator):
         if fn:
             fn()
 
@@ -209,10 +208,7 @@ def test_service_log_not_emitted_when_config_start_wrong_order(
     )
     deployment_iterator = mock_deployment_runner.run(deployment)
 
-    for (
-        op,
-        fn,
-    ) in deployment_iterator:
+    for op, fn in deployment_iterator:
         if fn:
             fn()
 
