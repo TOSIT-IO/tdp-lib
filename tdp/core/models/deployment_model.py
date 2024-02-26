@@ -119,9 +119,10 @@ class DeploymentModel(BaseModel):
         )
 
         if filter_expression:
+            filter_type = filter_type or FilterTypeEnum.GLOB
             filter = FilterFactory.create_filter(
                 # Default to glob if no filter type is provided
-                filter_type or FilterTypeEnum.GLOB,
+                filter_type,
                 filter_expression,
             )
             operations = filter(operations)
