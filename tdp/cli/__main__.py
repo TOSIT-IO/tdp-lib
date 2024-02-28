@@ -19,11 +19,21 @@ from tdp.cli.commands.status import status
 from tdp.cli.commands.validate import validate
 from tdp.cli.commands.vars import vars
 from tdp.cli.logger import setup_logging
-from tdp.cli.utils import CatchGroup
 
 # Add `-h` shortcut to print the help for the whole cli.
 # Click only uses `--help` by default.
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+class CatchGroup(click.Group):
+    """Catch exceptions and print them to stderr."""
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.main(*args, **kwargs)
+
+        except Exception as e:
+            click.echo(f"Error: {e}", err=True)
 
 
 def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optional[Path]:
