@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
+from tdp.cli.params import collections_option, database_dsn_option
+from tdp.cli.params.plan import preview_option
 from tdp.cli.queries import (
     get_deployment,
     get_last_deployment,
     get_planned_deployment,
 )
-from tdp.cli.utils import collections, database_dsn, preview, print_deployment
+from tdp.cli.utils import print_deployment
 from tdp.core.models import DeploymentModel
 from tdp.dao import Dao
 
@@ -22,9 +24,9 @@ if TYPE_CHECKING:
 
 @click.command()
 @click.argument("id", required=False)
-@collections
-@database_dsn
-@preview
+@collections_option
+@database_dsn_option
+@preview_option
 def resume(
     collections: Collections,
     database_dsn: str,

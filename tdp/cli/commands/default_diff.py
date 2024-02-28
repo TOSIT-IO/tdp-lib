@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.utils import collections, vars
+from tdp.cli.params import collections_option, vars_option
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables, merge_hash
 
@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 
 @click.command()
 @click.argument("service", required=False)
-@collections
-@vars
+@collections_option
+@vars_option
 def default_diff(collections: Collections, vars: Path, service: Optional[str] = None):
     """Difference between tdp_vars and defaults."""
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)

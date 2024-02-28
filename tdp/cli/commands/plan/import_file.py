@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING
 
 import click
 
+from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.queries import get_planned_deployment
-from tdp.cli.utils import collections, database_dsn, parse_file
+from tdp.cli.utils import parse_file
 from tdp.core.models.deployment_model import DeploymentModel
 from tdp.dao import Dao
 
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 @click.command("import")
 @click.argument("file_name", nargs=1, required=True)
-@collections
-@database_dsn
+@collections_option
+@database_dsn_option
 def import_file(
     collections: Collections,
     database_dsn: str,

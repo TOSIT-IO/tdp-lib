@@ -7,13 +7,11 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
+from tdp.cli.params import collections_option, database_dsn_option
+from tdp.cli.params.plan import preview_option, rolling_interval_option
 from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import (
-    collections,
-    database_dsn,
-    preview,
     print_deployment,
-    rolling_interval,
 )
 from tdp.core.models import DeploymentModel
 from tdp.dao import Dao
@@ -23,10 +21,10 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@collections
-@database_dsn
-@preview
-@rolling_interval
+@collections_option
+@database_dsn_option
+@preview_option
+@rolling_interval_option
 def reconfigure(
     collections: Collections,
     database_dsn: str,

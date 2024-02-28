@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Optional
 import click
 import networkx as nx
 
-from tdp.cli.utils import collections
+from tdp.cli.params import collections_option
 from tdp.core.dag import Dag
 
 if TYPE_CHECKING:
@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Group nodes into cluster inside each service.",
 )
-@collections
+@collections_option
 def dag(
     collections: Collections,
     cluster: bool,

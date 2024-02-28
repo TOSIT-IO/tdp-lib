@@ -6,13 +6,18 @@ from typing import Optional
 
 import click
 
+from tdp.cli.params import database_dsn_option
 from tdp.cli.queries import (
     get_deployment,
     get_deployments,
     get_operation_records,
     get_planned_deployment,
 )
-from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
+from tdp.cli.utils import (
+    print_deployment,
+    print_object,
+    print_table,
+)
 from tdp.core.models import DeploymentModel, OperationModel
 from tdp.dao import Dao
 
@@ -46,7 +51,7 @@ from tdp.dao import Dao
     default=0,
     help="At which offset the database query should start.",
 )
-@database_dsn
+@database_dsn_option
 def browse(
     plan: bool,
     last: bool,

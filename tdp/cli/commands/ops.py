@@ -6,7 +6,7 @@ from collections.abc import Iterable
 import click
 from tabulate import tabulate
 
-from tdp.cli.utils import collections, hosts
+from tdp.cli.params import collections_option, hosts_option
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.operation import Operation
@@ -21,13 +21,13 @@ from tdp.core.operation import Operation
     is_flag=True,
     help="Only shows operations from the DAG.",
 )
-@hosts(help="Hosts where operations are launched. Can be used multiple times.")
+@hosts_option(help="Hosts where operations are launched. Can be used multiple times.")
 @click.option(
     "--topo-sort",
     is_flag=True,
     help="Display DAG operations in topological order.",
 )
-@collections
+@collections_option
 def ops(
     collections: Collections,
     display_dag_operations: bool,
