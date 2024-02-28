@@ -7,14 +7,10 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
+from tdp.cli.params import collections_option, database_dsn_option
+from tdp.cli.params.plan import preview_option, rolling_interval_option
 from tdp.cli.queries import get_planned_deployment
-from tdp.cli.utils import (
-    collections,
-    database_dsn,
-    preview,
-    print_deployment,
-    rolling_interval,
-)
+from tdp.cli.utils import print_deployment
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentModel
 from tdp.core.models.enums import FilterTypeEnum
@@ -71,10 +67,10 @@ def _validate_filtertype(
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
-@rolling_interval
-@preview
-@collections
-@database_dsn
+@rolling_interval_option
+@preview_option
+@collections_option
+@database_dsn_option
 def dag(
     sources: tuple[str],
     targets: tuple[str],

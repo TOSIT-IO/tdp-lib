@@ -7,11 +7,11 @@ from typing import Optional
 
 import click
 
-from tdp.cli.utils import (
-    collections,
-    database_dsn,
-    validate,
-    vars,
+from tdp.cli.params import (
+    collections_option,
+    database_dsn_option,
+    validate_option,
+    vars_option,
 )
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
@@ -34,10 +34,10 @@ logger = logging.getLogger(__name__)
     default="updated from `tdp vars edit` command",
     help="Validation message for the service repository.",
 )
-@collections
-@database_dsn
-@validate
-@vars
+@collections_option
+@database_dsn_option
+@validate_option
+@vars_option
 def edit(
     commit_message: str,
     collections: Collections,

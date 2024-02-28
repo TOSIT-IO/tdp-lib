@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from tdp.cli.utils import collections, vars
+from tdp.cli.params import collections_option, vars_option
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@collections
-@vars
+@collections_option
+@vars_option
 def validate(collections: Collections, vars: Path):
     """Validate TDP variables against the loaded collections schemas."""
     ClusterVariables.get_cluster_variables(collections, vars, validate=True)

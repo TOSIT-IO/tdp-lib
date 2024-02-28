@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING
 import click
 
 from tdp.cli.init_db import init_db
-from tdp.cli.utils import collections, database_dsn, validate, vars
+from tdp.cli.params import (
+    collections_option,
+    database_dsn_option,
+    validate_option,
+    vars_option,
+)
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -25,10 +30,10 @@ if TYPE_CHECKING:
     multiple=True,
     help="Path to TDP variables overrides. Can be used multiple times. Last one takes precedence.",
 )
-@collections
-@database_dsn
-@validate
-@vars(exists=False)
+@collections_option
+@database_dsn_option
+@validate_option
+@vars_option(exists=False)
 def init(
     overrides: tuple[Path],
     collections: Collections,

@@ -7,11 +7,14 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.commands.status.utils import (
-    _common_status_options,
-    _print_sch_status_logs,
+from tdp.cli.params import (
+    collections_option,
+    database_dsn_option,
+    validate_option,
+    vars_option,
 )
-from tdp.cli.utils import check_services_cleanliness
+from tdp.cli.params.status import component_argument_option, service_argument_option
+from tdp.cli.utils import check_services_cleanliness, print_sch_status_logs
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -22,7 +25,12 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@_common_status_options
+@service_argument_option
+@component_argument_option
+@collections_option
+@database_dsn_option
+@validate_option
+@vars_option
 def generate_stales(
     collections: Collections,
     database_dsn: str,
@@ -49,6 +57,6 @@ def generate_stales(
         dao.session.add_all(stale_status_logs)
         dao.session.commit()
 
-        _print_sch_status_logs(
+        print_sch_status_logs(
             dao.get_sch_status(service, component, filter_stale=True).values()
         )

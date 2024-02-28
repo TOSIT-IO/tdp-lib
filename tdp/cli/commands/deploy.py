@@ -8,16 +8,16 @@ from typing import TYPE_CHECKING
 
 import click
 
+from tdp.cli.params import (
+    collections_option,
+    database_dsn_option,
+    validate_option,
+    vars_option,
+)
 from tdp.cli.queries import (
     get_planned_deployment,
 )
-from tdp.cli.utils import (
-    check_services_cleanliness,
-    collections,
-    database_dsn,
-    validate,
-    vars,
-)
+from tdp.cli.utils import check_services_cleanliness
 from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models.enums import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
@@ -36,8 +36,8 @@ if TYPE_CHECKING:
     help="Force stale status update.",
 )
 @click.option("--dry", is_flag=True, help="Execute dag without running any action.")
-@collections
-@database_dsn
+@collections_option
+@database_dsn_option
 @click.option(
     "--mock-deploy",
     envvar="TDP_MOCK_DEPLOY",
@@ -51,8 +51,8 @@ if TYPE_CHECKING:
     help="Working directory where the executor is launched (`ansible-playbook` for Ansible).",
     required=True,
 )
-@validate
-@vars
+@validate_option
+@vars_option
 def deploy(
     dry: bool,
     collections: Collections,

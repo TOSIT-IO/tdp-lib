@@ -20,7 +20,7 @@ from pathlib import Path
 import click
 import networkx as nx
 
-from tdp.cli.utils import collections
+from tdp.cli.params import collections_option
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.dag import Dag
 from tdp.core.operation import Operation
@@ -42,7 +42,7 @@ from tdp.core.operation import Operation
     required=False,
     multiple=True,
 )
-@collections
+@collections_option
 def playbooks(services, output_dir, for_collection, collections):
     """Generate meta playbooks in order to use a TDP like collection without tdp-lib."""
     dag = Dag(collections)
