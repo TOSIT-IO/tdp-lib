@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import and_, case, func, or_
+from sqlalchemy import case, func
 from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
@@ -18,6 +18,28 @@ if TYPE_CHECKING:
     from sqlalchemy.orm.session import Session
 
     from tdp.core.models import SCHStatusRow
+
+
+def create_windowed_statement(column):
+    """Create a windowed query.
+
+    Args:
+        column: The column to window.
+
+    Returns:
+        The windowed query.
+    """
+    return func.first_value(column).over(
+        partition_by=(
+            SCHStatusLogModel.service,
+            SCHStatusLogModel.component,
+            SCHStatusLogModel.host,
+        ),
+        order_by=(
+            case((column == None, 0), else_=1).desc(),
+            SCHStatusLogModel.event_time.desc(),
+        ),
+    )
 
 
 def get_sch_status(
@@ -33,343 +55,24 @@ def get_sch_status(
     Returns:
         The cluster status.
     """
-    # Get the latest timestamps of non null values for each (service, component, host)
-    # combination.
-    latest_configured_version_timestamp_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            func.max(
-                case(
-                    (
-                        SCHStatusLogModel.configured_version != None,
-                        SCHStatusLogModel.event_time,
-                    )
-                )
-            ).label("latest_configured_version_timestamp"),
-        )
-        .group_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
-        .subquery()
+    base_columns = (
+        SCHStatusLogModel.service,
+        SCHStatusLogModel.component,
+        SCHStatusLogModel.host,
     )
-
-    latest_running_version_timestamp_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            func.max(
-                case(
-                    (
-                        SCHStatusLogModel.running_version != None,
-                        SCHStatusLogModel.event_time,
-                    )
-                )
-            ).label("latest_running_version_timestamp"),
-        )
-        .group_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
-        .subquery()
+    queryable_columns = (
+        SCHStatusLogModel.running_version,
+        SCHStatusLogModel.configured_version,
+        SCHStatusLogModel.to_config,
+        SCHStatusLogModel.to_restart,
     )
-
-    latest_to_config_timestamp_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            func.max(
-                case(
-                    (SCHStatusLogModel.to_config != None, SCHStatusLogModel.event_time)
-                )
-            ).label("latest_to_config_timestamp"),
-        )
-        .group_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
-        .subquery()
-    )
-
-    latest_to_restart_timestamp_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            func.max(
-                case(
-                    (SCHStatusLogModel.to_restart != None, SCHStatusLogModel.event_time)
-                )
-            ).label("latest_to_restart_timestamp"),
-        )
-        .group_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
-        .subquery()
-    )
-
-    # Get the latest values for each (service, component, host) combination.
-    latest_configured_version_value_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            SCHStatusLogModel.configured_version,
-            SCHStatusLogModel.event_time,
-        )
-        .join(
-            latest_configured_version_timestamp_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_configured_version_timestamp_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_configured_version_timestamp_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_configured_version_timestamp_subquery.c.host,
-                ),
-                # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLogModel.event_time
-                == latest_configured_version_timestamp_subquery.c.latest_configured_version_timestamp,
-            ),
-        )
-        .subquery()
-    )
-
-    latest_running_version_value_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            SCHStatusLogModel.running_version,
-            SCHStatusLogModel.event_time,
-        )
-        .join(
-            latest_running_version_timestamp_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_running_version_timestamp_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_running_version_timestamp_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_running_version_timestamp_subquery.c.host,
-                ),
-                # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLogModel.event_time
-                == latest_running_version_timestamp_subquery.c.latest_running_version_timestamp,
-            ),
-        )
-        .subquery()
-    )
-
-    latest_to_config_value_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            SCHStatusLogModel.to_config,
-            SCHStatusLogModel.event_time,
-        )
-        .join(
-            latest_to_config_timestamp_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_to_config_timestamp_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_to_config_timestamp_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_to_config_timestamp_subquery.c.host,
-                ),
-                # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLogModel.event_time
-                == latest_to_config_timestamp_subquery.c.latest_to_config_timestamp,
-            ),
-        )
-        .subquery()
-    )
-
-    latest_to_restart_value_subquery = (
-        session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            SCHStatusLogModel.to_restart,
-            SCHStatusLogModel.event_time,
-        )
-        .join(
-            latest_to_restart_timestamp_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_to_restart_timestamp_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_to_restart_timestamp_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_to_restart_timestamp_subquery.c.host,
-                ),
-                # Join based on matching timestamps for all the columns in the subquery.
-                SCHStatusLogModel.event_time
-                == latest_to_restart_timestamp_subquery.c.latest_to_restart_timestamp,
-            ),
-        )
-        .subquery()
-    )
-
-    # Individual query components
-    max_running_version = func.max(
-        latest_running_version_value_subquery.c.running_version
-    )
-    max_configured_version = func.max(
-        latest_configured_version_value_subquery.c.configured_version
-    )
-
-    bool_map = {True: 1, False: 0}
-    case_to_config = case(
-        bool_map, value=latest_to_config_value_subquery.c.to_config, else_=0
-    )
-
-    case_to_restart = case(
-        bool_map, value=latest_to_restart_value_subquery.c.to_restart, else_=0
-    )
-
-    max_to_config = func.max(case_to_config).label("max_to_config")
-    max_to_restart = func.max(case_to_restart).label("max_to_restart")
-
+    for column in queryable_columns:
+        base_columns += (create_windowed_statement(column).label(column.name),)
     return (
         session.query(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-            max_running_version,
-            max_configured_version,
-            max_to_config,
-            max_to_restart,
+            *base_columns,
         )
-        .outerjoin(
-            latest_running_version_value_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_running_version_value_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_running_version_value_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_running_version_value_subquery.c.host,
-                ),
-                SCHStatusLogModel.event_time
-                == latest_running_version_value_subquery.c.event_time,
-            ),
-        )
-        .outerjoin(
-            latest_configured_version_value_subquery,
-            and_(
-                SCHStatusLogModel.service
-                == latest_configured_version_value_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_configured_version_value_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host
-                    == latest_configured_version_value_subquery.c.host,
-                ),
-                SCHStatusLogModel.event_time
-                == latest_configured_version_value_subquery.c.event_time,
-            ),
-        )
-        .outerjoin(
-            latest_to_config_value_subquery,
-            and_(
-                SCHStatusLogModel.service == latest_to_config_value_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_to_config_value_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host == latest_to_config_value_subquery.c.host,
-                ),
-                SCHStatusLogModel.event_time
-                == latest_to_config_value_subquery.c.event_time,
-            ),
-        )
-        .outerjoin(
-            latest_to_restart_value_subquery,
-            and_(
-                SCHStatusLogModel.service == latest_to_restart_value_subquery.c.service,
-                # Check for null component or if they are equal
-                or_(
-                    SCHStatusLogModel.component == None,
-                    SCHStatusLogModel.component
-                    == latest_to_restart_value_subquery.c.component,
-                ),
-                # Check for null host or if they are equal
-                or_(
-                    SCHStatusLogModel.host == None,
-                    SCHStatusLogModel.host == latest_to_restart_value_subquery.c.host,
-                ),
-                SCHStatusLogModel.event_time
-                == latest_to_restart_value_subquery.c.event_time,
-            ),
-        )
-        .group_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
-        .order_by(
-            SCHStatusLogModel.service,
-            SCHStatusLogModel.component,
-            SCHStatusLogModel.host,
-        )
+        .distinct()
         .all()
     )
 
