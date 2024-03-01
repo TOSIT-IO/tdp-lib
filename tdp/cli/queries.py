@@ -3,10 +3,11 @@
 
 from __future__ import annotations
 
+from collections import namedtuple
 from operator import and_
 from typing import TYPE_CHECKING, Optional, Sequence
 
-from sqlalchemy import case, func, or_, select
+from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
@@ -41,13 +42,27 @@ def _create_last_value_statement(column, non_null=False):
     )
 
 
+SCHLatestStatus = namedtuple(
+    "SCHLatestStatus",
+    [
+        "service",
+        "component",
+        "host",
+        "latest_running_version",
+        "latest_configured_version",
+        "latest_to_config",
+        "latest_to_restart",
+    ],
+)
+
+
 def create_get_sch_latest_status_statement(
     service_to_filter: Optional[str] = None,
     component_to_filter: Optional[str] = None,
     host_to_filter: Optional[str] = None,
     include_stale: bool = True,
     include_not_stale: bool = True,
-):
+) -> Select[SCHLatestStatus]:
     """Create a query to get the cluster status.
 
     Args:
