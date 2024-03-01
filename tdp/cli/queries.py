@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from operator import and_
+from typing import TYPE_CHECKING, Optional, Sequence
 
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
@@ -20,31 +21,93 @@ if TYPE_CHECKING:
     from tdp.core.models import SCHStatusRow
 
 
-def create_windowed_statement(column):
-    """Create a windowed query.
+def _create_last_value_statement(column, non_null=False):
+    """Create a windowed query that returns last value of a column.
 
     Args:
-        column: The column to window.
-
-    Returns:
-        The windowed query.
+        column: The column to return the last value of.
+        non_null: Whether to return the last non-null value.
     """
+    order_by = SCHStatusLogModel.event_time.desc()
+    if non_null:
+        order_by = case((column == None, 0), else_=1).desc(), order_by
     return func.first_value(column).over(
         partition_by=(
             SCHStatusLogModel.service,
             SCHStatusLogModel.component,
             SCHStatusLogModel.host,
         ),
-        order_by=(
-            case((column == None, 0), else_=1).desc(),
-            SCHStatusLogModel.event_time.desc(),
-        ),
+        order_by=order_by,
     )
 
 
-def get_sch_status(
-    session: Session,
-) -> list[SCHStatusRow]:
+def create_get_sch_status_statement(
+    service_to_filter: Optional[str] = None,
+    component_to_filter: Optional[str] = None,
+    host_to_filter: Optional[str] = None,
+    include_stale: bool = True,
+    include_not_stale: bool = True,
+):
+    """Create a query to get the cluster status.
+
+    Args:
+        service_to_filter: The service to filter.
+        component_to_filter: The component to filter.
+        host_to_filter: The host to filter.
+        include_stale: Whether to include stale status.
+        include_not_stale: Whether to include not stale status.
+    """
+    subquery_filter = []
+    if service_to_filter:
+        subquery_filter.append(SCHStatusLogModel.service == service_to_filter)
+    if component_to_filter:
+        subquery_filter.append(SCHStatusLogModel.component == component_to_filter)
+    if host_to_filter:
+        subquery_filter.append(SCHStatusLogModel.host == host_to_filter)
+
+    subq = (
+        select(
+            SCHStatusLogModel.service,
+            SCHStatusLogModel.component,
+            SCHStatusLogModel.host,
+            _create_last_value_statement(
+                SCHStatusLogModel.running_version, non_null=True
+            ).label("latest_running_version"),
+            _create_last_value_statement(
+                SCHStatusLogModel.configured_version, non_null=True
+            ).label("latest_configured_version"),
+            _create_last_value_statement(
+                SCHStatusLogModel.to_config, non_null=True
+            ).label("latest_to_config"),
+            _create_last_value_statement(
+                SCHStatusLogModel.to_restart, non_null=True
+            ).label("latest_to_restart"),
+        )
+        .filter(*subquery_filter)
+        .distinct()
+        .subquery()
+    )
+
+    query_filter = []
+    if not include_stale:
+        query_filter.append(
+            and_(
+                subq.c.latest_to_config.is_not(True),
+                subq.c.latest_to_restart.is_not(True),
+            )
+        )
+    if not include_not_stale:
+        query_filter.append(
+            or_(
+                subq.c.latest_to_config.is_(True),
+                subq.c.latest_to_restart.is_(True),
+            )
+        )
+
+    return select(subq).filter(*query_filter)
+
+
+def get_sch_status(session: Session) -> Sequence[SCHStatusRow]:
     """Get cluster status.
 
     Recover the latest values for each (service, component, host) combination.
@@ -55,26 +118,8 @@ def get_sch_status(
     Returns:
         The cluster status.
     """
-    base_columns = (
-        SCHStatusLogModel.service,
-        SCHStatusLogModel.component,
-        SCHStatusLogModel.host,
-    )
-    queryable_columns = (
-        SCHStatusLogModel.running_version,
-        SCHStatusLogModel.configured_version,
-        SCHStatusLogModel.to_config,
-        SCHStatusLogModel.to_restart,
-    )
-    for column in queryable_columns:
-        base_columns += (create_windowed_statement(column).label(column.name),)
-    return (
-        session.query(
-            *base_columns,
-        )
-        .distinct()
-        .all()
-    )
+    stmt = create_get_sch_status_statement()
+    return session.execute(stmt).all()
 
 
 def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:
