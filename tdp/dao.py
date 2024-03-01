@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from typing import Iterable, Optional
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -34,8 +36,27 @@ class Dao:
         self._check_session()
         return self._session
 
-    def get_sch_status(self) -> ClusterStatus:
+    def get_sch_status(
+        self,
+        service: Optional[str] = None,
+        component: Optional[str] = None,
+        hosts: Optional[Iterable[str]] = None,
+        include_not_stale: bool = True,
+    ) -> ClusterStatus:
+        """Get the status of the cluster.
+
+        Args:
+            service: Service to filter.
+            component: Component to filter.
+            hosts: Hosts to filter.
+            include_not_stale: Should the result include components that are not stales.
+        """
         self._check_session()
-        stmt = create_get_sch_latest_status_statement()
+        stmt = create_get_sch_latest_status_statement(
+            service_to_filter=service,
+            component_to_filter=component,
+            hosts_to_filter=hosts,
+            include_not_stale=include_not_stale,
+        )
         res = self.session.execute(stmt).all()
         return ClusterStatus.from_sch_status_rows(res)
