@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Optional
 import click
 
 from tdp.cli.queries import get_planned_deployment
-from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
     database_dsn,
@@ -18,6 +17,7 @@ from tdp.cli.utils import (
     rolling_interval,
 )
 from tdp.core.models import DeploymentModel
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -57,9 +57,9 @@ def ops(
     if preview:
         print_deployment(deployment)
         return
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment = get_planned_deployment(session)
+    with Dao(database_dsn, commit_on_exit=True) as dao:
+        planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment:
             deployment.id = planned_deployment.id
-        session.merge(deployment)
+        dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")

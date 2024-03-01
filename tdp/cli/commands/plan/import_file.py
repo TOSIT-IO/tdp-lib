@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 import click
 
 from tdp.cli.queries import get_planned_deployment
-from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, parse_file
 from tdp.core.models.deployment_model import DeploymentModel
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -29,8 +29,8 @@ def import_file(
     file_name: str,
 ):
     """Import a deployment from a file."""
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment = get_planned_deployment(session)
+    with Dao(database_dsn, commit_on_exit=True) as dao:
+        planned_deployment = get_planned_deployment(dao.session)
         with open(file_name) as file:
             # Remove empty elements and comments
             # and get the operations, hosts and extra vars in a list
@@ -43,6 +43,6 @@ def import_file(
             # if a planned deployment is present, update it instead of creating it
             if planned_deployment:
                 deployment.id = planned_deployment.id
-            session.merge(deployment)
-            session.commit()
+            dao.session.merge(deployment)
+            dao.session.commit()
             click.echo("Deployment plan successfully imported.")

@@ -12,7 +12,6 @@ from tdp.cli.queries import (
     get_planned_deployment,
     get_sch_status,
 )
-from tdp.cli.session import get_session
 from tdp.cli.utils import (
     check_services_cleanliness,
     collections,
@@ -24,6 +23,7 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models.enums import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -71,8 +71,8 @@ def deploy(
     )
     check_services_cleanliness(cluster_variables)
 
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment = get_planned_deployment(session)
+    with Dao(database_dsn, commit_on_exit=True) as dao:
+        planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
@@ -85,7 +85,9 @@ def deploy(
                 dry=dry or mock_deploy,
             ),
             cluster_variables=cluster_variables,
-            cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
+            cluster_status=ClusterStatus.from_sch_status_rows(
+                get_sch_status(dao.session)
+            ),
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:
@@ -96,12 +98,12 @@ def deploy(
 
         # deployment and operations records are mutated by the iterator so we need to
         # commit them before iterating and at each iteration
-        session.commit()  # Update operation status to RUNNING
+        dao.session.commit()  # Update operation status to RUNNING
         for process_operation_fn in deployment_iterator:
-            session.commit()  # Update deployment and current operation status to RUNNING and next operations to PENDING
+            dao.session.commit()  # Update deployment and current operation status to RUNNING and next operations to PENDING
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
-                session.add_all(cluster_status_logs)
-            session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
+                dao.session.add_all(cluster_status_logs)
+            dao.session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
 
         if deployment_iterator.deployment.state != DeploymentStateEnum.SUCCESS:
             raise click.ClickException("Deployment failed.")

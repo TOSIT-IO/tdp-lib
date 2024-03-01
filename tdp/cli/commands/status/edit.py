@@ -12,7 +12,6 @@ from tdp.cli.commands.status.utils import (
     _print_sch_status_logs,
 )
 from tdp.cli.queries import get_sch_status
-from tdp.cli.session import get_session
 from tdp.cli.utils import check_services_cleanliness, hosts
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models.sch_status_log_model import (
@@ -20,6 +19,7 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogSourceEnum,
 )
 from tdp.core.variables import ClusterVariables
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -72,7 +72,7 @@ def edit(
     )
     check_services_cleanliness(cluster_variables)
 
-    with get_session(database_dsn) as session:
+    with Dao(database_dsn) as dao:
         if not service:
             raise click.UsageError("SERVICE argument is required.")
 
@@ -82,7 +82,7 @@ def edit(
 
         # Create a new SCHStatusLog for each host
         for host in hosts:
-            session.add(
+            dao.session.add(
                 SCHStatusLogModel(
                     service=service,
                     component=component,
@@ -104,11 +104,11 @@ def edit(
             override_msg += f" for {service}_{component} on {host}."
             click.echo(override_msg)
 
-        session.commit()
+        dao.session.commit()
 
         _print_sch_status_logs(
             ClusterStatus.from_sch_status_rows(
-                get_sch_status(session)
+                get_sch_status(dao.session)
             ).find_sch_statuses(
                 service=service, component=component, hosts=hosts, stale=False
             )

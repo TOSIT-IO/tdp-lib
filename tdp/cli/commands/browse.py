@@ -12,9 +12,9 @@ from tdp.cli.queries import (
     get_operation_records,
     get_planned_deployment,
 )
-from tdp.cli.session import get_session
 from tdp.cli.utils import database_dsn, print_deployment, print_object, print_table
 from tdp.core.models import DeploymentModel, OperationModel
+from tdp.dao import Dao
 
 
 @click.command()
@@ -57,10 +57,10 @@ def browse(
     operation: Optional[str] = None,
 ):
     """Browse deployments."""
-    with get_session(database_dsn) as session:
+    with Dao(database_dsn) as dao:
         # Print last deployment plan
         if plan:
-            deployment_plan = get_planned_deployment(session)
+            deployment_plan = get_planned_deployment(dao.session)
             if deployment_plan:
                 _print_deployment(deployment_plan)
             else:
@@ -68,7 +68,7 @@ def browse(
                 click.echo("Create a deployment plan using the `tdp plan` command")
             return
         elif last:
-            deployment = get_deployments(session, limit=1, offset=0)
+            deployment = get_deployments(dao.session, limit=1, offset=0)
             if deployment:
                 _print_deployment(deployment[0])
             else:
@@ -78,16 +78,18 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            _print_operations(get_operation_records(session, deployment_id, operation))
+            _print_operations(
+                get_operation_records(dao.session, deployment_id, operation)
+            )
             return
 
         # Print a specific deployment
         if deployment_id:
-            _print_deployment(get_deployment(session, deployment_id))
+            _print_deployment(get_deployment(dao.session, deployment_id))
             return
 
         # Print all deployments
-        _print_deployments(get_deployments(session, limit, offset))
+        _print_deployments(get_deployments(dao.session, limit, offset))
 
 
 def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
