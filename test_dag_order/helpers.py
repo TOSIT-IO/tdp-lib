@@ -5,13 +5,10 @@ import argparse
 import logging
 import pathlib
 from collections.abc import Generator, Iterable, Mapping
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, TextIO, Union
 
 import yaml
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.collection import (
     Collection,
@@ -29,27 +26,6 @@ from .constants import RULES_DIRECTORY_NAME
 logger = logging.getLogger(__name__)
 
 logger.setLevel(logging.DEBUG)
-
-
-@contextmanager
-def get_session(database_dsn: str) -> Generator[Session, None, None]:
-    """Get a SQLAlchemy session for use in a context manager.
-
-    Example:
-        with get_session(database_dsn) as session:
-            session.query(...)
-    """
-    engine = create_engine(database_dsn, echo=False, future=True)
-    session_maker = sessionmaker(bind=engine)
-    session = session_maker()
-
-    try:
-        yield session
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 # * Duplicated from tdp.core.models.test_deployment_log.py
