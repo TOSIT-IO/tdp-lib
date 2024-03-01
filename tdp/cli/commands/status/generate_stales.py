@@ -12,7 +12,6 @@ from tdp.cli.commands.status.utils import (
     _print_sch_status_logs,
 )
 from tdp.cli.utils import check_services_cleanliness
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -43,9 +42,7 @@ def generate_stales(
     check_services_cleanliness(cluster_variables)
 
     with Dao(database_dsn) as dao:
-        stale_status_logs = ClusterStatus.from_sch_status_rows(
-            dao.get_sch_status()
-        ).generate_stale_sch_logs(
+        stale_status_logs = dao.get_sch_status().generate_stale_sch_logs(
             cluster_variables=cluster_variables, collections=collections
         )
 
@@ -53,7 +50,7 @@ def generate_stales(
         dao.session.commit()
 
         _print_sch_status_logs(
-            ClusterStatus.from_sch_status_rows(dao.get_sch_status()).find_sch_statuses(
+            dao.get_sch_status().find_sch_statuses(
                 service=service, component=component, stale=True
             )
         )

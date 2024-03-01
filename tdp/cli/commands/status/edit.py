@@ -12,7 +12,6 @@ from tdp.cli.commands.status.utils import (
     _print_sch_status_logs,
 )
 from tdp.cli.utils import check_services_cleanliness, hosts
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -107,7 +106,7 @@ def edit(
 
     with Dao(database_dsn) as dao:
         _print_sch_status_logs(
-            ClusterStatus.from_sch_status_rows(dao.get_sch_status()).find_sch_statuses(
+            dao.get_sch_status().find_sch_statuses(
                 service=service, component=component, hosts=hosts, stale=False
             )
         )

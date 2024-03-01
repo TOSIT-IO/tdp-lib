@@ -15,7 +15,6 @@ from tdp.cli.utils import (
     print_deployment,
     rolling_interval,
 )
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.models import DeploymentModel
 from tdp.dao import Dao
 
@@ -39,7 +38,7 @@ def reconfigure(
     with Dao(database_dsn) as dao:
         deployment = DeploymentModel.from_stale_components(
             collections=collections,
-            cluster_status=ClusterStatus.from_sch_status_rows(dao.get_sch_status()),
+            cluster_status=dao.get_sch_status(),
             rolling_interval=rolling_interval,
         )
         if preview:
