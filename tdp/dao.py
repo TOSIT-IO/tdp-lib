@@ -42,6 +42,7 @@ class Dao:
         component: Optional[str] = None,
         hosts: Optional[Iterable[str]] = None,
         filter_stale: Optional[bool] = None,
+        filter_active: Optional[bool] = None,
     ) -> ClusterStatus:
         """Get the status of the cluster.
 
@@ -57,6 +58,7 @@ class Dao:
             component_to_filter=component,
             hosts_to_filter=hosts,
             filter_stale=filter_stale,
+            filter_active=filter_active,
         )
         res = self.session.execute(stmt).all()
         return ClusterStatus.from_sch_status_rows(res)

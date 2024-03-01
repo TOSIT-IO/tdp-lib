@@ -44,6 +44,11 @@ if TYPE_CHECKING:
     type=bool,
     help="Manually set the 'to_restart' value.",
 )
+@click.option(
+    "--is-active",
+    type=bool,
+    help="Manually set the 'is_active' value.",
+)
 def edit(
     collections: Collections,
     database_dsn: str,
@@ -55,11 +60,16 @@ def edit(
     message: Optional[str] = None,
     to_config: Optional[bool] = None,
     to_restart: Optional[bool] = None,
+    is_active: Optional[bool] = None,
 ) -> None:
     """Edit the status of the cluster.
 
     Provide a SERVICE and a COMPONENT (optional) to edit.
     """
+    if is_active is False and (to_config is not None or to_restart is not None):
+        raise click.UsageError(
+            "Setting `to-config` or `to-restart` won't have any effect if `is-active` is set to False."
+        )
     if to_config is not None and to_restart is not None:
         raise click.UsageError(
             "You must provide either `--to-config` or `--to-restart` option."
@@ -88,12 +98,15 @@ def edit(
                     source=SCHStatusLogSourceEnum.MANUAL,
                     to_config=to_config,
                     to_restart=to_restart,
+                    is_active=is_active,
                     message=message,
                 )
             )
 
             # Print the override message
             override_msg = "Setting"
+            if is_active is not None:
+                override_msg += f" is_active to {is_active}"
             if to_config is not None:
                 override_msg += f" to_config to {to_config}"
             if to_restart is not None:

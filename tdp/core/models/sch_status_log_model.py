@@ -51,6 +51,9 @@ class SCHStatusLogModel(BaseModel):
     to_restart: Mapped[Optional[bool]] = mapped_column(
         doc="True if the component need to be restarted."
     )
+    is_active: Mapped[Optional[bool]] = mapped_column(
+        doc="True (or None) if the component is active."
+    )
     source: Mapped[SCHStatusLogSourceEnum] = mapped_column(
         doc="Source of the status log.",
     )
