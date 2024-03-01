@@ -106,7 +106,10 @@ def edit(
 
     with Dao(database_dsn) as dao:
         _print_sch_status_logs(
-            dao.get_sch_status().find_sch_statuses(
-                service=service, component=component, hosts=hosts, stale=False
-            )
+            dao.get_sch_status(
+                service=service,
+                component=component,
+                hosts=hosts,
+                include_not_stale=False,
+            ).values()
         )

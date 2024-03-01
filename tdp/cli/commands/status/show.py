@@ -46,7 +46,7 @@ def show(
 
     with Dao(database_dsn) as dao:
         _print_sch_status_logs(
-            dao.get_sch_status().find_sch_statuses(
-                service=service, component=component, hosts=hosts, stale=stale
-            )
+            dao.get_sch_status(
+                service, component, hosts, include_not_stale=not stale
+            ).values()
         )
