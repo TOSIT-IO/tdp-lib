@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
-    ServiceComponentHostStatus,
 )
 from tdp.dao import Dao
 
@@ -65,7 +64,7 @@ def _mock_sch_status_log(
 
 def _last_values(
     logs: List["SCHStatusLogModel"],
-) -> ServiceComponentHostStatus:
+):
     """Return an SCHStatusLog holding the last non None value for each column from a list of logs."""
     return (
         logs[-1].service,

@@ -18,18 +18,6 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogSourceEnum,
 )
 
-ServiceComponentHostStatus = tuple[
-    str,  # service
-    Optional[str],  # component
-    Optional[str],  # host
-    Optional[str],  # running_version
-    Optional[str],  # configured_version
-    Optional[int],  # to_config
-    Optional[int],  # to_restart
-]
-
-SCHStatusRow = Row[ServiceComponentHostStatus]
-
 
 def init_database(engine):
     BaseModel.metadata.create_all(engine)

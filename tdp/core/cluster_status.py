@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Generator, Iterable, Mapping
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Sequence
+
+from sqlalchemy import Row
 
 from tdp.core.dag import Dag
 from tdp.core.models.sch_status_log_model import (
@@ -16,8 +18,8 @@ from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
+    from tdp.cli.queries import SCHLatestStatus
     from tdp.core.collections import Collections
-    from tdp.core.models import SCHStatusRow
     from tdp.core.variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
@@ -68,14 +70,8 @@ class SCHStatus:
         return bool(self.to_config or self.to_restart)
 
     @staticmethod
-    def from_sch_status_row(row: SCHStatusRow, /) -> SCHStatus:
-        """Create a SCHStatus from a SCHStatusRow.
-
-        Args:
-            row: SCHStatusRow.
-
-        Returns:
-            SCHStatus instance."""
+    def from_sch_status_row(row: Row[SCHLatestStatus], /) -> SCHStatus:
+        """Create a SCHStatus from a SCHLatestStatus row."""
         (
             service,
             component,
@@ -241,16 +237,9 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
     @staticmethod
     def from_sch_status_rows(
-        sch_status_rows: Iterable[SCHStatusRow], /
+        sch_status_rows: Sequence[Row[SCHLatestStatus]], /
     ) -> ClusterStatus:
-        """Get an instance of ClusterStatus from a list of SCHStatusRow.
-
-        Args:
-            cluster_status_log: List of SCHStatusRow.
-
-        Returns:
-            ClusterStatus instance.
-        """
+        """Get an instance of ClusterStatus from a list of SCHLatestStatus rows."""
         cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
         for row in sch_status_rows:
             sch_status = SCHStatus.from_sch_status_row(row)
