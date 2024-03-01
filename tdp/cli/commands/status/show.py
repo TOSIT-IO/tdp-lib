@@ -33,6 +33,18 @@ def _filter_stale(stale: Optional[bool], no_stale: Optional[bool]) -> Optional[b
         return None
 
 
+def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional[bool]:
+    """Return the filter_active argument for get_sch_status."""
+    if active is False and inactive is False:
+        raise click.UsageError("Either --active or --inactive must be True.")
+    elif active and inactive:
+        return None
+    elif inactive and not active:
+        return False
+    else:
+        return True
+
+
 @click.command()
 @_common_status_options
 @hosts(help="Host to filter. Can be used multiple times.")
@@ -40,12 +52,18 @@ def _filter_stale(stale: Optional[bool], no_stale: Optional[bool]) -> Optional[b
 @click.option(
     "--no-stale", is_flag=True, default=None, help="Filter non stale components."
 )
+@click.option("--active", is_flag=True, default=None, help="Filter active components.")
+@click.option(
+    "--inactive", is_flag=True, default=None, help="Filter inactive components."
+)
 def show(
     collections: Collections,
     database_dsn: str,
     hosts: tuple[str],
     stale: bool,
     no_stale: bool,
+    active: Optional[bool],
+    inactive: Optional[bool],
     validate: bool,
     vars: Path,
     service: Optional[str] = None,
@@ -57,6 +75,9 @@ def show(
 
     --stale/--no-stale is used to select only stale or non-stale components. By default,
     both are printed (same as using both flags).
+
+    --active/--inactive is used to select only active or inactive components. By default
+    only active components are printed.
     """
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=validate
@@ -66,6 +87,10 @@ def show(
     with Dao(database_dsn) as dao:
         _print_sch_status_logs(
             dao.get_sch_status(
-                service, component, hosts, filter_stale=_filter_stale(stale, no_stale)
+                service,
+                component,
+                hosts,
+                filter_stale=_filter_stale(stale, no_stale),
+                filter_active=_filter_active(active, inactive),
             ).values()
         )

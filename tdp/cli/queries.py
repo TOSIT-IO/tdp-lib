@@ -51,6 +51,7 @@ SCHLatestStatus = namedtuple(
         "latest_configured_version",
         "latest_to_config",
         "latest_to_restart",
+        "latest_is_active",
     ],
 )
 
@@ -60,6 +61,7 @@ def create_get_sch_latest_status_statement(
     component_to_filter: Optional[str] = None,
     hosts_to_filter: Optional[Iterable[str]] = None,
     filter_stale: Optional[bool] = None,
+    filter_active: Optional[bool] = None,
 ) -> Select[SCHLatestStatus]:
     """Create a query to get the cluster status.
 
@@ -95,6 +97,9 @@ def create_get_sch_latest_status_statement(
             _create_last_value_statement(
                 SCHStatusLogModel.to_restart, non_null=True
             ).label("latest_to_restart"),
+            _create_last_value_statement(
+                SCHStatusLogModel.is_active, non_null=True
+            ).label("latest_is_active"),
         )
         .filter(*subquery_filter)
         .distinct()
@@ -116,6 +121,11 @@ def create_get_sch_latest_status_statement(
                 subq.c.latest_to_restart.is_not(True),
             )
         )
+
+    if filter_active is True:
+        query_filter.append(subq.c.latest_is_active.is_not(False))
+    elif filter_active is False:
+        query_filter.append(subq.c.latest_is_active.is_(False))
 
     return select(subq).filter(*query_filter)
 

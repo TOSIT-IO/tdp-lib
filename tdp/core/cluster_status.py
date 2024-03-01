@@ -80,6 +80,7 @@ class SCHStatus:
             configured_version,
             to_config,
             to_restart,
+            is_active,
         ) = row
         return SCHStatus(
             service=service,
