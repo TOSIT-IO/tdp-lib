@@ -41,7 +41,7 @@ def _create_last_value_statement(column, non_null=False):
     )
 
 
-def create_get_sch_status_statement(
+def create_get_sch_latest_status_statement(
     service_to_filter: Optional[str] = None,
     component_to_filter: Optional[str] = None,
     host_to_filter: Optional[str] = None,
@@ -118,7 +118,7 @@ def get_sch_status(session: Session) -> Sequence[SCHStatusRow]:
     Returns:
         The cluster status.
     """
-    stmt = create_get_sch_status_statement()
+    stmt = create_get_sch_latest_status_statement()
     return session.execute(stmt).all()
 
 
