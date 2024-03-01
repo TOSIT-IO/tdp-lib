@@ -323,7 +323,7 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        stale_sch_statuses = cluster_status.find_sch_statuses(stale=True)
+        stale_sch_statuses = cluster_status.find_stale_sch_statuses()
 
         # Associate config and/or restart operation with their host
         operation_hosts: set[tuple[str, Optional[str]]] = set()

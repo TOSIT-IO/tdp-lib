@@ -349,41 +349,9 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
         return set(stale_sch_logs_dict.values())
 
-    def find_sch_statuses(
-        self,
-        *,
-        service: Optional[str] = None,
-        component: Optional[str] = None,
-        hosts: Optional[Iterable[str]] = None,
-        stale: Optional[bool] = False,
-        to_config: Optional[bool] = None,
-        to_restart: Optional[bool] = None,
-    ) -> Generator[SCHStatus, None, None]:
-        """Find sch statuses based on the given criteria.
-
-        Args:
-            service: Service name.
-            component: Component name.
-            hosts: Host names.
-            stale: Whether to return stale sch, i.e. sch that need to be configured or restarted.
-            to_config: Whether to return sch that need to be configured.
-            to_restart: Whether to return sch that need to be restarted.
-
-        Returns:
-            Generator of ServiceComponentHostStatus.
-        """
-        return (
-            sch_status
-            for sch_status in self.values()
-            if (
-                (not service or sch_status.service == service)
-                and (not component or sch_status.component == component)
-                and (not hosts or sch_status.host in list(hosts))
-                and (not stale or sch_status.to_config or sch_status.to_restart)
-                and (to_config is None or sch_status.to_config is to_config)
-                and (to_restart is None or sch_status.to_restart is to_restart)
-            )
-        )
+    def find_stale_sch_statuses(self) -> Generator[SCHStatus, None, None]:
+        """Find sch statuses that are stale."""
+        return (sch_status for sch_status in self.values() if sch_status.is_stale)
 
     def update_sch(
         self,
