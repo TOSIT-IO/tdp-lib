@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.queries import get_planned_deployment, get_sch_status
+from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import (
     collections,
     database_dsn,
@@ -36,12 +36,10 @@ def reconfigure(
 ):
     """Reconfigure required TDP services."""
     click.echo("Creating a deployment plan to reconfigure services.")
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(database_dsn) as dao:
         deployment = DeploymentModel.from_stale_components(
             collections=collections,
-            cluster_status=ClusterStatus.from_sch_status_rows(
-                get_sch_status(dao.session)
-            ),
+            cluster_status=ClusterStatus.from_sch_status_rows(dao.get_sch_status()),
             rolling_interval=rolling_interval,
         )
         if preview:

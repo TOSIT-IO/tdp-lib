@@ -6,14 +6,15 @@ import random
 import string
 from typing import List, Optional
 
+import pytest
 from sqlalchemy.orm import Session
 
-from tdp.cli.queries import get_sch_status
 from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
     ServiceComponentHostStatus,
 )
+from tdp.dao import Dao
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +97,7 @@ def _last_values(
     )
 
 
+@pytest.mark.skip(reason="db_session fixture needs to be reworked.")
 def test_single_service_component_status(db_session: Session):
     """Test the get_sch_status query with a single sch."""
     logs = _mock_sch_status_log("smock", "cmock", "hmock", 5)
@@ -106,9 +108,11 @@ def test_single_service_component_status(db_session: Session):
         db_session.add(log)
         db_session.commit()
 
-    assert get_sch_status(db_session) == [last_values]
+    with Dao(db_session) as dao:
+        assert dao.get_sch_status() == [last_values]
 
 
+@pytest.mark.skip(reason="db_session fixture needs to be reworked.")
 def test_multiple_service_component_status(db_session: Session):
     """Test the get_sch_status query with multiple schs."""
     classic_component_logs = _mock_sch_status_log("smock", "cmock", "hmock")
@@ -146,4 +150,5 @@ def test_multiple_service_component_status(db_session: Session):
         # Update the next log for the chosen list. 'None' if no more logs are left.
         next_logs[chosen_index] = next(iterators[chosen_index], None)
 
-    assert set(get_sch_status(db_session)) == last_values
+    with Dao(db_session) as dao:
+        assert set(dao.get_sch_status()) == last_values

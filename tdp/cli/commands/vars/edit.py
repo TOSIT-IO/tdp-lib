@@ -7,7 +7,6 @@ from typing import Optional
 
 import click
 
-from tdp.cli.queries import get_sch_status
 from tdp.cli.utils import (
     collections,
     database_dsn,
@@ -139,7 +138,7 @@ def edit(
         # Generate stale component list and save it to the database
         with Dao(database_dsn) as dao:
             stale_status_logs = ClusterStatus.from_sch_status_rows(
-                get_sch_status(dao.session)
+                dao.get_sch_status()
             ).generate_stale_sch_logs(
                 cluster_variables=cluster_variables, collections=collections
             )

@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import namedtuple
 from collections.abc import Iterable
 from operator import and_
-from typing import TYPE_CHECKING, Optional, Sequence
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.exc import NoResultFound
@@ -19,8 +19,6 @@ from tdp.core.models import (
 
 if TYPE_CHECKING:
     from sqlalchemy.orm.session import Session
-
-    from tdp.core.models import SCHStatusRow
 
 
 def _create_last_value_statement(column, non_null=False):
@@ -121,21 +119,6 @@ def create_get_sch_latest_status_statement(
         )
 
     return select(subq).filter(*query_filter)
-
-
-def get_sch_status(session: Session) -> Sequence[SCHStatusRow]:
-    """Get cluster status.
-
-    Recover the latest values for each (service, component, host) combination.
-
-    Args:
-        session: The database session.
-
-    Returns:
-        The cluster status.
-    """
-    stmt = create_get_sch_latest_status_statement()
-    return session.execute(stmt).all()
 
 
 def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:

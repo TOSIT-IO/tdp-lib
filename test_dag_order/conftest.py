@@ -14,7 +14,6 @@ from typing import TYPE_CHECKING, Any, cast
 import pytest
 from sqlalchemy import create_engine
 
-from tdp.cli.queries import get_sch_status
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
@@ -24,9 +23,10 @@ from tdp.core.deployment.test_deployment_runner import MockExecutor
 from tdp.core.models import DeploymentModel, init_database
 from tdp.core.operation import Operation
 from tdp.core.variables import ClusterVariables
+from tdp.dao import Dao
 
 from .constants import RULES_KEYS
-from .helpers import append_collection_list_action, get_session
+from .helpers import append_collection_list_action
 
 if TYPE_CHECKING:
     from .helpers import CollectionToTest
@@ -147,24 +147,24 @@ def populated_database_dsn(
     collections: Collections,
 ) -> str:
     """Populated database with a full DAG deployment"""
-    with get_session(database_dsn) as session:
+    with Dao(database_dsn) as dao:
         # plan a deployment for the whole DAG
         planned_deployment = DeploymentModel.from_dag(dag)
-        session.add(planned_deployment)
-        session.commit()
+        dao.session.add(planned_deployment)
+        dao.session.commit()
         # run the deployment
         deployment_iterator = DeploymentRunner(
             collections=collections,
             executor=MockExecutor(),
             cluster_variables=cluster_variables,
-            cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
+            cluster_status=ClusterStatus.from_sch_status_rows(dao.get_sch_status()),
         ).run(planned_deployment)
         for process_operation_fn in deployment_iterator:
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
-                session.add_all(cluster_status_logs)
+                dao.session.add_all(cluster_status_logs)
                 for cluster_status_log in cluster_status_logs:
                     logger.info(f"Adding {cluster_status_log}")
-            session.commit()
+            dao.session.commit()
     return database_dsn
 
 
@@ -192,15 +192,15 @@ def plan_reconfigure(
     ) as var_files:
         var_files[source_filename]["foo"] = "bar"
     # update the cluster status in the database
-    with get_session(populated_database_dsn) as session:
+    with Dao(populated_database_dsn) as dao:
         stale_status_logs = ClusterStatus.from_sch_status_rows(
-            get_sch_status(session)
+            dao.get_sch_status()
         ).generate_stale_sch_logs(
             cluster_variables=cluster_variables, collections=collections
         )
-        session.add_all(stale_status_logs)
-        session.commit()
-        cluster_status = ClusterStatus.from_sch_status_rows(get_sch_status(session))
+        dao.session.add_all(stale_status_logs)
+        dao.session.commit()
+        cluster_status = ClusterStatus.from_sch_status_rows(dao.get_sch_status())
     # return the deployment plan (it is neither persisted in the database nor executed)
     return DeploymentModel.from_stale_components(collections, cluster_status)
 

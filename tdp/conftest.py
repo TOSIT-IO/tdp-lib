@@ -21,6 +21,7 @@ from tdp.core.models import BaseModel
 DATABASE_URL = "sqlite:///:memory:"
 
 
+# TODO: This fixture should return a database dsn
 @pytest.fixture()
 def db_session() -> Generator[Session, None, None]:
     # Connect to the database

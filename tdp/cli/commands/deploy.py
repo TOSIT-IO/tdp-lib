@@ -10,7 +10,6 @@ import click
 
 from tdp.cli.queries import (
     get_planned_deployment,
-    get_sch_status,
 )
 from tdp.cli.utils import (
     check_services_cleanliness,
@@ -85,9 +84,7 @@ def deploy(
                 dry=dry or mock_deploy,
             ),
             cluster_variables=cluster_variables,
-            cluster_status=ClusterStatus.from_sch_status_rows(
-                get_sch_status(dao.session)
-            ),
+            cluster_status=ClusterStatus.from_sch_status_rows(dao.get_sch_status()),
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:
