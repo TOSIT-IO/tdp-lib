@@ -159,8 +159,8 @@ def populated_database_dsn(
             cluster_variables=cluster_variables,
             cluster_status=ClusterStatus.from_sch_status_rows(get_sch_status(session)),
         ).run(planned_deployment)
-        for cluster_status_logs in deployment_iterator:
-            if cluster_status_logs and any(cluster_status_logs):
+        for process_operation_fn in deployment_iterator:
+            if process_operation_fn and (cluster_status_logs := process_operation_fn()):
                 session.add_all(cluster_status_logs)
                 for cluster_status_log in cluster_status_logs:
                     logger.info(f"Adding {cluster_status_log}")
