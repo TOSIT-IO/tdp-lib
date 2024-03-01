@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import click
 
-from tdp.cli.session import init_db
+from tdp.cli.init_db import init_db
 from tdp.cli.utils import collections, database_dsn, validate, vars
 from tdp.core.variables import ClusterVariables
 

@@ -8,7 +8,6 @@ from typing import Optional
 import click
 
 from tdp.cli.queries import get_sch_status
-from tdp.cli.session import get_session
 from tdp.cli.utils import (
     collections,
     database_dsn,
@@ -22,6 +21,7 @@ from tdp.core.repository.repository import EmptyCommit
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
+from tdp.dao import Dao
 
 logger = logging.getLogger(__name__)
 
@@ -137,13 +137,13 @@ def edit(
         click.echo(f"{variables_file.name} successfully updated")
 
         # Generate stale component list and save it to the database
-        with get_session(database_dsn) as session:
+        with Dao(database_dsn) as dao:
             stale_status_logs = ClusterStatus.from_sch_status_rows(
-                get_sch_status(session)
+                get_sch_status(dao.session)
             ).generate_stale_sch_logs(
                 cluster_variables=cluster_variables, collections=collections
             )
-            session.add_all(stale_status_logs)
-            session.commit()
+            dao.session.add_all(stale_status_logs)
+            dao.session.commit()
 
         break

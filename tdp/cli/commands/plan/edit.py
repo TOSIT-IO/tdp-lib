@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 import click
 
 from tdp.cli.queries import get_planned_deployment
-from tdp.cli.session import get_session
 from tdp.cli.utils import collections, database_dsn, parse_file
 from tdp.core.models.deployment_model import DeploymentModel
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -72,8 +72,8 @@ def edit(
     database_dsn: str,
 ):
     """Edit the planned deployment."""
-    with get_session(database_dsn, commit_on_exit=True) as session:
-        planned_deployment = get_planned_deployment(session)
+    with Dao(database_dsn, commit_on_exit=True) as dao:
+        planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
@@ -135,8 +135,8 @@ def edit(
                         )
 
                         deployment.id = planned_deployment.id
-                        session.merge(deployment)
-                        session.commit()
+                        dao.session.merge(deployment)
+                        dao.session.commit()
                         click.echo("Deployment plan successfully modified.")
                         break
                     except Exception as e:

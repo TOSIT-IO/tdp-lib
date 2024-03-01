@@ -12,10 +12,10 @@ from tdp.cli.commands.status.utils import (
     _print_sch_status_logs,
 )
 from tdp.cli.queries import get_sch_status
-from tdp.cli.session import get_session
 from tdp.cli.utils import check_services_cleanliness, hosts
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.variables import ClusterVariables
+from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -46,10 +46,10 @@ def show(
     )
     check_services_cleanliness(cluster_variables)
 
-    with get_session(database_dsn) as session:
+    with Dao(database_dsn) as dao:
         _print_sch_status_logs(
             ClusterStatus.from_sch_status_rows(
-                get_sch_status(session)
+                get_sch_status(dao.session)
             ).find_sch_statuses(
                 service=service, component=component, hosts=hosts, stale=stale
             )
