@@ -13,7 +13,6 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.repository.repository import EmptyCommit
@@ -137,9 +136,7 @@ def edit(
 
         # Generate stale component list and save it to the database
         with Dao(database_dsn) as dao:
-            stale_status_logs = ClusterStatus.from_sch_status_rows(
-                dao.get_sch_status()
-            ).generate_stale_sch_logs(
+            stale_status_logs = dao.get_sch_status().generate_stale_sch_logs(
                 cluster_variables=cluster_variables, collections=collections
             )
             dao.session.add_all(stale_status_logs)

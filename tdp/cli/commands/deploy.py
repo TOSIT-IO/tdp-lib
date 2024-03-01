@@ -18,7 +18,6 @@ from tdp.cli.utils import (
     validate,
     vars,
 )
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment import DeploymentRunner, Executor
 from tdp.core.models.enums import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
@@ -84,7 +83,7 @@ def deploy(
                 dry=dry or mock_deploy,
             ),
             cluster_variables=cluster_variables,
-            cluster_status=ClusterStatus.from_sch_status_rows(dao.get_sch_status()),
+            cluster_status=dao.get_sch_status(),
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:

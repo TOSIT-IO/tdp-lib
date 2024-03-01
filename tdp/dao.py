@@ -1,13 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Sequence
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from tdp.cli.queries import create_get_sch_latest_status_statement
-from tdp.core.models import SCHStatusRow
+from tdp.core.cluster_status import ClusterStatus
 
 
 class Dao:
@@ -36,7 +34,8 @@ class Dao:
         self._check_session()
         return self._session
 
-    def get_sch_status(self) -> Sequence[SCHStatusRow]:
+    def get_sch_status(self) -> ClusterStatus:
         self._check_session()
         stmt = create_get_sch_latest_status_statement()
-        return self.session.execute(stmt).all()
+        res = self.session.execute(stmt).all()
+        return ClusterStatus.from_sch_status_rows(res)
