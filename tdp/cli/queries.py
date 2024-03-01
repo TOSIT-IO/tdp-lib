@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from collections import namedtuple
+from collections.abc import Iterable
 from operator import and_
 from typing import TYPE_CHECKING, Optional, Sequence
 
@@ -59,7 +60,7 @@ SCHLatestStatus = namedtuple(
 def create_get_sch_latest_status_statement(
     service_to_filter: Optional[str] = None,
     component_to_filter: Optional[str] = None,
-    host_to_filter: Optional[str] = None,
+    hosts_to_filter: Optional[Iterable[str]] = None,
     include_stale: bool = True,
     include_not_stale: bool = True,
 ) -> Select[SCHLatestStatus]:
@@ -77,8 +78,8 @@ def create_get_sch_latest_status_statement(
         subquery_filter.append(SCHStatusLogModel.service == service_to_filter)
     if component_to_filter:
         subquery_filter.append(SCHStatusLogModel.component == component_to_filter)
-    if host_to_filter:
-        subquery_filter.append(SCHStatusLogModel.host == host_to_filter)
+    if hosts_to_filter:
+        subquery_filter.append(SCHStatusLogModel.host.in_(hosts_to_filter))
 
     subq = (
         select(
