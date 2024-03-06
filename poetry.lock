@@ -1408,6 +1408,22 @@ tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-alembic"
+version = "0.11.0"
+description = "A pytest plugin for verifying alembic migrations."
+optional = false
+python-versions = ">=3.6,<4"
+files = [
+    {file = "pytest_alembic-0.11.0-py3-none-any.whl", hash = "sha256:bce543dae00eec8b69b283105d48e0b3e1cc31ca721b0a8c46cb4710e7aa0ec8"},
+    {file = "pytest_alembic-0.11.0.tar.gz", hash = "sha256:4f4237c06598226b2bc58df8154a8aed29f7efadd7157ee3a946f81585532627"},
+]
+
+[package.dependencies]
+alembic = "*"
+pytest = ">=6.0"
+sqlalchemy = "*"
+
+[[package]]
 name = "pytest-xdist"
 version = "3.5.0"
 description = "pytest xdist plugin for distributed testing, most importantly across multiple CPUs"
@@ -1952,4 +1968,4 @@ visualization = ["matplotlib", "pydot"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<4.0"
-content-hash = "bd30f742c9dd22b5b4cf73079c0b90f0511d9cd422a1de54f0d1c02d12673016"
+content-hash = "36f9736d4176a5555255cb1c3e3e6b2c6af562db4163aa453f517dbc8670df54"
