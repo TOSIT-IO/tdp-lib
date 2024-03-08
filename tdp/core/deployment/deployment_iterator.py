@@ -166,7 +166,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
             component_name=operation.component_name,
         )
         is_sc_stale = self._cluster_status.is_sc_stale(
-            sc_name, sc_hosts=operation.host_names
+            sc_name, sc_hosts=operation.playbook.hosts if operation.playbook else None
         )
 
         if is_sc_stale:
@@ -196,9 +196,9 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
 
         # fmt: off
         hosts = (
-            [None] if operation.noop  # A noop operation doesn't have any host
+            [None] if operation.playbook==None or operation.noop  # A noop operation doesn't have any host
             else [operation_rec.host] if operation_rec.host  # Only one operation is launched on a single host
-            else operation.host_names  # Host is not specified, hence the operation is launched on all host
+            else operation.playbook.hosts  # Host is not specified, hence the operation is launched on all host
         )
         # fmt: on
 

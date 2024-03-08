@@ -54,7 +54,11 @@ class DeploymentRunner:
         operation = self._collections.get_operation(operation_rec.operation)
 
         # Check if the operation is available for the given host
-        if operation_rec.host and operation_rec.host not in operation.host_names:
+        if (
+            operation.playbook is None
+            or operation_rec.host
+            and operation_rec.host not in operation.playbook.hosts
+        ):
             logs = (
                 f"Operation '{operation_rec.operation}' not available for host "
                 + f"'{operation_rec.host}'"

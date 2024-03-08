@@ -11,6 +11,7 @@ from tdp.core.constants import (
     OPERATION_NAME_MAX_LENGTH,
     SERVICE_NAME_MAX_LENGTH,
 )
+from tdp.core.entities.operation import Playbook
 
 # service operation: <service>_<action>
 RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
@@ -29,36 +30,40 @@ class Operation:
     Args:
         action: Name of the action.
         name: Name of the operation.
+        playbook: Playbook where the operation is defined.
         collection_name: Name of the collection where the operation is defined.
         component: Name of the component.
         depends_on: List of operations that must be executed before this one.
         noop: If True, the operation will not be executed.
         service: Name of the service.
-        host_names: Set of host names where the operation can be launched.
     """
 
     def __init__(
         self,
         name: str,
+        playbook: Optional[Playbook] = None,
         collection_name: Optional[str] = None,
         depends_on: Optional[list[str]] = None,
         noop: bool = False,
-        host_names: Optional[set[str]] = None,
     ):
         """Create a new Operation.
 
         Args:
             name: Name of the operation.
+            playbook: Playbook where the operation is defined.
             collection_name: Name of the collection where the operation is defined.
             depends_on: List of operations that must be executed before this one.
             noop: If True, the operation will not be executed.
-            host_names: Set of host names where the operation can be launched.
         """
         self.name = name
+        self.playbook = playbook
         self.collection_name = collection_name
         self.depends_on = depends_on or []
         self.noop = noop
-        self.host_names = host_names or set()
+        if playbook:
+            host_names = playbook.hosts
+        else:
+            host_names = set()
 
         if len(name) > OPERATION_NAME_MAX_LENGTH:
             raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}")
@@ -96,7 +101,7 @@ class Operation:
                 f"component {self.component_name} is longer than {COMPONENT_NAME_MAX_LENGTH}"
             )
 
-        for host_name in self.host_names:
+        for host_name in host_names:
             if len(host_name) > HOST_NAME_MAX_LENGTH:
                 raise ValueError(
                     f"host {host_name} is longer than {HOST_NAME_MAX_LENGTH}"
@@ -109,10 +114,10 @@ class Operation:
     def __repr__(self):
         return (
             f"Operation(name={self.name}, "
+            f"playbook={self.playbook}, "
             f"collection_name={self.collection_name}, "
             f"depends_on={self.depends_on}, "
             f"noop={self.noop}, "
-            f"host_names={self.host_names})"
         )
 
     def __eq__(self, other: Any) -> bool:

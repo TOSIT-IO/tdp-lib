@@ -111,11 +111,10 @@ class Collections(Mapping[str, Collection]):
                 # The read_operation is associated with a playbook defined in the
                 # current collection
                 if playbook := collection.playbooks.get(dag_node.name):
-                    # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
                     dag_operation_to_register = Operation(
                         name=dag_node.name,
                         collection_name=collection.name,
-                        host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
+                        playbook=playbook,
                         depends_on=dag_node.depends_on.copy(),
                     )
                     # If the operation is already registered, merge its dependencies
@@ -150,10 +149,10 @@ class Collections(Mapping[str, Collection]):
                 # Create and register the operation
                 dag_operations[dag_node.name] = Operation(
                     name=dag_node.name,
+                    playbook=None,
                     collection_name=collection.name,
                     depends_on=dag_node.depends_on.copy(),
                     noop=True,
-                    host_names=None,
                 )
                 # 'restart' and 'stop' operations are not defined in the DAG file
                 # for noop, they need to be generated from the start operations
@@ -166,19 +165,19 @@ class Collections(Mapping[str, Collection]):
                     restart_operation_name = dag_node.name.replace("_start", "_restart")
                     other_operations[restart_operation_name] = Operation(
                         name=restart_operation_name,
+                        playbook=None,
                         collection_name="replace_restart_noop",
                         depends_on=dag_node.depends_on.copy(),
                         noop=True,
-                        host_names=None,
                     )
                     # Create and register the stop operation
                     stop_operation_name = dag_node.name.replace("_start", "_stop")
                     other_operations[stop_operation_name] = Operation(
                         name=stop_operation_name,
+                        playbook=None,
                         collection_name="replace_stop_noop",
                         depends_on=dag_node.depends_on.copy(),
                         noop=True,
-                        host_names=None,
                     )
 
         # We can't merge the two for loops to handle the case where a playbook operation
@@ -198,7 +197,7 @@ class Collections(Mapping[str, Collection]):
                     )
                 other_operations[operation_name] = Operation(
                     name=operation_name,
-                    host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
+                    playbook=playbook,
                     collection_name=collection.name,
                 )
 
@@ -274,7 +273,7 @@ class Collections(Mapping[str, Collection]):
                 or operation.is_service_operation()
             ):
                 continue
-            for host in operation.host_names:
+            for host in operation.playbook.hosts if operation.playbook else set():
                 result.add(
                     ServiceComponentHostName(
                         ServiceComponentName(service_name, operation.component_name),
@@ -339,11 +338,14 @@ class Collections(Mapping[str, Collection]):
         """
         for operation_name in operation_names:
             operation = self.get_operation(operation_name)
-            for host_name in host_names:
-                if host_name not in operation.host_names:
-                    raise MissingHostForOperationError(
-                        f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.host_names}"
-                    )
+            if operation.playbook is None:
+                raise Exception("The operation has no playbook.")
+            else:
+                for host_name in host_names:
+                    if host_name not in operation.playbook.hosts:
+                        raise MissingHostForOperationError(
+                            f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.playbook.hosts}"
+                        )
 
     def get_operation_or_none(
         self, service_component_name: ServiceComponentName, action_name: str

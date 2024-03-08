@@ -326,7 +326,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
             if operation.action_name not in ["config", "restart"]:
                 continue
 
-            for host in operation.host_names:
+            for host in operation.playbook.hosts if operation.playbook else set():
                 stale_sch_log = stale_sch_logs_dict.setdefault(
                     ServiceComponentHostName(
                         service_component_name=ServiceComponentName(

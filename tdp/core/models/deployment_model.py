@@ -157,7 +157,8 @@ class DeploymentModel(BaseModel):
             can_perform_rolling_restart = (
                 rolling_interval is not None
                 and operation.action_name == "restart"
-                and operation.host_names
+                and operation.playbook
+                and operation.playbook.hosts
             )
             deployment.operations.append(
                 OperationModel(
@@ -228,13 +229,14 @@ class DeploymentModel(BaseModel):
             can_perform_rolling_restart = (
                 rolling_interval is not None
                 and operation.action_name == "restart"
-                and operation.host_names
+                and operation.playbook
+                and operation.playbook.hosts
             )
             for host_name in host_names or (
                 # if restart operation with rolling and no host is specified,
                 # run on all hosts
-                operation.host_names
-                if can_perform_rolling_restart
+                operation.playbook.hosts
+                if operation.playbook and can_perform_rolling_restart
                 else [None]
             ):
                 deployment.operations.append(
