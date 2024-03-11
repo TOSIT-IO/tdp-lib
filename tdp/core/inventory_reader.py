@@ -56,7 +56,7 @@ class InventoryReader:
         # so we convert them to "str"
         return [str(host) for host in self.inventory.get_hosts(*args, **kwargs)]
 
-    def get_hosts_from_playbook(self, fd: TextIO) -> set[str]:
+    def get_hosts_from_playbook(self, fd: TextIO) -> frozenset[str]:
         """Takes a playbook content, read all plays inside and return a set
         of matching host like "ansible-playbook --list-hosts playbook.yml".
 
@@ -64,7 +64,7 @@ class InventoryReader:
             fd: file-like object from which the playbook content must be read.
 
         Returns:
-            Set of hosts.
+            Frozenset of hosts.
         """
         plays = yaml.load(fd, Loader=Loader)
         if not isinstance(plays, list):
@@ -81,4 +81,4 @@ class InventoryReader:
                 )
             hosts.update(self.get_hosts(play["hosts"]))
 
-        return hosts
+        return frozenset(hosts)

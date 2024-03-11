@@ -218,7 +218,7 @@ def get_collection_playbooks(
 
 def read_hosts_from_playbook(
     playbook_path: Path, inventory_reader: Optional[InventoryReader]
-) -> set[str]:
+) -> frozenset[str]:
     """Read the hosts from a playbook.
 
     Args:
@@ -226,7 +226,7 @@ def read_hosts_from_playbook(
         inventory_reader: Inventory reader.
 
     Returns:
-        Set of hosts.
+        frozenset of hosts.
     """
     if not inventory_reader:
         inventory_reader = InventoryReader()

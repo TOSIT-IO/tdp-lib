@@ -11,7 +11,7 @@ from tdp.core.constants import HOST_NAME_MAX_LENGTH
 class Playbook:
     path: Path
     collection_name: str
-    hosts: set[str]  # TODO: would be better to use a frozenset
+    hosts: frozenset[str]
 
     def __post_init__(self):
         for host_name in self.hosts:

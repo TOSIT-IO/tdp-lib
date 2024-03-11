@@ -47,7 +47,7 @@ def ops(
             for operation in dag.get_all_operations()
             if len(hosts) == 0
             or operation.playbook
-            and bool(set(operation.playbook.hosts) & set(hosts))
+            and bool(operation.playbook.hosts & set(hosts))
         ]
         if topo_sort:
             sorted_operations = dag.topological_sort_key(
@@ -62,7 +62,7 @@ def ops(
             for operation in collections.operations.values()
             if len(hosts) == 0
             or operation.playbook
-            and bool(set(operation.playbook.hosts) & set(hosts))
+            and bool(operation.playbook.hosts & set(hosts))
         ]
         sorted_operations = sorted(operations, key=lambda operation: operation.name)
         _print_operations(sorted_operations)
