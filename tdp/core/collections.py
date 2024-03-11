@@ -19,7 +19,6 @@ from collections.abc import Mapping, Sequence
 from tdp.core.collection import Collection
 from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
-from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.schema.exceptions import InvalidSchemaError, SchemaNotFoundError
 from tdp.core.variables.schema.service_schema import ServiceSchema
@@ -241,36 +240,3 @@ class Collections(Mapping[str, Collection]):
             if operation.service_name == service_name
             and not operation.is_service_operation()
         }
-
-    def get_components_hosts_from_service(
-        self, service_name: str
-    ) -> set[ServiceComponentHostName]:
-        """Retrieve the distinct components with host associated with a specific
-        service.
-
-        This method fetches and returns the unique component names tied to a given
-        service. The input service is not returned.
-
-        Args:
-            service_name: The name of the service for which to retrieve associated
-              components.
-
-        Returns:
-            A set containing the unique names of components related to the provided
-              service.
-        """
-        result = set()
-        for operation in self.operations.values():
-            if (
-                operation.service_name != service_name
-                or operation.is_service_operation()
-            ):
-                continue
-            for host in operation.host_names:
-                result.add(
-                    ServiceComponentHostName(
-                        ServiceComponentName(service_name, operation.component_name),
-                        host,
-                    )
-                )
-        return result
