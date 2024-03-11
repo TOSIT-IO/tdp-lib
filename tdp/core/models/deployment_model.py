@@ -292,8 +292,8 @@ class DeploymentModel(BaseModel):
                     [host_name],
                 )
             else:
-                collections.check_operations_exist(
-                    [operation_name],
+                collections.check_operation_exists(
+                    operation_name,
                 )
 
             deployment.operations.append(
@@ -433,7 +433,8 @@ class DeploymentModel(BaseModel):
             for operation in failed_deployment.operations[failed_operation_id:]
         ]
         operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
-        collections.check_operations_exist(operations_names_to_resume)
+        for operation_name_to_resume in operations_names_to_resume:
+            collections.check_operation_exists(operation_name_to_resume)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RESUME,
             options={
