@@ -18,6 +18,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Optional
 
 from tdp.core.collection import Collection
+from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
 from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
@@ -78,19 +79,19 @@ class Collections(Mapping[str, Collection]):
         )
 
     @property
-    def dag_operations(self) -> dict[str, Operation]:
+    def dag_operations(self) -> Operations:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
 
     @property
-    def other_operations(self) -> dict[str, Operation]:
+    def other_operations(self) -> Operations:
         """Mapping of operation name that aren't in dag files to their Operation instance."""
         return self._other_operations
 
     @property
-    def operations(self) -> dict[str, Operation]:
+    def operations(self) -> Operations:
         """Mapping of all operation name to Operation instance."""
-        operations = {}
+        operations = Operations()
         if self._dag_operations:
             operations.update(self._dag_operations)
         if self._other_operations:
@@ -99,9 +100,9 @@ class Collections(Mapping[str, Collection]):
 
     def _init_operations(
         self, collections: Mapping[str, Collection]
-    ) -> tuple[dict[str, Operation], dict[str, Operation]]:
-        dag_operations: dict[str, Operation] = {}
-        other_operations: dict[str, Operation] = {}
+    ) -> tuple[Operations, Operations]:
+        dag_operations = Operations()
+        other_operations = Operations()
 
         for collection in collections.values():
             # Load DAG operations from the dag files
