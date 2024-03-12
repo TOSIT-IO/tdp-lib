@@ -78,8 +78,7 @@ class ServiceVariables:
         """Path of the service repository."""
         return self.repository.path
 
-    # TODO: rename to `get_component_variables`
-    def get_variables(self, component_name: str) -> dict:
+    def get_component_variables(self, component_name: str) -> dict | None:
         """Get the variables for a component.
 
         Args:
