@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from tdp.core.cluster_status import SCHStatus
     from tdp.core.collections import Collections
     from tdp.core.repository.repository import Repository
-    from tdp.core.service_component_host_name import ServiceComponentHostName
+    from tdp.core.service_component_name import ServiceComponentName
 
 logger = logging.getLogger(__name__)
 
@@ -190,7 +190,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
     def get_modified_sch(
         self,
         sch_statuses: Iterable[SCHStatus],
-    ) -> set[ServiceComponentHostName]:
+    ) -> set[ServiceComponentName]:
         """Get the list of modified sch.
 
         Args:
@@ -202,7 +202,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         Raises:
             RuntimeError: If a service is deployed but its repository is missing.
         """
-        modified_sch: set[ServiceComponentHostName] = set()
+        modified_sch: set[ServiceComponentName] = set()
         for status in sch_statuses:
             # Check if the service exist
             if status.service not in self.keys():
@@ -212,16 +212,15 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
                 )
 
             sch = status.get_sch_name()
-            sc = sch.service_component_name
 
             # Skip if no newer version is available
             if status.configured_version and not self[
-                sc.service_name
-            ].is_sc_modified_from_version(sc, status.configured_version):
+                sch.service_name
+            ].is_sc_modified_from_version(sch, status.configured_version):
                 continue
 
             logger.debug(
-                f"{sc.full_name} has been modified"
+                f"{sch.full_name} has been modified"
                 + (f" for host {sch.host_name}" if sch.host_name else "")
             )
 

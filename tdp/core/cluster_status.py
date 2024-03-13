@@ -12,7 +12,6 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
@@ -96,11 +95,9 @@ class SCHStatus:
         )
 
     # ? transform into a property if we keep it?
-    def get_sch_name(self) -> ServiceComponentHostName:
+    def get_sch_name(self) -> ServiceComponentName:
         """Get the service component host name."""
-        return ServiceComponentHostName(
-            ServiceComponentName(self.service, self.component), self.host
-        )
+        return ServiceComponentName(self.service, self.component, self.host)
 
     def update(
         self,
@@ -206,18 +203,18 @@ class SCHStatus:
         return self.__str__()
 
 
-class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
+class ClusterStatus(Mapping[ServiceComponentName, SCHStatus]):
     """Hold what component version are deployed."""
 
     def __init__(
         self,
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus],
+        cluster_status_dict: dict[ServiceComponentName, SCHStatus],
         /,
     ):
         """Initialize a ClusterStatus object.
 
         Args:
-            cluster_status_dict: Dictionary of ServiceComponentHostName to ServiceComponentStatus.
+            cluster_status_dict: Dictionary of ServiceComponentName to ServiceComponentStatus.
         """
         self._cluster_status_dict = cluster_status_dict
 
@@ -251,7 +248,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             ClusterStatus instance.
         """
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
+        cluster_status_dict: dict[ServiceComponentName, SCHStatus] = {}
         for row in sch_status_rows:
             sch_status = SCHStatus.from_sch_status_row(row)
             cluster_status_dict[sch_status.get_sch_name()] = sch_status
@@ -278,7 +275,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             Set of SCHStatusLog.
         """
-        stale_sch_logs_dict: dict[ServiceComponentHostName, SCHStatusLogModel] = {}
+        stale_sch_logs_dict: dict[ServiceComponentName, SCHStatusLogModel] = {}
         source_reconfigure_operations: set[str] = set()
 
         modified_sch = cluster_variables.get_modified_sch(self.values())
@@ -287,8 +284,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         if len(modified_sch) == 0:
             return set()
 
-        for sch in modified_sch:
-            sc = sch.service_component_name
+        for sc in modified_sch:
 
             config_operation = collections.get_operation_or_none(sc, "config")
             start_operation = collections.get_operation_or_none(sc, "start")
@@ -303,10 +299,10 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
             # Create SCHStatusLog for modified sch
             if config_operation or restart_operation:
-                stale_sch_log = stale_sch_logs_dict[sch] = SCHStatusLogModel(
+                stale_sch_log = stale_sch_logs_dict[sc] = SCHStatusLogModel(
                     service=sc.service_name,
                     component=sc.component_name,
-                    host=sch.host_name,
+                    host=sc.host_name,
                     source=SCHStatusLogSourceEnum.STALE,
                 )
                 if config_operation:
@@ -328,11 +324,9 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
             for host in operation.host_names:
                 stale_sch_log = stale_sch_logs_dict.setdefault(
-                    ServiceComponentHostName(
-                        service_component_name=ServiceComponentName(
-                            service_name=operation.service_name,
-                            component_name=operation.component_name,
-                        ),
+                    ServiceComponentName(
+                        service_name=operation.service_name,
+                        component_name=operation.component_name,
                         host_name=host,
                     ),
                     SCHStatusLogModel(
@@ -387,7 +381,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
 
     def update_sch(
         self,
-        sch: ServiceComponentHostName,
+        sc: ServiceComponentName,
         /,
         *,
         action_name: str,
@@ -405,15 +399,16 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             ClusterStatusLog if the status was updated, None otherwise.
         """
-        service = sch.service_component_name.service_name
-        component = sch.service_component_name.component_name
+        service = sc.service_name
+        component = sc.component_name
+        host = sc.host_name
 
         sch_status = self.setdefault(
-            sch,
+            sc,
             SCHStatus(
                 service=service,
                 component=component,
-                host=sch.host_name,
+                host=host,
             ),
         )
 
@@ -449,7 +444,12 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
             True if the service component is stale, False otherwise.
         """
         for host in sc_hosts or [None]:
-            sch_status = self.get(ServiceComponentHostName(sc_name, host), None)
+            sch_status = self.get(
+                ServiceComponentName(
+                    sc_name.service_name, sc_name.component_name, host
+                ),
+                None,
+            )
             if sch_status and sch_status.is_stale:
                 return True
         return False

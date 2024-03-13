@@ -20,7 +20,6 @@ from tdp.core.models import (
     SCHStatusLogSourceEnum,
 )
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
-from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
@@ -205,7 +204,9 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
         # Update the cluster status for each host
         for host in hosts:
             sch_status_log = self._cluster_status.update_sch(
-                ServiceComponentHostName(sc_name, host),
+                ServiceComponentName(
+                    operation.service_name, operation.component_name, host
+                ),
                 action_name=operation.action_name,
                 version=self._cluster_variables[operation.service_name].version,
                 can_update_stale=can_update_stale,

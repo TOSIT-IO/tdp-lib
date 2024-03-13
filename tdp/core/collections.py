@@ -19,7 +19,6 @@ from typing import Optional
 
 from tdp.core.collection import Collection
 from tdp.core.operation import Operation
-from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.schema.exceptions import InvalidSchemaError, SchemaNotFoundError
 from tdp.core.variables.schema.service_schema import ServiceSchema
@@ -252,7 +251,7 @@ class Collections(Mapping[str, Collection]):
 
     def get_components_hosts_from_service(
         self, service_name: str
-    ) -> set[ServiceComponentHostName]:
+    ) -> set[ServiceComponentName]:
         """Retrieve the distinct components with host associated with a specific
         service.
 
@@ -276,10 +275,7 @@ class Collections(Mapping[str, Collection]):
                 continue
             for host in operation.host_names:
                 result.add(
-                    ServiceComponentHostName(
-                        ServiceComponentName(service_name, operation.component_name),
-                        host,
-                    )
+                    ServiceComponentName(service_name, operation.component_name, host)
                 )
         return result
 

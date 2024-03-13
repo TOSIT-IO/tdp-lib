@@ -8,9 +8,15 @@ from typing import Any, Optional
 class ServiceComponentName:
     """Represent a service or a component name."""
 
-    def __init__(self, service_name: str, component_name: Optional[str] = None):
+    def __init__(
+        self,
+        service_name: str,
+        component_name: Optional[str] = None,
+        host_name: Optional[str] = None,
+    ):
         self.service_name = service_name
         self.component_name = component_name
+        self.host_name = host_name
 
     @property
     def full_name(self) -> str:
@@ -27,7 +33,9 @@ class ServiceComponentName:
         return self.component_name is None
 
     @staticmethod
-    def from_full_name(full_name: str) -> "ServiceComponentName":
+    def from_full_name(
+        full_name: str, host_name: Optional[str] = None
+    ) -> "ServiceComponentName":
         """Factory method to build ServiceComponentName from a full name.
 
         Args:
@@ -38,10 +46,10 @@ class ServiceComponentName:
         """
         [service_name, *component_name] = full_name.split("_", 1)
         component_name = component_name[0] if component_name else None
-        return ServiceComponentName(service_name, component_name)
+        return ServiceComponentName(service_name, component_name, host_name)
 
     def __repr__(self) -> str:
-        return f"ServiceComponentName({self.service_name}, {self.component_name})"
+        return f"ServiceComponentName({self.service_name}, {self.component_name}, {self.host_name})"
 
     def __str__(self) -> str:
         return self.full_name
