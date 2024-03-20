@@ -41,7 +41,7 @@ class Dao:
         service: Optional[str] = None,
         component: Optional[str] = None,
         hosts: Optional[Iterable[str]] = None,
-        include_not_stale: bool = True,
+        filter_stale: Optional[bool] = None,
     ) -> ClusterStatus:
         """Get the status of the cluster.
 
@@ -49,14 +49,14 @@ class Dao:
             service: Service to filter.
             component: Component to filter.
             hosts: Hosts to filter.
-            include_not_stale: Should the result include components that are not stales.
+            filter_stale: Whether to filter stale statuses.
         """
         self._check_session()
         stmt = create_get_sch_latest_status_statement(
             service_to_filter=service,
             component_to_filter=component,
             hosts_to_filter=hosts,
-            include_not_stale=include_not_stale,
+            filter_stale=filter_stale,
         )
         res = self.session.execute(stmt).all()
         return ClusterStatus.from_sch_status_rows(res)
