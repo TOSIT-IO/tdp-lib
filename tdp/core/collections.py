@@ -15,7 +15,6 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Optional
 
 from tdp.core.collection import Collection
 from tdp.core.entities.operation import Operations
@@ -329,21 +328,3 @@ class Collections(Mapping[str, Collection]):
                     raise MissingHostForOperationError(
                         f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.host_names}"
                     )
-
-    def get_operation_or_none(
-        self, service_component_name: ServiceComponentName, action_name: str
-    ) -> Optional[Operation]:
-        """Get an operation by its name.
-
-        Args:
-            service_component_name: Name of the service.
-            action_name: Name of the action.
-
-        Returns:
-            The Operation instance.
-        """
-        operation_name = f"{service_component_name.full_name}_{action_name}"
-        try:
-            return self.get_operation(operation_name)
-        except MissingOperationError:
-            return None

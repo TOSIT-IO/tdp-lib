@@ -280,9 +280,9 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         for sch in modified_sch:
             sc = sch.service_component_name
 
-            config_operation = collections.get_operation_or_none(sc, "config")
-            start_operation = collections.get_operation_or_none(sc, "start")
-            restart_operation = collections.get_operation_or_none(sc, "restart")
+            config_operation = collections.operations.get(f"{sc.full_name}_config")
+            start_operation = collections.operations.get(f"{sc.full_name}_start")
+            restart_operation = collections.operations.get(f"{sc.full_name}_restart")
 
             # Add the config and start operations to the source_reconfigure_operations set
             # to get the descendants of these operations
