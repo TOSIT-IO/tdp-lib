@@ -47,6 +47,13 @@ class UnsupportedDeploymentTypeError(Exception):
     pass
 
 
+class MissingOperationError(Exception):
+
+    def __init__(self, operation_name: str):
+        self.operation_name = operation_name
+        super().__init__(f"Operation {operation_name} not found.")
+
+
 class DeploymentModel(BaseModel):
     """Deployment model.
 
@@ -292,9 +299,8 @@ class DeploymentModel(BaseModel):
                     [host_name],
                 )
             else:
-                collections.check_operation_exists(
-                    operation_name,
-                )
+                if operation_name not in collections.operations:
+                    raise MissingOperationError(operation_name)
 
             deployment.operations.append(
                 OperationModel(
@@ -434,7 +440,8 @@ class DeploymentModel(BaseModel):
         ]
         operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
         for operation_name_to_resume in operations_names_to_resume:
-            collections.check_operation_exists(operation_name_to_resume)
+            if operation_name_to_resume not in collections.operations:
+                raise MissingOperationError(operation_name_to_resume)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RESUME,
             options={

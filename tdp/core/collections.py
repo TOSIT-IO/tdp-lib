@@ -292,22 +292,11 @@ class Collections(Mapping[str, Collection]):
         Returns:
             The Operation instance.
         """
-        self.check_operation_exists(operation_name)
-        return self.operations[operation_name]
-
-    def check_operation_exists(self, operation_name: str) -> None:
-        """Check that an operation exists.
-
-        Args:
-            operation_name: Name of the operation.
-
-        Raises:
-            MissingOperationError: If the operation is missing.
-        """
         if operation_name not in self.operations:
             raise MissingOperationError(
                 f"Operation {operation_name} not found in collections."
             )
+        return self.operations[operation_name]
 
     def check_operations_hosts_exist(
         self, operation_names: Iterable[str], host_names: Iterable[str]
