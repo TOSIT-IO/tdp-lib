@@ -35,7 +35,7 @@ def reconfigure(
 ):
     """Reconfigure required TDP services."""
     click.echo("Creating a deployment plan to reconfigure services.")
-    with Dao(database_dsn) as dao:
+    with Dao(database_dsn, commit_on_exit=True) as dao:
         deployment = DeploymentModel.from_stale_components(
             collections=collections,
             cluster_status=dao.get_sch_status(),
