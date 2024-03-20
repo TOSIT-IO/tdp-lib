@@ -27,10 +27,6 @@ from tdp.core.variables.schema.service_schema import ServiceSchema
 logger = logging.getLogger(__name__)
 
 
-class MissingOperationError(Exception):
-    pass
-
-
 class MissingHostForOperationError(Exception):
     pass
 
@@ -283,21 +279,6 @@ class Collections(Mapping[str, Collection]):
                 )
         return result
 
-    def get_operation(self, operation_name: str) -> Operation:
-        """Get an operation by its name.
-
-        Args:
-            operation_name: Name of the operation.
-
-        Returns:
-            The Operation instance.
-        """
-        if operation_name not in self.operations:
-            raise MissingOperationError(
-                f"Operation {operation_name} not found in collections."
-            )
-        return self.operations[operation_name]
-
     def check_operations_hosts_exist(
         self, operation_names: Iterable[str], host_names: Iterable[str]
     ) -> None:
@@ -311,7 +292,7 @@ class Collections(Mapping[str, Collection]):
             MissingHostForOperationError: If a host name is missing for an operation.
         """
         for operation_name in operation_names:
-            operation = self.get_operation(operation_name)
+            operation = self.operations[operation_name]
             for host_name in host_names:
                 if host_name not in operation.host_names:
                     raise MissingHostForOperationError(

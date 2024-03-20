@@ -210,7 +210,7 @@ class DeploymentModel(BaseModel):
             UnsupportedOperationError: If an operation is a noop.
             ValueError: If an operation is not found in the collections.
         """
-        operations = [collections.get_operation(o) for o in operation_names]
+        operations = [collections.operations[o] for o in operation_names]
         if host_names is not None:
             collections.check_operations_hosts_exist(
                 operation_names,
