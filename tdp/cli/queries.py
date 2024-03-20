@@ -59,8 +59,7 @@ def create_get_sch_latest_status_statement(
     service_to_filter: Optional[str] = None,
     component_to_filter: Optional[str] = None,
     hosts_to_filter: Optional[Iterable[str]] = None,
-    include_stale: bool = True,
-    include_not_stale: bool = True,
+    filter_stale: Optional[bool] = None,
 ) -> Select[SCHLatestStatus]:
     """Create a query to get the cluster status.
 
@@ -68,8 +67,8 @@ def create_get_sch_latest_status_statement(
         service_to_filter: The service to filter.
         component_to_filter: The component to filter.
         host_to_filter: The host to filter.
-        include_stale: Whether to include stale status.
-        include_not_stale: Whether to include not stale status.
+        filter_stale: Whether to filter stale status.
+          True for stale, False for not stale, None for all.
     """
     subquery_filter = []
     if service_to_filter:
@@ -103,18 +102,18 @@ def create_get_sch_latest_status_statement(
     )
 
     query_filter = []
-    if not include_stale:
-        query_filter.append(
-            and_(
-                subq.c.latest_to_config.is_not(True),
-                subq.c.latest_to_restart.is_not(True),
-            )
-        )
-    if not include_not_stale:
+    if filter_stale is True:
         query_filter.append(
             or_(
                 subq.c.latest_to_config.is_(True),
                 subq.c.latest_to_restart.is_(True),
+            )
+        )
+    elif filter_stale is False:
+        query_filter.append(
+            and_(
+                subq.c.latest_to_config.is_not(True),
+                subq.c.latest_to_restart.is_not(True),
             )
         )
 

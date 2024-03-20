@@ -50,5 +50,5 @@ def generate_stales(
         dao.session.commit()
 
         _print_sch_status_logs(
-            dao.get_sch_status(service, component, include_not_stale=False).values()
+            dao.get_sch_status(service, component, filter_stale=True).values()
         )

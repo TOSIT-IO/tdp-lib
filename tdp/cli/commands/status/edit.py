@@ -110,6 +110,6 @@ def edit(
                 service=service,
                 component=component,
                 hosts=hosts,
-                include_not_stale=False,
+                filter_stale=True,
             ).values()
         )
