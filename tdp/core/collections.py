@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 from collections import OrderedDict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 from tdp.core.collection import Collection
 from tdp.core.entities.operation import Operations
@@ -25,10 +25,6 @@ from tdp.core.variables.schema.exceptions import InvalidSchemaError, SchemaNotFo
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 logger = logging.getLogger(__name__)
-
-
-class MissingHostForOperationError(Exception):
-    pass
 
 
 class Collections(Mapping[str, Collection]):
@@ -278,23 +274,3 @@ class Collections(Mapping[str, Collection]):
                     )
                 )
         return result
-
-    def check_operations_hosts_exist(
-        self, operation_names: Iterable[str], host_names: Iterable[str]
-    ) -> None:
-        """Check that all operations exist and hosts exist for all operations.
-
-        Args:
-            operation_names: Iterable of operation names to check.
-            host_names: Iterable of host names to check for each operation.
-
-        Raises:
-            MissingHostForOperationError: If a host name is missing for an operation.
-        """
-        for operation_name in operation_names:
-            operation = self.operations[operation_name]
-            for host_name in host_names:
-                if host_name not in operation.host_names:
-                    raise MissingHostForOperationError(
-                        f"Host {host_name} not found for operation {operation.name}. Valid hosts are {operation.host_names}"
-                    )

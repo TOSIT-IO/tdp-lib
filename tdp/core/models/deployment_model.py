@@ -27,6 +27,7 @@ from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
+    from tdp.core.operation import Operation
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,17 @@ class MissingOperationError(Exception):
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
         super().__init__(f"Operation {operation_name} not found.")
+
+
+class MissingHostForOperationError(Exception):
+
+    def __init__(self, operation: Operation, host_name: str):
+        self.operation = operation
+        self.host_name = host_name
+        super().__init__(
+            f"Host {host_name} not found for operation {operation.name}."
+            f"Available hosts are {operation.host_names}."
+        )
 
 
 class DeploymentModel(BaseModel):
@@ -211,11 +223,10 @@ class DeploymentModel(BaseModel):
             ValueError: If an operation is not found in the collections.
         """
         operations = [collections.operations[o] for o in operation_names]
-        if host_names is not None:
-            collections.check_operations_hosts_exist(
-                operation_names,
-                host_names,
-            )
+        for host in host_names or []:
+            for operation in operations:
+                if host not in operation.host_names:
+                    raise MissingHostForOperationError(operation, host)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             options={
@@ -293,10 +304,12 @@ class DeploymentModel(BaseModel):
             operation_host_vars_names, start=1
         ):
             operation_name, host_name, var_names = operation_host_vars
-            if host_name is not None:
-                collections.check_operations_hosts_exist(
-                    [operation_name],
-                    [host_name],
+            if (
+                host_name
+                and host_name not in collections.operations[operation_name].host_names
+            ):
+                raise MissingHostForOperationError(
+                    collections.operations[operation_name], host_name
                 )
             else:
                 if operation_name not in collections.operations:
