@@ -51,7 +51,7 @@ class DeploymentRunner:
         """
         operation_rec.start_time = datetime.utcnow()
 
-        operation = self._collections.get_operation(operation_rec.operation)
+        operation = self._collections.operations[operation_rec.operation]
 
         # Check if the operation is available for the given host
         if operation_rec.host and operation_rec.host not in operation.host_names:

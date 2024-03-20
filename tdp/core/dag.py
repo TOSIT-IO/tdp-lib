@@ -149,7 +149,7 @@ class Dag:
             node = node.replace("_start", "_restart")
         elif stop and node.endswith("_start"):
             node = node.replace("_start", "_stop")
-        return self.collections.get_operation(node)
+        return self.collections.operations[node]
 
     def topological_sort_key(
         self,

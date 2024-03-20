@@ -138,7 +138,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
 
     def _process_operation_fn(self, operation_rec) -> Optional[list[SCHStatusLogModel]]:
 
-        operation = self._collections.get_operation(operation_rec.operation)
+        operation = self._collections.operations[operation_rec.operation]
 
         # Run the operation
         if operation.noop:
