@@ -87,17 +87,21 @@ def deploy(
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:
-            for _ in deployment_iterator:
-                if _:
-                    _()
+            for op, fn in deployment_iterator:
+                if fn:
+                    fn()
+                click.echo(op)
             return
 
         # deployment and operations records are mutated by the iterator so we need to
         # commit them before iterating and at each iteration
         dao.session.commit()  # Update operation status to RUNNING
-        for process_operation_fn in deployment_iterator:
+        for operation_rec, process_operation_fn in deployment_iterator:
             dao.session.commit()  # Update deployment and current operation status to RUNNING and next operations to PENDING
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
+                click.echo(
+                    f"Operation {operation_rec.operation} is in state {operation_rec.state}"
+                )
                 dao.session.add_all(cluster_status_logs)
             dao.session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
 

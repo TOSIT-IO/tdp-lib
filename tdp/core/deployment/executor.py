@@ -101,7 +101,7 @@ class Executor:
         # Execute command
         if self._dry:
             # Operation always succeed in dry mode
-            logger.info("[DRY MODE] Ansible command: " + " ".join(command))
+            logger.debug("[DRY MODE] Ansible command: " + " ".join(command))
             return OperationStateEnum.SUCCESS, b""
         logger.debug("Ansible command: " + " ".join(command))
         return self._execute_ansible_command(command)
