@@ -50,7 +50,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         override_folders: Optional[Iterable[PathLike]] = None,
         repository_class: type[Repository] = GitRepository,
         validate: bool = False,
-    ) -> "ClusterVariables":
+    ) -> ClusterVariables:
         """Get an instance of ClusterVariables, initialize services repositories if needed.
 
         Args:

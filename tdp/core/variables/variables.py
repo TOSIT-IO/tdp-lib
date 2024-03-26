@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import os
 from collections.abc import MutableMapping
 from pathlib import Path
@@ -41,7 +43,7 @@ class Variables:
             self._file_path.parent.mkdir(parents=True, exist_ok=True)
             self._file_path.touch()
 
-    def open(self, mode: Optional[str] = None) -> "_VariablesIOWrapper":
+    def open(self, mode: Optional[str] = None) -> _VariablesIOWrapper:
         """Opens the file in the given mode.
 
         Args:
@@ -127,7 +129,7 @@ class _VariablesIOWrapper(VariablesDict):
         self._content = from_yaml(self._file_descriptor) or {}
         self._name = path.name
 
-    def __enter__(self) -> "_VariablesIOWrapper":
+    def __enter__(self) -> _VariablesIOWrapper:
         return proxy(self)
 
     def __exit__(self, exc_type, exc_val, exc_tb):

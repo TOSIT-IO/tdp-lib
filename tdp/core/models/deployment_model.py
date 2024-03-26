@@ -116,7 +116,7 @@ class DeploymentModel(BaseModel):
         reverse: bool = False,
         stop: bool = False,
         rolling_interval: Optional[int] = None,
-    ) -> "DeploymentModel":
+    ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
         Args:
@@ -208,7 +208,7 @@ class DeploymentModel(BaseModel):
         host_names: Optional[Iterable[str]] = None,
         extra_vars: Optional[Iterable[str]] = None,
         rolling_interval: Optional[int] = None,
-    ) -> "DeploymentModel":
+    ) -> DeploymentModel:
         """Generate a deployment plan from a list of operations.
 
         Args:
@@ -284,7 +284,7 @@ class DeploymentModel(BaseModel):
     def from_operations_hosts_vars(
         collections: Collections,
         operation_host_vars_names: list[tuple[str, Optional[str], Optional[list[str]]]],
-    ) -> "DeploymentModel":
+    ) -> DeploymentModel:
         """Generate a deployment plan from a list of operations, hosts and extra vars.
 
         Args:
@@ -331,7 +331,7 @@ class DeploymentModel(BaseModel):
         collections: Collections,
         cluster_status: ClusterStatus,
         rolling_interval: Optional[int] = None,
-    ) -> "DeploymentModel":
+    ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
         Args:
@@ -415,7 +415,7 @@ class DeploymentModel(BaseModel):
     @staticmethod
     def from_failed_deployment(
         collections: Collections, failed_deployment: "DeploymentModel"
-    ) -> "DeploymentModel":
+    ) -> DeploymentModel:
         """Generate a deployment plan from a failed deployment.
 
         Args:

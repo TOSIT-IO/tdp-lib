@@ -1,6 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
 
 from typing import Any, Optional
 
@@ -27,7 +28,7 @@ class ServiceComponentName:
         return self.component_name is None
 
     @staticmethod
-    def from_full_name(full_name: str) -> "ServiceComponentName":
+    def from_full_name(full_name: str) -> ServiceComponentName:
         """Factory method to build ServiceComponentName from a full name.
 
         Args:
