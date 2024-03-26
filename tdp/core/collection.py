@@ -82,7 +82,7 @@ class Collection:
         )
 
     @staticmethod
-    def from_path(path: PathLike) -> "Collection":
+    def from_path(path: PathLike) -> Collection:
         """Factory method to create a collection from a path.
 
         Args:

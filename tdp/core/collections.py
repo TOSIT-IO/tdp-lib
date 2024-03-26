@@ -49,7 +49,7 @@ class Collections(Mapping[str, Collection]):
         return self._collections.__len__()
 
     @staticmethod
-    def from_collection_list(collections: Sequence[Collection]) -> "Collections":
+    def from_collection_list(collections: Sequence[Collection]) -> Collections:
         """Factory method to build Collections from a sequence of Collection.
 
         Ordering of the sequence is what will determine the loading order of the operations.
