@@ -1,0 +1,9 @@
+Generic single-database configuration.
+
+For tests run from the` migration` folder:
+
+```sh
+pytest -v --test-alembic
+```
+
+If using sqlite, tests will only work if the database url in the `.env` file is an absolute path.

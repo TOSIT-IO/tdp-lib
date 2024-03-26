@@ -61,6 +61,38 @@ tdp init
 tdp --help
 ```
 
+## Table Migration
+
+The table models defined in `tdp/core/models` might incure changes over time. Alembic is used to migrate these changes to your database.
+
+Use Alembic:
+
+- Set the path of the `ruff` executable file in the `alembic.ini` file if the `venv` environment is not in the `tdp-lib` folder.
+
+- Set path to `alembic.ini` file if alembic commands are executed ouside the `tdp-lib` folder:
+
+    ```sh
+    export ALEMBIC_CONFIG=<path_to>/tdp-lib/alembic.ini
+    ```
+
+- Check if the database is up to date with SQLAlchemy models in the code:
+
+    ```sh
+    alembic check
+    ```
+
+- Let Alembic generate a migration file in `alambic/versions`:
+
+    ```sh
+    alembic revision --autogenerate -m "commit message"
+    ```
+
+- Apply the changes on the database:
+
+    ```sh
+    alembic upgrade head
+    ```
+
 ## Contributing
 
 Contributions are welcome! Here are some guidelines specific to this project:
