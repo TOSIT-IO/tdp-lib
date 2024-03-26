@@ -78,21 +78,6 @@ class ServiceVariables:
         """Path of the service repository."""
         return self.repository.path
 
-    def get_component_variables(self, component_name: str) -> dict | None:
-        """Get the variables for a component.
-
-        Args:
-            component_name: Name of the component.
-
-        Returns:
-            Copy of the variables of the component.
-        """
-        component_path = self._repo.path / (component_name + YML_EXTENSION)
-        if not component_path.exists():
-            return None
-        with Variables(component_path).open("r") as variables:
-            return variables.copy()
-
     def update_from_dir(
         self, input_dir: PathLike, /, *, validation_message: str
     ) -> None:
