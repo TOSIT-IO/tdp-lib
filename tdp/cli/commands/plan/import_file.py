@@ -21,12 +21,18 @@ logger = logging.getLogger(__name__)
 
 @click.command("import")
 @click.argument("file_name", nargs=1, required=True)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force overriding an existing deployment plan.",
+)
 @collections
 @database_dsn
 def import_file(
     collections: Collections,
     database_dsn: str,
     file_name: str,
+    force: bool,
 ):
     """Import a deployment from a file."""
     with Dao(database_dsn, commit_on_exit=True) as dao:
@@ -40,9 +46,17 @@ def import_file(
             deployment = DeploymentModel.from_operations_hosts_vars(
                 collections, new_operations_hosts_vars
             )
-            # if a planned deployment is present, update it instead of creating it
+            # if a planned deployment is present, override it or keep it
             if planned_deployment:
-                deployment.id = planned_deployment.id
+                confirmed = click.confirm(
+                    "A deployment plan already exists, do you want to override it?"
+                )
+                if confirmed:
+                    dao.session.delete(planned_deployment)
+                    click.echo("Previous planned deployment has been overritten")
+                else:
+                    click.echo("No new deployment plan has been created")
+                    return
             dao.session.merge(deployment)
             dao.session.commit()
             click.echo("Deployment plan successfully imported.")

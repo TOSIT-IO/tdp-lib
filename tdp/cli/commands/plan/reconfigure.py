@@ -23,6 +23,11 @@ if TYPE_CHECKING:
 
 
 @click.command()
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force overriding an existing deployment plan.",
+)
 @collections
 @database_dsn
 @preview
@@ -31,6 +36,7 @@ def reconfigure(
     collections: Collections,
     database_dsn: str,
     preview: bool,
+    force: bool,
     rolling_interval: Optional[int] = None,
 ):
     """Reconfigure required TDP services."""
@@ -46,6 +52,14 @@ def reconfigure(
             return
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment:
-            deployment.id = planned_deployment.id
+            confirmed = click.confirm(
+                "A deployment plan already exists, do you want to override it?"
+            )
+            if confirmed:
+                dao.session.delete(planned_deployment)
+                click.echo("Previous planned deployment has been overritten")
+            else:
+                click.echo("No new deployment plan has been created")
+                return
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
