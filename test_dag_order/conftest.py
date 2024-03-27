@@ -157,6 +157,7 @@ def populated_database_dsn(
             executor=MockExecutor(),
             cluster_variables=cluster_variables,
             cluster_status=dao.get_cluster_status(),
+            stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),
         ).run(planned_deployment)
         for process_operation_fn in deployment_iterator:
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
@@ -197,9 +198,11 @@ def plan_reconfigure(
         )
         dao.session.add_all(stale_status_logs)
         dao.session.commit()
-        cluster_status = dao.get_cluster_status()
     # return the deployment plan (it is neither persisted in the database nor executed)
-    return DeploymentModel.from_stale_components(collections, cluster_status)
+    return DeploymentModel.from_stale_components(
+        collections=collections,
+        stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),
+    )
 
 
 @pytest.fixture

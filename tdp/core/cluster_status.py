@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Generator, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, Optional, Sequence
 
 from sqlalchemy import Row
@@ -338,10 +338,6 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
                     stale_sch_log.to_restart = True
 
         return set(stale_sch_logs_dict.values())
-
-    def find_stale_sch_statuses(self) -> Generator[SCHStatus, None, None]:
-        """Find sch statuses that are stale."""
-        return (sch_status for sch_status in self.values() if sch_status.is_stale)
 
     def update_sch(
         self,
