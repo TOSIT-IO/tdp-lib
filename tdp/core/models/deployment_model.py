@@ -363,8 +363,8 @@ class DeploymentModel(BaseModel):
         if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
 
-        # Sort hosts in lexicographical order to improve readability
-        sch_and_operation_names_sorted = sorted(
+        # Sort by hosts to improve readability
+        operation_hosts_sorted_by_host = sorted(
             operation_hosts,
             key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
         )
@@ -376,7 +376,7 @@ class DeploymentModel(BaseModel):
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
                 dag.topological_sort_key(
-                    sch_and_operation_names_sorted, key=lambda x: x[0]
+                    operation_hosts_sorted_by_host, key=lambda x: x[0]
                 ),
             )
         )
