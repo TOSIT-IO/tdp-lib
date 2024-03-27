@@ -8,7 +8,7 @@ from collections import OrderedDict
 from collections.abc import Generator, Iterable
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.collection import YML_EXTENSION
 from tdp.core.constants import SERVICE_NAME_MAX_LENGTH
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 class ServiceVariables:
     """Variables of a service."""
 
-    def __init__(self, repository: Repository, schema: ServiceSchema):
+    def __init__(self, repository: Repository, schema: Optional[ServiceSchema]):
         """Initialize a ServiceVariables object.
 
         Args:
@@ -59,7 +59,7 @@ class ServiceVariables:
         return self._repo
 
     @property
-    def schema(self) -> ServiceSchema:
+    def schema(self) -> Optional[ServiceSchema]:
         """Schema of the service."""
         return self._schema
 
@@ -185,6 +185,8 @@ class ServiceVariables:
                     )
                     test_variables.merge(variables)
             # Validate the variables against the schema
+            if not self.schema:
+                continue
             try:
                 self.schema.validate(test_variables)
             except SchemaValidationError as e:

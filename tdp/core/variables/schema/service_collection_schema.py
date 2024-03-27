@@ -21,7 +21,7 @@ from tdp.core.variables.variables import VariablesDict
 class ServiceCollectionSchema:
     """Service schema for a single collection."""
 
-    def __init__(self, schema: Schema) -> None:
+    def __init__(self, service: str, schema: Schema) -> None:
         """Initialize a schema.
 
         Args:
@@ -35,6 +35,7 @@ class ServiceCollectionSchema:
         except exceptions.SchemaError as e:
             raise InvalidSchemaError() from e
         self._schema = schema
+        self._service = service
 
     @staticmethod
     def from_path(path: Path) -> ServiceCollectionSchema:
@@ -57,7 +58,18 @@ class ServiceCollectionSchema:
             raise SchemaNotFoundError(path) from e
         except json.JSONDecodeError as e:
             raise InvalidSchemaError() from e
-        return ServiceCollectionSchema(schema)
+        service = path.name
+        return ServiceCollectionSchema(service, schema)
+
+    @property
+    def schema(self) -> Schema:
+        """Schema."""
+        return self._schema
+
+    @property
+    def service(self) -> str:
+        """Service name."""
+        return self._service
 
     def validate(self, variables: VariablesDict) -> None:
         """Validate variables against the schema.
