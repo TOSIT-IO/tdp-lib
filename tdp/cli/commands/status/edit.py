@@ -7,11 +7,16 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.commands.status.utils import (
-    _common_status_options,
-    _print_sch_status_logs,
+from tdp.cli.options import (
+    collections_option,
+    component_argument_option,
+    database_dsn_option,
+    hosts_option,
+    service_argument_option,
+    validate_option,
+    vars_option,
 )
-from tdp.cli.utils import check_services_cleanliness, hosts
+from tdp.cli.utils import check_services_cleanliness, print_sch_status_logs
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -26,8 +31,13 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@_common_status_options
-@hosts(help="Host to filter. Can be used multiple times.")
+@service_argument_option
+@component_argument_option
+@collections_option
+@database_dsn_option
+@validate_option
+@vars_option
+@hosts_option(help="Host to filter. Can be used multiple times.")
 @click.option(
     "--message",
     "-m",
@@ -118,7 +128,7 @@ def edit(
         dao.session.commit()
 
     with Dao(database_dsn) as dao:
-        _print_sch_status_logs(
+        print_sch_status_logs(
             dao.get_sch_status(
                 service=service,
                 component=component,
