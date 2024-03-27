@@ -108,7 +108,7 @@ def test_single_service_component_status(db_session: Session):
         db_session.commit()
 
     with Dao(db_session) as dao:
-        assert dao.get_sch_status() == [last_values]
+        assert dao.get_cluster_status() == [last_values]
 
 
 @pytest.mark.skip(reason="db_session fixture needs to be reworked.")
@@ -150,4 +150,4 @@ def test_multiple_service_component_status(db_session: Session):
         next_logs[chosen_index] = next(iterators[chosen_index], None)
 
     with Dao(db_session) as dao:
-        assert set(dao.get_sch_status()) == last_values
+        assert set(dao.get_cluster_status()) == last_values

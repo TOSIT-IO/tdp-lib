@@ -36,7 +36,7 @@ class Dao:
         self._check_session()
         return self._session
 
-    def get_sch_status(
+    def get_cluster_status(
         self,
         service: Optional[str] = None,
         component: Optional[str] = None,
