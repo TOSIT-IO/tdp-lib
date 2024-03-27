@@ -11,6 +11,7 @@ from tdp.cli.commands.status.utils import (
     _common_status_options,
     _print_sch_status_logs,
 )
+from tdp.cli.queries import get_sch_status_history
 from tdp.cli.utils import check_services_cleanliness, hosts
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
@@ -56,6 +57,18 @@ def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional
 @click.option(
     "--inactive", is_flag=True, default=None, help="Filter inactive components."
 )
+@click.option(
+    "--history",
+    is_flag=True,
+    help="The history of editions for all or specific service and component.",
+)
+@click.option(
+    "--limit",
+    envvar="TDP_LIMIT",
+    type=int,
+    default=50,
+    help="Limit number of lines returned with option --history.",
+)
 def show(
     collections: Collections,
     database_dsn: str,
@@ -65,7 +78,9 @@ def show(
     active: Optional[bool],
     inactive: Optional[bool],
     validate: bool,
+    history: bool,
     vars: Path,
+    limit: int,
     service: Optional[str] = None,
     component: Optional[str] = None,
 ) -> None:
@@ -85,6 +100,11 @@ def show(
     check_services_cleanliness(cluster_variables)
 
     with Dao(database_dsn) as dao:
+        if history:
+            _print_sch_status_logs(
+                get_sch_status_history(dao.session, service, component, limit)
+            )
+            return
         _print_sch_status_logs(
             dao.get_sch_status(
                 service,
