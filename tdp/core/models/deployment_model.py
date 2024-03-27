@@ -12,7 +12,6 @@ from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
 from tdp.core.filters import FilterFactory
@@ -27,6 +26,7 @@ from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
+    from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.operation import Operation
 
 logger = logging.getLogger(__name__)
@@ -329,20 +329,19 @@ class DeploymentModel(BaseModel):
     @staticmethod
     def from_stale_components(
         collections: Collections,
-        cluster_status: ClusterStatus,
+        stale_hosted_entity_statuses: list[HostedEntityStatus],
         rolling_interval: Optional[int] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
-            cluster_status: ClusterStatus object.
+            stale_hosted_entity_statuses: List of stale hosted entity statuses.
             rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        stale_sch_statuses = cluster_status.find_stale_sch_statuses()
 
         class OperationHostTuple(NamedTuple):
             operation_name: str
@@ -350,15 +349,20 @@ class DeploymentModel(BaseModel):
 
         # Get the list of operations to reconfigure from the stale components
         operation_hosts: set[OperationHostTuple] = set()
-        for stale_sch_status in stale_sch_statuses:
-            sch = stale_sch_status.get_sch_name()
-            if stale_sch_status.to_config:
+        for status in stale_hosted_entity_statuses:
+            if status.to_config:
                 operation_hosts.add(
-                    OperationHostTuple(f"{sch.full_name}_config", sch.host_name)
+                    OperationHostTuple(
+                        f"{status.entity.name}_config",
+                        status.entity.host,
+                    )
                 )
-            if stale_sch_status.to_restart:
+            if status.to_restart:
                 operation_hosts.add(
-                    OperationHostTuple(f"{sch.full_name}_start", sch.host_name)
+                    OperationHostTuple(
+                        f"{status.entity.name}_start",
+                        status.entity.host,
+                    )
                 )
         if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
@@ -372,7 +376,7 @@ class DeploymentModel(BaseModel):
         # Sort operations using DAG topological sort. Convert operation name to
         # Operation instance and replace "start" action by "restart".
         dag = Dag(collections)
-        operation_hosts_sorted = list(
+        reconfigure_operations_sorted = list(
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
                 dag.topological_sort_key(
@@ -394,7 +398,7 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation, host in operation_hosts_sorted:
+        for operation, host in reconfigure_operations_sorted:
             deployment.operations.append(
                 OperationModel(
                     operation=operation.name,

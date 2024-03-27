@@ -25,6 +25,7 @@ from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
+    from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
         run_method: Callable[[OperationModel], None],
         cluster_variables: ClusterVariables,
         cluster_status: ClusterStatus,
+        stale_hosted_entity_statuses: list[HostedEntityStatus],
         force_stale_update: bool,
     ):
         """Initialize the iterator.
@@ -82,6 +84,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
             collections: Collections instance.
             run_method: Method to run the operation.
             cluster_variables: ClusterVariables instance.
+            stale_hosted_entity_statuses: List of stale hosted entity statuses.
             cluster_status: ClusterStatus instance.
         """
         # Initialize the deployment state
@@ -102,7 +105,8 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
         try:
             self._reconfigure_operations = _group_hosts_by_operation(
                 DeploymentModel.from_stale_components(
-                    self._collections, self._cluster_status
+                    collections=self._collections,
+                    stale_hosted_entity_statuses=stale_hosted_entity_statuses,
                 )
             )
         except NothingToReconfigureError:

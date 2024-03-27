@@ -8,6 +8,9 @@ from sqlalchemy.orm import sessionmaker
 
 from tdp.cli.queries import create_get_sch_latest_status_statement
 from tdp.core.cluster_status import ClusterStatus
+from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
+from tdp.core.entities.hosted_entity import create_hosted_entity
+from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 
 
 class Dao:
@@ -62,3 +65,24 @@ class Dao:
         )
         res = self.session.execute(stmt).all()
         return ClusterStatus.from_sch_status_rows(res)
+
+    def get_stale_hosted_entity_statuses(self) -> list[HostedEntityStatus]:
+        """Get stale hosted entity statuses."""
+        self._check_session()
+        stmt = create_get_sch_latest_status_statement(filter_stale=True)
+        return [
+            HostedEntityStatus(
+                entity=create_hosted_entity(
+                    name=create_hostable_entity_name(
+                        service_name=status.service, component_name=status.component
+                    ),
+                    host=status.host,
+                ),
+                running_version=status.latest_running_version,
+                configured_version=status.latest_configured_version,
+                to_config=status.latest_to_config,
+                to_restart=status.latest_to_restart,
+                is_active=status.latest_is_active,
+            )
+            for status in self.session.execute(stmt).all()
+        ]
