@@ -199,7 +199,7 @@ def plan_reconfigure(
         dao.session.add_all(stale_status_logs)
         dao.session.commit()
     # return the deployment plan (it is neither persisted in the database nor executed)
-    return DeploymentModel.from_stale_components(
+    return DeploymentModel.from_stale_hosted_entities(
         collections=collections,
         stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),
     )

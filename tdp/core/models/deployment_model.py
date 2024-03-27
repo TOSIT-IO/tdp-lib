@@ -327,7 +327,7 @@ class DeploymentModel(BaseModel):
         return deployment
 
     @staticmethod
-    def from_stale_components(
+    def from_stale_hosted_entities(
         collections: Collections,
         stale_hosted_entity_statuses: list[HostedEntityStatus],
         rolling_interval: Optional[int] = None,

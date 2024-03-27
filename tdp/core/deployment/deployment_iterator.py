@@ -104,7 +104,7 @@ class DeploymentIterator(Iterator[Optional[ProcessOperationFn]]):
         # to run
         try:
             self._reconfigure_operations = _group_hosts_by_operation(
-                DeploymentModel.from_stale_components(
+                DeploymentModel.from_stale_hosted_entities(
                     collections=self._collections,
                     stale_hosted_entity_statuses=stale_hosted_entity_statuses,
                 )
