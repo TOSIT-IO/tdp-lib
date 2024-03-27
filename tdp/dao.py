@@ -78,11 +78,11 @@ class Dao:
                     ),
                     host=status.host,
                 ),
-                running_version=status.running_version,
-                configured_version=status.configured_version,
-                to_config=status.to_config,
-                to_restart=status.to_restart,
-                is_active=status.is_active,
+                running_version=status.latest_running_version,
+                configured_version=status.latest_configured_version,
+                to_config=status.latest_to_config,
+                to_restart=status.latest_to_restart,
+                is_active=status.latest_is_active,
             )
             for status in self.session.execute(stmt).all()
         ]

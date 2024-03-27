@@ -342,36 +342,7 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-
-        class OperationHostTuple(NamedTuple):
-            operation_name: str
-            host_name: Optional[str]
-
-        # Get the list of operations to reconfigure from the stale components
-        operation_hosts: set[OperationHostTuple] = set()
-        for status in stale_hosted_entity_statuses:
-            if status.to_config:
-                operation_hosts.add(
-                    OperationHostTuple(
-                        f"{status.entity.name}_config",
-                        status.entity.host,
-                    )
-                )
-            if status.to_restart:
-                operation_hosts.add(
-                    OperationHostTuple(
-                        f"{status.entity.name}_start",
-                        status.entity.host,
-                    )
-                )
-        if len(operation_hosts) == 0:
-            raise NothingToReconfigureError("No component needs to be reconfigured.")
-
-        # Sort by hosts to improve readability
-        operation_hosts_sorted_by_host = sorted(
-            operation_hosts,
-            key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
-        )
+        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
 
         # Sort operations using DAG topological sort. Convert operation name to
         # Operation instance and replace "start" action by "restart".
@@ -379,9 +350,7 @@ class DeploymentModel(BaseModel):
         reconfigure_operations_sorted = list(
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(
-                    operation_hosts_sorted_by_host, key=lambda x: x[0]
-                ),
+                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
             )
         )
 
@@ -499,3 +468,43 @@ def _filter_falsy_options(options: dict) -> dict:
         Filtered options.
     """
     return {k: v for k, v in options.items() if v}
+
+
+class OperationHostTuple(NamedTuple):
+    operation_name: str
+    host_name: Optional[str]
+
+
+def _get_reconfigure_operation_hosts(
+    stale_hosted_entity_statuses: list[HostedEntityStatus],
+) -> list[OperationHostTuple]:
+    """Get the list of reconfigure operations from a list of hosted entities statuses.
+
+    Args:
+        stale_hosted_entity_statuses: List of stale hosted entities statuses.
+
+    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
+    """
+    operation_hosts: set[OperationHostTuple] = set()
+    for status in stale_hosted_entity_statuses:
+        if status.to_config:
+            operation_hosts.add(
+                OperationHostTuple(
+                    f"{status.entity.name}_config",
+                    status.entity.host,
+                )
+            )
+        if status.to_restart:
+            operation_hosts.add(
+                OperationHostTuple(
+                    f"{status.entity.name}_start",
+                    status.entity.host,
+                )
+            )
+    if len(operation_hosts) == 0:
+        raise NothingToReconfigureError("No component needs to be reconfigured.")
+    # Sort by hosts to improve readability
+    return sorted(
+        operation_hosts,
+        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
+    )
