@@ -50,7 +50,7 @@ def generate_stales(
     check_services_cleanliness(cluster_variables)
 
     with Dao(database_dsn) as dao:
-        stale_status_logs = dao.get_sch_status().generate_stale_sch_logs(
+        stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
             cluster_variables=cluster_variables, collections=collections
         )
 
@@ -58,5 +58,5 @@ def generate_stales(
         dao.session.commit()
 
         print_sch_status_logs(
-            dao.get_sch_status(service, component, filter_stale=True).values()
+            dao.get_cluster_status(service, component, filter_stale=True).values()
         )

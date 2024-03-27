@@ -156,7 +156,7 @@ def populated_database_dsn(
             collections=collections,
             executor=MockExecutor(),
             cluster_variables=cluster_variables,
-            cluster_status=dao.get_sch_status(),
+            cluster_status=dao.get_cluster_status(),
         ).run(planned_deployment)
         for process_operation_fn in deployment_iterator:
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
@@ -192,12 +192,12 @@ def plan_reconfigure(
         var_files[source_filename]["foo"] = "bar"
     # update the cluster status in the database
     with Dao(populated_database_dsn) as dao:
-        stale_status_logs = dao.get_sch_status().generate_stale_sch_logs(
+        stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
             cluster_variables=cluster_variables, collections=collections
         )
         dao.session.add_all(stale_status_logs)
         dao.session.commit()
-        cluster_status = dao.get_sch_status()
+        cluster_status = dao.get_cluster_status()
     # return the deployment plan (it is neither persisted in the database nor executed)
     return DeploymentModel.from_stale_components(collections, cluster_status)
 
