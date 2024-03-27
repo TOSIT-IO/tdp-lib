@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -344,14 +344,22 @@ class DeploymentModel(BaseModel):
         """
         stale_sch_statuses = cluster_status.find_stale_sch_statuses()
 
-        # Associate config and/or restart operation with their host
-        operation_hosts: set[tuple[str, Optional[str]]] = set()
+        class OperationHostTuple(NamedTuple):
+            operation_name: str
+            host_name: Optional[str]
+
+        # Get the list of operations to reconfigure from the stale components
+        operation_hosts: set[OperationHostTuple] = set()
         for stale_sch_status in stale_sch_statuses:
             sch = stale_sch_status.get_sch_name()
             if stale_sch_status.to_config:
-                operation_hosts.add((f"{sch.full_name}_config", sch.host_name))
+                operation_hosts.add(
+                    OperationHostTuple(f"{sch.full_name}_config", sch.host_name)
+                )
             if stale_sch_status.to_restart:
-                operation_hosts.add((f"{sch.full_name}_start", sch.host_name))
+                operation_hosts.add(
+                    OperationHostTuple(f"{sch.full_name}_start", sch.host_name)
+                )
         if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
 
