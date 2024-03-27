@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.deployment.executor import Executor
+    from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.models import DeploymentModel, OperationModel
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class DeploymentRunner:
         collections: Collections,
         cluster_variables: ClusterVariables,
         cluster_status: ClusterStatus,
+        stale_hosted_entity_statuses: list[HostedEntityStatus],
     ):
         """Deployment runner.
 
@@ -36,12 +38,13 @@ class DeploymentRunner:
             collections: Collections object.
             executor: Executor object.
             cluster_variables: ClusterVariables object.
-            stale_components: List of stale components to actualize.
+            stale_hosted_entoty_statuses: List of stale hosted entity statuses.
         """
         self._collections = collections
         self._executor = executor
         self._cluster_variables = cluster_variables
         self._cluster_status = cluster_status
+        self._stale_hosted_entity_statuses = stale_hosted_entity_statuses
 
     def _run_operation(self, operation_rec: OperationModel) -> None:
         """Run operation.
@@ -109,5 +112,6 @@ class DeploymentRunner:
             run_method=self._run_operation,
             cluster_variables=self._cluster_variables,
             cluster_status=self._cluster_status,
+            stale_hosted_entity_statuses=self._stale_hosted_entity_statuses,
             force_stale_update=force_stale_update,
         )
