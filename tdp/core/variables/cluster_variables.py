@@ -205,28 +205,29 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         """
         modified_sch: set[ServiceComponentHostName] = set()
         for status in sch_statuses:
-            # Check if the service exist
-            if status.service not in self.keys():
+            # Skip if the entity has already been listed as modified
+            if status.entity in modified_sch:
+                continue
+            # Raise an error if the service is deployed but its repository is missing
+            if status.service not in self:
                 raise RuntimeError(
                     f"Service '{status.service}' is deployed but its repository is "
                     + "missing."
                 )
-
-            sch = status.entity
-
-            # Skip if no newer version is available
-            if status.configured_version and not self[
-                sch.service_component_name.service_name
+            # Check if the entity has been modified
+            if status.configured_version and self[
+                status.entity.service_component_name.service_name
             ].is_entity_modified_from_version(
-                parse_hostable_entity_name(sch.full_name), status.configured_version
+                parse_hostable_entity_name(status.entity.full_name),
+                status.configured_version,
             ):
-                continue
-
-            logger.debug(
-                f"{sch.full_name} has been modified"
-                + (f" for host {sch.host_name}" if sch.host_name else "")
-            )
-
-            modified_sch.add(sch)
-
+                logger.debug(
+                    f"{status.entity.full_name} has been modified"
+                    + (
+                        f" for host {status.entity.host_name}"
+                        if status.entity.host_name
+                        else ""
+                    )
+                )
+                modified_sch.add(status.entity)
         return modified_sch
