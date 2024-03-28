@@ -67,7 +67,6 @@ def mock_deployment_runner(
         collections=mock_collections,
         cluster_variables=mock_cluster_variables,
         cluster_status=mock_cluster_status,
-        stale_hosted_entity_statuses=[],
     )
 
 
@@ -82,7 +81,6 @@ def mock_deployment_runner_failing(
         collections=mock_collections,
         cluster_variables=mock_cluster_variables,
         cluster_status=mock_cluster_status,
-        stale_hosted_entity_statuses=[],
     )
 
 
