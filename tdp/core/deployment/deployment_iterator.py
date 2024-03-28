@@ -10,7 +10,6 @@ from datetime import datetime
 from functools import partial
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.models import (
     DeploymentModel,
@@ -24,6 +23,7 @@ from tdp.core.service_component_host_name import ServiceComponentHostName
 from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
+    from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.variables import ClusterVariables
