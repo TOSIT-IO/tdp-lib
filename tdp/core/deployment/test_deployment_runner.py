@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Optional
 
 import pytest
 
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
 from tdp.core.models import (
@@ -21,6 +20,7 @@ from tdp.core.models.enums import (
 )
 
 if TYPE_CHECKING:
+    from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.dag import Dag
     from tdp.core.variables import ClusterVariables
