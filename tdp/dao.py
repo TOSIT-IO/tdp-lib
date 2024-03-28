@@ -65,10 +65,30 @@ class Dao:
         res = self.session.execute(stmt).all()
         return ClusterStatus.from_sch_status_rows(res)
 
-    def get_stale_hosted_entity_statuses(self) -> list[HostedEntityStatus]:
-        """Get stale hosted entity statuses."""
+    def get_hosted_entity_statuses(
+        self,
+        service: Optional[str] = None,
+        component: Optional[str] = None,
+        hosts: Optional[Iterable[str]] = None,
+        filter_stale: Optional[bool] = None,
+        filter_active: Optional[bool] = None,
+    ) -> list[HostedEntityStatus]:
+        """Get the status of the hosted entities.
+
+        Args:
+            service: Service to filter.
+            component: Component to filter.
+            hosts: Hosts to filter.
+            filter_stale: Whether to filter stale statuses.
+        """
         self._check_session()
-        stmt = create_get_sch_latest_status_statement(filter_stale=True)
+        stmt = create_get_sch_latest_status_statement(
+            service_to_filter=service,
+            component_to_filter=component,
+            hosts_to_filter=hosts,
+            filter_stale=filter_stale,
+            filter_active=filter_active,
+        )
         return [
             HostedEntityStatus(
                 entity=create_hosted_entity(
