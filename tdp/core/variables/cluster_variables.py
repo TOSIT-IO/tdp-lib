@@ -211,7 +211,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
                     + "missing."
                 )
 
-            sch = status.get_sch_name()
+            sch = status.entity
             sc = sch.service_component_name
 
             # Skip if no newer version is available
