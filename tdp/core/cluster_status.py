@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, MutableMapping
 from typing import TYPE_CHECKING, Any, Optional, Sequence
 
 from sqlalchemy import Row
@@ -203,7 +203,7 @@ class SCHStatus:
         return self.__str__()
 
 
-class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
+class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
     """Hold what component version are deployed."""
 
     def __init__(
@@ -221,20 +221,17 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
     def __getitem__(self, key):
         return self._cluster_status_dict.__getitem__(key)
 
+    def __setitem__(self, key, value):
+        return self._cluster_status_dict.__setitem__(key, value)
+
+    def __delitem__(self, key):
+        return self._cluster_status_dict.__delitem__(key)
+
     def __len__(self) -> int:
         return self._cluster_status_dict.__len__()
 
     def __iter__(self):
         return self._cluster_status_dict.__iter__()
-
-    def items(self):
-        return self._cluster_status_dict.items()
-
-    def values(self):
-        return self._cluster_status_dict.values()
-
-    def setdefault(self, key, default):
-        return self._cluster_status_dict.setdefault(key, default)
 
     @staticmethod
     def from_sch_status_rows(
