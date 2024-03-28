@@ -16,8 +16,11 @@ from tdp.cli.params import (
 )
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
+from tdp.core.entities.hostable_entity_name import (
+    ServiceComponentName,
+    parse_hostable_entity_name,
+)
 from tdp.core.repository.repository import EmptyCommit
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables import ClusterVariables
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
 from tdp.dao import Dao
@@ -91,12 +94,11 @@ def edit(
         )
 
     # Check if component exists
-    service_component_name = ServiceComponentName.from_full_name(variables_file.stem)
-    if not service_component_name.is_service:
-        components_of_service = collections.get_components_from_service(service_name)
-        if service_component_name not in components_of_service:
+    entity_name = parse_hostable_entity_name(variables_file.stem)
+    if isinstance(entity_name, ServiceComponentName):
+        if entity_name not in collections.get_components_from_service(service_name):
             raise click.ClickException(
-                f"Error unknown component '{service_component_name.component_name}' for service '{service_component_name.service_name}'"
+                f"Error unknown component '{entity_name.component}' for service '{entity_name.service}'"
             )
 
     logger.debug(f"Editing {variables_file.name} for service {service_name}")
