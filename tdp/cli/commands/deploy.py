@@ -85,7 +85,9 @@ def deploy(
             ),
             cluster_variables=cluster_variables,
             cluster_status=dao.get_cluster_status(),
-            stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),
+            stale_hosted_entity_statuses=dao.get_hosted_entity_statuses(
+                filter_stale=True
+            ),
         ).run(planned_deployment, force_stale_update=force_stale_update)
 
         if dry:
