@@ -92,8 +92,8 @@ class SCHStatus:
             to_restart=bool(to_restart),
         )
 
-    # ? transform into a property if we keep it?
-    def get_sch_name(self) -> ServiceComponentHostName:
+    @property
+    def entity(self) -> ServiceComponentHostName:
         """Get the service component host name."""
         return ServiceComponentHostName(
             ServiceComponentName(self.service, self.component), self.host
@@ -244,7 +244,7 @@ class ClusterStatus(Mapping[ServiceComponentHostName, SCHStatus]):
         cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
         for row in sch_status_rows:
             sch_status = SCHStatus.from_sch_status_row(row)
-            cluster_status_dict[sch_status.get_sch_name()] = sch_status
+            cluster_status_dict[sch_status.entity] = sch_status
         return ClusterStatus(cluster_status_dict)
 
     def generate_stale_sch_logs(
