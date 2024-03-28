@@ -206,43 +206,35 @@ class SCHStatus:
 class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
     """Hold what component version are deployed."""
 
-    def __init__(
-        self,
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus],
-        /,
-    ):
-        """Initialize a ClusterStatus object.
-
-        Args:
-            cluster_status_dict: Dictionary of ServiceComponentHostName to ServiceComponentStatus.
-        """
-        self._cluster_status_dict = cluster_status_dict
+    def __init__(self):
+        """Initialize an empty ClusterStatus object."""
+        self._cluster_status = {}
 
     def __getitem__(self, key):
-        return self._cluster_status_dict.__getitem__(key)
+        return self._cluster_status.__getitem__(key)
 
     def __setitem__(self, key, value):
-        return self._cluster_status_dict.__setitem__(key, value)
+        return self._cluster_status.__setitem__(key, value)
 
     def __delitem__(self, key):
-        return self._cluster_status_dict.__delitem__(key)
+        return self._cluster_status.__delitem__(key)
 
     def __len__(self) -> int:
-        return self._cluster_status_dict.__len__()
+        return self._cluster_status.__len__()
 
     def __iter__(self):
-        return self._cluster_status_dict.__iter__()
+        return self._cluster_status.__iter__()
 
     @staticmethod
     def from_sch_status_rows(
         sch_status_rows: Sequence[Row[SCHLatestStatus]], /
     ) -> ClusterStatus:
         """Get an instance of ClusterStatus from a list of SCHLatestStatus rows."""
-        cluster_status_dict: dict[ServiceComponentHostName, SCHStatus] = {}
+        cluster_status = ClusterStatus()
         for row in sch_status_rows:
             sch_status = SCHStatus.from_sch_status_row(row)
-            cluster_status_dict[sch_status.entity] = sch_status
-        return ClusterStatus(cluster_status_dict)
+            cluster_status[sch_status.entity] = sch_status
+        return cluster_status
 
     def generate_stale_sch_logs(
         self,

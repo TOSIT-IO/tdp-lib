@@ -81,7 +81,7 @@ def mock_cluster_variables(
 
 @pytest.fixture
 def mock_cluster_status():
-    return ClusterStatus({})
+    return ClusterStatus()
 
 
 # TODO: returns tuple[ClusterVariables, ClusterStatus]
