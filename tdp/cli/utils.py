@@ -10,8 +10,9 @@ from typing import TYPE_CHECKING, Optional
 import click
 from tabulate import tabulate
 
+from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+
 if TYPE_CHECKING:
-    from tdp.core.cluster_status import SCHStatus
     from tdp.core.models import DeploymentModel
     from tdp.core.variables.cluster_variables import ClusterVariables
 
@@ -83,10 +84,8 @@ def print_table(rows) -> None:
     )
 
 
-def print_sch_status_logs(sch_status: Iterable[SCHStatus]) -> None:
-    print_table(
-        [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],
-    )
+def print_hosted_entity_status_log(sch_status: Iterable[HostedEntityStatus]) -> None:
+    print_table([status.export_tabulate() for status in sch_status])
 
 
 def _parse_line(line: str) -> tuple[str, Optional[str], Optional[list[str]]]:

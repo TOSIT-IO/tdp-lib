@@ -16,7 +16,7 @@ from tdp.cli.params import (
     vars_option,
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_sch_status_logs
+from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -128,11 +128,11 @@ def edit(
         dao.session.commit()
 
     with Dao(db_engine) as dao:
-        print_sch_status_logs(
-            dao.get_cluster_status(
+        print_hosted_entity_status_log(
+            dao.get_hosted_entity_statuses(
                 service=service,
                 component=component,
                 hosts=hosts,
                 filter_stale=True,
-            ).values()
+            )
         )

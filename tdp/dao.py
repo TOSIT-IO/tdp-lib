@@ -38,32 +38,8 @@ class Dao:
         self._check_session()
         return self._session
 
-    def get_cluster_status(
-        self,
-        service: Optional[str] = None,
-        component: Optional[str] = None,
-        hosts: Optional[Iterable[str]] = None,
-        filter_stale: Optional[bool] = None,
-        filter_active: Optional[bool] = None,
-    ) -> ClusterStatus:
-        """Get the status of the cluster.
-
-        Args:
-            service: Service to filter.
-            component: Component to filter.
-            hosts: Hosts to filter.
-            filter_stale: Whether to filter stale statuses.
-        """
-        self._check_session()
-        stmt = create_get_sch_latest_status_statement(
-            service_to_filter=service,
-            component_to_filter=component,
-            hosts_to_filter=hosts,
-            filter_stale=filter_stale,
-            filter_active=filter_active,
-        )
-        res = self.session.execute(stmt).all()
-        return ClusterStatus.from_sch_status_rows(res)
+    def get_cluster_status(self) -> ClusterStatus:
+        return ClusterStatus(self.get_hosted_entity_statuses(filter_active=True))
 
     def get_hosted_entity_statuses(
         self,

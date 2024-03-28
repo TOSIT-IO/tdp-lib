@@ -8,7 +8,6 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.entities.hostable_entity_name import parse_hostable_entity_name
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
 from tdp.core.types import PathLike
@@ -16,10 +15,10 @@ from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:
-    from tdp.core.cluster_status import SCHStatus
     from tdp.core.collections import Collections
+    from tdp.core.entities.hosted_entity import HostedEntity
+    from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.repository.repository import Repository
-    from tdp.core.service_component_host_name import ServiceComponentHostName
 
 logger = logging.getLogger(__name__)
 
@@ -188,46 +187,41 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         if errors:
             raise SchemaValidationError(errors)
 
-    def get_modified_sch(
+    def get_modified_entities(
         self,
-        sch_statuses: Iterable[SCHStatus],
-    ) -> set[ServiceComponentHostName]:
-        """Get the list of modified sch.
+        entity_statuses: Iterable[HostedEntityStatus],
+    ) -> set[HostedEntity]:
+        """Get modified entities from a list of hosted entity statuses.
 
         Args:
-            sch_statuses: List of deployed sch statuses.
+            entity_statuses: List of hosted entity statuses.
 
         Returns:
-            Modified service components names with host.
+            Hosted entities that have been modified.
 
         Raises:
             RuntimeError: If a service is deployed but its repository is missing.
         """
-        modified_sch: set[ServiceComponentHostName] = set()
-        for status in sch_statuses:
+        modified_entities: set[HostedEntity] = set()
+        for status in entity_statuses:
             # Skip if the entity has already been listed as modified
-            if status.entity in modified_sch:
+            if status.entity in modified_entities:
                 continue
             # Raise an error if the service is deployed but its repository is missing
-            if status.service not in self:
+            if status.entity.name.service not in self:
                 raise RuntimeError(
-                    f"Service '{status.service}' is deployed but its repository is "
-                    + "missing."
+                    f"Service '{status.entity.name.service}' is deployed but its"
+                    + "repository is missing."
                 )
             # Check if the entity has been modified
             if status.configured_version and self[
-                status.entity.service_component_name.service_name
+                status.entity.name.service
             ].is_entity_modified_from_version(
-                parse_hostable_entity_name(status.entity.full_name),
-                status.configured_version,
+                status.entity.name, status.configured_version
             ):
                 logger.debug(
-                    f"{status.entity.full_name} has been modified"
-                    + (
-                        f" for host {status.entity.host_name}"
-                        if status.entity.host_name
-                        else ""
-                    )
+                    f"{status.entity.name} has been modified"
+                    + (f" for host {status.entity.host}" if status.entity.host else "")
                 )
-                modified_sch.add(status.entity)
-        return modified_sch
+                modified_entities.add(status.entity)
+        return modified_entities

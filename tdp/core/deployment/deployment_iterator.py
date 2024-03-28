@@ -11,6 +11,8 @@ from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.constants import OPERATION_SLEEP_NAME
+from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
+from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.models import (
     DeploymentModel,
     NothingToReconfigureError,
@@ -19,8 +21,6 @@ from tdp.core.models import (
     SCHStatusLogSourceEnum,
 )
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
@@ -166,15 +166,11 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             return
 
         sch_status_logs: list[SCHStatusLogModel] = []
-        sc_name = ServiceComponentName(
-            service_name=operation.service_name,
-            component_name=operation.component_name,
-        )
-        is_sc_stale = self._cluster_status.is_sc_stale(
-            sc_name, sc_hosts=operation.host_names
+        entity_name = create_hostable_entity_name(
+            operation.service_name, operation.component_name
         )
 
-        if is_sc_stale:
+        if self._cluster_status.is_sc_stale(entity_name, hosts=operation.host_names):
             # Get the first reconfigure operation if any
             if self._reconfigure_operations:
                 try:
@@ -193,7 +189,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             # Log a warning if the operation affect a stale SCH which is not the first reconfigure operation (if any)
             if not can_update_stale:
                 logger.warning(
-                    f"can't update stale {sc_name} with {operation_rec.operation}\n"
+                    f"can't update stale {entity_name} with {operation_rec.operation}\n"
                     + "first operation is {first_reconfigure_operation}"
                 )
         else:
@@ -209,8 +205,8 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
         # Update the cluster status for each host
         for host in hosts:
-            sch_status_log = self._cluster_status.update_sch(
-                ServiceComponentHostName(sc_name, host),
+            sch_status_log = self._cluster_status.update_hosted_entity(
+                create_hosted_entity(entity_name, host),
                 action_name=operation.action_name,
                 version=self._cluster_variables[operation.service_name].version,
                 can_update_stale=can_update_stale,
