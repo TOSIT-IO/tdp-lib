@@ -157,9 +157,6 @@ def populated_database_dsn(
             executor=MockExecutor(),
             cluster_variables=cluster_variables,
             cluster_status=dao.get_cluster_status(),
-            stale_hosted_entity_statuses=dao.get_hosted_entity_statuses(
-                filter_stale=True
-            ),
         ).run(planned_deployment)
         for operation_rec, process_operation_fn in deployment_iterator:
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
