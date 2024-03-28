@@ -8,6 +8,7 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
+from tdp.core.entities.hostable_entity_name import parse_hostable_entity_name
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
 from tdp.core.types import PathLike
@@ -212,16 +213,17 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
                 )
 
             sch = status.entity
-            sc = sch.service_component_name
 
             # Skip if no newer version is available
             if status.configured_version and not self[
-                sc.service_name
-            ].is_sc_modified_from_version(sc, status.configured_version):
+                sch.service_component_name.service_name
+            ].is_entity_modified_from_version(
+                parse_hostable_entity_name(sch.full_name), status.configured_version
+            ):
                 continue
 
             logger.debug(
-                f"{sc.full_name} has been modified"
+                f"{sch.full_name} has been modified"
                 + (f" for host {sch.host_name}" if sch.host_name else "")
             )
 

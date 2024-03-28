@@ -20,8 +20,8 @@ from tdp.core.variables.variables import (
 )
 
 if TYPE_CHECKING:
+    from tdp.core.entities.hostable_entity_name import HostableEntityName
     from tdp.core.repository.repository import Repository
-    from tdp.core.service_component_name import ServiceComponentName
     from tdp.core.variables.schema.service_schema import ServiceSchema
     from tdp.core.variables.variables import _VariablesIOWrapper
 
@@ -142,8 +142,8 @@ class ServiceVariables:
         with self.repository.validate(validation_message) as repo:
             repo.add_for_validation(open_files.keys())
 
-    def is_sc_modified_from_version(
-        self, service_component: ServiceComponentName, version: str
+    def is_entity_modified_from_version(
+        self, entity: HostableEntityName, version: str
     ) -> bool:
         """Check if a component has been modified since the given version.
 
@@ -152,15 +152,15 @@ class ServiceVariables:
 
         Args:
             version: From what version to look. It is most likely the deployed version.
-            service_component: Name of the service or component to check.
+            entity: Name of the service or component to check.
 
         Returns:
             True if the component has been modified, False otherwise.
         """
         return self._repo.is_file_modified(
-            commit=version, path=service_component.full_name + YML_EXTENSION
+            commit=version, path=entity.name + YML_EXTENSION
         ) or self._repo.is_file_modified(
-            commit=version, path=service_component.service_name + YML_EXTENSION
+            commit=version, path=entity.service + YML_EXTENSION
         )
 
     def validate(self) -> None:
