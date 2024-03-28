@@ -86,7 +86,7 @@ def show(
 
     with Dao(database_dsn) as dao:
         _print_sch_status_logs(
-            dao.get_sch_status(
+            dao.get_cluster_status(
                 service,
                 component,
                 hosts,

@@ -6,15 +6,15 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
-from tdp.core.cluster_status import ClusterStatus
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
+from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.filters import FilterFactory
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import (
@@ -327,49 +327,30 @@ class DeploymentModel(BaseModel):
         return deployment
 
     @staticmethod
-    def from_stale_components(
+    def from_stale_hosted_entitites(
         collections: Collections,
-        cluster_status: ClusterStatus,
+        stale_hosted_entity_statuses: list[HostedEntityStatus],
         rolling_interval: Optional[int] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
-            cluster_status: ClusterStatus object.
+            stale_hosted_entity_statuses: List of stale hosted entity statuses.
             rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        stale_sch_statuses = cluster_status.find_stale_sch_statuses()
-
-        # Associate config and/or restart operation with their host
-        operation_hosts: set[tuple[str, Optional[str]]] = set()
-        for stale_sch_status in stale_sch_statuses:
-            sch = stale_sch_status.get_sch_name()
-            if stale_sch_status.to_config:
-                operation_hosts.add((f"{sch.full_name}_config", sch.host_name))
-            if stale_sch_status.to_restart:
-                operation_hosts.add((f"{sch.full_name}_start", sch.host_name))
-        if len(operation_hosts) == 0:
-            raise NothingToReconfigureError("No component needs to be reconfigured.")
-
-        # Sort hosts in lexicographical order to improve readability
-        sch_and_operation_names_sorted = sorted(
-            operation_hosts,
-            key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
-        )
+        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
 
         # Sort operations using DAG topological sort. Convert operation name to
         # Operation instance and replace "start" action by "restart".
         dag = Dag(collections)
-        operation_hosts_sorted = list(
+        reconfigure_operations_sorted = list(
             map(
                 lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(
-                    sch_and_operation_names_sorted, key=lambda x: x[0]
-                ),
+                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
             )
         )
 
@@ -386,7 +367,7 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation, host in operation_hosts_sorted:
+        for operation, host in reconfigure_operations_sorted:
             deployment.operations.append(
                 OperationModel(
                     operation=operation.name,
@@ -487,3 +468,43 @@ def _filter_falsy_options(options: dict) -> dict:
         Filtered options.
     """
     return {k: v for k, v in options.items() if v}
+
+
+class OperationHostTuple(NamedTuple):
+    operation_name: str
+    host_name: Optional[str]
+
+
+def _get_reconfigure_operation_hosts(
+    stale_hosted_entity_statuses: list[HostedEntityStatus],
+) -> list[OperationHostTuple]:
+    """Get the list of reconfigure operations from a list of hosted entities statuses.
+
+    Args:
+        stale_hosted_entity_statuses: List of stale hosted entities statuses.
+
+    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
+    """
+    operation_hosts: set[OperationHostTuple] = set()
+    for status in stale_hosted_entity_statuses:
+        if status.to_config:
+            operation_hosts.add(
+                OperationHostTuple(
+                    f"{status.entity.name}_config",
+                    status.entity.host,
+                )
+            )
+        if status.to_restart:
+            operation_hosts.add(
+                OperationHostTuple(
+                    f"{status.entity.name}_start",
+                    status.entity.host,
+                )
+            )
+    if len(operation_hosts) == 0:
+        raise NothingToReconfigureError("No component needs to be reconfigured.")
+    # Sort by hosts to improve readability
+    return sorted(
+        operation_hosts,
+        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
+    )
