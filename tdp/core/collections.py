@@ -17,9 +17,9 @@ from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 
 from tdp.core.collection import Collection
+from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
-from tdp.core.service_component_name import ServiceComponentName
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 logger = logging.getLogger(__name__)
@@ -226,9 +226,7 @@ class Collections(Mapping[str, Collection]):
               service.
         """
         return {
-            ServiceComponentName(
-                service_name=service_name, component_name=operation.component_name
-            )
+            ServiceComponentName(service_name, operation.component_name)
             for operation in self.operations.values()
             if operation.service_name == service_name
             and not operation.is_service_operation()

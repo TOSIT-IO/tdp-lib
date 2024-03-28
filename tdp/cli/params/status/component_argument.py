@@ -19,7 +19,7 @@ def _check_component(
     collections: Collections = ctx.params["collections"]
     service: str = ctx.params["service"]
     if value and value not in [
-        sc_name.component_name
+        sc_name.component
         for sc_name in collections.get_components_from_service(service)
     ]:
         raise click.UsageError(
