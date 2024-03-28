@@ -5,218 +5,52 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, MutableMapping
-from typing import TYPE_CHECKING, Any, Optional, Sequence
-
-from sqlalchemy import Row
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.dag import Dag
+from tdp.core.entities.hostable_entity_name import (
+    HostableEntityName,
+    create_hostable_entity_name,
+)
+from tdp.core.entities.hosted_entity import (
+    HostedEntity,
+    HostedServiceComponent,
+    create_hosted_entity,
+)
+from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.service_component_host_name import ServiceComponentHostName
-from tdp.core.service_component_name import ServiceComponentName
 
 if TYPE_CHECKING:
-    from tdp.cli.queries import SCHLatestStatus
     from tdp.core.collections import Collections
     from tdp.core.variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: add latest_update column
-class SCHStatus:
-    """Status of a service component host."""
+class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
+    """Holds the status of all hosted entities in the cluster.
 
-    service: str
-    component: Optional[str]
-    host: Optional[str]
-    running_version: Optional[str]
-    configured_version: Optional[str]
-    to_config: Optional[bool]
-    to_restart: Optional[bool]
+    The ClusterStatus object is used to keep track of the status of all hosted entities.
+    It provides methods to update the status of an entity and to generate logs for
+    stale entities.
+    """
 
-    def __init__(
-        self,
-        *,
-        service: str,
-        component: Optional[str] = None,
-        host: Optional[str] = None,
-        running_version: Optional[str] = None,
-        configured_version: Optional[str] = None,
-        to_config: Optional[bool] = None,
-        to_restart: Optional[bool] = None,
-    ):
-        """Initialize a ServiceComponentHostStatus object.
-
-        Args:
-            running_version: Running version of the component.
-            configured_version: Configured version of the component.
-            to_config: True if the component need to be configured.
-            to_restart: True if the component need to be restarted.
-        """
-        self.service = service
-        self.component = component
-        self.host = host
-        self.running_version = running_version
-        self.configured_version = configured_version
-        self.to_config = to_config
-        self.to_restart = to_restart
-
-    @property
-    def is_stale(self) -> bool:
-        """Whether the service component host is stale."""
-        return bool(self.to_config or self.to_restart)
-
-    @staticmethod
-    def from_sch_status_row(row: Row[SCHLatestStatus], /) -> SCHStatus:
-        """Create a SCHStatus from a SCHLatestStatus row."""
-        (
-            service,
-            component,
-            host,
-            running_version,
-            configured_version,
-            to_config,
-            to_restart,
-            is_active,
-        ) = row
-        return SCHStatus(
-            service=service,
-            component=component,
-            host=host,
-            running_version=running_version,
-            configured_version=configured_version,
-            to_config=bool(to_config),
-            to_restart=bool(to_restart),
-        )
-
-    @property
-    def entity(self) -> ServiceComponentHostName:
-        """Get the service component host name."""
-        return ServiceComponentHostName(
-            ServiceComponentName(self.service, self.component), self.host
-        )
-
-    def update(
-        self,
-        *,
-        running_version: Optional[str] = None,
-        configured_version: Optional[str] = None,
-        to_config: Optional[bool] = None,
-        to_restart: Optional[bool] = None,
-    ) -> Optional[SCHStatusLogModel]:
-        """Update the status of a service component host, returns a SCHStatusLog if the status was updated.
-
-        Args:
-            running_version: Running version of the component.
-            configured_version: Configured version of the component.
-            to_config: True if the component need to be configured.
-            to_restart: True if the component need to be restarted.
-
-        Returns:
-            SCHStatusLog instance if the status was updated, None otherwise.
-        """
-        # Return early if no update is needed
-        if (
-            running_version == self.running_version
-            and configured_version == self.configured_version
-            and to_config == self.to_config
-            and to_restart == self.to_restart
-        ):
-            return
-
-        # Base log
-        log = SCHStatusLogModel(
-            service=self.service,
-            component=self.component,
-            host=self.host,
-        )
-
-        if running_version is not None and running_version != self.running_version:
-            self.running_version = running_version
-            log.running_version = running_version
-
-        if (
-            configured_version is not None
-            and configured_version != self.configured_version
-        ):
-            self.configured_version = configured_version
-            log.configured_version = configured_version
-
-        if to_config is not None and to_config != self.to_config:
-            self.to_config = to_config
-            log.to_config = to_config
-
-        if to_restart is not None and to_restart != self.to_restart:
-            self.to_restart = to_restart
-            log.to_restart = to_restart
-
-        return log
-
-    def to_dict(
-        self,
-        *,
-        filter_out: Optional[list[str]] = None,
-        format: Optional[bool] = True,
-    ) -> dict[str, Any]:
-        """Convert a SCHStatus instance to a dictionary.
-
-        Args:
-            filter_out: List of columns to filter out.
-            format: Whether to format the values for printing.
-
-        Returns:
-            Dictionary representation of the model.
-        """
-        filter_out = filter_out or []
-        return {
-            k: self._formater(k, v) if format else v
-            for k, v in self.__dict__.items()
-            if k not in filter_out
-        }
-
-    def _formater(self, key: str, value: Optional[Any], /) -> str:
-        """Format a value for printing."""
-
-        if not value:
-            return ""
-        if key in ["running_version", "configured_version"]:
-            value = str(value[:7])
-        return str(value)
-
-    def __str__(self) -> str:
-        return (
-            f"{SCHStatus.__name__}("
-            f"service: {self.service}, "
-            f"component: {self.component}, "
-            f"host: {self.host}, "
-            f"running_version: {self.running_version}, "
-            f"configured_version: {self.configured_version}, "
-            f"to_config: {self.to_config}, "
-            f"to_restart: {self.to_restart}"
-            f")"
-        )
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-
-class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
-    """Hold what component version are deployed."""
-
-    def __init__(self):
-        """Initialize an empty ClusterStatus object."""
+    def __init__(self, hosted_entity_statuses: Iterable[HostedEntityStatus]):
+        """Initialize the ClusterStatus object."""
         self._cluster_status = {}
+        for status in hosted_entity_statuses:
+            self._cluster_status[status.entity] = status
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: HostedEntity) -> HostedEntityStatus:
         return self._cluster_status.__getitem__(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: HostedEntity, value: HostedEntityStatus):
         return self._cluster_status.__setitem__(key, value)
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: HostedEntity):
         return self._cluster_status.__delitem__(key)
 
     def __len__(self) -> int:
@@ -225,24 +59,13 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
     def __iter__(self):
         return self._cluster_status.__iter__()
 
-    @staticmethod
-    def from_sch_status_rows(
-        sch_status_rows: Sequence[Row[SCHLatestStatus]], /
-    ) -> ClusterStatus:
-        """Get an instance of ClusterStatus from a list of SCHLatestStatus rows."""
-        cluster_status = ClusterStatus()
-        for row in sch_status_rows:
-            sch_status = SCHStatus.from_sch_status_row(row)
-            cluster_status[sch_status.entity] = sch_status
-        return cluster_status
-
     def generate_stale_sch_logs(
         self,
         *,
         cluster_variables: ClusterVariables,
         collections: Collections,
     ) -> set[SCHStatusLogModel]:
-        """Generate SCHStatusLog(s) for components that need to be configured or restarted.
+        """Generate logs for components that need to be configured or restarted.
 
         This method identifies components that have undergone changes in their
         versions and determines if they need to be configured, restarted, or both.
@@ -257,62 +80,66 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             Set of SCHStatusLog.
         """
-        stale_sch_logs_dict: dict[ServiceComponentHostName, SCHStatusLogModel] = {}
+        logs: dict[HostedEntity, SCHStatusLogModel] = {}
         source_reconfigure_operations: set[str] = set()
 
-        modified_sch = cluster_variables.get_modified_sch(self.values())
+        modified_entities = cluster_variables.get_modified_entities(self.values())
 
-        # Return early if no sch have modified configurations.
-        if len(modified_sch) == 0:
+        # Return early if no entity has modified configurations
+        if len(modified_entities) == 0:
             return set()
 
-        for sch in modified_sch:
-            sc = sch.service_component_name
+        # Create logs for the modified entities
+        for entity in modified_entities:
+            config_operation = collections.operations.get(f"{entity.name}_config")
+            start_operation = collections.operations.get(f"{entity.name}_start")
+            restart_operation = collections.operations.get(f"{entity.name}_restart")
 
-            config_operation = collections.operations.get(f"{sc.full_name}_config")
-            start_operation = collections.operations.get(f"{sc.full_name}_start")
-            restart_operation = collections.operations.get(f"{sc.full_name}_restart")
-
-            # Add the config and start operations to the source_reconfigure_operations set
-            # to get the descendants of these operations
+            # Add the config and start operations to the set to get their descendants
             if config_operation:
                 source_reconfigure_operations.add(config_operation.name)
             if start_operation:
                 source_reconfigure_operations.add(start_operation.name)
 
-            # Create SCHStatusLog for modified sch
+            # Create a log to update the stale status of the entity if a config and/or
+            # restart operations are available
+            # Only source hosts affected by the modified configuration are considered as
+            # stale (while all hosts are considered as stale for the descendants)
             if config_operation or restart_operation:
-                stale_sch_log = stale_sch_logs_dict[sch] = SCHStatusLogModel(
-                    service=sc.service_name,
-                    component=sc.component_name,
-                    host=sch.host_name,
-                    source=SCHStatusLogSourceEnum.STALE,
+                log = logs.setdefault(
+                    entity,
+                    SCHStatusLogModel(
+                        service=entity.name.service,
+                        component=(
+                            entity.name.component
+                            if isinstance(entity, HostedServiceComponent)
+                            else None
+                        ),
+                        host=entity.host,
+                        source=SCHStatusLogSourceEnum.STALE,
+                    ),
                 )
                 if config_operation:
-                    stale_sch_log.to_config = True
+                    log.to_config = True
                 if restart_operation:
-                    stale_sch_log.to_restart = True
+                    log.to_restart = True
 
-        # Get the descendants of the reconfigure operations
-        dag = Dag(collections)
-        operation_descendants = dag.get_operation_descendants(
+        # Create logs for the descendants of the modified entities
+        for operation in Dag(collections).get_operation_descendants(
             nodes=list(source_reconfigure_operations), restart=True
-        )
-
-        # Create SCHStatusLog for the descendants
-        for operation in operation_descendants:
-            # Only consider config and restart operations
+        ):
+            # Only create a log when config or restart operation is available
             if operation.action_name not in ["config", "restart"]:
                 continue
 
+            # Create a log for each host where the entity is deployed
             for host in operation.host_names:
-                stale_sch_log = stale_sch_logs_dict.setdefault(
-                    ServiceComponentHostName(
-                        service_component_name=ServiceComponentName(
-                            service_name=operation.service_name,
-                            component_name=operation.component_name,
+                log = logs.setdefault(
+                    create_hosted_entity(
+                        create_hostable_entity_name(
+                            operation.service_name, operation.component_name
                         ),
-                        host_name=host,
+                        host,
                     ),
                     SCHStatusLogModel(
                         service=operation.service_name,
@@ -322,15 +149,15 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
                     ),
                 )
                 if operation.action_name == "config":
-                    stale_sch_log.to_config = True
+                    log.to_config = True
                 elif operation.action_name == "restart":
-                    stale_sch_log.to_restart = True
+                    log.to_restart = True
 
-        return set(stale_sch_logs_dict.values())
+        return set(logs.values())
 
-    def update_sch(
+    def update_hosted_entity(
         self,
-        sch: ServiceComponentHostName,
+        entity: HostedEntity,
         /,
         *,
         action_name: str,
@@ -340,47 +167,38 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
         """Update the status of a sch, returns a log if the status was updated.
 
         Args:
-            sch: sch to update.
+            entity: hosted entity to update
             action_name: Action name of the ongoing operation (i.e. config, start...).
             version: Version to update to.
-            update_stale: Whether to update to_config and to_update values.
+            can_update_stale: Whether to update to_config and to_update values.
 
         Returns:
-            ClusterStatusLog if the status was updated, None otherwise.
+            SCHStatusLogModel if the status was updated, None otherwise.
         """
-        service = sch.service_component_name.service_name
-        component = sch.service_component_name.component_name
 
-        sch_status = self.setdefault(
-            sch,
-            SCHStatus(
-                service=service,
-                component=component,
-                host=sch.host_name,
-            ),
-        )
+        status = self.setdefault(entity, HostedEntityStatus(entity))
 
         if action_name == "config":
-            return sch_status.update(
+            return status.update(
                 configured_version=version,
                 to_config=False if can_update_stale else None,
             )
 
         if action_name == "restart":
-            return sch_status.update(
+            return status.update(
                 running_version=version,
                 to_restart=False if can_update_stale else None,
             )
 
         if action_name == "start":
-            if not sch_status.configured_version:
+            if not status.configured_version:
                 return
-            return sch_status.update(
-                running_version=sch_status.configured_version,
+            return status.update(
+                running_version=status.configured_version,
             )
 
     def is_sc_stale(
-        self, sc_name: ServiceComponentName, /, sc_hosts: Optional[Iterable[str]]
+        self, entity_name: HostableEntityName, /, hosts: Optional[Iterable[str]]
     ) -> bool:
         """Whether a service or component is stale.
 
@@ -391,8 +209,9 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
         Returns:
             True if the service component is stale, False otherwise.
         """
-        for host in sc_hosts or [None]:
-            sch_status = self.get(ServiceComponentHostName(sc_name, host), None)
-            if sch_status and sch_status.is_stale:
+        for host in hosts or [None]:
+            if (
+                status := self.get(create_hosted_entity(entity_name, host))
+            ) and status.is_stale:
                 return True
         return False

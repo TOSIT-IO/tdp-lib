@@ -15,7 +15,7 @@ from tdp.cli.params import (
     vars_option,
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_sch_status_logs
+from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -58,6 +58,6 @@ def generate_stales(
         dao.session.add_all(stale_status_logs)
         dao.session.commit()
 
-        print_sch_status_logs(
-            dao.get_cluster_status(service, component, filter_stale=True).values()
+        print_hosted_entity_status_log(
+            dao.get_hosted_entity_statuses(service, component, filter_stale=True)
         )

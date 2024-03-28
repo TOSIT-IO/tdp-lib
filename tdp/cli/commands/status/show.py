@@ -16,7 +16,7 @@ from tdp.cli.params import (
     vars_option,
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_sch_status_logs
+from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -95,12 +95,12 @@ def show(
     check_services_cleanliness(cluster_variables)
 
     with Dao(db_engine) as dao:
-        print_sch_status_logs(
-            dao.get_cluster_status(
+        print_hosted_entity_status_log(
+            dao.get_hosted_entity_statuses(
                 service,
                 component,
                 hosts,
                 filter_stale=_filter_stale(stale, no_stale),
                 filter_active=_filter_active(active, inactive),
-            ).values()
+            )
         )
