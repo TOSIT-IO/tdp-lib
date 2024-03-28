@@ -3,10 +3,9 @@
 
 from __future__ import annotations
 
-from collections import namedtuple
 from collections.abc import Iterable
 from operator import and_
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 from sqlalchemy import Select, case, func, or_, select
 from sqlalchemy.exc import NoResultFound
@@ -41,19 +40,15 @@ def _create_last_value_statement(column, non_null=False):
     )
 
 
-SCHLatestStatus = namedtuple(
-    "SCHLatestStatus",
-    [
-        "service",
-        "component",
-        "host",
-        "latest_running_version",
-        "latest_configured_version",
-        "latest_to_config",
-        "latest_to_restart",
-        "latest_is_active",
-    ],
-)
+class SCHLatestStatus(NamedTuple):
+    service: str
+    component: Optional[str]
+    host: Optional[str]
+    latest_running_version: Optional[str]
+    latest_configured_version: Optional[str]
+    latest_to_config: Optional[bool]
+    latest_to_restart: Optional[bool]
+    latest_is_active: Optional[bool]
 
 
 def create_get_sch_latest_status_statement(
