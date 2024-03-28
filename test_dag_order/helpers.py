@@ -18,8 +18,11 @@ from tdp.core.collection import (
 )
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
+from tdp.core.entities.hostable_entity_name import (
+    ServiceName,
+    parse_hostable_entity_name,
+)
 from tdp.core.inventory_reader import InventoryReader
-from tdp.core.service_component_name import ServiceComponentName
 
 from .constants import RULES_DIRECTORY_NAME
 
@@ -183,7 +186,7 @@ def resolve_components(
     resolved_components: set[str] = set()
     service_component_map: dict[str, str] = {}
     for service_component in service_components:
-        if ServiceComponentName.from_full_name(service_component).is_service:
+        if isinstance(parse_hostable_entity_name(service_component), ServiceName):
             for component in collections.get_components_from_service(service_component):
                 resolved_components.add(component.full_name)
                 service_component_map[component.full_name] = service_component
