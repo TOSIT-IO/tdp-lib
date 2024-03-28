@@ -79,9 +79,21 @@ class Dao:
                 ),
                 running_version=status.latest_running_version,
                 configured_version=status.latest_configured_version,
-                to_config=status.latest_to_config,
-                to_restart=status.latest_to_restart,
-                is_active=status.latest_is_active,
+                to_config=(
+                    bool(status.latest_to_config)
+                    if status.latest_to_config is not None
+                    else None
+                ),
+                to_restart=(
+                    bool(status.latest_to_restart)
+                    if status.latest_to_restart is not None
+                    else None
+                ),
+                is_active=(
+                    bool(status.latest_is_active)
+                    if status.latest_is_active is not None
+                    else None
+                ),
             )
             for status in self.session.execute(stmt).all()
         ]
