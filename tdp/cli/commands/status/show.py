@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
 import click
 from sqlalchemy import Engine
@@ -15,8 +15,16 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
-from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+from tdp.cli.params.status import (
+    component_argument_option,
+    service_argument_option,
+)
+from tdp.cli.utils import (
+    check_services_cleanliness,
+    print_hosted_entity_status_log,
+    print_table,
+)
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -66,6 +74,18 @@ def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional
 @click.option(
     "--inactive", is_flag=True, default=None, help="Filter inactive components."
 )
+@click.option(
+    "--history",
+    is_flag=True,
+    help="The history of editions for all or specific service and component.",
+)
+@click.option(
+    "--limit",
+    envvar="TDP_HISTORY_LIMIT",
+    type=int,
+    default=50,
+    help="Limit number of lines returned with option --history.",
+)
 def show(
     collections: Collections,
     db_engine: Engine,
@@ -74,6 +94,8 @@ def show(
     no_stale: bool,
     active: Optional[bool],
     inactive: Optional[bool],
+    history: bool,
+    limit: int,
     validate: bool,
     vars: Path,
     service: Optional[str] = None,
@@ -95,6 +117,19 @@ def show(
     check_services_cleanliness(cluster_variables)
 
     with Dao(db_engine) as dao:
+        if history:
+            _print_sch_status_logs(
+                dao.get_hosted_entity_statuses_history(
+                    limit,
+                    service,
+                    component,
+                    hosts,
+                    filter_stale=_filter_stale(stale, no_stale),
+                    filter_active=_filter_active(active, inactive),
+                )
+            )
+            return
+
         print_hosted_entity_status_log(
             dao.get_hosted_entity_statuses(
                 service,
@@ -104,3 +139,9 @@ def show(
                 filter_active=_filter_active(active, inactive),
             )
         )
+
+
+def _print_sch_status_logs(sch_status: Iterable[SCHStatusLogModel]) -> None:
+    print_table(
+        [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],
+    )
