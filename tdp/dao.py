@@ -201,6 +201,60 @@ class Dao:
             for status in self.session.execute(stmt).all()
         ]
 
+    def get_hosted_entity_statuses_history(
+        self,
+        limit,
+        service: Optional[str] = None,
+        component: Optional[str] = None,
+        hosts: Optional[Iterable[str]] = None,
+        filter_stale: Optional[bool] = None,
+        filter_active: Optional[bool] = None,
+    ) -> list[SCHStatusLogModel]:
+        """Get the status of the hosted entities.
+
+        Args:
+            limit: limits the rows to display
+            service: Service to filter.
+            component: Component to filter.
+            hosts: Hosts to filter.
+            filter_stale: Whether to filter stale statuses.
+            filter_active: Whether to filter active statuses.
+        """
+        self._check_session()
+        query_filter = []
+        if service:
+            query_filter.append(SCHStatusLogModel.service == service)
+        if component:
+            query_filter.append(SCHStatusLogModel.component == component)
+        if hosts:
+            query_filter.append(SCHStatusLogModel.host.in_(hosts))
+
+        if filter_stale is True:
+            query_filter.append(
+                or_(
+                    SCHStatusLogModel.to_config.is_(True),
+                    SCHStatusLogModel.to_restart.is_(True),
+                )
+            )
+        elif filter_stale is False:
+            query_filter.append(
+                and_(
+                    SCHStatusLogModel.to_config.is_not(True),
+                    SCHStatusLogModel.to_restart.is_not(True),
+                )
+            )
+
+        if filter_active is True:
+            query_filter.append(SCHStatusLogModel.is_active.is_not(False))
+        elif filter_active is False:
+            query_filter.append(SCHStatusLogModel.is_active.is_(False))
+        return (
+            self.session.query(SCHStatusLogModel)
+            .filter(*query_filter)
+            .limit(limit)
+            .all()
+        )
+
     def get_deployment(self, id: int) -> Optional[DeploymentModel]:
         """Get a deployment by ID.
 
