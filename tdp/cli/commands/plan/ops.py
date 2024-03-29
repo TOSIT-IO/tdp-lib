@@ -57,6 +57,12 @@ def ops(
     with Dao(database_dsn, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment:
-            deployment.id = planned_deployment.id
+            if click.confirm(
+                "A deployment plan already exists, do you want to override it?"
+            ):
+                deployment.id = planned_deployment.id
+            else:
+                click.echo("No new deployment plan has been created.")
+                return
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
