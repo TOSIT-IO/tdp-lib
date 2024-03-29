@@ -2082,9 +2082,9 @@ docs = ["Sphinx", "sphinx-rtd-theme"]
 mysql = ["pymysql"]
 postgresql = ["psycopg2"]
 postgresql-binary = ["psycopg2-binary"]
-visualization = ["matplotlib", "pydot"]
+visualization = ["matplotlib", "numpy", "pydot"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<4.0"
-content-hash = "8a9fdf475d30db15a31398d8744ebe59763cb88af69c73833c6a168d6deaf265"
+content-hash = "f04fe6ff12281ce991908759ef5152842bca29e909aaca46f10cc2be2267e8d9"
