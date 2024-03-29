@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional
 import click
 
 from tdp.cli.params import collections_option, database_dsn_option
-from tdp.cli.params.plan import preview_option, rolling_interval_option
+from tdp.cli.params.plan import force_option, preview_option, rolling_interval_option
 from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import print_deployment
 from tdp.core.dag import Dag
@@ -69,6 +69,7 @@ def _validate_filtertype(
 )
 @rolling_interval_option
 @preview_option
+@force_option
 @collections_option
 @database_dsn_option
 def dag(
@@ -76,6 +77,7 @@ def dag(
     targets: tuple[str],
     restart: bool,
     preview: bool,
+    force: bool,
     collections: Collections,
     database_dsn: str,
     reverse: bool,
@@ -120,7 +122,7 @@ def dag(
     with Dao(database_dsn, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment:
-            if click.confirm(
+            if force or click.confirm(
                 "A deployment plan already exists, do you want to override it?"
             ):
                 deployment.id = planned_deployment.id
