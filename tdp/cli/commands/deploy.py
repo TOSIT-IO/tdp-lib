@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -56,7 +57,7 @@ if TYPE_CHECKING:
 def deploy(
     dry: bool,
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     force_stale_update: bool,
     mock_deploy: bool,
     run_directory: Path,
@@ -69,7 +70,7 @@ def deploy(
     )
     check_services_cleanliness(cluster_variables)
 
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment is None:
             raise click.ClickException(

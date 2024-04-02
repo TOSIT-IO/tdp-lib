@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -67,7 +68,7 @@ def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional
 )
 def show(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     hosts: tuple[str],
     stale: bool,
     no_stale: bool,
@@ -93,7 +94,7 @@ def show(
     )
     check_services_cleanliness(cluster_variables)
 
-    with Dao(database_dsn) as dao:
+    with Dao(db_engine) as dao:
         print_sch_status_logs(
             dao.get_cluster_status(
                 service,

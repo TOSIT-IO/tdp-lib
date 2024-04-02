@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import preview_option, rolling_interval_option
@@ -27,13 +28,13 @@ if TYPE_CHECKING:
 @rolling_interval_option
 def reconfigure(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     preview: bool,
     rolling_interval: Optional[int] = None,
 ):
     """Reconfigure required TDP services."""
     click.echo("Creating a deployment plan to reconfigure services.")
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         deployment = DeploymentModel.from_stale_hosted_entities(
             collections=collections,
             stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),

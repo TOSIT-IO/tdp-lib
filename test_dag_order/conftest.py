@@ -12,7 +12,7 @@ import pathlib
 from typing import TYPE_CHECKING, Any, cast
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
@@ -127,7 +127,7 @@ def cluster_variables(collections, vars) -> ClusterVariables:
 
 
 @pytest.fixture
-def database_dsn(tmp_path_factory: pytest.TempPathFactory) -> str:
+def db_engine(tmp_path_factory: pytest.TempPathFactory) -> Engine:
     """DSN of the database, initialized in memory"""
     # we can't use the in memory database because it needs to be shared for the whole
     # session
@@ -135,18 +135,18 @@ def database_dsn(tmp_path_factory: pytest.TempPathFactory) -> str:
     database_dsn = f"sqlite+pysqlite:///{db_file}"
     engine = create_engine(database_dsn, echo=True, future=True)
     init_database(engine)
-    return database_dsn
+    return engine
 
 
 @pytest.fixture
 def populated_database_dsn(
-    database_dsn: str,
+    db_engine: Engine,
     dag: Dag,
     cluster_variables: ClusterVariables,
     collections: Collections,
-) -> str:
+) -> Engine:
     """Populated database with a full DAG deployment"""
-    with Dao(database_dsn) as dao:
+    with Dao(db_engine) as dao:
         # plan a deployment for the whole DAG
         planned_deployment = DeploymentModel.from_dag(dag)
         dao.session.add(planned_deployment)
@@ -165,13 +165,13 @@ def populated_database_dsn(
                 for cluster_status_log in cluster_status_logs:
                     logger.info(f"Adding {cluster_status_log}")
             dao.session.commit()
-    return database_dsn
+    return db_engine
 
 
 @pytest.fixture
 def plan_reconfigure(
     source: str,
-    populated_database_dsn: str,
+    populated_database_dsn: Engine,
     cluster_variables: ClusterVariables,
     collections: Collections,
 ):

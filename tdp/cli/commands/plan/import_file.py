@@ -7,6 +7,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.queries import get_planned_deployment
@@ -26,11 +27,11 @@ logger = logging.getLogger(__name__)
 @database_dsn_option
 def import_file(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     file_name: str,
 ):
     """Import a deployment from a file."""
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         with open(file_name) as file:
             # Remove empty elements and comments

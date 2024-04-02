@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.queries import get_planned_deployment
@@ -70,10 +71,10 @@ def _managed_temp_file(**kwargs):
 @database_dsn_option
 def edit(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
 ):
     """Edit the planned deployment."""
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment is None:
             raise click.ClickException(

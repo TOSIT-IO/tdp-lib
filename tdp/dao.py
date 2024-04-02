@@ -3,7 +3,7 @@
 
 from typing import Iterable, Optional
 
-from sqlalchemy import create_engine
+from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 
 from tdp.cli.queries import create_get_sch_latest_status_statement
@@ -14,8 +14,7 @@ from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 
 
 class Dao:
-    def __init__(self, database_dsn: str, commit_on_exit: bool = False):
-        engine = create_engine(database_dsn, echo=False, future=True)
+    def __init__(self, engine: Engine, commit_on_exit: bool = False):
         self.session_maker = sessionmaker(bind=engine)
         self.commit_on_exit = commit_on_exit
 

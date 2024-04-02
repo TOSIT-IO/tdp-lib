@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option, hosts_option
 from tdp.cli.params.plan import preview_option, rolling_interval_option
@@ -40,7 +41,7 @@ def ops(
     extra_vars: tuple[str],
     hosts: tuple[str],
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     preview: bool,
     rolling_interval: Optional[int] = None,
 ):
@@ -54,7 +55,7 @@ def ops(
     if preview:
         print_deployment(deployment)
         return
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = get_planned_deployment(dao.session)
         if planned_deployment:
             deployment.id = planned_deployment.id
