@@ -92,7 +92,7 @@ def deploy(
                 if process_operation_fn:
                     process_operation_fn()
                 click.echo(
-                    f"[DRY MODE] :Operation {operation_rec.operation} is in state {operation_rec.state}"
+                    f"[DRY MODE] :Operation {operation_rec.operation} is {operation_rec.state}"
                 )
             return
 
@@ -103,7 +103,7 @@ def deploy(
             dao.session.commit()  # Update deployment and current operation status to RUNNING and next operations to PENDING
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
                 click.echo(
-                    f"Operation {operation_rec.operation} is in state {operation_rec.state} {'in hosts :' + operation_rec.host if operation_rec.host is not None else ''}"
+                    f"Operation {operation_rec.operation} is {operation_rec.state} {'for hosts: ' + operation_rec.host if operation_rec.host is not None else ''}"
                 )
                 dao.session.add_all(cluster_status_logs)
             dao.session.commit()  # Update operation status to SUCCESS, FAILURE or HELD
