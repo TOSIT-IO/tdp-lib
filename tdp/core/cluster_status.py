@@ -290,7 +290,7 @@ class ClusterStatus(MutableMapping[ServiceComponentHostName, SCHStatus]):
                 )
                 if config_operation:
                     stale_sch_log.to_config = True
-                if start_operation:
+                if restart_operation:
                     stale_sch_log.to_restart = True
 
         # Get the descendants of the reconfigure operations
