@@ -217,15 +217,17 @@ def get_operation_records(
         List of matching operation records.
 
     Raises:
-        NoResultFound: If the operation does not exist.
+        NoResultFound: If the operation or deployment does not exist.
     """
-    try:
-        return (
-            session.query(OperationModel)
-            .filter_by(deployment_id=deployment_id, operation=operation_name)
-            .all()
-        )
-    except NoResultFound as e:
+    query_result = (
+        session.query(OperationModel)
+        .filter_by(deployment_id=deployment_id, operation=operation_name)
+        .all()
+    )
+    if query_result:
+        return query_result
+
+    else:
         raise Exception(
-            f"Operation {operation_name} does not exist in deployment {deployment_id}."
-        ) from e
+            f"Operation {operation_name} does not exist in deployment {deployment_id} or deployment {deployment_id} does not exist."
+        )
