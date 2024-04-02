@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -41,7 +42,7 @@ logger = logging.getLogger(__name__)
 def edit(
     commit_message: str,
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     validate: bool,
     vars: Path,
     service_name: str,
@@ -135,7 +136,7 @@ def edit(
         click.echo(f"{variables_file.name} successfully updated")
 
         # Generate stale component list and save it to the database
-        with Dao(database_dsn) as dao:
+        with Dao(db_engine) as dao:
             stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
                 cluster_variables=cluster_variables, collections=collections
             )

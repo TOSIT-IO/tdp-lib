@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from typing import Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import database_dsn_option
 from tdp.cli.queries import (
@@ -57,12 +58,12 @@ def browse(
     last: bool,
     limit: int,
     offset: int,
-    database_dsn: str,
+    db_engine: Engine,
     deployment_id: Optional[int] = None,
     operation: Optional[str] = None,
 ):
     """Browse deployments."""
-    with Dao(database_dsn) as dao:
+    with Dao(db_engine) as dao:
         # Print last deployment plan
         if plan:
             deployment_plan = get_planned_deployment(dao.session)

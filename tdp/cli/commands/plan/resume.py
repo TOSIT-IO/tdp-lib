@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import preview_option
@@ -29,12 +30,12 @@ if TYPE_CHECKING:
 @preview_option
 def resume(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     preview: bool,
     id: Optional[int] = None,
 ):
     """Resume a failed deployment."""
-    with Dao(database_dsn, commit_on_exit=True) as dao:
+    with Dao(db_engine, commit_on_exit=True) as dao:
         if id is None:
             deployment_to_resume = get_last_deployment(dao.session)
             click.echo("Creating a deployment plan to resume latest deployment.")

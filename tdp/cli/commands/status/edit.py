@@ -6,6 +6,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
+from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -60,7 +61,7 @@ if TYPE_CHECKING:
 )
 def edit(
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     vars: Path,
     validate: bool,
     hosts: tuple[str],
@@ -89,7 +90,7 @@ def edit(
     )
     check_services_cleanliness(cluster_variables)
 
-    with Dao(database_dsn) as dao:
+    with Dao(db_engine) as dao:
         if not service:
             raise click.UsageError("SERVICE argument is required.")
 
@@ -126,7 +127,7 @@ def edit(
 
         dao.session.commit()
 
-    with Dao(database_dsn) as dao:
+    with Dao(db_engine) as dao:
         print_sch_status_logs(
             dao.get_cluster_status(
                 service=service,

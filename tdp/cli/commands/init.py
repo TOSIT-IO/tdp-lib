@@ -7,14 +7,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
+from sqlalchemy import Engine
 
-from tdp.cli.init_db import init_db
 from tdp.cli.params import (
     collections_option,
     database_dsn_option,
     validate_option,
     vars_option,
 )
+from tdp.core.models import init_database
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -37,12 +38,12 @@ if TYPE_CHECKING:
 def init(
     overrides: tuple[Path],
     collections: Collections,
-    database_dsn: str,
+    db_engine: Engine,
     validate: bool,
     vars: Path,
 ):
     """Initialize the database and the TDP variables."""
-    init_db(database_dsn)
+    init_database(db_engine)
     cluster_variables = ClusterVariables.initialize_cluster_variables(
         collections, vars, overrides, validate=validate
     )
