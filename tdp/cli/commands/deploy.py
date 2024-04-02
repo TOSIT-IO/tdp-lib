@@ -91,7 +91,7 @@ def deploy(
                 if process_operation_fn:
                     process_operation_fn()
                 click.echo(
-                    f"[DRY MODE] :Operation {operation_rec.operation} is {operation_rec.state}"
+                    f"[DRY MODE]: Operation {operation_rec.operation} is {operation_rec.state}"
                 )
             return
 
