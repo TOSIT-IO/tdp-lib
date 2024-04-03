@@ -4,6 +4,7 @@
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Generic, TypeVar
 
 from tdp.core.constants import HOST_NAME_MAX_LENGTH
 from tdp.core.operation import Operation
@@ -24,10 +25,13 @@ class Playbook:
                 )
 
 
-class Operations(MutableMapping[str, Operation]):
+T = TypeVar("T", bound=Operation)
+
+
+class Operations(MutableMapping[str, T], Generic[T]):
 
     def __init__(self):
-        self._operations: dict[str, Operation] = {}
+        self._operations: dict[str, T] = {}
 
     def __getitem__(self, key: str):
         try:
@@ -35,7 +39,7 @@ class Operations(MutableMapping[str, Operation]):
         except KeyError:
             raise KeyError(f"Operation '{key}' not found")
 
-    def __setitem__(self, key: str, value: Operation):
+    def __setitem__(self, key: str, value: T):
         if key != value.name:
             raise ValueError(
                 f"Operation name '{value.name}' does not match key '{key}'"
