@@ -21,6 +21,7 @@ import networkx as nx
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
+from tdp.utils import get_previous_item
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -294,14 +295,9 @@ def validate_dag_nodes(nodes: Operations) -> None:
             services_actions.setdefault(operation.service_name, set()).add(
                 operation.action_name
             )
-
-            if (
-                operation.action_name in actions_order
-                and operation.action_name != actions_order[0]
+            if previous_action := get_previous_item(
+                actions_order, operation.action_name
             ):
-                previous_action = actions_order[
-                    actions_order.index(operation.action_name) - 1
-                ]
                 previous_service_action = f"{operation.service_name}_{previous_action}"
                 if previous_service_action not in operation.depends_on:
                     logger.warning(
