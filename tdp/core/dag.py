@@ -315,9 +315,8 @@ def validate_dag_nodes(nodes: Operations) -> None:
                     )
 
     # Service should at least define the 4 basic operations
-    actions_for_service = {"install", "config", "start", "init"}
     for service, actions in services_actions.items():
-        if not actions.issuperset(actions_for_service):
+        if not actions.issuperset(set(actions_order)):
             logger.warning(
                 f"Service '{service}' is missing {set(actions_order) - actions}. "
                 f"Service should have the following actions specified: {actions_order}."
