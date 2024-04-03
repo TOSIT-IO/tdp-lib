@@ -232,15 +232,16 @@ class Dag:
             )
         )
 
-    # TODO: can take a list of operations instead of a dict
     def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
         DG = nx.DiGraph()
         for operation_name, operation in nodes.items():
             DG.add_node(operation_name)
             for dependency in operation.depends_on:
+                # Check if the dependency exists
                 if dependency not in nodes:
                     raise ValueError(
-                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
+                        f"Operation '{operation.name}' depends on '{dependency}' which "
+                        "doesn't exist."
                     )
                 DG.add_edge(dependency, operation_name)
 
@@ -250,52 +251,48 @@ class Dag:
             raise ValueError("Not a DAG")
 
 
-# TODO: call this method inside of Collections._init_operations instead of the Dag constructor
 def validate_dag_nodes(nodes: Operations) -> None:
-    r"""Validation rules :
-    - \*_start operations can only be required from within its own service
-    - \*_install operations should only depend on other \*_install operations
-    - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
-    - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
+    """Validate the DAG nodes.
+
+    Validation rules:
+
+    - Start operations can only be required from within its own service
+    - Install operations should only depend on other install operations
+    - Service operations should have the following dependency chain within the same
+      service: install > config > start > init
     """
-    # key: service_name
-    # value: set of available actions for the service
-    services_actions = {}
+    actions_order = ["install", "config", "start", "init"]
+    services_actions = {}  # {service_name: {actions}}
 
     for operation in nodes.values():
         for dependency in operation.depends_on:
-            # *_start operations can only be required from within its own service
+            # Start operations can only be required from within its own service
             dependency_service = nodes[dependency].service_name
             if (
                 dependency.endswith("_start")
                 and dependency_service != operation.service_name
             ):
                 logger.warning(
-                    f"Operation '{operation.name}' is in service '{operation.service_name}', depends on "
-                    f"'{dependency}' which is a start action in service '{dependency_service}' and should "
-                    f"only depends on start action within its own service"
+                    f"Operation '{operation.name}' depends on '{dependency}' which "
+                    "starts a diffent service. Start operations can only be required "
+                    "from their own service."
                 )
 
-            # *_install operations should only depend on other *_install operations
+            # Install operations should only depend on other install operations
             if operation.name.endswith("_install") and not dependency.endswith(
                 "_install"
             ):
                 logger.warning(
-                    f"Operation '{operation.name}' is an install action, depends on '{dependency}' which is "
-                    f"not an install action and should only depends on other install action"
+                    f"Operation '{operation.name}' depends on '{dependency}' which is "
+                    f"not an install action. Install operations should only depends on "
+                    "other install operations."
                 )
 
-        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-        # even if they are "empty" (tagged with noop)
-        # Part 1
+        # Service operations should respect the actions dependency chain
         service_actions = services_actions.setdefault(operation.service_name, set())
         if operation.is_service_operation():
+            # Save the current action for the service for a later check
             service_actions.add(operation.action_name)
-
-            # Each service action (config, start, init) except the first (install) must have an explicit
-            # dependency with the previous service action within the same service
-            actions_order = ["install", "config", "start", "init"]
-            # Check only if the action is in actions_order and is not the first
             if (
                 operation.action_name in actions_order
                 and operation.action_name != actions_order[0]
@@ -311,17 +308,17 @@ def validate_dag_nodes(nodes: Operations) -> None:
                         previous_service_action_found = True
                 if not previous_service_action_found:
                     logger.warning(
-                        f"Operation '{operation.name}' is a service action and has to depend on "
-                        f"'{operation.service_name}_{previous_action}'"
+                        f"Operation '{operation.name}' doesn't depend on "
+                        f"'{previous_service_action}'. Service operations should have "
+                        "the following dependency chain within the same service: "
+                        " > ".join(actions_order)
                     )
 
-    # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-    # even if they are "empty" (tagged with noop)
-    # Part 2
+    # Service should at least define the 4 basic operations
     actions_for_service = {"install", "config", "start", "init"}
     for service, actions in services_actions.items():
         if not actions.issuperset(actions_for_service):
             logger.warning(
-                f"Service '{service}' have these actions {actions} and at least one action is missing from "
-                f"{actions_for_service}"
+                f"Service '{service}' is missing {set(actions_order) - actions}. "
+                f"Service should have the following actions specified: {actions_order}."
             )
