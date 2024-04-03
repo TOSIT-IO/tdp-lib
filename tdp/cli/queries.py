@@ -228,6 +228,6 @@ def get_operation_records(
         return query_result
 
     else:
-        raise Exception(
+        raise NoResultFound(
             f"Operation {operation_name} does not exist in deployment {deployment_id} or deployment {deployment_id} does not exist."
         )
