@@ -262,7 +262,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
       service: install > config > start > init
     """
     actions_order = ["install", "config", "start", "init"]
-    services_actions = {}  # {service_name: {actions}}
+    services_actions: dict[str, set[str]] = {}  # {service_name: {actions}}
 
     for operation in nodes.values():
         for dependency in operation.depends_on:
@@ -289,10 +289,12 @@ def validate_dag_nodes(nodes: Operations) -> None:
                 )
 
         # Service operations should respect the actions dependency chain
-        service_actions = services_actions.setdefault(operation.service_name, set())
         if operation.is_service_operation():
             # Save the current action for the service for a later check
-            service_actions.add(operation.action_name)
+            services_actions.setdefault(operation.service_name, set()).add(
+                operation.action_name
+            )
+
             if (
                 operation.action_name in actions_order
                 and operation.action_name != actions_order[0]
@@ -301,12 +303,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
                     actions_order.index(operation.action_name) - 1
                 ]
                 previous_service_action = f"{operation.service_name}_{previous_action}"
-                previous_service_action_found = False
-                # Loop over dependency and check if the service previous action is found
-                for dependency in operation.depends_on:
-                    if dependency == previous_service_action:
-                        previous_service_action_found = True
-                if not previous_service_action_found:
+                if previous_service_action not in operation.depends_on:
                     logger.warning(
                         f"Operation '{operation.name}' doesn't depend on "
                         f"'{previous_service_action}'. Service operations should have "
