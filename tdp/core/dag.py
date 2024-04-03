@@ -12,7 +12,6 @@ or on a subgraph of the DAG.
 
 from __future__ import annotations
 
-import functools
 import logging
 from collections.abc import Callable, Generator, Iterable
 from typing import TYPE_CHECKING, Optional, TypeVar
@@ -263,11 +262,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
     # value: set of available actions for the service
     services_actions = {}
 
-    def warning(collection_name: str, message: str) -> None:
-        logger.warning(message + f", collection: {collection_name}")
-
     for operation_name, operation in nodes.items():
-        c_warning = functools.partial(warning, operation.collection_name)
         for dependency in operation.depends_on:
             # *_start operations can only be required from within its own service
             dependency_service = nodes[dependency].service_name
@@ -275,7 +270,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
                 dependency.endswith("_start")
                 and dependency_service != operation.service_name
             ):
-                c_warning(
+                logger.warning(
                     f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
                     f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                     f"only depends on start action within its own service"
@@ -285,7 +280,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
             if operation_name.endswith("_install") and not dependency.endswith(
                 "_install"
             ):
-                c_warning(
+                logger.warning(
                     f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
                     f"not an install action and should only depends on other install action"
                 )
@@ -315,7 +310,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
                     if dependency == previous_service_action:
                         previous_service_action_found = True
                 if not previous_service_action_found:
-                    c_warning(
+                    logger.warning(
                         f"Operation '{operation_name}' is a service action and has to depend on "
                         f"'{operation.service_name}_{previous_action}'"
                     )
