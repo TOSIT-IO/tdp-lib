@@ -17,7 +17,7 @@ def _engine_from_dsn(ctx: click.Context, param: click.Parameter, value: str) -> 
     Returns:
         Engine from the DSN.
     """
-    return create_engine(value, echo=True, future=True)
+    return create_engine(value, future=True)
 
 
 def database_dsn_option(func: FC) -> FC:
