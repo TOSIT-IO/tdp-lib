@@ -8,7 +8,7 @@ from collections.abc import Callable, Iterable
 from typing import Type
 
 from tdp.core.models.enums import FilterTypeEnum
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 
 
 class FilterStrategy(ABC):
@@ -16,8 +16,8 @@ class FilterStrategy(ABC):
 
     @abstractmethod
     def apply_filter(
-        self, operations: Iterable[Operation], expression: str
-    ) -> list[Operation]:
+        self, operations: Iterable[LegacyOperation], expression: str
+    ) -> list[LegacyOperation]:
         """Apply the filter strategy to the operations."""
         pass
 
@@ -48,7 +48,7 @@ class FilterFactory:
     @staticmethod
     def create_filter(
         filter_type: FilterTypeEnum, filter_expression: str
-    ) -> Callable[[Iterable[Operation]], list[Operation]]:
+    ) -> Callable[[Iterable[LegacyOperation]], list[LegacyOperation]]:
         """Create a filter function based on the filter type and expression."""
         strategy_class = FilterFactory._strategies.get(filter_type)
         if not strategy_class:

@@ -27,7 +27,7 @@ from tdp.core.models.operation_model import OperationModel
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
-    from tdp.core.operation import Operation
+    from tdp.core.operation import LegacyOperation
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class MissingOperationError(Exception):
 
 class MissingHostForOperationError(Exception):
 
-    def __init__(self, operation: Operation, host_name: str):
+    def __init__(self, operation: LegacyOperation, host_name: str):
         self.operation = operation
         self.host_name = host_name
         super().__init__(

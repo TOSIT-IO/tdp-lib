@@ -9,7 +9,7 @@ from tabulate import tabulate
 from tdp.cli.params import collections_option, hosts_option
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 
 
 @click.command()
@@ -64,7 +64,7 @@ def ops(
         _print_operations(sorted_operations)
 
 
-def _print_operations(operations: Iterable[Operation], /):
+def _print_operations(operations: Iterable[LegacyOperation], /):
     """Prints a list of operations."""
     click.echo(
         tabulate(

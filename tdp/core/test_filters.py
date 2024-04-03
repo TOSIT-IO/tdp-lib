@@ -5,16 +5,16 @@ import pytest
 
 from tdp.core.filters import FilterFactory, GlobFilterStrategy, RegexFilterStrategy
 from tdp.core.models.enums import FilterTypeEnum
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 
 
 @pytest.fixture
 def operations():
     return [
-        Operation("service1_component1_config"),
-        Operation("service1_component1_start"),
-        Operation("service1_component2_config"),
-        Operation("service2_component1_start"),
+        LegacyOperation("service1_component1_config"),
+        LegacyOperation("service1_component1_start"),
+        LegacyOperation("service1_component2_config"),
+        LegacyOperation("service2_component1_start"),
     ]
 
 

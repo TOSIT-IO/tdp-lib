@@ -20,7 +20,7 @@ import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.entities.operation import Operations
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 from tdp.utils import get_previous_item
 
 if TYPE_CHECKING:
@@ -56,7 +56,7 @@ class Dag:
 
     def node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
-    ) -> Operation:
+    ) -> LegacyOperation:
         # ? Restart operations are now stored in collections.operations they can be
         # ? directly retrieved using the collections.get_operation method.
         # ? This method could be removed in the future.
@@ -134,7 +134,7 @@ class Dag:
         nodes: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[LegacyOperation]:
         """Perform a topological sort on the DAG.
 
         Args:
@@ -157,7 +157,7 @@ class Dag:
         targets: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[LegacyOperation]:
         """Retrieve operations based on the provided sources or targets.
 
         All operations are returned if neither sources nor targets are provided.
@@ -193,7 +193,7 @@ class Dag:
 
     def get_operation_descendants(
         self, nodes: list[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[LegacyOperation]:
         """
         Retrieve all descendant operations for the specified nodes in the DAG.
 

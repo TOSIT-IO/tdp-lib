@@ -1,13 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from abc import ABC
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, TypeVar
+from typing import Generic, Optional, TypeVar
 
 from tdp.core.constants import HOST_NAME_MAX_LENGTH
-from tdp.core.operation import Operation
+from tdp.core.entities.operation_name import OperationName
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,37 @@ class Playbook:
                     f"Host '{host_name}' must be less than {HOST_NAME_MAX_LENGTH} "
                     "characters."
                 )
+
+
+@dataclass(frozen=True)
+class Operation(ABC):
+    name: OperationName
+
+
+@dataclass(frozen=True)
+class PlaybookOperation(Operation, ABC):
+    playbook: Playbook
+
+
+@dataclass(frozen=True)
+class DagOperation(Operation, ABC):
+    depends_on: set[OperationName]
+    include_in_graph: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class DagOperationNoop(DagOperation):
+    pass
+
+
+@dataclass(frozen=True)
+class DagOperationWithPlaybook(DagOperation, PlaybookOperation):
+    pass
+
+
+@dataclass(frozen=True)
+class OtherOperation(PlaybookOperation):
+    pass
 
 
 T = TypeVar("T", bound=Operation)
@@ -60,10 +92,3 @@ class Operations(MutableMapping[str, T], Generic[T]):
 
     def __str__(self):
         return f"{self.__class__.__name__}({self._operations})"
-
-    def get(self, key: str, default=None, *, restart: bool = False, stop: bool = False):
-        if restart and key.endswith("_start"):
-            key = key.replace("_start", "_restart")
-        elif stop and key.endswith("_start"):
-            key = key.replace("_start", "_stop")
-        return self._operations.get(key, default)

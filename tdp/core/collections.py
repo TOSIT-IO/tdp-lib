@@ -19,7 +19,7 @@ from collections.abc import Mapping, Sequence
 from tdp.core.collection import Collection
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 logger = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class Collections(Mapping[str, Collection]):
                             )
 
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
-                    dag_operation_to_register = Operation(
+                    dag_operation_to_register = LegacyOperation(
                         name=dag_node.name,
                         collection_name=collection.name,
                         host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
@@ -167,7 +167,7 @@ class Collections(Mapping[str, Collection]):
                 # in the current nor the previous collections
 
                 # Create and register the operation
-                dag_operations[dag_node.name] = Operation(
+                dag_operations[dag_node.name] = LegacyOperation(
                     name=dag_node.name,
                     collection_name=collection.name,
                     depends_on=dag_node.depends_on.copy(),
@@ -183,7 +183,7 @@ class Collections(Mapping[str, Collection]):
                     )
                     # Create and register the restart operation
                     restart_operation_name = dag_node.name.replace("_start", "_restart")
-                    other_operations[restart_operation_name] = Operation(
+                    other_operations[restart_operation_name] = LegacyOperation(
                         name=restart_operation_name,
                         collection_name="replace_restart_noop",
                         depends_on=dag_node.depends_on.copy(),
@@ -192,7 +192,7 @@ class Collections(Mapping[str, Collection]):
                     )
                     # Create and register the stop operation
                     stop_operation_name = dag_node.name.replace("_start", "_stop")
-                    other_operations[stop_operation_name] = Operation(
+                    other_operations[stop_operation_name] = LegacyOperation(
                         name=stop_operation_name,
                         collection_name="replace_stop_noop",
                         depends_on=dag_node.depends_on.copy(),
@@ -215,7 +215,7 @@ class Collections(Mapping[str, Collection]):
                         f"'{other_operations[operation_name].collection_name}' "
                         f"is overridden by '{collection.name}'"
                     )
-                other_operations[operation_name] = Operation(
+                other_operations[operation_name] = LegacyOperation(
                     name=operation_name,
                     host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
                     collection_name=collection.name,

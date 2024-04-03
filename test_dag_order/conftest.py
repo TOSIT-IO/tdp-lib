@@ -20,7 +20,7 @@ from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentRunner
 from tdp.core.deployment.test_deployment_runner import MockExecutor
 from tdp.core.models import DeploymentModel, init_database
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -210,7 +210,7 @@ def stale_sc(plan_reconfigure: DeploymentModel) -> set[str]:
     sc: set[str] = set()
     for operation in plan_reconfigure.operations:
         # TODO: would be nice to use a dedicated class to parse the operation name
-        operation = Operation(operation.operation)
+        operation = LegacyOperation(operation.operation)
         if operation.component_name is None:
             sc.add(operation.service_name)
         else:
