@@ -159,7 +159,7 @@ def populated_database_dsn(
             cluster_status=dao.get_cluster_status(),
             stale_hosted_entity_statuses=dao.get_stale_hosted_entity_statuses(),
         ).run(planned_deployment)
-        for process_operation_fn in deployment_iterator:
+        for operation_rec, process_operation_fn in deployment_iterator:
             if process_operation_fn and (cluster_status_logs := process_operation_fn()):
                 dao.session.add_all(cluster_status_logs)
                 for cluster_status_log in cluster_status_logs:
