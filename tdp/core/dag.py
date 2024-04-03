@@ -46,7 +46,7 @@ class Dag:
             collections: Collections instance.
         """
         self._collections = collections
-        validate_dag_nodes(self._collections.dag_operations, self._collections)
+        validate_dag_nodes(self._collections.dag_operations)
         self._graph = self._generate_graph(self._collections.dag_operations)
 
     @property
@@ -252,13 +252,11 @@ class Dag:
 
 
 # TODO: call this method inside of Collections._init_operations instead of the Dag constructor
-# TODO: remove Collections dependency
-def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
+def validate_dag_nodes(nodes: Operations) -> None:
     r"""Validation rules :
     - \*_start operations can only be required from within its own service
     - \*_install operations should only depend on other \*_install operations
     - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
-    - Operations tagged with the noop flag should not have a playbook defined in the collection
     - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
     """
     # key: service_name
@@ -321,17 +319,6 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
                         f"Operation '{operation_name}' is a service action and has to depend on "
                         f"'{operation.service_name}_{previous_action}'"
                     )
-
-        # Operations tagged with the noop flag should not have a playbook defined in the collection
-
-        if operation_name in collections[operation.collection_name].playbooks:
-            if operation.noop:
-                c_warning(
-                    f"Operation '{operation_name}' is noop and the playbook should not exist"
-                )
-        else:
-            if not operation.noop:
-                c_warning(f"Operation '{operation_name}' should have a playbook")
 
     # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
     # even if they are "empty" (tagged with noop)
