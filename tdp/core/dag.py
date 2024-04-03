@@ -257,6 +257,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
 
     Validation rules:
 
+    - Check if the dependency exists
     - Start operations can only be required from within its own service
     - Install operations should only depend on other install operations
     - Service operations should have the following dependency chain within the same
@@ -267,6 +268,13 @@ def validate_dag_nodes(nodes: Operations) -> None:
 
     for operation in nodes.values():
         for dependency in operation.depends_on:
+            # Check if the dependency exists
+            if str(dependency) not in nodes:
+                logger.warning(
+                    f"Operation '{operation.name}' depends on '{dependency}' which "
+                    "doesn't exist."
+                )
+
             # Start operations can only be required from within its own service
             dependency_service = nodes[dependency].service_name
             if (
