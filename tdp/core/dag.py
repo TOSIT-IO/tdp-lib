@@ -262,7 +262,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
     # value: set of available actions for the service
     services_actions = {}
 
-    for operation_name, operation in nodes.items():
+    for operation in nodes.values():
         for dependency in operation.depends_on:
             # *_start operations can only be required from within its own service
             dependency_service = nodes[dependency].service_name
@@ -271,17 +271,17 @@ def validate_dag_nodes(nodes: Operations) -> None:
                 and dependency_service != operation.service_name
             ):
                 logger.warning(
-                    f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
+                    f"Operation '{operation.name}' is in service '{operation.service_name}', depends on "
                     f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                     f"only depends on start action within its own service"
                 )
 
             # *_install operations should only depend on other *_install operations
-            if operation_name.endswith("_install") and not dependency.endswith(
+            if operation.name.endswith("_install") and not dependency.endswith(
                 "_install"
             ):
                 logger.warning(
-                    f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
+                    f"Operation '{operation.name}' is an install action, depends on '{dependency}' which is "
                     f"not an install action and should only depends on other install action"
                 )
 
@@ -311,7 +311,7 @@ def validate_dag_nodes(nodes: Operations) -> None:
                         previous_service_action_found = True
                 if not previous_service_action_found:
                     logger.warning(
-                        f"Operation '{operation_name}' is a service action and has to depend on "
+                        f"Operation '{operation.name}' is a service action and has to depend on "
                         f"'{operation.service_name}_{previous_action}'"
                     )
 
