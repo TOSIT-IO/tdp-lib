@@ -96,7 +96,7 @@ def dag(
         set_nodes.update(sources)
     if targets:
         set_nodes.update(targets)
-    set_difference = set_nodes.difference(dag.operations)
+    set_difference = set_nodes.difference(collections.dag_operations)
     if set_difference:
         raise click.BadParameter(f"{set_difference} are not valid nodes.")
 

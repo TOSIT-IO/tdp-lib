@@ -45,14 +45,8 @@ class Dag:
             collections: Collections instance.
         """
         self._collections = collections
-        self._operations = self._collections.dag_operations
-        validate_dag_nodes(self._operations, self._collections)
-        self._graph = self._generate_graph(self.operations)
-
-    @property
-    def operations(self) -> dict[str, Operation]:
-        """DAG operations dictionary."""
-        return self._operations
+        validate_dag_nodes(self._collections.dag_operations, self._collections)
+        self._graph = self._generate_graph(self._collections.dag_operations)
 
     @property
     def graph(self) -> nx.DiGraph:
@@ -119,7 +113,7 @@ class Dag:
 
         # Define a priority function for nodes based on service priority.
         def priority_key(node: str) -> str:
-            operation = self.operations[node]
+            operation = self._collections.dag_operations[node]
             operation_priority = SERVICE_PRIORITY.get(
                 operation.service_name, DEFAULT_SERVICE_PRIORITY
             )
