@@ -44,7 +44,7 @@ def ops(
         dag = Dag(collections)
         operations = [
             operation
-            for operation in dag.get_all_operations()
+            for operation in dag.get_operations()
             if len(hosts) == 0 or bool(set(operation.host_names) & set(hosts))
         ]
         if topo_sort:

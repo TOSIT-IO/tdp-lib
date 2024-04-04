@@ -158,43 +158,38 @@ class Dag:
         restart: bool = False,
         stop: bool = False,
     ) -> list[Operation]:
+        """Retrieve operations based on the provided sources or targets.
+
+        All operations are returned if neither sources nor targets are provided.
+
+        Args:
+            sources: List of source nodes.
+            targets: List of target nodes.
+            restart: If True, restart operations are returned instead of start
+              operations.
+            stop: If True, stop operations are returned instead of start operations.
+
+        Returns:
+            List of operations sorted topologically.
+        """
         if sources and targets:
             raise NotImplementedError("Cannot specify both sources and targets.")
-        if sources:
-            return self.get_operations_from_nodes(sources, restart=restart, stop=stop)
-        elif targets:
-            return self.get_operations_to_nodes(targets, restart=restart, stop=stop)
-        return self.get_all_operations(restart=restart, stop=stop)
 
-    def get_operations_to_nodes(
-        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        nodes_set = set(nodes)
-        for node in nodes:
-            if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
-            nodes_set.update(nx.ancestors(self.graph, node))
-        return self.topological_sort(nodes_set, restart=restart, stop=stop)
+        if nodes := sources or targets:
+            nodes = set(nodes)
+            relation_func = nx.descendants if sources else nx.ancestors
+            for node in nodes.copy():
+                # Check if all nodes exist in the DAG.
+                if not self.graph.has_node(node):
+                    raise IllegalNodeError(f"{node} does not exist in the dag")
+                # Update the nodes set with the descendants or ancestors of the current
+                # node.
+                nodes.update(relation_func(self.graph, node))
+            nodes = self.graph.subgraph(nodes)
+        else:
+            nodes = self.graph
 
-    def get_operations_from_nodes(
-        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        nodes_set = set(nodes)
-        for node in nodes:
-            if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
-            nodes_set.update(nx.descendants(self.graph, node))
-        return self.topological_sort(nodes_set, restart=restart, stop=stop)
-
-    def get_all_operations(
-        self, restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        """gets all operations from the graph sorted topologically and lexicographically.
-
-        :return: a topologically and lexicographically sorted string list
-        :rtype: List[str]
-        """
-        return self.topological_sort(self.graph, restart=restart, stop=stop)
+        return self.topological_sort(nodes, restart=restart, stop=stop)
 
     def get_operation_descendants(
         self, nodes: list[str], restart: bool = False, stop: bool = False
