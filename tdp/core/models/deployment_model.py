@@ -342,15 +342,18 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
+        operation_hosts = _get_reconfigure_operation_hosts(
+            stale_hosted_entity_statuses, collections
+        )
 
         # Sort operations using DAG topological sort. Convert operation name to
         # Operation instance.
-        dag = Dag(collections)
         reconfigure_operations_sorted = list(
             map(
-                lambda x: (dag.node_to_operation(x.operation), x.host),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x.operation),
+                lambda x: (x.operation, x.host),
+                Dag(collections).topological_sort_key(
+                    operation_hosts, key=lambda x: x.operation.name
+                ),
             )
         )
 
@@ -471,12 +474,13 @@ def _filter_falsy_options(options: dict) -> dict:
 
 
 class OperationHostTuple(NamedTuple):
-    operation: str
+    operation: LegacyOperation
     host: Optional[str]
 
 
 def _get_reconfigure_operation_hosts(
     stale_hosted_entity_statuses: list[HostedEntityStatus],
+    collections: Collections,
 ) -> list[OperationHostTuple]:
     """Get the list of reconfigure operations from a list of hosted entities statuses.
 
@@ -490,15 +494,15 @@ def _get_reconfigure_operation_hosts(
         if status.to_config:
             operation_hosts.add(
                 OperationHostTuple(
-                    f"{status.entity.name}_config",
-                    status.entity.host,
+                    operation=collections.operations[f"{status.entity.name}_config"],
+                    host=status.entity.host,
                 )
             )
         if status.to_restart:
             operation_hosts.add(
                 OperationHostTuple(
-                    f"{status.entity.name}_restart",
-                    status.entity.host,
+                    operation=collections.operations[f"{status.entity.name}_restart"],
+                    host=status.entity.host,
                 )
             )
     if len(operation_hosts) == 0:
