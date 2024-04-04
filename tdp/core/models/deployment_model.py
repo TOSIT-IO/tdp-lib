@@ -349,8 +349,8 @@ class DeploymentModel(BaseModel):
         dag = Dag(collections)
         reconfigure_operations_sorted = list(
             map(
-                lambda x: (dag.node_to_operation(x[0]), x[1]),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
+                lambda x: (dag.node_to_operation(x.operation), x.host),
+                dag.topological_sort_key(operation_hosts, key=lambda x: x.operation),
             )
         )
 
@@ -471,8 +471,8 @@ def _filter_falsy_options(options: dict) -> dict:
 
 
 class OperationHostTuple(NamedTuple):
-    operation_name: str
-    host_name: Optional[str]
+    operation: str
+    host: Optional[str]
 
 
 def _get_reconfigure_operation_hosts(
@@ -503,8 +503,5 @@ def _get_reconfigure_operation_hosts(
             )
     if len(operation_hosts) == 0:
         raise NothingToReconfigureError("No component needs to be reconfigured.")
-    # Sort by hosts to improve readability
-    return sorted(
-        operation_hosts,
-        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
-    )
+    # Sort by <operation-name>_<host> to improve readability
+    return sorted(operation_hosts, key=lambda x: f"{x.operation}_{x.host}")
