@@ -342,22 +342,7 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_hosts = _get_reconfigure_operation_hosts(
-            stale_hosted_entity_statuses, collections
-        )
-
-        # Sort operations using DAG topological sort. Convert operation name to
-        # Operation instance.
-        reconfigure_operations_sorted = list(
-            map(
-                lambda x: (x.operation, x.host),
-                Dag(collections).topological_sort_key(
-                    operation_hosts, key=lambda x: x.operation.name
-                ),
-            )
-        )
-
-        # Generate deployment
+        # Generate base deployment
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             options={
@@ -369,8 +354,11 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
+        # Populate deployment with reconfigure operations
         operation_order = 1
-        for operation, host in reconfigure_operations_sorted:
+        for operation, host in _get_reconfigure_operation_hosts(
+            stale_hosted_entity_statuses, collections
+        ):
             deployment.operations.append(
                 OperationModel(
                     operation=operation.name,
@@ -473,22 +461,22 @@ def _filter_falsy_options(options: dict) -> dict:
     return {k: v for k, v in options.items() if v}
 
 
-class OperationHostTuple(NamedTuple):
-    operation: LegacyOperation
-    host: Optional[str]
-
-
 def _get_reconfigure_operation_hosts(
     stale_hosted_entity_statuses: list[HostedEntityStatus],
     collections: Collections,
-) -> list[OperationHostTuple]:
+) -> list[tuple[LegacyOperation, Optional[str]]]:
     """Get the list of reconfigure operations from a list of hosted entities statuses.
 
     Args:
         stale_hosted_entity_statuses: List of stale hosted entities statuses.
 
-    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
+    Returns: List of tuple (operation, host) ordered following the DAG topological sort.
     """
+
+    class OperationHostTuple(NamedTuple):
+        operation: LegacyOperation
+        host: Optional[str]
+
     operation_hosts: set[OperationHostTuple] = set()
     for status in stale_hosted_entity_statuses:
         if status.to_config:
@@ -507,5 +495,18 @@ def _get_reconfigure_operation_hosts(
             )
     if len(operation_hosts) == 0:
         raise NothingToReconfigureError("No component needs to be reconfigured.")
-    # Sort by <operation-name>_<host> to improve readability
-    return sorted(operation_hosts, key=lambda x: f"{x.operation}_{x.host}")
+
+    # First, order by <operation-name>_<host> to improve readability
+    operation_hosts_sorted_by_host = sorted(
+        operation_hosts, key=lambda x: f"{x.operation}_{x.host}"
+    )
+
+    # Then, order using DAG topological sort
+    return list(
+        map(
+            lambda x: (x.operation, x.host),
+            Dag(collections).topological_sort_key(
+                operation_hosts_sorted_by_host, key=lambda x: x.operation.name
+            ),
+        )
+    )
