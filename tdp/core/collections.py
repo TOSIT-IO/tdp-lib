@@ -193,13 +193,14 @@ class Collections(Mapping[str, Collection]):
                 # in the current nor the previous collections
 
                 # Create and register the operation
-                dag_operations[node.name] = LegacyOperation(
+                operation_to_register = LegacyOperation(
                     name=node.name,
                     collection_name=collection.name,
                     depends_on=node.depends_on.copy(),
                     noop=True,
                     host_names=None,
                 )
+                dag_operations[node.name] = operation_to_register
                 # 'restart' and 'stop' operations are not defined in the DAG file
                 # for noop, they need to be generated from the start operations
                 if node.name.endswith("_start"):
@@ -212,7 +213,7 @@ class Collections(Mapping[str, Collection]):
                         other_operations[operation_name] = LegacyOperation(
                             name=operation_name,
                             collection_name=collection.name,
-                            depends_on=node.depends_on.copy(),
+                            depends_on=operation_to_register.depends_on,
                             noop=True,
                             host_names=None,
                         )
