@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 
 from tdp.core.collection import Collection
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
-from tdp.core.entities.operation import Operations
+from tdp.core.entities.operation import Operations, Playbook
 from tdp.core.operation import LegacyOperation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
@@ -34,6 +34,7 @@ class Collections(Mapping[str, Collection]):
 
     def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
+        self._playbooks = self._init_playbooks(self._collections)
         self._dag_operations, self._other_operations = self._init_operations(
             self._collections
         )
@@ -69,6 +70,14 @@ class Collections(Mapping[str, Collection]):
         )
 
     @property
+    def playbooks(self) -> dict[str, Playbook]:
+        """Available playbooks.
+
+        Playbooks that are defined in multiple collections are overridden by the last
+        collection in the list."""
+        return self._playbooks
+
+    @property
     def dag_operations(self) -> Operations:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
@@ -92,6 +101,21 @@ class Collections(Mapping[str, Collection]):
     def schemas(self) -> dict[str, ServiceSchema]:
         """Mapping of service with their variable schemas."""
         return self._schemas
+
+    def _init_playbooks(
+        self, collections: Mapping[str, Collection]
+    ) -> dict[str, Playbook]:
+        playbooks: dict[str, Playbook] = {}
+        for collection in collections.values():
+            for operation_name, playbook in collection.playbooks.items():
+                if operation_name in playbooks:
+                    logger.warning(
+                        f"Playbook '{operation_name}' defined in "
+                        f"'{playbook.collection_name}' is overridden by "
+                        f"'{collection.name}'"
+                    )
+                playbooks[operation_name] = playbook
+        return playbooks
 
     def _init_operations(
         self, collections: Mapping[str, Collection]
@@ -200,26 +224,15 @@ class Collections(Mapping[str, Collection]):
                         host_names=None,
                     )
 
-        # We can't merge the two for loops to handle the case where a playbook operation
-        # is defined in a first collection but not used in the DAG and then used in
-        # the DAG in a second collection.
-        for collection in collections.values():
-            # Load playbook operations to complete the operations list with the
-            # operations that are not defined in the DAG files
-            for operation_name, playbook in collection.playbooks.items():
-                if operation_name in dag_operations:
-                    continue
-                if operation_name in other_operations:
-                    logger.debug(
-                        f"'{operation_name}' defined in "
-                        f"'{other_operations[operation_name].collection_name}' "
-                        f"is overridden by '{collection.name}'"
-                    )
-                other_operations[operation_name] = LegacyOperation(
-                    name=operation_name,
-                    host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
-                    collection_name=collection.name,
-                )
+        # Register the operations that are not defined in the DAG files
+        for operation_name, playbook in self.playbooks.items():
+            if operation_name in dag_operations:
+                continue
+            other_operations[operation_name] = LegacyOperation(
+                name=operation_name,
+                host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
+                collection_name=playbook.collection_name,
+            )
 
         return dag_operations, other_operations
 
