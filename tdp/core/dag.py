@@ -230,8 +230,8 @@ class Dag:
 
     def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
         DG = nx.DiGraph()
-        for operation_name, operation in nodes.items():
-            DG.add_node(operation_name)
+        for operation in nodes.values():
+            DG.add_node(operation.name)
             for dependency in operation.depends_on:
                 # Check if the dependency exists
                 if dependency not in nodes:
@@ -239,7 +239,7 @@ class Dag:
                         f"Operation '{operation.name}' depends on '{dependency}' which "
                         "doesn't exist."
                     )
-                DG.add_edge(dependency, operation_name)
+                DG.add_edge(dependency, operation.name)
 
         if nx.is_directed_acyclic_graph(DG):
             return DG
