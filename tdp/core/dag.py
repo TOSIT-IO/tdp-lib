@@ -54,18 +54,6 @@ class Dag:
         """DAG graph."""
         return self._graph
 
-    def node_to_operation(
-        self, node: str, restart: bool = False, stop: bool = False
-    ) -> LegacyOperation:
-        # ? Restart operations are now stored in collections.operations they can be
-        # ? directly retrieved using the collections.get_operation method.
-        # ? This method could be removed in the future.
-        if restart and node.endswith("_start"):
-            node = node.replace("_start", "_restart")
-        elif stop and node.endswith("_start"):
-            node = node.replace("_start", "_stop")
-        return self._collections.operations[node]
-
     def topological_sort_key(
         self,
         items: Optional[Iterable[T]] = None,
@@ -170,7 +158,7 @@ class Dag:
         # Return the operations sorted topologically.
         return list(
             map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
+                lambda node: self._node_to_operation(node, restart=restart, stop=stop),
                 self.topological_sort_key(nodes),
             )
         )
@@ -192,6 +180,15 @@ class Dag:
             return DG
         else:
             raise ValueError("Not a DAG")
+
+    def _node_to_operation(
+        self, node: str, restart: bool = False, stop: bool = False
+    ) -> LegacyOperation:
+        if restart and node.endswith("_start"):
+            node = node.replace("_start", "_restart")
+        elif stop and node.endswith("_start"):
+            node = node.replace("_start", "_stop")
+        return self._collections.operations[node]
 
 
 def validate_dag_nodes(nodes: Operations) -> None:
