@@ -124,9 +124,13 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
                 if restart_operation:
                     log.to_restart = True
 
-        # Create logs for the descendants of the modified entities
-        for operation in Dag(collections).get_operation_descendants(
-            nodes=list(source_reconfigure_operations), restart=True
+        # Create logs for the descendants of the modified entities while excluding the
+        # source reconfigure operations that have already been processed
+        for operation in filter(
+            lambda node: node not in source_reconfigure_operations,
+            Dag(collections).get_operations(
+                sources=source_reconfigure_operations, restart=True
+            ),
         ):
             # Only create a log when config or restart operation is available
             if operation.action_name not in ["config", "restart"]:
