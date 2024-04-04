@@ -107,6 +107,29 @@ class Collections(Mapping[str, Collection]):
                 # The read_operation is associated with a playbook defined in the
                 # current collection
                 if playbook := collection.playbooks.get(dag_node.name):
+                    # Check if the start operation has an associated restart and stop
+                    if dag_node.name.endswith("_start"):
+                        if (
+                            restart_operation_name := dag_node.name.replace(
+                                "_start", "_restart"
+                            )
+                        ) not in collection.playbooks:
+                            logger.warning(
+                                f"Missing {restart_operation_name} playbook in "
+                                f"{collection.name}. Each start playbook should have "
+                                "an associated restart playbook."
+                            )
+                        if (
+                            stop_operation_name := dag_node.name.replace(
+                                "_start", "_stop"
+                            )
+                        ) not in collection.playbooks:
+                            logger.warning(
+                                f"Missing {stop_operation_name} playbook in "
+                                f"{collection.name}. Each stop playbook should have an "
+                                "associated restart playbook."
+                            )
+
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
                     dag_operation_to_register = Operation(
                         name=dag_node.name,
