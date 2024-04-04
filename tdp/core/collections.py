@@ -205,24 +205,15 @@ class Collections(Mapping[str, Collection]):
                         f"'{dag_node.name}' is noop, creating the associated "
                         "restart and stop operations"
                     )
-                    # Create and register the restart operation
-                    restart_operation_name = dag_node.name.replace("_start", "_restart")
-                    other_operations[restart_operation_name] = LegacyOperation(
-                        name=restart_operation_name,
-                        collection_name="replace_restart_noop",
-                        depends_on=dag_node.depends_on.copy(),
-                        noop=True,
-                        host_names=None,
-                    )
-                    # Create and register the stop operation
-                    stop_operation_name = dag_node.name.replace("_start", "_stop")
-                    other_operations[stop_operation_name] = LegacyOperation(
-                        name=stop_operation_name,
-                        collection_name="replace_stop_noop",
-                        depends_on=dag_node.depends_on.copy(),
-                        noop=True,
-                        host_names=None,
-                    )
+                    for action_name in ["_restart", "_stop"]:
+                        operation_name = dag_node.name.replace("_start", action_name)
+                        other_operations[operation_name] = LegacyOperation(
+                            name=operation_name,
+                            collection_name=collection.name,
+                            depends_on=dag_node.depends_on.copy(),
+                            noop=True,
+                            host_names=None,
+                        )
 
         # Register the operations that are not defined in the DAG files
         for operation_name, playbook in self.playbooks.items():
