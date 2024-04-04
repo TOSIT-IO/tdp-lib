@@ -125,16 +125,17 @@ class Collections(Mapping[str, Collection]):
 
         for collection in collections.values():
             # Load DAG operations from the dag files
-            for dag_node in collection.dag_nodes:
-                existing_operation = dag_operations.get(dag_node.name)
+            for node in collection.dag_nodes:
+                existing_operation = dag_operations.get(node.name)
 
-                # The read_operation is associated with a playbook defined in the
-                # current collection
-                if playbook := collection.playbooks.get(dag_node.name):
-                    # Check if the start operation has an associated restart and stop
-                    if dag_node.name.endswith("_start"):
+                # The DAG node is associated with a playbook defined in the current
+                # collection
+                if playbook := collection.playbooks.get(node.name):
+                    # If a the action is a start, check if the associated restart and
+                    # stop playbooks are defined
+                    if node.name.endswith("_start"):
                         if (
-                            restart_operation_name := dag_node.name.replace(
+                            restart_operation_name := node.name.replace(
                                 "_start", "_restart"
                             )
                         ) not in collection.playbooks:
@@ -144,9 +145,7 @@ class Collections(Mapping[str, Collection]):
                                 "an associated restart playbook."
                             )
                         if (
-                            stop_operation_name := dag_node.name.replace(
-                                "_start", "_stop"
-                            )
+                            stop_operation_name := node.name.replace("_start", "_stop")
                         ) not in collection.playbooks:
                             logger.warning(
                                 f"Missing {stop_operation_name} playbook in "
@@ -155,62 +154,62 @@ class Collections(Mapping[str, Collection]):
                             )
 
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
-                    dag_operation_to_register = LegacyOperation(
-                        name=dag_node.name,
+                    operation_to_register = LegacyOperation(
+                        name=node.name,
                         collection_name=collection.name,
                         host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
-                        depends_on=dag_node.depends_on.copy(),
+                        depends_on=node.depends_on.copy(),
                     )
                     # If the operation is already registered, merge its dependencies
                     if existing_operation:
-                        dag_operation_to_register.depends_on.extend(
-                            dag_operations[dag_node.name].depends_on
+                        operation_to_register.depends_on.extend(
+                            dag_operations[node.name].depends_on
                         )
                         # Print a warning if we override a playbook operation
                         if not existing_operation.noop:
                             logger.debug(
-                                f"'{dag_node.name}' defined in "
+                                f"'{node.name}' defined in "
                                 f"'{existing_operation.collection_name}' "
                                 f"is overridden by '{collection.name}'"
                             )
                     # Register the operation
-                    dag_operations[dag_node.name] = dag_operation_to_register
+                    dag_operations[node.name] = operation_to_register
                     continue
 
                 # The read_operation is already registered
                 if existing_operation:
                     logger.debug(
-                        f"'{dag_node.name}' defined in "
+                        f"'{node.name}' defined in "
                         f"'{existing_operation.collection_name}' "
                         f"is extended by '{collection.name}'"
                     )
-                    existing_operation.depends_on.extend(dag_node.depends_on)
+                    existing_operation.depends_on.extend(node.depends_on)
                     continue
 
                 # From this point, the read_operation is a noop as it is not defined
                 # in the current nor the previous collections
 
                 # Create and register the operation
-                dag_operations[dag_node.name] = LegacyOperation(
-                    name=dag_node.name,
+                dag_operations[node.name] = LegacyOperation(
+                    name=node.name,
                     collection_name=collection.name,
-                    depends_on=dag_node.depends_on.copy(),
+                    depends_on=node.depends_on.copy(),
                     noop=True,
                     host_names=None,
                 )
                 # 'restart' and 'stop' operations are not defined in the DAG file
                 # for noop, they need to be generated from the start operations
-                if dag_node.name.endswith("_start"):
+                if node.name.endswith("_start"):
                     logger.debug(
-                        f"'{dag_node.name}' is noop, creating the associated "
+                        f"'{node.name}' is noop, creating the associated "
                         "restart and stop operations"
                     )
                     for action_name in ["_restart", "_stop"]:
-                        operation_name = dag_node.name.replace("_start", action_name)
+                        operation_name = node.name.replace("_start", action_name)
                         other_operations[operation_name] = LegacyOperation(
                             name=operation_name,
                             collection_name=collection.name,
-                            depends_on=dag_node.depends_on.copy(),
+                            depends_on=node.depends_on.copy(),
                             noop=True,
                             host_names=None,
                         )
