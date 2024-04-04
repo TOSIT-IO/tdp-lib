@@ -162,15 +162,19 @@ class Collections(Mapping[str, Collection]):
                     )
                     # If the operation is already registered, merge its dependencies
                     if existing_operation:
+                        logger.debug(
+                            f"'{existing_operation.name}' dependencies are extended by "
+                            f"'{collection.name}'"
+                        )
                         operation_to_register.depends_on.extend(
                             dag_operations[node.name].depends_on
                         )
                         # Print a warning if we override a playbook operation
                         if not existing_operation.noop:
                             logger.debug(
-                                f"'{node.name}' defined in "
+                                f"'{existing_operation.name}' defined in "
                                 f"'{existing_operation.collection_name}' "
-                                f"is overridden by '{collection.name}'"
+                                f"is overridden by '{collection.name}'."
                             )
                     # Register the operation
                     dag_operations[node.name] = operation_to_register
@@ -179,9 +183,8 @@ class Collections(Mapping[str, Collection]):
                 # The read_operation is already registered
                 if existing_operation:
                     logger.debug(
-                        f"'{node.name}' defined in "
-                        f"'{existing_operation.collection_name}' "
-                        f"is extended by '{collection.name}'"
+                        f"'{existing_operation.name}' dependencies are extended by "
+                        f"'{collection.name}'"
                     )
                     existing_operation.depends_on.extend(node.depends_on)
                     continue
