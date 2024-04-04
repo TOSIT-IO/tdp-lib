@@ -129,28 +129,6 @@ class Dag:
                     yield item
         return topo_sorted
 
-    def topological_sort(
-        self,
-        nodes: Optional[Iterable[str]] = None,
-        restart: bool = False,
-        stop: bool = False,
-    ) -> list[LegacyOperation]:
-        """Perform a topological sort on the DAG.
-
-        Args:
-            nodes: List of nodes to sort.
-            restart: If True, restart operations are returned instead of start operations.
-
-        Returns:
-            List of operations sorted topologically.
-        """
-        return list(
-            map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
-                self.topological_sort_key(nodes),
-            )
-        )
-
     def get_operations(
         self,
         sources: Optional[Iterable[str]] = None,
@@ -189,7 +167,13 @@ class Dag:
         else:
             nodes = self.graph
 
-        return self.topological_sort(nodes, restart=restart, stop=stop)
+        # Return the operations sorted topologically.
+        return list(
+            map(
+                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
+                self.topological_sort_key(nodes),
+            )
+        )
 
     def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
         DG = nx.DiGraph()
