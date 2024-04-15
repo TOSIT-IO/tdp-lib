@@ -10,12 +10,12 @@ from tdp.cli.commands.init import init
 from tdp.cli.commands.plan.dag import dag
 
 
-def test_tdp_plan_dag(collection_path: Path, database_dsn_path: str, vars: Path):
+def test_tdp_plan_dag(collection_path: Path, database_dsn: str, vars: Path):
     base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
-        database_dsn_path,
+        database_dsn,
     ]
     runner = CliRunner()
     result = runner.invoke(init, [*base_args, "--vars", str(vars)])
