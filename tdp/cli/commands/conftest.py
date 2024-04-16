@@ -29,10 +29,5 @@ def collection_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture
-def database_dsn(tmp_path: Path) -> str:
-    return "sqlite:///" + str(tmp_path / "sqlite.db")
-
-
-@pytest.fixture
 def vars(tmp_path_factory: pytest.TempPathFactory) -> Path:
     return tmp_path_factory.mktemp("collection")

@@ -18,14 +18,24 @@ from tdp.core.constants import (
 )
 from tdp.core.models import BaseModel
 
-DATABASE_URL = "sqlite:///:memory:"
+
+@pytest.fixture
+def database_dsn(tmp_path: Path) -> str:
+    """Return a database dsn.
+
+    We create a temp path instead of the default in-memory sqlite database as some test
+    need to generate several engine instances (which will loose the data between them).
+    Concerned tests are CLI tests that need to perform a `tdp init` at the beginning of
+    the test.
+    """
+    return "sqlite:///" + str(tmp_path / "sqlite.db")
 
 
 # TODO: This fixture should return a database dsn
 @pytest.fixture()
-def db_session() -> Generator[Session, None, None]:
+def db_session(database_dsn: str) -> Generator[Session, None, None]:
     # Connect to the database
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(database_dsn)
 
     # Create tables
     BaseModel.metadata.create_all(engine)
