@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import cast
 
 import pytest
 import yaml
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from tdp.core.constants import (
@@ -17,7 +18,7 @@ from tdp.core.constants import (
     PLAYBOOKS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
-from tdp.core.models import BaseModel
+from tdp.core.models import BaseModel, init_database
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -62,24 +63,32 @@ def db_dsn(
     engine.dispose()
 
 
-# TODO: This fixture should return a database dsn
 @pytest.fixture()
-def db_session(db_dsn: str) -> Generator[Session, None, None]:
-    # Connect to the database
+def db_engine_uninitialized(db_dsn: str) -> Generator[Engine, None, None]:
+    """Create a database engine."""
     engine = create_engine(db_dsn)
-
-    # Create tables
-    BaseModel.metadata.create_all(engine)
-
-    # Create a session
-    session_maker = sessionmaker(bind=engine)
-    session = session_maker()
-    yield session
-
-    # Close and rollback for isolation
-    session.close()
-    BaseModel.metadata.drop_all(engine)
+    yield engine
     engine.dispose()
+
+
+@pytest.fixture()
+def db_engine_initialized(db_dsn: str) -> Generator[Engine, None, None]:
+    """Create a database engine and initialize the schema."""
+    engine = create_engine(db_dsn)
+    init_database(engine)
+    yield engine
+    engine.dispose()
+
+
+@contextmanager
+def create_session(engine: Engine) -> Generator[Session, None, None]:
+    """Utility function to create a session."""
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 def generate_collection_at_path(
