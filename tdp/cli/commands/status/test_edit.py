@@ -9,12 +9,12 @@ from tdp.cli.commands.init import init
 from tdp.cli.commands.status.edit import edit
 
 
-def test_tdp_status_edit(collection_path: Path, database_dsn: str, vars: Path):
+def test_tdp_status_edit(collection_path: Path, db_dsn: str, vars: Path):
     base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
-        database_dsn,
+        db_dsn,
         "--vars",
         str(vars),
     ]

@@ -11,13 +11,13 @@ from tdp.cli.commands.plan.resume import resume
 
 
 def test_tdp_plan_resume_nothing_to_resume(
-    collection_path: Path, database_dsn: str, vars: Path
+    collection_path: Path, db_dsn: str, vars: Path
 ):
     base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
-        database_dsn,
+        db_dsn,
     ]
     runner = CliRunner()
     result = runner.invoke(init, [*base_args, "--vars", str(vars)])
