@@ -3,6 +3,7 @@
 
 from typing import Optional
 
+from sqlalchemy import Engine
 from sqlalchemy.engine.row import Row
 
 from tdp.core.models.base_model import BaseModel
@@ -19,5 +20,5 @@ from tdp.core.models.sch_status_log_model import (
 )
 
 
-def init_database(engine):
+def init_database(engine: Engine) -> None:
     BaseModel.metadata.create_all(engine)
