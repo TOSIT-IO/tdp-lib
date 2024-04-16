@@ -3,6 +3,7 @@
 
 from collections.abc import Generator
 from pathlib import Path
+from typing import cast
 
 import pytest
 import yaml
@@ -19,16 +20,46 @@ from tdp.core.constants import (
 from tdp.core.models import BaseModel
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--database-dsn",
+        dest="database_dsn",
+        action="append",
+        default=["sqlite"],
+        help="Add database DSN.",
+    )
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Pytest hook to generate tests based on the database dsn option."""
+    if "db_dsn" in metafunc.fixturenames:
+        metafunc.parametrize(
+            "db_dsn", metafunc.config.getoption("database_dsn"), indirect=True  # type: ignore
+        )
+
+
 @pytest.fixture
-def db_dsn(tmp_path: Path) -> str:
+def db_dsn(
+    request: pytest.FixtureRequest, tmp_path: Path
+) -> Generator[str, None, None]:
     """Return a database dsn.
+
+    Ensure that the database is cleaned up after each test is done.
 
     We create a temp path instead of the default in-memory sqlite database as some test
     need to generate several engine instances (which will loose the data between them).
     Concerned tests are CLI tests that need to perform a `tdp init` at the beginning of
     the test.
     """
-    return "sqlite:///" + str(tmp_path / "sqlite.db")
+    database_dsn = cast(str, request.param)
+    # Assign a temporary database for sqlite
+    if database_dsn == "sqlite":
+        database_dsn = f"sqlite:///{tmp_path / 'test.db'}"
+    yield database_dsn
+    # Drop the database content
+    engine = create_engine(database_dsn)
+    BaseModel.metadata.drop_all(engine)
+    engine.dispose()
 
 
 # TODO: This fixture should return a database dsn
