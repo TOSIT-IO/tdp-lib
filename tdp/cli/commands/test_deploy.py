@@ -11,13 +11,13 @@ from tdp.cli.commands.plan.dag import dag
 
 
 def test_tdp_deploy_mock(
-    collection_path: Path, database_dsn: str, vars: Path, tmp_path: Path
+    collection_path: Path, db_dsn: str, vars: Path, tmp_path: Path
 ):
     base_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
-        database_dsn,
+        db_dsn,
     ]
     runner = CliRunner()
     result = runner.invoke(init, [*base_args, "--vars", str(vars)])

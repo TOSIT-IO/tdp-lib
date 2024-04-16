@@ -20,7 +20,7 @@ from tdp.core.models import BaseModel
 
 
 @pytest.fixture
-def database_dsn(tmp_path: Path) -> str:
+def db_dsn(tmp_path: Path) -> str:
     """Return a database dsn.
 
     We create a temp path instead of the default in-memory sqlite database as some test
@@ -33,9 +33,9 @@ def database_dsn(tmp_path: Path) -> str:
 
 # TODO: This fixture should return a database dsn
 @pytest.fixture()
-def db_session(database_dsn: str) -> Generator[Session, None, None]:
+def db_session(db_dsn: str) -> Generator[Session, None, None]:
     # Connect to the database
-    engine = create_engine(database_dsn)
+    engine = create_engine(db_dsn)
 
     # Create tables
     BaseModel.metadata.create_all(engine)
