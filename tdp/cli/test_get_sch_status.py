@@ -98,24 +98,26 @@ def _last_values(
 
 
 @pytest.mark.skip(reason="db_session fixture needs to be reworked.")
-def test_single_service_component_status(db_engine_initialized: Engine):
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_single_service_component_status(db_engine: Engine):
     """Test the get_sch_status query with a single sch."""
     logs = _mock_sch_status_log("smock", "cmock", "hmock", 5)
     last_values = _last_values(logs)
 
     # Use this instead of db_session.add_all() to ensure different timestamps
-    with create_session(db_engine_initialized) as session:
+    with create_session(db_engine) as session:
         for log in logs:
             session.add(log)
             # Commit at each step to ensure different timestamps
             session.commit()
 
-    with Dao(db_engine_initialized) as dao:
+    with Dao(db_engine) as dao:
         assert dao.get_cluster_status() == [last_values]
 
 
 @pytest.mark.skip(reason="db_session fixture needs to be reworked.")
-def test_multiple_service_component_status(db_engine_initialized: Engine):
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_multiple_service_component_status(db_engine: Engine):
     """Test the get_sch_status query with multiple schs."""
     classic_component_logs = _mock_sch_status_log("smock", "cmock", "hmock")
     service_noop_logs = _mock_sch_status_log("smock", None, None)
@@ -146,7 +148,7 @@ def test_multiple_service_component_status(db_engine_initialized: Engine):
         chosen_index = random.choice(available_indices)
 
         # Append the next log from the chosen list to the database.
-        with create_session(db_engine_initialized) as session:
+        with create_session(db_engine) as session:
             session.add(next_logs[chosen_index])
             # Commit at each step to ensure different timestamps
             session.commit()
@@ -154,5 +156,5 @@ def test_multiple_service_component_status(db_engine_initialized: Engine):
         # Update the next log for the chosen list. 'None' if no more logs are left.
         next_logs[chosen_index] = next(iterators[chosen_index], None)
 
-    with Dao(db_engine_initialized) as dao:
+    with Dao(db_engine) as dao:
         assert set(dao.get_cluster_status()) == last_values

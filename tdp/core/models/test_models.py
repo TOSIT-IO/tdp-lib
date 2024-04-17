@@ -4,6 +4,7 @@
 import logging
 from datetime import datetime, timedelta
 
+import pytest
 from sqlalchemy.engine import Engine
 
 from tdp.conftest import create_session
@@ -13,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 # TODO: add some status logs
-def test_create_deployment(db_engine_initialized: Engine):
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_create_deployment(db_engine: Engine):
     deployment = DeploymentModel(
         options={
             "sources": ["source1", "source2"],
@@ -52,7 +54,7 @@ def test_create_deployment(db_engine_initialized: Engine):
     logger.info(operation_rec)
     logger.info(component_version_log)
 
-    with create_session(db_engine_initialized) as session:
+    with create_session(db_engine) as session:
         session.add(deployment)
         session.commit()
 

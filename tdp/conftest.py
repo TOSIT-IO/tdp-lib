@@ -64,18 +64,13 @@ def db_dsn(
 
 
 @pytest.fixture()
-def db_engine_uninitialized(db_dsn: str) -> Generator[Engine, None, None]:
-    """Create a database engine."""
+def db_engine(
+    db_dsn: str, request: pytest.FixtureRequest
+) -> Generator[Engine, None, None]:
+    """Create a database engine and optionnally by default initialize the schema."""
     engine = create_engine(db_dsn)
-    yield engine
-    engine.dispose()
-
-
-@pytest.fixture()
-def db_engine_initialized(db_dsn: str) -> Generator[Engine, None, None]:
-    """Create a database engine and initialize the schema."""
-    engine = create_engine(db_dsn)
-    init_database(engine)
+    if request.param:
+        init_database(engine)
     yield engine
     engine.dispose()
 
