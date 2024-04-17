@@ -8,12 +8,13 @@ import click
 from click.decorators import FC
 
 from tdp.core.collections import Collections
+from tdp.core.entities.hostable_entity_name import ServiceName
 from tdp.core.variables.cluster_variables import ClusterVariables
 
 
 def _check_service(
     ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> Optional[str]:
+) -> Optional[ServiceName]:
     """Click callback that check if the service exists."""
     collections: Collections = ctx.params["collections"]
     vars: Path = ctx.params["vars"]
@@ -21,9 +22,11 @@ def _check_service(
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=False
     )
-    if value and value not in cluster_variables.keys():
+    if not value:
+        return
+    if value not in cluster_variables.keys():
         raise click.UsageError(f"Service '{value}' does not exists.")
-    return value
+    return ServiceName(value)
 
 
 def service_argument_option(func: FC) -> FC:

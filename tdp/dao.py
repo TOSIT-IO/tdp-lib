@@ -8,7 +8,11 @@ from sqlalchemy.orm import sessionmaker
 
 from tdp.cli.queries import create_get_sch_latest_status_statement
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
+from tdp.core.entities.hostable_entity_name import (
+    ServiceComponentName,
+    ServiceName,
+    create_hostable_entity_name,
+)
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 
@@ -43,8 +47,8 @@ class Dao:
 
     def get_hosted_entity_statuses(
         self,
-        service: Optional[str] = None,
-        component: Optional[str] = None,
+        service: Optional[ServiceName] = None,
+        component: Optional[ServiceComponentName] = None,
         hosts: Optional[Iterable[str]] = None,
         filter_stale: Optional[bool] = None,
         filter_active: Optional[bool] = None,
@@ -59,8 +63,8 @@ class Dao:
         """
         self._check_session()
         stmt = create_get_sch_latest_status_statement(
-            service_to_filter=service,
-            component_to_filter=component,
+            service_to_filter=service.name if service is not None else None,
+            component_to_filter=component.component if component is not None else None,
             hosts_to_filter=hosts,
             filter_stale=filter_stale,
             filter_active=filter_active,

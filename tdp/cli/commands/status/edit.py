@@ -17,6 +17,7 @@ from tdp.cli.params import (
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
 from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+from tdp.core.entities.hostable_entity_name import ServiceComponentName, ServiceName
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -65,8 +66,8 @@ def edit(
     vars: Path,
     validate: bool,
     hosts: tuple[str],
-    service: Optional[str] = None,
-    component: Optional[str] = None,
+    service: Optional[ServiceName] = None,
+    component: Optional[ServiceComponentName] = None,
     message: Optional[str] = None,
     to_config: Optional[bool] = None,
     to_restart: Optional[bool] = None,

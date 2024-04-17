@@ -16,6 +16,7 @@ from tdp.cli.params import (
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
 from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+from tdp.core.entities.hostable_entity_name import ServiceComponentName, ServiceName
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 
@@ -37,8 +38,8 @@ def generate_stales(
     db_engine: Engine,
     validate: bool,
     vars: Path,
-    service: Optional[str] = None,
-    component: Optional[str] = None,
+    service: Optional[ServiceName] = None,
+    component: Optional[ServiceComponentName] = None,
 ) -> None:
     """Generate stale components.
 
