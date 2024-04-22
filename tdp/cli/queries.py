@@ -198,10 +198,34 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
 
 
+def get_running_deployment(session: Session) -> Optional[DeploymentModel]:
+    """Get the running deployment
+
+    Args:
+        session: The database session.
+
+    Returns:
+        The running deployment or NoResultFound if there is no running deployment.
+
+    Raises:
+        NoResultFound: If there is no running deployment.
+    """
+    try:
+        return (
+            session.query(DeploymentModel)
+            .where(DeploymentModel.state == "Running")
+            .order_by(DeploymentModel.id.desc())
+            .limit(1)
+            .one()
+        )
+    except NoResultFound as e:
+        raise Exception("No running deployment.") from e
+
+
 def get_operation_records(
     session: Session, deployment_id: int, operation_name: str
 ) -> list[OperationModel]:
-    """Get an operation records.
+    """Get the records of an operation.
 
     Args:
         session: The database session.
@@ -223,4 +247,32 @@ def get_operation_records(
     except NoResultFound as e:
         raise Exception(
             f"Operation {operation_name} does not exist in deployment {deployment_id}."
+        ) from e
+
+
+def get_operation_from_order(
+    session: Session, deployment_id: int, operation_order: int
+) -> OperationModel:
+    """Get an operation from the order.
+
+    Args:
+        session: The database session.
+        deployment_id: The deployment ID.
+        operation_order: The operation order.
+
+    Returns:
+        The matching operation record.
+
+    Raises:
+        NoResultFound: If the operation order does not exist.
+    """
+    try:
+        return (
+            session.query(OperationModel)
+            .filter_by(deployment_id=deployment_id, operation_order=operation_order)
+            .one()
+        )
+    except NoResultFound as e:
+        raise Exception(
+            f"Operation {operation_order} does not exist in deployment {deployment_id}."
         ) from e
