@@ -4,20 +4,21 @@
 
 from click.testing import CliRunner
 
+from tdp.cli.commands.conftest import tdp_init_args
 from tdp.cli.commands.plan.reconfigure import reconfigure
 
 
 def test_tdp_plan_reconfigure(
-    tdp_init: tuple,
+    tdp_init: tdp_init_args,
 ):
-    tdp_init_args = [
+    base_args = [
         "--collection-path",
-        tdp_init[0],
+        tdp_init.collection_path,
         "--database-dsn",
-        tdp_init[1],
+        tdp_init.db_dsn,
     ]
     runner = CliRunner()
-    result = runner.invoke(reconfigure, tdp_init_args)
+    result = runner.invoke(reconfigure, base_args)
     assert (
         result.exit_code == 1
     ), result.output  # No stale components, hence nothing to reconfigure.
