@@ -11,12 +11,17 @@ from tdp.cli.commands.plan.ops import ops
 def test_tdp_plan_run(
     tdp_init: tdp_init_args,
 ):
-    base_args = [
-        "--collection-path",
-        tdp_init.collection_path,
-        "--database-dsn",
-        tdp_init.db_dsn,
-    ]
     runner = CliRunner()
-    result = runner.invoke(ops, [*base_args, "service_install"])
+    result = runner.invoke(
+        ops,
+        [
+            *[
+                "--collection-path",
+                tdp_init.collection_path,
+                "--database-dsn",
+                tdp_init.db_dsn,
+            ],
+            "service_install",
+        ],
+    )
     assert result.exit_code == 0, result.output
