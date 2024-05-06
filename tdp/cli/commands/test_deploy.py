@@ -15,15 +15,6 @@ def test_tdp_deploy_mock(
     tdp_init: tdp_init_args,
     tmp_path: Path,
 ):
-
-    base_args = [
-        "--collection-path",
-        tdp_init.collection_path,
-        "--database-dsn",
-        tdp_init.db_dsn,
-        "--vars",
-        tdp_init.vars,
-    ]
     runner = CliRunner()
     result = runner.invoke(
         dag,
@@ -38,7 +29,14 @@ def test_tdp_deploy_mock(
     result = runner.invoke(
         deploy,
         [
-            *base_args,
+            *[
+                "--collection-path",
+                tdp_init.collection_path,
+                "--database-dsn",
+                tdp_init.db_dsn,
+                "--vars",
+                tdp_init.vars,
+            ],
             "--run-directory",
             str(tmp_path),
             "--mock-deploy",

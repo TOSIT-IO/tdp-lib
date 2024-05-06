@@ -11,14 +11,16 @@ from tdp.cli.commands.plan.reconfigure import reconfigure
 def test_tdp_plan_reconfigure(
     tdp_init: tdp_init_args,
 ):
-    base_args = [
-        "--collection-path",
-        tdp_init.collection_path,
-        "--database-dsn",
-        tdp_init.db_dsn,
-    ]
     runner = CliRunner()
-    result = runner.invoke(reconfigure, base_args)
+    result = runner.invoke(
+        reconfigure,
+        [
+            "--collection-path",
+            tdp_init.collection_path,
+            "--database-dsn",
+            tdp_init.db_dsn,
+        ],
+    )
     assert (
         result.exit_code == 1
     ), result.output  # No stale components, hence nothing to reconfigure.
