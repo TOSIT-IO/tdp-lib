@@ -9,20 +9,6 @@ from click.testing import CliRunner
 from tdp.cli.commands.init import init
 
 
-def test_tdp_init(collection_path: Path, db_dsn: str, vars: Path):
-    args = [
-        "--collection-path",
-        collection_path,
-        "--database-dsn",
-        db_dsn,
-        "--vars",
-        vars,
-    ]
-    runner = CliRunner()
-    result = runner.invoke(init, args)
-    assert result.exit_code == 0, result.output
-
-
 def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Path):
     db_path = tmp_path / "sqlite.db"
     args = [

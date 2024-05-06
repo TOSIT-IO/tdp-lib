@@ -2,23 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from pathlib import Path
-
 from click.testing import CliRunner
 
-from tdp.cli.commands.init import init
 from tdp.cli.commands.plan.dag import dag
 
 
-def test_tdp_plan_dag(collection_path: Path, db_dsn: str, vars: Path):
-    base_args = [
-        "--collection-path",
-        collection_path,
-        "--database-dsn",
-        db_dsn,
-    ]
+def test_tdp_plan_dag(
+    tdp_init: list,
+):
     runner = CliRunner()
-    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
-    assert result.exit_code == 0, result.output
-    result = runner.invoke(dag, base_args)
+    result = runner.invoke(dag, tdp_init[:-2])
     assert result.exit_code == 0, result.output

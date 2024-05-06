@@ -1,11 +1,37 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
+from click.testing import CliRunner
+from sqlalchemy import create_engine
 
+from tdp.cli.commands.init import init
 from tdp.conftest import generate_collection_at_path
+from tdp.core.models import BaseModel
+
+
+@pytest.fixture
+def tdp_init(
+    collection_path: Path, db_dsn: str, vars: Path
+) -> Generator[list[Any], Any, None]:
+    base_args = [
+        "--collection-path",
+        collection_path,
+        "--database-dsn",
+        db_dsn,
+        "--vars",
+        vars,
+    ]
+    runner = CliRunner()
+    runner.invoke(init, base_args)
+    yield base_args
+    engine = create_engine(db_dsn)
+    BaseModel.metadata.drop_all(engine)
+    engine.dispose()
 
 
 @pytest.fixture

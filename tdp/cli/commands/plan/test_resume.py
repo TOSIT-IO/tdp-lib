@@ -1,28 +1,18 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from pathlib import Path
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.init import init
 from tdp.cli.commands.plan.dag import dag
 from tdp.cli.commands.plan.resume import resume
 
 
 def test_tdp_plan_resume_nothing_to_resume(
-    collection_path: Path, db_dsn: str, vars: Path
+    tdp_init: list,
 ):
-    base_args = [
-        "--collection-path",
-        collection_path,
-        "--database-dsn",
-        db_dsn,
-    ]
     runner = CliRunner()
-    result = runner.invoke(init, [*base_args, "--vars", str(vars)])
+    result = runner.invoke(dag, tdp_init[:-2])
     assert result.exit_code == 0, result.output
-    result = runner.invoke(dag, base_args)
-    assert result.exit_code == 0, result.output
-    result = runner.invoke(resume, base_args)
+    result = runner.invoke(resume, tdp_init[:-2])
     assert result.exit_code == 1, result.output  # No deployment to resume.
