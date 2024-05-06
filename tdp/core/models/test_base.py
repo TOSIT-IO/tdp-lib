@@ -11,7 +11,7 @@ class ExampleClass(BaseModel):
     __tablename__ = "test"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String(10))
 
 
 @pytest.fixture
