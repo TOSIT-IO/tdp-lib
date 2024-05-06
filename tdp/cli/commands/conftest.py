@@ -17,8 +17,8 @@ from tdp.core.models import BaseModel
 @pytest.fixture
 def tdp_init(
     collection_path: Path, db_dsn: str, vars: Path
-) -> Generator[list[Any], Any, None]:
-    base_args = [
+) -> Generator[tuple[Path, str, Path], Any, None]:
+    tdp_init_args = [
         "--collection-path",
         collection_path,
         "--database-dsn",
@@ -27,8 +27,8 @@ def tdp_init(
         vars,
     ]
     runner = CliRunner()
-    runner.invoke(init, base_args)
-    yield base_args
+    runner.invoke(init, tdp_init_args)
+    yield (collection_path, db_dsn, vars)
     engine = create_engine(db_dsn)
     BaseModel.metadata.drop_all(engine)
     engine.dispose()
