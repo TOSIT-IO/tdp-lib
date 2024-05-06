@@ -8,8 +8,14 @@ from tdp.cli.commands.plan.dag import dag
 
 
 def test_tdp_plan_dag(
-    tdp_init: list,
+    tdp_init: tuple,
 ):
+    tdp_init_args = [
+        "--collection-path",
+        tdp_init[0],
+        "--database-dsn",
+        tdp_init[1],
+    ]
     runner = CliRunner()
-    result = runner.invoke(dag, tdp_init[:-2])
+    result = runner.invoke(dag, tdp_init_args)
     assert result.exit_code == 0, result.output
