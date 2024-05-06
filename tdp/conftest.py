@@ -57,10 +57,6 @@ def db_dsn(
     if database_dsn == "sqlite":
         database_dsn = f"sqlite:///{tmp_path / 'test.db'}"
     yield database_dsn
-    # Drop the database content
-    engine = create_engine(database_dsn)
-    BaseModel.metadata.drop_all(engine)
-    engine.dispose()
 
 
 @pytest.fixture()
@@ -72,6 +68,7 @@ def db_engine(
     if request.param:
         init_database(engine)
     yield engine
+    BaseModel.metadata.drop_all(engine)
     engine.dispose()
 
 
