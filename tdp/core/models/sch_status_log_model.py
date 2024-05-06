@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from tdp.core.constants import (
     COMPONENT_NAME_MAX_LENGTH,
     HOST_NAME_MAX_LENGTH,
+    MESSAGE_MAX_LENGTH,
     SERVICE_NAME_MAX_LENGTH,
     VERSION_MAX_LENGTH,
 )
@@ -62,6 +63,7 @@ class SCHStatusLogModel(BaseModel):
         doc="Related deployment id (if applicable).",
     )
     message: Mapped[Optional[str]] = mapped_column(
+        String(MESSAGE_MAX_LENGTH),
         doc="Description of the change when manually edited.",
     )
 
