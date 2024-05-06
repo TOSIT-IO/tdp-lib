@@ -6,32 +6,39 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
+from tdp.cli.commands.conftest import tdp_init_args
 from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.plan.dag import dag
 
 
 def test_tdp_deploy_mock(
-    tdp_init: tuple,
+    tdp_init: tdp_init_args,
     tmp_path: Path,
 ):
 
-    tdp_init_args = [
+    base_args = [
         "--collection-path",
-        tdp_init[0],
+        tdp_init.collection_path,
         "--database-dsn",
-        tdp_init[1],
+        tdp_init.db_dsn,
         "--vars",
-        tdp_init[2],
+        tdp_init.vars,
     ]
     runner = CliRunner()
     result = runner.invoke(
-        dag, ["--collection-path", tdp_init[0], "--database-dsn", tdp_init[1]]
+        dag,
+        [
+            "--collection-path",
+            tdp_init.collection_path,
+            "--database-dsn",
+            tdp_init.db_dsn,
+        ],
     )
     assert result.exit_code == 0, result.output
     result = runner.invoke(
         deploy,
         [
-            *tdp_init_args,
+            *base_args,
             "--run-directory",
             str(tmp_path),
             "--mock-deploy",

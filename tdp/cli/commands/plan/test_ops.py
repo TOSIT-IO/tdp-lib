@@ -4,18 +4,19 @@
 
 from click.testing import CliRunner
 
+from tdp.cli.commands.conftest import tdp_init_args
 from tdp.cli.commands.plan.ops import ops
 
 
 def test_tdp_plan_run(
-    tdp_init: tuple,
+    tdp_init: tdp_init_args,
 ):
-    tdp_init_args = [
+    base_args = [
         "--collection-path",
-        tdp_init[0],
+        tdp_init.collection_path,
         "--database-dsn",
-        tdp_init[1],
+        tdp_init.db_dsn,
     ]
     runner = CliRunner()
-    result = runner.invoke(ops, [*tdp_init_args, "service_install"])
+    result = runner.invoke(ops, [*base_args, "service_install"])
     assert result.exit_code == 0, result.output
