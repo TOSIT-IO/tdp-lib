@@ -1,10 +1,9 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from collections import namedtuple
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import NamedTuple
 
 import pytest
 from click.testing import CliRunner
@@ -14,13 +13,17 @@ from tdp.cli.commands.init import init
 from tdp.conftest import generate_collection_at_path
 from tdp.core.models import BaseModel
 
-tdp_init_args = namedtuple("tdp_init_args", ["collection_path", "db_dsn", "vars"])
+
+class TDPInitArgs(NamedTuple):
+    collection_path: Path
+    db_dsn: str
+    vars: Path
 
 
 @pytest.fixture
 def tdp_init(
     collection_path: Path, db_dsn: str, vars: Path
-) -> Generator[tdp_init_args, Any, None]:
+) -> Generator[TDPInitArgs, None, None]:
     base_args = [
         "--collection-path",
         collection_path,
@@ -31,7 +34,7 @@ def tdp_init(
     ]
     runner = CliRunner()
     runner.invoke(init, base_args)
-    yield tdp_init_args(collection_path, db_dsn, vars)
+    yield TDPInitArgs(collection_path, db_dsn, vars)
     engine = create_engine(db_dsn)
     BaseModel.metadata.drop_all(engine)
     engine.dispose()

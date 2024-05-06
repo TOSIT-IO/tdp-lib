@@ -4,12 +4,12 @@
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import tdp_init_args
+from tdp.cli.commands.conftest import TDPInitArgs
 from tdp.cli.commands.plan.reconfigure import reconfigure
 
 
 def test_tdp_plan_reconfigure(
-    tdp_init: tdp_init_args,
+    tdp_init: TDPInitArgs,
 ):
     runner = CliRunner()
     result = runner.invoke(

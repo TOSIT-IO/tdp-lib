@@ -4,12 +4,12 @@
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import tdp_init_args
+from tdp.cli.commands.conftest import TDPInitArgs
 from tdp.cli.commands.status.generate_stales import generate_stales
 
 
 def test_tdp_status_edit(
-    tdp_init: tdp_init_args,
+    tdp_init: TDPInitArgs,
 ):
     runner = CliRunner()
     result = runner.invoke(
