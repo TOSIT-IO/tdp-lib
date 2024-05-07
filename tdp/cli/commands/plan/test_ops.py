@@ -16,7 +16,7 @@ def test_tdp_plan_run(
         ops,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
             "service_install",

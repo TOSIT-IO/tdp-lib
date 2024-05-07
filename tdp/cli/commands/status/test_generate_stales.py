@@ -16,11 +16,11 @@ def test_tdp_status_edit(
         generate_stales,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
             "--vars",
-            tdp_init.vars,
+            str(tdp_init.vars),
         ],
     )
     assert result.exit_code == 0, result.output

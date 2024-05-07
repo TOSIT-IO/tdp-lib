@@ -16,7 +16,7 @@ def test_tdp_plan_dag(
         dag,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
         ],

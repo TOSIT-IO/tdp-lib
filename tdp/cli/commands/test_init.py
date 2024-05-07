@@ -13,11 +13,11 @@ def test_tdp_init_db_is_created(collection_path: Path, vars: Path, tmp_path: Pat
     db_path = tmp_path / "sqlite.db"
     args = [
         "--collection-path",
-        collection_path,
+        str(collection_path),
         "--database-dsn",
         "sqlite:///" + str(db_path),
         "--vars",
-        vars,
+        str(vars),
     ]
     runner = CliRunner()
     result = runner.invoke(init, args)

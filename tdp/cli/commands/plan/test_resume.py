@@ -14,7 +14,7 @@ def test_tdp_plan_resume_nothing_to_resume(
 ):
     common_args = [
         "--collection-path",
-        tdp_init.collection_path,
+        str(tdp_init.collection_path),
         "--database-dsn",
         tdp_init.db_dsn,
     ]
