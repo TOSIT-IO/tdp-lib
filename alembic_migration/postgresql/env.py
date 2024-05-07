@@ -16,9 +16,23 @@ config = context.config
 # Model's MetaData object here for 'autogenerate' support.
 target_metadata = BaseModel.metadata
 
-# Set the the database_dsn if not already set.
-if config.get_main_option("sqlalchemy.url") == None:
-    config.set_main_option("sqlalchemy.url", settings.TDP_DATABASE_DSN)
+# Set the the database_dsn
+config.set_main_option("sqlalchemy.url", settings.TDP_DATABASE_DSN)
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode.
+
+    This configures the context with just a URL
+    and not an Engine, though an Engine is acceptable
+    here as well.  By skipping the Engine creation
+    we don't even need a DBAPI to be available.
+
+    Calls to context.execute() here emit the given string to the
+    script output.
+
+    """
+    raise NotImplementedError()
 
 
 def run_migrations_online() -> None:
@@ -45,4 +59,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
-run_migrations_online()
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
