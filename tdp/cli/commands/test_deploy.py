@@ -20,7 +20,7 @@ def test_tdp_deploy_mock(
         dag,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
         ],
@@ -30,11 +30,11 @@ def test_tdp_deploy_mock(
         deploy,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
             "--vars",
-            tdp_init.vars,
+            str(tdp_init.vars),
             "--run-directory",
             str(tmp_path),
             "--mock-deploy",

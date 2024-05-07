@@ -26,11 +26,11 @@ def tdp_init(
 ) -> Generator[TDPInitArgs, None, None]:
     base_args = [
         "--collection-path",
-        collection_path,
+        str(collection_path),
         "--database-dsn",
         db_dsn,
         "--vars",
-        vars,
+        str(vars),
     ]
     runner = CliRunner()
     runner.invoke(init, base_args)

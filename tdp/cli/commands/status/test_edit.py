@@ -16,11 +16,11 @@ def test_tdp_status_edit(
         edit,
         [
             "--collection-path",
-            tdp_init.collection_path,
+            str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
             "--vars",
-            tdp_init.vars,
+            str(tdp_init.vars),
             "service",
             "--host",
             "localhost",
