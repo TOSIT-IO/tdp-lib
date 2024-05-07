@@ -68,7 +68,8 @@ def db_engine(
     if request.param:
         init_database(engine)
     yield engine
-    BaseModel.metadata.drop_all(engine)
+    if request.param:
+        BaseModel.metadata.drop_all(engine)
     engine.dispose()
 
 
