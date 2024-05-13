@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  # Connect to prompt with `docker exec -it postgres_container psql -U postgres -d tdp`
+  postgres:
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tdp
+      PGDATA: /var/lib/postgresql/data
+      
+    image: postgres:15.4
+    ports:
+      - '5432:5432'
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # Connect to prompt with `docker exec -it mysql_container mysql -u mysql -pmysql tdp`
+  mysql:
+    container_name: mysql_container
+    environment:
+      MYSQL_USER: mysql
+      MYSQL_PASSWORD: mysql
+      MYSQL_DATABASE: tdp
+      MYSQL_ROOT_PASSWORD: admin
+    image: mysql:8.0
+    ports:
+      - '3306:3306'
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  # Connect to prompt with `docker exec -it mariadb_container mariadb -u mariadb -pmariadb tdp`
+  mariadb:
+    container_name: mariadb_container
+    environment:
+      MYSQL_USER: mariadb
+      MYSQL_PASSWORD: mariadb
+      MYSQL_DATABASE: tdp
+      MYSQL_ROOT_PASSWORD: admin
+    image: mariadb:10.9  
+    ports:
+      - '3307:3306'
+    restart: always
+    volumes:
+      - mariadb-data:/var/lib/mysql/
+
+volumes:
+  postgres-data:
+  mysql-data:
+  mariadb-data:
