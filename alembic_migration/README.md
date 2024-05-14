@@ -2,7 +2,17 @@
 
 The table models defined in `tdp/core/models` might incure changes over time. Alembic is used to migrate these changes to your database.
 
-It has been setup to work with 3 DBMSs:`MySQL`,`PostreSQL` and `SqLite`. 
+It has been setup to work with 3 DBMSs:`MySQL & MariaDB`,`PostreSQL` and `SqLite`.
+
+Add the following variables in an `.env` file to use development databases:
+
+```sh
+export SQLITE_DSN=sqlite:///sqlite.db
+export POSTGRES_DSN=postgresql://postgres:postgres@localhost:5432/tdp
+export MYSQL_DSN=mysql+pymysql://mysql:mysql@localhost:3306/tdp
+export MARIADB_DSN=mysql+pymysql://mariadb:mariadb@localhost:3307/tdp
+export TDP_DATABASE_DSN=$SQLITE_DSN # or one of the other DSNs
+```
 
 Use Alembic:
 

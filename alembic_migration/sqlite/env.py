@@ -15,7 +15,7 @@ config = context.config
 target_metadata = BaseModel.metadata
 
 # Set the the database_dsn
-config.set_main_option("sqlalchemy.url", settings.TDP_DATABASE_DSN)
+config.set_main_option("sqlalchemy.url", settings.SQLITE_DSN)
 
 
 def run_migrations_offline() -> None:
