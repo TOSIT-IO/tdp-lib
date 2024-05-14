@@ -1,12 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import os
+from pathlib import Path
 
-import alembic_postgresql_enum  # noqa: F401
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+import alembic_postgresql_enum  # noqa: F401
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
-from alembic_migration.migration_basesettings import settings
 from tdp.core.models.base_model import BaseModel
 
 # this is the Alembic Config object, which provides
@@ -15,9 +17,6 @@ config = context.config
 
 # Model's MetaData object here for 'autogenerate' support.
 target_metadata = BaseModel.metadata
-
-# Set the the database_dsn
-config.set_main_option("sqlalchemy.url", settings.POSTGRES_DSN)
 
 
 def run_migrations_offline() -> None:
@@ -42,11 +41,16 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    env_path = Path(os.environ.get('TDP_ENV', '.env'))
+    if env_path.exists:
+        load_dotenv(env_path)
+
+    database_dsn = os.environ.get('TDP_ALEMBIC_POSGRESQL_DSN', os.environ.get('TDP_DATABASE_DSN', None))
+
+    if database_dsn is None:
+        raise ValueError("TDP_DATABASE_DSN env var is missing")
+
+    connectable = create_engine(database_dsn)
 
     with connectable.connect() as connection:
         context.configure(
