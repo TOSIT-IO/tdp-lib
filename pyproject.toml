@@ -26,7 +26,9 @@ python-dotenv = "0.20.0"
 jsonschema = "4.10.3"
 sphinx-rtd-theme = { version = "^1.2.2", optional = true }
 pydantic = "^2.6.0"
-pymysql = "^1.1.0"
+psycopg2 = { version = "^2.9.9", optional = true }
+psycopg2-binary = { version = "^2.9.9", optional = true }
+pymysql = { version = "^1.1.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
@@ -38,6 +40,9 @@ pytest-xdist = "^3.5.0"
 [tool.poetry.extras]
 docs = ["Sphinx", "sphinx_rtd_theme"]
 visualization = ["matplotlib", "pydot"]
+postgresql = ["psycopg2"]
+postgresql-binary = ["psycopg2-binary"]
+mysql = ["pymysql"]
 
 [tool.poetry.scripts]
 tdp = "tdp.cli.__main__:main"
