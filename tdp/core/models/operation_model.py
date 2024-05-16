@@ -6,10 +6,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
-from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from tdp.core.constants import HOST_NAME_MAX_LENGTH, OPERATION_NAME_MAX_LENGTH
+from tdp.core.constants import (
+    HOST_NAME_MAX_LENGTH,
+    LOGS_MAX_LENGTH,
+    OPERATION_NAME_MAX_LENGTH,
+)
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import OperationStateEnum
 
@@ -43,7 +47,9 @@ class OperationModel(BaseModel):
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation end time.")
     state: Mapped[OperationStateEnum] = mapped_column(doc="Operation state.")
-    logs: Mapped[Optional[bytes]] = mapped_column(doc="Operation.")
+    logs: Mapped[Optional[bytes]] = mapped_column(
+        LargeBinary(LOGS_MAX_LENGTH), doc="Operation."
+    )
 
     deployment: Mapped[DeploymentModel] = relationship(
         back_populates="operations", doc="deployment."
