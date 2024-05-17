@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING, Iterator, TextIO
 
+import lorem
 import pytest
+from sqlalchemy import Engine
 
-from tdp.conftest import generate_collection_at_path
+from tdp.conftest import create_session, generate_collection_at_path
 from tdp.core.collection import Collection
 from tdp.core.collections import (
     Collections,
@@ -19,6 +21,7 @@ from tdp.core.models.deployment_model import (
     NothingToResumeError,
 )
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag
@@ -51,6 +54,18 @@ def set_success(deployment: DeploymentModel):
     deployment.state = DeploymentStateEnum.SUCCESS
     for operation in deployment.operations:
         operation.state = OperationStateEnum.SUCCESS
+
+
+def lorem_gen_until_len(lorem_generator: Iterator[str], size: int = 10):
+    current_size = 0
+    while True:
+        element = next(lorem_generator)
+        # add length of a word + 1 for space
+        current_size += len(element) + 1
+        if current_size < size:
+            yield element
+        else:
+            return element
 
 
 class TestFromOperations:
@@ -321,6 +336,31 @@ class TestFromFailedDeployment:
         assert len(deployment.operations) >= len(resume_deployment.operations)
         for operation_rec in resume_deployment.operations:
             assert operation_rec.extra_vars == extra_vars
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+class Test_multiple_db:
+    def test_operation_log_length(self, db_engine: Engine):
+        # Param for lorem.word() is the number of non-repeated random words.
+        lorem_generator = lorem.word(1000)
+        # Generate a string with 10 000 000 characters
+        lorem_content = " ".join(lorem_gen_until_len(lorem_generator, 10000000))
+
+        with create_session(db_engine) as session:
+            # All databases except SQLite have a constraint on foreignkey deployment_id.
+            deployment_content = DeploymentModel(id=1)
+            session.add(deployment_content)
+            # Add the lorem ipsum text in bytes to the logs column in the operation table.
+            operation_content = OperationModel(
+                deployment_id=1,
+                operation_order=1,
+                operation="logs_length_test",
+                state=OperationStateEnum.RUNNING,
+                logs=lorem_content.encode("utf-8"),
+            )
+            session.add(operation_content)
+            session.commit()
+            assert session.query(OperationModel.logs).first() is not None
 
 
 @pytest.mark.skip(reason="test to rewrite using cluster_status")
