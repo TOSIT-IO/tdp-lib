@@ -48,7 +48,7 @@ class OperationModel(BaseModel):
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Operation end time.")
     state: Mapped[OperationStateEnum] = mapped_column(doc="Operation state.")
     logs: Mapped[Optional[bytes]] = mapped_column(
-        LargeBinary(LOGS_MAX_LENGTH), doc="Operation."
+        LargeBinary(LOGS_MAX_LENGTH), doc="Operation logs."
     )
 
     deployment: Mapped[DeploymentModel] = relationship(
