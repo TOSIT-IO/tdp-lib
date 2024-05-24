@@ -2034,4 +2034,4 @@ visualization = ["matplotlib", "pydot"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<4.0"
-content-hash = "34d755e27cbacf90946dc850e7a6c6d5256a2638dd3e8d19513a7d9668ead626"
+content-hash = "cf3b28faaac27c1aa48a4cb45fc1bfceab34558b18b2b16bd2d1ad38782049d5"
