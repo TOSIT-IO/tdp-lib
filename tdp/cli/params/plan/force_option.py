@@ -12,6 +12,7 @@ def force_option(func: FC) -> FC:
     """
     return click.option(
         "--force",
+        envvar="TDP_FORCE_PLAN_OVERRIDE",
         is_flag=True,
         help="Force overriding an existing deployment plan.",
     )(func)
