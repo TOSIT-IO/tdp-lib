@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, Optional
 import click
 from tabulate import tabulate
 
+from tdp.core.entities.deployment_entity import Deployment_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentModel
     from tdp.core.variables.cluster_variables import ClusterVariables
 
 
@@ -43,16 +43,23 @@ def check_services_cleanliness(cluster_variables: ClusterVariables) -> None:
 
 
 def print_deployment(
-    deployment: DeploymentModel, /, *, filter_out: Optional[list[str]] = None
+    deployment: Deployment_entity, /, *, filter_out: Optional[list[str]] = None
 ) -> None:
     # Print general deployment infos
     click.secho("Deployment details", bold=True)
-    click.echo(print_object(deployment.to_dict(filter_out=filter_out)))
+    click.echo(
+        print_object(
+            deployment.transform_to_deployment_model().to_dict(filter_out=filter_out)
+        )
+    )
 
     # Print deployment operations
     click.secho("\nOperations", bold=True)
     print_table(
-        [o.to_dict(filter_out=filter_out) for o in deployment.operations],
+        [
+            o.transform_to_operation_model().to_dict(filter_out=filter_out)
+            for o in deployment.operations
+        ],
     )
 
 

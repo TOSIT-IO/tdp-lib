@@ -1,16 +1,25 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 
-from tdp.cli.queries import create_get_sch_latest_status_statement
+from tdp.cli.queries import (
+    create_get_sch_latest_status_statement,
+    get_deployment,
+    get_deployments,
+    get_last_deployment,
+    get_operation_records,
+    get_planned_deployment,
+)
 from tdp.core.cluster_status import ClusterStatus
+from tdp.core.entities.deployment_entity import Deployment_entity
 from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+from tdp.core.entities.operation_entity import Operation_entity
 
 
 class Dao:
@@ -92,4 +101,89 @@ class Dao:
                 ),
             )
             for status in self.session.execute(stmt).all()
+        ]
+
+    def get_deployments_dao(self, limit: int, offset: int):
+        self._check_session()
+        deployments_records = get_deployments(limit=limit, offset=offset)
+        return [
+            Deployment_entity(
+                id=first_element.id,
+                options=first_element.options,
+                start_time=first_element.start_time,
+                end_time=first_element.end_time,
+                state=first_element.state,
+                deployment_type=first_element.deployment_type,
+                operations=first_element.operations,
+            )
+            for first_element, *others in self.session.execute(
+                deployments_records
+            ).all()
+        ]
+
+    def get_deployment_dao(self, deployment_id: int) -> Deployment_entity:
+        self._check_session()
+        deployments_records = get_deployment(deployment_id=deployment_id)
+        first_element, *others = self.session.execute(deployments_records).one()
+        return Deployment_entity(
+            id=first_element.id,
+            options=first_element.options,
+            start_time=first_element.start_time,
+            end_time=first_element.end_time,
+            state=first_element.state,
+            deployment_type=first_element.deployment_type,
+            operations=first_element.operations,
+        )
+
+    def get_last_deployment_dao(self) -> Deployment_entity:
+        self._check_session()
+        deployments_records = get_last_deployment()
+        first_element, *others = self.session.execute(deployments_records).one()
+        return Deployment_entity(
+            id=first_element.id,
+            options=first_element.options,
+            start_time=first_element.start_time,
+            end_time=first_element.end_time,
+            state=first_element.state,
+            deployment_type=first_element.deployment_type,
+            operations=first_element.operations,
+        )
+
+    def get_planned_deployment_dao(self) -> Union[Deployment_entity, None]:
+        self._check_session()
+        deployment_record = get_planned_deployment()
+        if deployment_tuple := self.session.execute(deployment_record).one_or_none():
+            first_element, *other = deployment_tuple
+            return Deployment_entity(
+                id=first_element.id,
+                options=first_element.options,
+                start_time=first_element.start_time,
+                end_time=first_element.end_time,
+                state=first_element.state,
+                deployment_type=first_element.deployment_type,
+                operations=first_element.operations,
+            )
+        else:
+            return
+
+    def get_operation_dao(
+        self, deployment_id, operation_name
+    ) -> list[Operation_entity]:
+        self._check_session()
+        operation_record = get_operation_records(
+            deployment_id=deployment_id, operation_name=operation_name
+        )
+        return [
+            Operation_entity(
+                deployment_id=operation.deployment_id,
+                operation_order=operation.operation_order,
+                operation=operation.operation,
+                host=operation.host,
+                extra_vars=operation.extra_vars,
+                start_time=operation.start_time,
+                end_time=operation.end_time,
+                state=operation.state,
+                logs=operation.logs,
+            )
+            for operation, *other in self.session.execute(operation_record).all()
         ]

@@ -5,19 +5,15 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from operator import and_
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 from sqlalchemy import Select, case, func, or_, select
-from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
     DeploymentModel,
     OperationModel,
     SCHStatusLogModel,
 )
-
-if TYPE_CHECKING:
-    from sqlalchemy.orm.session import Session
 
 
 def _create_last_value_statement(column, non_null=False):
@@ -125,7 +121,7 @@ def create_get_sch_latest_status_statement(
     return select(subq).filter(*query_filter)
 
 
-def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:
+def get_deployments(limit: int, offset: int) -> Select[tuple[DeploymentModel]]:
     """Get deployments.
 
     Args:
@@ -137,15 +133,14 @@ def get_deployments(session: Session, limit: int, offset: int) -> list[Deploymen
         The deployments.
     """
     return (
-        session.query(DeploymentModel)
+        select(DeploymentModel)
         .order_by(DeploymentModel.id.desc())
         .limit(limit)
         .offset(offset)
-        .all()
     )
 
 
-def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
+def get_deployment(deployment_id: int) -> Select[tuple[DeploymentModel]]:
     """Get a deployment by ID.
 
     Args:
@@ -157,13 +152,10 @@ def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
 
     Raises:
         NoResultFound: If the deployment does not exist."""
-    try:
-        return session.query(DeploymentModel).filter_by(id=deployment_id).one()
-    except NoResultFound as e:
-        raise Exception(f"Deployment with ID {deployment_id} does not exist.") from e
+    return select(DeploymentModel).filter_by(id=deployment_id)  # .one()
 
 
-def get_last_deployment(session: Session) -> DeploymentModel:
+def get_last_deployment() -> Select[tuple[DeploymentModel]]:
     """Get the last deployment.
 
     Args:
@@ -175,18 +167,10 @@ def get_last_deployment(session: Session) -> DeploymentModel:
     Raises:
         NoResultFound: If there is no deployment.
     """
-    try:
-        return (
-            session.query(DeploymentModel)
-            .order_by(DeploymentModel.id.desc())
-            .limit(1)
-            .one()
-        )
-    except NoResultFound as e:
-        raise Exception("No deployments.") from e
+    return select(DeploymentModel).order_by(DeploymentModel.id.desc()).limit(1)
 
 
-def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
+def get_planned_deployment() -> Select[tuple[DeploymentModel]]:
     """Get the planned deployment.
 
     Args:
@@ -195,12 +179,12 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
     Returns:
         The planned deployment or None if there is no planned deployment.
     """
-    return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
+    return select(DeploymentModel).filter_by(state="PLANNED")
 
 
 def get_operation_records(
-    session: Session, deployment_id: int, operation_name: str
-) -> list[OperationModel]:
+    deployment_id: int, operation_name: str
+) -> Select[tuple[OperationModel]]:
     """Get an operation records.
 
     Args:
@@ -214,13 +198,6 @@ def get_operation_records(
     Raises:
         NoResultFound: If the operation does not exist.
     """
-    try:
-        return (
-            session.query(OperationModel)
-            .filter_by(deployment_id=deployment_id, operation=operation_name)
-            .all()
-        )
-    except NoResultFound as e:
-        raise Exception(
-            f"Operation {operation_name} does not exist in deployment {deployment_id}."
-        ) from e
+    return select(OperationModel).filter_by(
+        deployment_id=deployment_id, operation=operation_name
+    )

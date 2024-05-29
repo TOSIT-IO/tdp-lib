@@ -15,11 +15,9 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
-from tdp.cli.queries import (
-    get_planned_deployment,
-)
 from tdp.cli.utils import check_services_cleanliness
 from tdp.core.deployment import DeploymentRunner, Executor
+from tdp.core.models.deployment_model import DeploymentModel
 from tdp.core.models.enums import DeploymentStateEnum
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
@@ -71,7 +69,9 @@ def deploy(
     check_services_cleanliness(cluster_variables)
 
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = (
+            dao.session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
+        )
         if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."

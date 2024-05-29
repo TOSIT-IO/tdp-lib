@@ -8,18 +8,13 @@ import click
 from sqlalchemy import Engine
 
 from tdp.cli.params import database_dsn_option
-from tdp.cli.queries import (
-    get_deployment,
-    get_deployments,
-    get_operation_records,
-    get_planned_deployment,
-)
 from tdp.cli.utils import (
     print_deployment,
     print_object,
     print_table,
 )
-from tdp.core.models import DeploymentModel, OperationModel
+from tdp.core.entities.deployment_entity import Deployment_entity
+from tdp.core.entities.operation_entity import Operation_entity
 from tdp.dao import Dao
 
 
@@ -66,7 +61,7 @@ def browse(
     with Dao(db_engine) as dao:
         # Print last deployment plan
         if plan:
-            deployment_plan = get_planned_deployment(dao.session)
+            deployment_plan = dao.get_planned_deployment_dao()
             if deployment_plan:
                 _print_deployment(deployment_plan)
             else:
@@ -74,7 +69,7 @@ def browse(
                 click.echo("Create a deployment plan using the `tdp plan` command")
             return
         elif last:
-            deployment = get_deployments(dao.session, limit=1, offset=0)
+            deployment = dao.get_deployments_dao(limit=1, offset=0)
             if deployment:
                 _print_deployment(deployment[0])
             else:
@@ -84,21 +79,19 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            _print_operations(
-                get_operation_records(dao.session, deployment_id, operation)
-            )
+            _print_operations(dao.get_operation_dao(deployment_id, operation))
             return
 
         # Print a specific deployment
         if deployment_id:
-            _print_deployment(get_deployment(dao.session, deployment_id))
+            _print_deployment(dao.get_deployment_dao(deployment_id))
             return
 
         # Print all deployments
-        _print_deployments(get_deployments(dao.session, limit, offset))
+        _print_deployments(dao.get_deployments_dao(limit, offset))
 
 
-def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
+def _print_deployments(deployments: Iterable[Deployment_entity]) -> None:
     """Print a list of deployments in a human readable format.
 
     Args:
@@ -109,11 +102,14 @@ def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
         click.echo("Create a deployment plan using the `tdp plan` command")
 
     print_table(
-        [d.to_dict(filter_out=["options"]) for d in deployments],
+        [
+            d.transform_to_deployment_model().to_dict(filter_out=["options"])
+            for d in deployments
+        ],
     )
 
 
-def _print_deployment(deployment: DeploymentModel) -> None:
+def _print_deployment(deployment: Deployment_entity) -> None:
     """Print a deployment in a human readable format.
 
     Args:
@@ -126,7 +122,7 @@ def _print_deployment(deployment: DeploymentModel) -> None:
     print_deployment(deployment, filter_out=["logs"])
 
 
-def _print_operations(operations: list[OperationModel]) -> None:
+def _print_operations(operations: list[Operation_entity]) -> None:
     """Print a list of operations in a human readable format.
 
     Args:
@@ -135,7 +131,7 @@ def _print_operations(operations: list[OperationModel]) -> None:
     # Print general operation infos
     click.secho("Operation(s) details", bold=True)
     for operation in operations:
-        click.echo(print_object(operation.to_dict()))
+        click.echo(print_object(operation.__dict__))
         # Print operation records
         if operation.logs:
             click.secho("\nOperations", bold=True)
