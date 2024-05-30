@@ -1,40 +1,52 @@
-# Database Migration (Dev mode)
+# Database Migration
 
-The table models defined in `tdp/core/models` might incur changes over time. Alembic is used to migrate these changes to your database. This section explains how to use Alembic for database migration in development mode (between 2 releases).
+Database migrations are handled by Alembic, a lightweight database migration tool compatible with SQLAlchemy. It is used to generate migration scripts, called "revisions", based on the database schema changes (defined in `tdp/core/models`).
 
-The `offline` triggered with the `--sql` argument in the command ahas been removed. The `online` mode enables the user to generate the revision scripts and perform migrations by being connected to a database.
+## Dialects
 
-The `alembic_migration` folder contains 3 subfolders corresponding to the different dialects TDP supports:
+TDP supports multiple databases dialects which require distinct environments (with their own set of revisions). Environments are located in the `alembic_migration` folder:
 
-- `mysql` (also supports MariaDB)
-- `postgresql`
-- `sqlite`
+- `mysql` for MySQL and MariaDB
+- `postgresql` for PostgreSQL
+- `sqlite` for SQLite
 
-Table transformations are written differently according to the mentioned dialects.
+Mapping between the dialects and these environments is done in the `alembic.ini` file.
 
-Alembic revisions are the migration files which are linked to each other with chained revision ids and revisions of each dialect are independant.
+## Migration Modes
 
-A compose file is provided to run the databases in Docker containers. To start the databases, run:
+TDP only supports the `online` mode which allows to run the migration scripts directly on the database. It does not support the `offline` (aka `--sql`) mode which generates the SQL scripts to be run manually. Hence, the `run_migrations_offline` function in `env.py` is not implemented.
+
+## Usage (development environment)
+
+Database connections are required by Alembic to generate the revisions. As mentioned previously, revisions need to be generated for each dialect, hence, the corresponding database needs to be running.
+
+### Database Setup (Optional)
+
+For convenience, a compose file is provided to run all supported databases in Docker containers. To start the databases, run:
 
 ```sh
 docker-compose -f dev/docker-compose.yaml up -d
 ```
 
-To use the databases, set the following environment variables. For example, in the `.env` file:
+To use the databases, set the following environment variables:
 
 ```sh
-export TDP_ALEMBIC_SQLITE_DSN=sqlite:///sqlite.db
-export TDP_ALEMBIC_POSGRESQL_DSN=postgresql://postgres:postgres@localhost:5432/tdp
-export TDP_ALEMBIC_MYSQL_DSN=mysql+pymysql://mysql:mysql@localhost:3306/tdp
+TDP_ALEMBIC_SQLITE_DSN=sqlite:///sqlite.db
+TDP_ALEMBIC_POSGRESQL_DSN=postgresql://postgres:postgres@localhost:5432/tdp
+TDP_ALEMBIC_MYSQL_DSN=mysql+pymysql://mysql:mysql@localhost:3306/tdp
 ```
 
-Alembic usage:
+### Environment Setup (Optional)
 
-- (Optional) Set path to `alembic.ini` file if Alembic commands are executed ouside the `tdp-lib` folder:
+If Alembic commands are executed ouside the `tdp-lib` folder, export the path to the `alembic.ini` file:
 
-  ```sh
-  export ALEMBIC_CONFIG=<path_to>/tdp-lib/alembic.ini
-  ```
+```sh
+export ALEMBIC_CONFIG=<path_to>/tdp-lib/alembic.ini
+```
+
+### Running Alembic Commands
+
+Alembic needs to know which environment to use when running the commands. This is done by specifying the `--name` argument.
 
 - Check if the database is up to date with SQLAlchemy models defined in `tdp/core/models`:
 
