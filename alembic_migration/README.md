@@ -31,9 +31,9 @@ docker-compose -f dev/docker-compose.yaml up -d
 To use the databases, set the following environment variables:
 
 ```sh
-TDP_ALEMBIC_SQLITE_DSN=sqlite:///sqlite.db
-TDP_ALEMBIC_POSGRESQL_DSN=postgresql://postgres:postgres@localhost:5432/tdp
-TDP_ALEMBIC_MYSQL_DSN=mysql+pymysql://mysql:mysql@localhost:3306/tdp
+export TDP_ALEMBIC_SQLITE_DSN=sqlite:///sqlite.db
+export TDP_ALEMBIC_POSTGRESQL_DSN=postgresql://postgres:postgres@localhost:5432/tdp
+export TDP_ALEMBIC_MYSQL_DSN=mysql+pymysql://mysql:mysql@localhost:3306/tdp
 ```
 
 ### Environment Setup (Optional)
