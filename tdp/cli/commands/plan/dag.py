@@ -10,7 +10,6 @@ from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import force_option, preview_option, rolling_interval_option
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import print_deployment
 from tdp.core.dag import Dag
 from tdp.core.models import DeploymentModel
@@ -121,7 +120,7 @@ def dag(
         print_deployment(deployment)
         return
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = dao.get_planned_deployment()
         if planned_deployment:
             if force or click.confirm(
                 "A deployment plan already exists, do you want to override it?"

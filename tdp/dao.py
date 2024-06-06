@@ -6,7 +6,9 @@ from typing import Iterable, Optional
 from sqlalchemy import Engine
 from sqlalchemy.orm import sessionmaker
 
-from tdp.cli.queries import create_get_sch_latest_status_statement
+from tdp.cli.queries import (
+    create_get_sch_latest_status_statement,
+)
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
@@ -118,4 +120,10 @@ class Dao:
             self.session.query(OperationModel)
             .filter_by(deployment_id=deployment_id, operation=operation_name)
             .all()
+        )
+
+    def get_planned_deployment(self) -> Optional[DeploymentModel]:
+        self._check_session()
+        return (
+            self.session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
         )

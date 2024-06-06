@@ -165,15 +165,3 @@ def get_last_deployment(session: Session) -> DeploymentModel:
         )
     except NoResultFound as e:
         raise Exception("No deployments.") from e
-
-
-def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
-    """Get the planned deployment.
-
-    Args:
-        session: The database session.
-
-    Returns:
-        The planned deployment or None if there is no planned deployment.
-    """
-    return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
