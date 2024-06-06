@@ -5,7 +5,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.validate import validate
+from tdp.cli.commands.vars.validate import validate
 
 
 def test_tdp_validate(collection_path: Path, vars: Path):

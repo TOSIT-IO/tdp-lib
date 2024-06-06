@@ -4,6 +4,7 @@
 import click
 
 from tdp.cli.commands.vars.edit import edit
+from tdp.cli.commands.vars.validate import validate
 
 
 @click.group()
@@ -13,3 +14,4 @@ def vars():
 
 
 vars.add_command(edit)
+vars.add_command(validate)
