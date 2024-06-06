@@ -5,18 +5,13 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from operator import and_
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import NamedTuple, Optional
 
 from sqlalchemy import Select, case, func, or_, select
-from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
-    DeploymentModel,
     SCHStatusLogModel,
 )
-
-if TYPE_CHECKING:
-    from sqlalchemy.orm.session import Session
 
 
 def _create_last_value_statement(column, non_null=False):
@@ -122,26 +117,3 @@ def create_get_sch_latest_status_statement(
         query_filter.append(subq.c.latest_is_active.is_(False))
 
     return select(subq).filter(*query_filter)
-
-
-def get_last_deployment(session: Session) -> DeploymentModel:
-    """Get the last deployment.
-
-    Args:
-        session: The database session.
-
-    Returns:
-        The last deployment.
-
-    Raises:
-        NoResultFound: If there is no deployment.
-    """
-    try:
-        return (
-            session.query(DeploymentModel)
-            .order_by(DeploymentModel.id.desc())
-            .limit(1)
-            .one()
-        )
-    except NoResultFound as e:
-        raise Exception("No deployments.") from e
