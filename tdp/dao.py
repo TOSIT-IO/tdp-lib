@@ -102,4 +102,4 @@ class Dao:
             id: Deployment ID.
         """
         self._check_session()
-        return self.session.query(DeploymentModel).get(id)
+        return self.session.get(DeploymentModel, id)
