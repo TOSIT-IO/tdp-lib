@@ -16,7 +16,6 @@ from tdp.cli.commands.init import init
 from tdp.cli.commands.ops import ops
 from tdp.cli.commands.plan import plan
 from tdp.cli.commands.status import status
-from tdp.cli.commands.validate import validate
 from tdp.cli.commands.vars import vars
 from tdp.cli.logger import setup_logging
 
@@ -75,7 +74,6 @@ def main():
     cli.add_command(ops)
     cli.add_command(plan)
     cli.add_command(status)
-    cli.add_command(validate)
     cli.add_command(vars)
 
     cli()
