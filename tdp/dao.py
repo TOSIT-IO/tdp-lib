@@ -127,3 +127,19 @@ class Dao:
         return (
             self.session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
         )
+
+    def get_last_deployment(self) -> Optional[DeploymentModel]:
+        """Get the last deployment."""
+        self._check_session()
+        return self.session.query(DeploymentModel).order_by(DeploymentModel.id).first()
+
+    def get_deployments(
+        self, limit: Optional[int] = None, offset: Optional[int] = None
+    ) -> Iterable[DeploymentModel]:
+        self._check_session()
+        return (
+            self.session.query(DeploymentModel)
+            .order_by(DeploymentModel.id)
+            .limit(limit)
+            .offset(offset)
+        )

@@ -8,7 +8,6 @@ import click
 from sqlalchemy import Engine
 
 from tdp.cli.params import database_dsn_option
-from tdp.cli.queries import get_deployments
 from tdp.cli.utils import (
     print_deployment,
     print_object,
@@ -69,9 +68,9 @@ def browse(
                 click.echo("Create a deployment plan using the `tdp plan` command")
             return
         elif last:
-            deployment = get_deployments(dao.session, limit=1, offset=0)
+            deployment = dao.get_last_deployment()
             if deployment:
-                _print_deployment(deployment[0])
+                _print_deployment(deployment)
             else:
                 click.echo("No deployment found")
                 click.echo("Create a deployment plan using the `tdp plan` command")
@@ -90,7 +89,7 @@ def browse(
             return
 
         # Print all deployments
-        _print_deployments(get_deployments(dao.session, limit, offset))
+        _print_deployments(dao.get_deployments(limit=limit, offset=offset))
 
 
 def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
