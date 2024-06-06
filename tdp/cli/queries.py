@@ -124,26 +124,6 @@ def create_get_sch_latest_status_statement(
     return select(subq).filter(*query_filter)
 
 
-def get_deployments(session: Session, limit: int, offset: int) -> list[DeploymentModel]:
-    """Get deployments.
-
-    Args:
-        session: The database session.
-        limit: The maximum number of deployments to return.
-        offset: The offset at which to start the query.
-
-    Returns:
-        The deployments.
-    """
-    return (
-        session.query(DeploymentModel)
-        .order_by(DeploymentModel.id.desc())
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
-
-
 def get_last_deployment(session: Session) -> DeploymentModel:
     """Get the last deployment.
 
