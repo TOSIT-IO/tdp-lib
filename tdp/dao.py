@@ -46,7 +46,7 @@ class SCHLatestStatus(NamedTuple):
     latest_is_active: Optional[bool]
 
 
-def create_get_sch_latest_status_statement(
+def _create_get_sch_latest_status_statement(
     service_to_filter: Optional[str] = None,
     component_to_filter: Optional[str] = None,
     hosts_to_filter: Optional[Iterable[str]] = None,
@@ -165,7 +165,7 @@ class Dao:
             filter_stale: Whether to filter stale statuses.
         """
         self._check_session()
-        stmt = create_get_sch_latest_status_statement(
+        stmt = _create_get_sch_latest_status_statement(
             service_to_filter=service,
             component_to_filter=component,
             hosts_to_filter=hosts,
