@@ -12,7 +12,6 @@ from sqlalchemy.exc import NoResultFound
 
 from tdp.core.models import (
     DeploymentModel,
-    OperationModel,
     SCHStatusLogModel,
 )
 
@@ -178,31 +177,3 @@ def get_planned_deployment(session: Session) -> Optional[DeploymentModel]:
         The planned deployment or None if there is no planned deployment.
     """
     return session.query(DeploymentModel).filter_by(state="PLANNED").one_or_none()
-
-
-def get_operation_records(
-    session: Session, deployment_id: int, operation_name: str
-) -> list[OperationModel]:
-    """Get an operation records.
-
-    Args:
-        session: The database session.
-        deployment_id: The deployment ID.
-        operation_name: The operation name.
-
-    Returns:
-        List of matching operation records.
-
-    Raises:
-        NoResultFound: If the operation does not exist.
-    """
-    try:
-        return (
-            session.query(OperationModel)
-            .filter_by(deployment_id=deployment_id, operation=operation_name)
-            .all()
-        )
-    except NoResultFound as e:
-        raise Exception(
-            f"Operation {operation_name} does not exist in deployment {deployment_id}."
-        ) from e
