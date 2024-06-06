@@ -12,7 +12,6 @@ from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import preview_option
 from tdp.cli.queries import (
     get_last_deployment,
-    get_planned_deployment,
 )
 from tdp.cli.utils import print_deployment
 from tdp.core.models import DeploymentModel
@@ -49,7 +48,7 @@ def resume(
         if preview:
             print_deployment(deployment)
             return
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = dao.get_planned_deployment()
         if planned_deployment:
             deployment.id = planned_deployment.id
         dao.session.merge(deployment)

@@ -10,7 +10,6 @@ from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import force_option, preview_option, rolling_interval_option
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import (
     print_deployment,
 )
@@ -47,7 +46,7 @@ def reconfigure(
         if preview:
             print_deployment(deployment)
             return
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = dao.get_planned_deployment()
         if planned_deployment:
             if force or click.confirm(
                 "A deployment plan already exists, do you want to override it?"

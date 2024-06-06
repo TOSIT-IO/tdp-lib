@@ -8,10 +8,7 @@ import click
 from sqlalchemy import Engine
 
 from tdp.cli.params import database_dsn_option
-from tdp.cli.queries import (
-    get_deployments,
-    get_planned_deployment,
-)
+from tdp.cli.queries import get_deployments
 from tdp.cli.utils import (
     print_deployment,
     print_object,
@@ -64,7 +61,7 @@ def browse(
     with Dao(db_engine) as dao:
         # Print last deployment plan
         if plan:
-            deployment_plan = get_planned_deployment(dao.session)
+            deployment_plan = dao.get_planned_deployment()
             if deployment_plan:
                 _print_deployment(deployment_plan)
             else:

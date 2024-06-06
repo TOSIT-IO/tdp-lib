@@ -11,7 +11,6 @@ from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import force_option
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import parse_file
 from tdp.core.models.deployment_model import DeploymentModel
 from tdp.dao import Dao
@@ -35,7 +34,7 @@ def import_file(
 ):
     """Import a deployment from a file."""
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = dao.get_planned_deployment()
         with open(file_name) as file:
             # Remove empty elements and comments
             # and get the operations, hosts and extra vars in a list

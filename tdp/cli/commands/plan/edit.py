@@ -13,7 +13,6 @@ import click
 from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
-from tdp.cli.queries import get_planned_deployment
 from tdp.cli.utils import parse_file
 from tdp.core.models.deployment_model import DeploymentModel
 from tdp.dao import Dao
@@ -75,7 +74,7 @@ def edit(
 ):
     """Edit the planned deployment."""
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = get_planned_deployment(dao.session)
+        planned_deployment = dao.get_planned_deployment()
         if planned_deployment is None:
             raise click.ClickException(
                 "No planned deployment found, please run `tdp plan` first."
