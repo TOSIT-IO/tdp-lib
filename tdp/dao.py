@@ -11,6 +11,7 @@ from tdp.core.cluster_status import ClusterStatus
 from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+from tdp.core.models.deployment_model import DeploymentModel
 
 
 class Dao:
@@ -93,3 +94,12 @@ class Dao:
             )
             for status in self.session.execute(stmt).all()
         ]
+
+    def get_deployment(self, id: int) -> Optional[DeploymentModel]:
+        """Get a deployment by ID.
+
+        Args:
+            id: Deployment ID.
+        """
+        self._check_session()
+        return self.session.query(DeploymentModel).get(id)

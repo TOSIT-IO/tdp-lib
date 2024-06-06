@@ -145,24 +145,6 @@ def get_deployments(session: Session, limit: int, offset: int) -> list[Deploymen
     )
 
 
-def get_deployment(session: Session, deployment_id: int) -> DeploymentModel:
-    """Get a deployment by ID.
-
-    Args:
-        session: The database session.
-        deployment_id: The deployment ID.
-
-    Returns:
-        The deployment.
-
-    Raises:
-        NoResultFound: If the deployment does not exist."""
-    try:
-        return session.query(DeploymentModel).filter_by(id=deployment_id).one()
-    except NoResultFound as e:
-        raise Exception(f"Deployment with ID {deployment_id} does not exist.") from e
-
-
 def get_last_deployment(session: Session) -> DeploymentModel:
     """Get the last deployment.
 

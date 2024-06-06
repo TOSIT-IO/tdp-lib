@@ -11,7 +11,6 @@ from sqlalchemy import Engine
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import preview_option
 from tdp.cli.queries import (
-    get_deployment,
     get_last_deployment,
     get_planned_deployment,
 )
@@ -40,7 +39,9 @@ def resume(
             deployment_to_resume = get_last_deployment(dao.session)
             click.echo("Creating a deployment plan to resume latest deployment.")
         else:
-            deployment_to_resume = get_deployment(dao.session, id)
+            deployment_to_resume = dao.get_deployment(id)
+            if not deployment_to_resume:
+                raise click.ClickException(f"Deployment {id} not found.")
             click.echo(f"Creating a deployment plan to resume deployment {id}.")
         deployment = DeploymentModel.from_failed_deployment(
             collections, deployment_to_resume

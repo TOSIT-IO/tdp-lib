@@ -9,7 +9,6 @@ from sqlalchemy import Engine
 
 from tdp.cli.params import database_dsn_option
 from tdp.cli.queries import (
-    get_deployment,
     get_deployments,
     get_operation_records,
     get_planned_deployment,
@@ -91,7 +90,9 @@ def browse(
 
         # Print a specific deployment
         if deployment_id:
-            _print_deployment(get_deployment(dao.session, deployment_id))
+            deployment = dao.get_deployment(deployment_id)
+            if deployment:
+                _print_deployment(deployment)
             return
 
         # Print all deployments
