@@ -12,6 +12,7 @@ from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.models.operation_model import OperationModel
 
 
 class Dao:
@@ -103,3 +104,18 @@ class Dao:
         """
         self._check_session()
         return self.session.get(DeploymentModel, id)
+
+    def get_operation(
+        self, deployment_id: int, operation_name: str
+    ) -> list[OperationModel]:
+        """Get an operation.
+
+        Args:
+            deployment_id: The deployment ID.
+            operation_name: The operation name.
+        """
+        return (
+            self.session.query(OperationModel)
+            .filter_by(deployment_id=deployment_id, operation=operation_name)
+            .all()
+        )
