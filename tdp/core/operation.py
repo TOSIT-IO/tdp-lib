@@ -20,7 +20,7 @@ RE_GET_COMPONENT = re.compile("^[^_]+_(.*)_[^_]+$")
 RE_GET_ACTION = re.compile(".*_([^_]+)$")
 
 
-class Operation:
+class LegacyOperation:
     """A task that can be executed by Ansible.
 
     The name of the operation is composed of the service name, the component name and
@@ -116,7 +116,7 @@ class Operation:
         )
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Operation):
+        if not isinstance(other, LegacyOperation):
             return NotImplemented
         return repr(self) == repr(other)
 

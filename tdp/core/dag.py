@@ -12,7 +12,6 @@ or on a subgraph of the DAG.
 
 from __future__ import annotations
 
-import functools
 import logging
 from collections.abc import Callable, Generator, Iterable
 from typing import TYPE_CHECKING, Optional, TypeVar
@@ -20,7 +19,9 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
-from tdp.core.operation import Operation
+from tdp.core.entities.operation import Operations
+from tdp.core.operation import LegacyOperation
+from tdp.utils import get_previous_item
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -45,31 +46,13 @@ class Dag:
             collections: Collections instance.
         """
         self._collections = collections
-        self._operations = self._collections.dag_operations
-        validate_dag_nodes(self._operations, self._collections)
-        self._graph = self._generate_graph(self.operations)
-
-    @property
-    def operations(self) -> dict[str, Operation]:
-        """DAG operations dictionary."""
-        return self._operations
+        validate_dag_nodes(self._collections.dag_operations)
+        self._graph = self._generate_graph(self._collections.dag_operations)
 
     @property
     def graph(self) -> nx.DiGraph:
         """DAG graph."""
         return self._graph
-
-    def node_to_operation(
-        self, node: str, restart: bool = False, stop: bool = False
-    ) -> Operation:
-        # ? Restart operations are now stored in collections.operations they can be
-        # ? directly retrieved using the collections.get_operation method.
-        # ? This method could be removed in the future.
-        if restart and node.endswith("_start"):
-            node = node.replace("_start", "_restart")
-        elif stop and node.endswith("_start"):
-            node = node.replace("_start", "_stop")
-        return self._collections.operations[node]
 
     def topological_sort_key(
         self,
@@ -119,7 +102,7 @@ class Dag:
 
         # Define a priority function for nodes based on service priority.
         def priority_key(node: str) -> str:
-            operation = self.operations[node]
+            operation = self._collections.dag_operations[node]
             operation_priority = SERVICE_PRIORITY.get(
                 operation.service_name, DEFAULT_SERVICE_PRIORITY
             )
@@ -134,217 +117,147 @@ class Dag:
                     yield item
         return topo_sorted
 
-    def topological_sort(
-        self,
-        nodes: Optional[Iterable[str]] = None,
-        restart: bool = False,
-        stop: bool = False,
-    ) -> list[Operation]:
-        """Perform a topological sort on the DAG.
-
-        Args:
-            nodes: List of nodes to sort.
-            restart: If True, restart operations are returned instead of start operations.
-
-        Returns:
-            List of operations sorted topologically.
-        """
-        return list(
-            map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
-                self.topological_sort_key(nodes),
-            )
-        )
-
     def get_operations(
         self,
         sources: Optional[Iterable[str]] = None,
         targets: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
-        if sources and targets:
-            raise NotImplementedError("Cannot specify both sources and targets.")
-        if sources:
-            return self.get_operations_from_nodes(sources, restart=restart, stop=stop)
-        elif targets:
-            return self.get_operations_to_nodes(targets, restart=restart, stop=stop)
-        return self.get_all_operations(restart=restart, stop=stop)
+    ) -> list[LegacyOperation]:
+        """Retrieve operations based on the provided sources or targets.
 
-    def get_operations_to_nodes(
-        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        nodes_set = set(nodes)
-        for node in nodes:
-            if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
-            nodes_set.update(nx.ancestors(self.graph, node))
-        return self.topological_sort(nodes_set, restart=restart, stop=stop)
-
-    def get_operations_from_nodes(
-        self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        nodes_set = set(nodes)
-        for node in nodes:
-            if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
-            nodes_set.update(nx.descendants(self.graph, node))
-        return self.topological_sort(nodes_set, restart=restart, stop=stop)
-
-    def get_all_operations(
-        self, restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        """gets all operations from the graph sorted topologically and lexicographically.
-
-        :return: a topologically and lexicographically sorted string list
-        :rtype: List[str]
-        """
-        return self.topological_sort(self.graph, restart=restart, stop=stop)
-
-    def get_operation_descendants(
-        self, nodes: list[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
-        """
-        Retrieve all descendant operations for the specified nodes in the DAG.
-
-        For each node in the provided list, this method identifies and returns
-        all its descendant operations, excluding the input nodes themselves.
+        All operations are returned if neither sources nor targets are provided.
 
         Args:
-            nodes: List of node names to find descendants for.
-            restart: If True, restart the operation mapping process. Defaults to False.
+            sources: List of source nodes.
+            targets: List of target nodes.
+            restart: If True, restart operations are returned instead of start
+              operations.
+            stop: If True, stop operations are returned instead of start operations.
 
         Returns:
-            List of descendant operations.
-
-        Raises:
-            IllegalNodeError: Raised if a provided node does not exist in the DAG.
-
-        Example:
-            Given a DAG with nodes A -> B -> C and D -> E,
-            get_operation_descendants(["A", "D"]) would return operations for B, C, and E.
+            List of operations sorted topologically.
         """
-        nodes_set = set()
-        for node in nodes:
-            if not self.graph.has_node(node):
-                raise IllegalNodeError(f"{node} does not exists in the dag")
-            nodes_set.update(nx.descendants(self.graph, node))
-        # Remove input nodes from the set to exclude them from the result.
-        nodes_filtered = filter(lambda node: node not in nodes, nodes_set)
+        if sources and targets:
+            raise NotImplementedError("Cannot specify both sources and targets.")
+
+        if nodes := sources or targets:
+            nodes = set(nodes)
+            relation_func = nx.descendants if sources else nx.ancestors
+            for node in nodes.copy():
+                # Check if all nodes exist in the DAG.
+                if not self.graph.has_node(node):
+                    raise IllegalNodeError(f"{node} does not exist in the dag")
+                # Update the nodes set with the descendants or ancestors of the current
+                # node.
+                nodes.update(relation_func(self.graph, node))
+            nodes = self.graph.subgraph(nodes)
+        else:
+            nodes = self.graph
+
+        # Return the operations sorted topologically.
         return list(
             map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
-                nodes_filtered,
+                lambda node: self._node_to_operation(node, restart=restart, stop=stop),
+                self.topological_sort_key(nodes),
             )
         )
 
-    # TODO: can take a list of operations instead of a dict
-    def _generate_graph(self, nodes: dict[str, Operation]) -> nx.DiGraph:
+    def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
         DG = nx.DiGraph()
-        for operation_name, operation in nodes.items():
-            DG.add_node(operation_name)
+        for operation in nodes.values():
+            DG.add_node(operation.name)
             for dependency in operation.depends_on:
+                # Check if the dependency exists
                 if dependency not in nodes:
                     raise ValueError(
-                        f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
+                        f"Operation '{operation.name}' depends on '{dependency}' which "
+                        "doesn't exist."
                     )
-                DG.add_edge(dependency, operation_name)
+                DG.add_edge(dependency, operation.name)
 
         if nx.is_directed_acyclic_graph(DG):
             return DG
         else:
             raise ValueError("Not a DAG")
 
+    def _node_to_operation(
+        self, node: str, restart: bool = False, stop: bool = False
+    ) -> LegacyOperation:
+        if restart and node.endswith("_start"):
+            node = node.replace("_start", "_restart")
+        elif stop and node.endswith("_start"):
+            node = node.replace("_start", "_stop")
+        return self._collections.operations[node]
 
-# TODO: call this method inside of Collections._init_operations instead of the Dag constructor
-# TODO: remove Collections dependency
-def validate_dag_nodes(nodes: dict[str, Operation], collections: Collections) -> None:
-    r"""Validation rules :
-    - \*_start operations can only be required from within its own service
-    - \*_install operations should only depend on other \*_install operations
-    - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
-    - Operations tagged with the noop flag should not have a playbook defined in the collection
-    - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
+
+def validate_dag_nodes(nodes: Operations) -> None:
+    """Validate the DAG nodes.
+
+    Validation rules:
+
+    - Check if the dependency exists
+    - Start operations can only be required from within its own service
+    - Install operations should only depend on other install operations
+    - Service operations should have the following dependency chain within the same
+      service: install > config > start > init
     """
-    # key: service_name
-    # value: set of available actions for the service
-    services_actions = {}
+    actions_order = ["install", "config", "start", "init"]
+    services_actions: dict[str, set[str]] = {}  # {service_name: {actions}}
 
-    def warning(collection_name: str, message: str) -> None:
-        logger.warning(message + f", collection: {collection_name}")
-
-    for operation_name, operation in nodes.items():
-        c_warning = functools.partial(warning, operation.collection_name)
+    for operation in nodes.values():
         for dependency in operation.depends_on:
-            # *_start operations can only be required from within its own service
+            # Check if the dependency exists
+            if str(dependency) not in nodes:
+                logger.warning(
+                    f"Operation '{operation.name}' depends on '{dependency}' which "
+                    "doesn't exist."
+                )
+
+            # Start operations can only be required from within its own service
             dependency_service = nodes[dependency].service_name
             if (
                 dependency.endswith("_start")
                 and dependency_service != operation.service_name
             ):
-                c_warning(
-                    f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
-                    f"'{dependency}' which is a start action in service '{dependency_service}' and should "
-                    f"only depends on start action within its own service"
+                logger.warning(
+                    f"Operation '{operation.name}' depends on '{dependency}' which "
+                    "starts a diffent service. Start operations can only be required "
+                    "from their own service."
                 )
 
-            # *_install operations should only depend on other *_install operations
-            if operation_name.endswith("_install") and not dependency.endswith(
+            # Install operations should only depend on other install operations
+            if operation.name.endswith("_install") and not dependency.endswith(
                 "_install"
             ):
-                c_warning(
-                    f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
-                    f"not an install action and should only depends on other install action"
+                logger.warning(
+                    f"Operation '{operation.name}' depends on '{dependency}' which is "
+                    f"not an install action. Install operations should only depends on "
+                    "other install operations."
                 )
 
-        # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-        # even if they are "empty" (tagged with noop)
-        # Part 1
-        service_actions = services_actions.setdefault(operation.service_name, set())
+        # Service operations should respect the actions dependency chain
         if operation.is_service_operation():
-            service_actions.add(operation.action_name)
-
-            # Each service action (config, start, init) except the first (install) must have an explicit
-            # dependency with the previous service action within the same service
-            actions_order = ["install", "config", "start", "init"]
-            # Check only if the action is in actions_order and is not the first
-            if (
-                operation.action_name in actions_order
-                and operation.action_name != actions_order[0]
+            # Save the current action for the service for a later check
+            services_actions.setdefault(operation.service_name, set()).add(
+                operation.action_name
+            )
+            if previous_action := get_previous_item(
+                actions_order, operation.action_name
             ):
-                previous_action = actions_order[
-                    actions_order.index(operation.action_name) - 1
-                ]
                 previous_service_action = f"{operation.service_name}_{previous_action}"
-                previous_service_action_found = False
-                # Loop over dependency and check if the service previous action is found
-                for dependency in operation.depends_on:
-                    if dependency == previous_service_action:
-                        previous_service_action_found = True
-                if not previous_service_action_found:
-                    c_warning(
-                        f"Operation '{operation_name}' is a service action and has to depend on "
-                        f"'{operation.service_name}_{previous_action}'"
+                if previous_service_action not in operation.depends_on:
+                    logger.warning(
+                        f"Operation '{operation.name}' doesn't depend on "
+                        f"'{previous_service_action}'. Service operations should have "
+                        "the following dependency chain within the same service: "
+                        " > ".join(actions_order)
                     )
 
-        # Operations tagged with the noop flag should not have a playbook defined in the collection
-
-        if operation_name in collections[operation.collection_name].playbooks:
-            if operation.noop:
-                c_warning(
-                    f"Operation '{operation_name}' is noop and the playbook should not exist"
-                )
-        else:
-            if not operation.noop:
-                c_warning(f"Operation '{operation_name}' should have a playbook")
-
-    # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
-    # even if they are "empty" (tagged with noop)
-    # Part 2
-    actions_for_service = {"install", "config", "start", "init"}
+    # Service should at least define the 4 basic operations
     for service, actions in services_actions.items():
-        if not actions.issuperset(actions_for_service):
+        if not actions.issuperset(set(actions_order)):
             logger.warning(
-                f"Service '{service}' have these actions {actions} and at least one action is missing from "
-                f"{actions_for_service}"
+                f"Service '{service}' is missing {set(actions_order) - actions}. "
+                f"Service should have the following actions specified: {actions_order}."
             )

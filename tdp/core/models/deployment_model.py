@@ -27,7 +27,7 @@ from tdp.core.models.operation_model import OperationModel
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
-    from tdp.core.operation import Operation
+    from tdp.core.operation import LegacyOperation
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class MissingOperationError(Exception):
 
 class MissingHostForOperationError(Exception):
 
-    def __init__(self, operation: Operation, host_name: str):
+    def __init__(self, operation: LegacyOperation, host_name: str):
         self.operation = operation
         self.host_name = host_name
         super().__init__(
@@ -342,19 +342,7 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
-
-        # Sort operations using DAG topological sort. Convert operation name to
-        # Operation instance and replace "start" action by "restart".
-        dag = Dag(collections)
-        reconfigure_operations_sorted = list(
-            map(
-                lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
-            )
-        )
-
-        # Generate deployment
+        # Generate base deployment
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
             options={
@@ -366,8 +354,11 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
+        # Populate deployment with reconfigure operations
         operation_order = 1
-        for operation, host in reconfigure_operations_sorted:
+        for operation, host in _get_reconfigure_operation_hosts(
+            stale_hosted_entity_statuses, collections
+        ):
             deployment.operations.append(
                 OperationModel(
                     operation=operation.name,
@@ -470,41 +461,52 @@ def _filter_falsy_options(options: dict) -> dict:
     return {k: v for k, v in options.items() if v}
 
 
-class OperationHostTuple(NamedTuple):
-    operation_name: str
-    host_name: Optional[str]
-
-
 def _get_reconfigure_operation_hosts(
     stale_hosted_entity_statuses: list[HostedEntityStatus],
-) -> list[OperationHostTuple]:
+    collections: Collections,
+) -> list[tuple[LegacyOperation, Optional[str]]]:
     """Get the list of reconfigure operations from a list of hosted entities statuses.
 
     Args:
         stale_hosted_entity_statuses: List of stale hosted entities statuses.
 
-    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
+    Returns: List of tuple (operation, host) ordered following the DAG topological sort.
     """
+
+    class OperationHostTuple(NamedTuple):
+        operation: LegacyOperation
+        host: Optional[str]
+
     operation_hosts: set[OperationHostTuple] = set()
     for status in stale_hosted_entity_statuses:
         if status.to_config:
             operation_hosts.add(
                 OperationHostTuple(
-                    f"{status.entity.name}_config",
-                    status.entity.host,
+                    operation=collections.operations[f"{status.entity.name}_config"],
+                    host=status.entity.host,
                 )
             )
         if status.to_restart:
             operation_hosts.add(
                 OperationHostTuple(
-                    f"{status.entity.name}_start",
-                    status.entity.host,
+                    operation=collections.operations[f"{status.entity.name}_restart"],
+                    host=status.entity.host,
                 )
             )
     if len(operation_hosts) == 0:
         raise NothingToReconfigureError("No component needs to be reconfigured.")
-    # Sort by hosts to improve readability
-    return sorted(
-        operation_hosts,
-        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
+
+    # First, order by <operation-name>_<host> to improve readability
+    operation_hosts_sorted_by_host = sorted(
+        operation_hosts, key=lambda x: f"{x.operation}_{x.host}"
+    )
+
+    # Then, order using DAG topological sort
+    return list(
+        map(
+            lambda x: (x.operation, x.host),
+            Dag(collections).topological_sort_key(
+                operation_hosts_sorted_by_host, key=lambda x: x.operation.name
+            ),
+        )
     )

@@ -23,7 +23,7 @@ import networkx as nx
 from tdp.cli.params import collections_option
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.dag import Dag
-from tdp.core.operation import Operation
+from tdp.core.operation import LegacyOperation
 
 
 @click.command()
@@ -50,10 +50,10 @@ def playbooks(services, output_dir, for_collection, collections):
     dag_services = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
     dag_service_operations = {}
-    for operation in dag.get_all_operations():
+    for operation in dag.get_operations():
         dag_services.add_node(operation.service_name)
         for dependency in operation.depends_on:
-            dependency_operation = Operation(dependency)
+            dependency_operation = LegacyOperation(dependency)
             if dependency_operation.service_name != operation.service_name:
                 dag_services.add_edge(
                     dependency_operation.service_name, operation.service_name
@@ -127,7 +127,7 @@ def playbooks(services, output_dir, for_collection, collections):
     with Path(meta_dir, "all.yml").open("w") as all_fd:
         write_copyright_licence_headers(all_fd)
         all_fd.write("---\n")
-        for operation in dag.get_all_operations():
+        for operation in dag.get_operations():
             if for_collection and operation.collection_name not in for_collection:
                 continue
             if not operation.noop:

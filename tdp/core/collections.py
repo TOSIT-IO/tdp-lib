@@ -18,8 +18,8 @@ from collections.abc import Mapping, Sequence
 
 from tdp.core.collection import Collection
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
-from tdp.core.entities.operation import Operations
-from tdp.core.operation import Operation
+from tdp.core.entities.operation import Operations, Playbook
+from tdp.core.operation import LegacyOperation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 logger = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ class Collections(Mapping[str, Collection]):
 
     def __init__(self, collections: Mapping[str, Collection]):
         self._collections = collections
+        self._playbooks = self._init_playbooks(self._collections)
         self._dag_operations, self._other_operations = self._init_operations(
             self._collections
         )
@@ -69,6 +70,14 @@ class Collections(Mapping[str, Collection]):
         )
 
     @property
+    def playbooks(self) -> dict[str, Playbook]:
+        """Available playbooks.
+
+        Playbooks that are defined in multiple collections are overridden by the last
+        collection in the list."""
+        return self._playbooks
+
+    @property
     def dag_operations(self) -> Operations:
         """Mapping of operation name that are defined in dag files to their Operation instance."""
         return self._dag_operations
@@ -93,6 +102,21 @@ class Collections(Mapping[str, Collection]):
         """Mapping of service with their variable schemas."""
         return self._schemas
 
+    def _init_playbooks(
+        self, collections: Mapping[str, Collection]
+    ) -> dict[str, Playbook]:
+        playbooks: dict[str, Playbook] = {}
+        for collection in collections.values():
+            for operation_name, playbook in collection.playbooks.items():
+                if operation_name in playbooks:
+                    logger.warning(
+                        f"Playbook '{operation_name}' defined in "
+                        f"'{playbook.collection_name}' is overridden by "
+                        f"'{collection.name}'"
+                    )
+                playbooks[operation_name] = playbook
+        return playbooks
+
     def _init_operations(
         self, collections: Mapping[str, Collection]
     ) -> tuple[Operations, Operations]:
@@ -101,102 +125,108 @@ class Collections(Mapping[str, Collection]):
 
         for collection in collections.values():
             # Load DAG operations from the dag files
-            for dag_node in collection.dag_nodes:
-                existing_operation = dag_operations.get(dag_node.name)
+            for node in collection.dag_nodes:
+                existing_operation = dag_operations.get(node.name)
 
-                # The read_operation is associated with a playbook defined in the
-                # current collection
-                if playbook := collection.playbooks.get(dag_node.name):
+                # The DAG node is associated with a playbook defined in the current
+                # collection
+                if playbook := collection.playbooks.get(node.name):
+                    # If a the action is a start, check if the associated restart and
+                    # stop playbooks are defined
+                    if node.name.endswith("_start"):
+                        if (
+                            restart_operation_name := node.name.replace(
+                                "_start", "_restart"
+                            )
+                        ) not in collection.playbooks:
+                            logger.warning(
+                                f"Missing {restart_operation_name} playbook in "
+                                f"{collection.name}. Each start playbook should have "
+                                "an associated restart playbook."
+                            )
+                        if (
+                            stop_operation_name := node.name.replace("_start", "_stop")
+                        ) not in collection.playbooks:
+                            logger.warning(
+                                f"Missing {stop_operation_name} playbook in "
+                                f"{collection.name}. Each stop playbook should have an "
+                                "associated restart playbook."
+                            )
+
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
-                    dag_operation_to_register = Operation(
-                        name=dag_node.name,
+                    operation_to_register = LegacyOperation(
+                        name=node.name,
                         collection_name=collection.name,
                         host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
-                        depends_on=dag_node.depends_on.copy(),
+                        depends_on=node.depends_on.copy(),
                     )
                     # If the operation is already registered, merge its dependencies
                     if existing_operation:
-                        dag_operation_to_register.depends_on.extend(
-                            dag_operations[dag_node.name].depends_on
+                        logger.debug(
+                            f"'{existing_operation.name}' dependencies are extended by "
+                            f"'{collection.name}'"
+                        )
+                        operation_to_register.depends_on.extend(
+                            dag_operations[node.name].depends_on
                         )
                         # Print a warning if we override a playbook operation
                         if not existing_operation.noop:
                             logger.debug(
-                                f"'{dag_node.name}' defined in "
+                                f"'{existing_operation.name}' defined in "
                                 f"'{existing_operation.collection_name}' "
-                                f"is overridden by '{collection.name}'"
+                                f"is overridden by '{collection.name}'."
                             )
                     # Register the operation
-                    dag_operations[dag_node.name] = dag_operation_to_register
+                    dag_operations[node.name] = operation_to_register
                     continue
 
                 # The read_operation is already registered
                 if existing_operation:
                     logger.debug(
-                        f"'{dag_node.name}' defined in "
-                        f"'{existing_operation.collection_name}' "
-                        f"is extended by '{collection.name}'"
+                        f"'{existing_operation.name}' dependencies are extended by "
+                        f"'{collection.name}'"
                     )
-                    existing_operation.depends_on.extend(dag_node.depends_on)
+                    existing_operation.depends_on.extend(node.depends_on)
                     continue
 
                 # From this point, the read_operation is a noop as it is not defined
                 # in the current nor the previous collections
 
                 # Create and register the operation
-                dag_operations[dag_node.name] = Operation(
-                    name=dag_node.name,
+                operation_to_register = LegacyOperation(
+                    name=node.name,
                     collection_name=collection.name,
-                    depends_on=dag_node.depends_on.copy(),
+                    depends_on=node.depends_on.copy(),
                     noop=True,
                     host_names=None,
                 )
+                dag_operations[node.name] = operation_to_register
                 # 'restart' and 'stop' operations are not defined in the DAG file
                 # for noop, they need to be generated from the start operations
-                if dag_node.name.endswith("_start"):
+                if node.name.endswith("_start"):
                     logger.debug(
-                        f"'{dag_node.name}' is noop, creating the associated "
+                        f"'{node.name}' is noop, creating the associated "
                         "restart and stop operations"
                     )
-                    # Create and register the restart operation
-                    restart_operation_name = dag_node.name.replace("_start", "_restart")
-                    other_operations[restart_operation_name] = Operation(
-                        name=restart_operation_name,
-                        collection_name="replace_restart_noop",
-                        depends_on=dag_node.depends_on.copy(),
-                        noop=True,
-                        host_names=None,
-                    )
-                    # Create and register the stop operation
-                    stop_operation_name = dag_node.name.replace("_start", "_stop")
-                    other_operations[stop_operation_name] = Operation(
-                        name=stop_operation_name,
-                        collection_name="replace_stop_noop",
-                        depends_on=dag_node.depends_on.copy(),
-                        noop=True,
-                        host_names=None,
-                    )
+                    for action_name in ["_restart", "_stop"]:
+                        operation_name = node.name.replace("_start", action_name)
+                        other_operations[operation_name] = LegacyOperation(
+                            name=operation_name,
+                            collection_name=collection.name,
+                            depends_on=operation_to_register.depends_on,
+                            noop=True,
+                            host_names=None,
+                        )
 
-        # We can't merge the two for loops to handle the case where a playbook operation
-        # is defined in a first collection but not used in the DAG and then used in
-        # the DAG in a second collection.
-        for collection in collections.values():
-            # Load playbook operations to complete the operations list with the
-            # operations that are not defined in the DAG files
-            for operation_name, playbook in collection.playbooks.items():
-                if operation_name in dag_operations:
-                    continue
-                if operation_name in other_operations:
-                    logger.debug(
-                        f"'{operation_name}' defined in "
-                        f"'{other_operations[operation_name].collection_name}' "
-                        f"is overridden by '{collection.name}'"
-                    )
-                other_operations[operation_name] = Operation(
-                    name=operation_name,
-                    host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
-                    collection_name=collection.name,
-                )
+        # Register the operations that are not defined in the DAG files
+        for operation_name, playbook in self.playbooks.items():
+            if operation_name in dag_operations:
+                continue
+            other_operations[operation_name] = LegacyOperation(
+                name=operation_name,
+                host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
+                collection_name=playbook.collection_name,
+            )
 
         return dag_operations, other_operations
 
