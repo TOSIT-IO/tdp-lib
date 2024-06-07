@@ -79,7 +79,7 @@ Contributions are welcome! Here are some guidelines specific to this project:
 
     ```sh
     docker compose -f dev/docker-compose.yaml up -d
-    poetry run pytest tdp --database-dsn 'postgresql+psycopg2://postgres:postgres@localhost:5432/tdp' --database-dsn 'mysql+pymysql://mysql:mysql@localhost:3306/tdp' --database-dsn 'mysql+pymysql://mariadb:mariadb@localhost:3307/tdp'
+    poetry run pytest tests --database-dsn 'postgresql+psycopg2://postgres:postgres@localhost:5432/tdp' --database-dsn 'mysql+pymysql://mysql:mysql@localhost:3306/tdp' --database-dsn 'mysql+pymysql://mariadb:mariadb@localhost:3307/tdp'
     docker compose -f dev/docker-compose.yaml down -v
     ```
 

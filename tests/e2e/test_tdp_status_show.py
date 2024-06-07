@@ -4,8 +4,8 @@
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import TDPInitArgs
-from tdp.cli.commands.status.generate_stales import generate_stales
+from tdp.cli.commands.status.show import show
+from tests.e2e.conftest import TDPInitArgs
 
 
 def test_tdp_status_edit(
@@ -13,7 +13,7 @@ def test_tdp_status_edit(
 ):
     runner = CliRunner()
     result = runner.invoke(
-        generate_stales,
+        show,
         [
             "--collection-path",
             str(tdp_init.collection_path),

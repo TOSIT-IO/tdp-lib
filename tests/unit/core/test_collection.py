@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from tdp.conftest import generate_collection_at_path
 from tdp.core.collection import (
     Collection,
     MissingMandatoryDirectoryError,
@@ -23,7 +22,10 @@ from tdp.core.constants import (
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
 )
-from tdp.core.models.test_deployment_log import MockInventoryReader
+from tests.conftest import generate_collection_at_path
+from tests.unit.core.models.test_deployment_log import (
+    MockInventoryReader,
+)
 
 
 def test_collection_from_path_does_not_exist():

@@ -4,23 +4,23 @@
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import TDPInitArgs
-from tdp.cli.commands.plan.reconfigure import reconfigure
+from tdp.cli.commands.status.generate_stales import generate_stales
+from tests.e2e.conftest import TDPInitArgs
 
 
-def test_tdp_plan_reconfigure(
+def test_tdp_status_edit(
     tdp_init: TDPInitArgs,
 ):
     runner = CliRunner()
     result = runner.invoke(
-        reconfigure,
+        generate_stales,
         [
             "--collection-path",
             str(tdp_init.collection_path),
             "--database-dsn",
             tdp_init.db_dsn,
+            "--vars",
+            str(tdp_init.vars),
         ],
     )
-    assert (
-        result.exit_code == 1
-    ), result.output  # No stale components, hence nothing to reconfigure.
+    assert result.exit_code == 0, result.output
