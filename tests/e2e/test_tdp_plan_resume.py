@@ -4,9 +4,9 @@
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import TDPInitArgs
 from tdp.cli.commands.plan.dag import dag
 from tdp.cli.commands.plan.resume import resume
+from tests.e2e.conftest import TDPInitArgs
 
 
 def test_tdp_plan_resume_nothing_to_resume(

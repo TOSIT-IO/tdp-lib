@@ -9,12 +9,12 @@ from typing import List, Optional
 import pytest
 from sqlalchemy.engine import Engine
 
-from tdp.conftest import create_session
 from tdp.core.models import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
 from tdp.dao import Dao
+from tests.conftest import create_session
 
 logger = logging.getLogger(__name__)
 

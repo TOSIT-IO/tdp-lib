@@ -9,7 +9,6 @@ import lorem
 import pytest
 from sqlalchemy import Engine
 
-from tdp.conftest import create_session, generate_collection_at_path
 from tdp.core.collection import Collection
 from tdp.core.collections import (
     Collections,
@@ -22,6 +21,7 @@ from tdp.core.models.deployment_model import (
 )
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 from tdp.core.models.operation_model import OperationModel
+from tests.conftest import create_session, generate_collection_at_path
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag

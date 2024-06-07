@@ -1,14 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-
 from pathlib import Path
 
 from click.testing import CliRunner
 
-from tdp.cli.commands.conftest import TDPInitArgs
 from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.plan.dag import dag
+from tests.e2e.conftest import TDPInitArgs
 
 
 def test_tdp_deploy_mock(
