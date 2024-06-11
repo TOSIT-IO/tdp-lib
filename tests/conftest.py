@@ -4,7 +4,7 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pytest
 import yaml
@@ -136,3 +136,16 @@ def generate_collection_at_path(
         for filename, vars in file_vars.items():
             with (service_dir / filename).open("w") as fd:
                 yaml.dump(vars, fd)
+
+
+def assert_equal_values_in_model(model1: Any, model2: Any) -> bool:
+    """SQLAlchemy asserts that two identical objects of type DeclarativeBase parent of the BaseModel class,
+    which is used in TDP as pattern for the table models, are identical if they are compared in the same session,
+    but different if compared in two different sessions.
+
+    This function therefore transforms the tables into dictionaries and by parsing the coulumns compares their values.
+    """
+    if isinstance(model1, BaseModel) and isinstance(model2, BaseModel):
+        return model1.to_dict() == model2.to_dict()
+    else:
+        return False
