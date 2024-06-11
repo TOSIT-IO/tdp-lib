@@ -10,11 +10,14 @@ import pytest
 from sqlalchemy.engine import Engine
 
 from tdp.core.models import (
+    DeploymentModel,
+    OperationModel,
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
+from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 from tdp.dao import Dao
-from tests.conftest import create_session
+from tests.conftest import assert_equal_values_in_model, create_session
 
 logger = logging.getLogger(__name__)
 
@@ -158,3 +161,115 @@ def test_multiple_service_component_status(db_engine: Engine):
 
     with Dao(db_engine) as dao:
         assert set(dao.get_cluster_status()) == last_values
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_get_deployment(db_engine):
+    with create_session(db_engine) as session:
+        session.add(
+            DeploymentModel(
+                id=1,
+                state=DeploymentStateEnum.RUNNING,
+            )
+        )
+        session.commit()
+    with Dao(db_engine) as dao:
+        assert assert_equal_values_in_model(
+            dao.get_deployment(1),
+            DeploymentModel(
+                id=1,
+                state=DeploymentStateEnum.RUNNING,
+            ),
+        )
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_get_planned_deployment(db_engine):
+    with create_session(db_engine) as session:
+        session.add(
+            DeploymentModel(
+                id=1,
+                state=DeploymentStateEnum.PLANNED,
+            )
+        )
+        session.commit()
+    with Dao(db_engine) as dao:
+        assert assert_equal_values_in_model(
+            dao.get_planned_deployment(),
+            DeploymentModel(
+                id=1,
+                state=DeploymentStateEnum.PLANNED,
+            ),
+        )
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_get_last_deployment(db_engine):
+    with create_session(db_engine) as session:
+        session.add(
+            DeploymentModel(
+                id=3,
+                state=DeploymentStateEnum.SUCCESS,
+            )
+        )
+        session.commit()
+    with Dao(db_engine) as dao:
+        assert assert_equal_values_in_model(
+            dao.get_last_deployment(),
+            DeploymentModel(
+                id=3,
+                state=DeploymentStateEnum.SUCCESS,
+            ),
+        )
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_get_deployments(db_engine):
+    with create_session(db_engine) as session:
+        session.add(
+            DeploymentModel(
+                id=1,
+                state=DeploymentStateEnum.SUCCESS,
+            )
+        )
+        session.add(
+            DeploymentModel(
+                id=2,
+                state=DeploymentStateEnum.PLANNED,
+            )
+        )
+        session.commit()
+    with Dao(db_engine) as dao:
+        assert assert_equal_values_in_model(
+            list(dao.get_deployments())[0],
+            DeploymentModel(id=1, state=DeploymentStateEnum.SUCCESS),
+        )
+        assert assert_equal_values_in_model(
+            list(dao.get_deployments())[1],
+            DeploymentModel(id=2, state=DeploymentStateEnum.PLANNED),
+        )
+
+
+@pytest.mark.parametrize("db_engine", [True], indirect=True)
+def test_operation(db_engine):
+    with create_session(db_engine) as session:
+        session.add(DeploymentModel(id=1, state=DeploymentStateEnum.SUCCESS))
+        session.add(
+            OperationModel(
+                deployment_id=1,
+                operation_order=1,
+                operation="test_operation",
+                state=OperationStateEnum.SUCCESS,
+            )
+        )
+        session.commit()
+    with Dao(db_engine) as dao:
+        assert assert_equal_values_in_model(
+            dao.get_operation(deployment_id=1, operation_name="test_operation")[0],
+            OperationModel(
+                deployment_id=1,
+                operation_order=1,
+                operation="test_operation",
+                state=OperationStateEnum.SUCCESS,
+            ),
+        )
