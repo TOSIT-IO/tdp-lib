@@ -203,7 +203,7 @@ class Dao:
 
     def get_hosted_entity_statuses_history(
         self,
-        limit,
+        limit: Optional[int] = None,
         service: Optional[str] = None,
         component: Optional[str] = None,
         hosts: Optional[Iterable[str]] = None,
