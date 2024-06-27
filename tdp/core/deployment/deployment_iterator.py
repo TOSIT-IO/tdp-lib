@@ -217,6 +217,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
                     if self.force_stale_update
                     else SCHStatusLogSourceEnum.DEPLOYMENT
                 )
+                sch_status_log.is_active = True
                 sch_status_logs.append(sch_status_log)
 
         # Update the reconfigure_operations dict
