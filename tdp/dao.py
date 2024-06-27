@@ -185,11 +185,13 @@ class Dao:
                 to_config=(
                     bool(status.latest_to_config)
                     if status.latest_to_config is not None
+                    and bool(status.latest_is_active) is not False
                     else None
                 ),
                 to_restart=(
                     bool(status.latest_to_restart)
                     if status.latest_to_restart is not None
+                    and bool(status.latest_is_active) is not False
                     else None
                 ),
                 is_active=(
