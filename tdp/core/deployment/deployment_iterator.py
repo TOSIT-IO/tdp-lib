@@ -188,8 +188,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             # Log a warning if the operation affect a stale SCH which is not the first reconfigure operation (if any)
             if not can_update_stale:
                 logger.warning(
-                    f"can't update stale {entity_name} with {operation_rec.operation}\n"
-                    + "first operation is {first_reconfigure_operation}"
+                    f"can't update stale {entity_name} with {operation_rec.operation}, the first operation is {first_reconfigure_operation}"
                 )
         else:
             can_update_stale = False
