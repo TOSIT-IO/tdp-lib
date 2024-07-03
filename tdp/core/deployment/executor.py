@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 from tdp.core.models.enums import OperationStateEnum
+from tdp.exception_playbooks import exception_playbooks
 from tdp.utils import resolve_executable
 
 logger = logging.getLogger(__name__)
@@ -95,7 +96,15 @@ class Executor:
         command = [self.ansible_path]
         command += [str(playbook)]
         if host is not None:
-            command += ["--limit", host]
+            command += [
+                "--limit",
+                (
+                    host
+                    if "/".join(str(playbook).rsplit("/", 3)[-3:])
+                    not in exception_playbooks
+                    else "all"
+                ),
+            ]
         for extra_var in extra_vars or []:
             command += ["--extra-vars", extra_var]
         # Execute command
