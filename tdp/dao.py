@@ -24,7 +24,11 @@ def _create_last_value_statement(column, non_null=False):
     """
     order_by = SCHStatusLogModel.event_time.desc()
     if non_null:
-        order_by = case((column == None, 0), else_=1).desc(), order_by
+        order_by = (
+            case((column == None, 0), else_=1).desc()
+            if column is not SCHStatusLogModel.is_active
+            else case((column == None, 1), else_=0).desc()
+        ), order_by
     return func.first_value(column).over(
         partition_by=(
             SCHStatusLogModel.service,
