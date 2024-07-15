@@ -10,10 +10,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import click
+from ansible.utils.vars import merge_hash
 
 from tdp.cli.params import collections_option, vars_option
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
-from tdp.core.variables import ClusterVariables, Variables, merge_hash
+from tdp.core.variables import ClusterVariables, Variables
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
