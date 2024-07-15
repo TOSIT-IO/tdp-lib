@@ -34,8 +34,6 @@ def test_tdp_deploy_mock(
             tdp_init.db_dsn,
             "--vars",
             str(tdp_init.vars),
-            "--run-directory",
-            str(tmp_path),
             "--mock-deploy",
         ],
     )

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+from os import chdir
 from pathlib import Path
 from typing import Optional
 
@@ -49,6 +50,15 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     envvar="TDP_LOG_LEVEL",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     help="Set the level of log output.",
+)
+@click.option(
+    "--run-directory",
+    envvar="TDP_RUN_DIRECTORY",
+    type=click.Path(resolve_path=True, exists=True),
+    help="Working directory where the executor is launched (`ansible-playbook` for Ansible).",
+    required=True,
+    callback=lambda ctx, param, value: chdir(value),
+    expose_value=False,
 )
 def cli(log_level: str):
     setup_logging(log_level)
