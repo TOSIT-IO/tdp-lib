@@ -24,17 +24,6 @@ from tdp.cli.logger import setup_logging
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-class CatchGroup(click.Group):
-    """Catch exceptions and print them to stderr."""
-
-    def __call__(self, *args, **kwargs):
-        try:
-            return self.main(*args, **kwargs)
-
-        except Exception as e:
-            click.echo(f"Error: {e}", err=True)
-
-
 def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optional[Path]:
     """Click callback to load the environment file."""
     if value.exists():
@@ -44,7 +33,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
         logging.warning(f"Environment file {value} does not exist.")
 
 
-@click.group("tdp", context_settings=CONTEXT_SETTINGS, cls=CatchGroup)
+@click.group("tdp", context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--env",
     default=".env",
