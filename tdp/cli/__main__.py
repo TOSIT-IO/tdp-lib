@@ -52,6 +52,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     callback=load_env,
     type=Path,
     help="Path to environment configuration file.",
+    expose_value=False,
 )
 @click.option(
     "--log-level",
@@ -60,7 +61,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
     help="Set the level of log output.",
 )
-def cli(env: Path, log_level: str):
+def cli(log_level: str):
     setup_logging(log_level)
     logging.info("Logging is configured.")
 
