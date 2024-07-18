@@ -52,10 +52,10 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     help="Set the level of log output.",
 )
 @click.option(
-    "--run-directory",
-    envvar="TDP_RUN_DIRECTORY",
+    "--cwd",
+    envvar="TDP_CWD",
     type=click.Path(resolve_path=True, exists=True),
-    help="Working directory where the executor is launched (`ansible-playbook` for Ansible).",
+    help="Current working directory, where the command will be executed.",
     required=True,
     callback=lambda ctx, param, value: chdir(value),
     expose_value=False,
