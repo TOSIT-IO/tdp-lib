@@ -10,9 +10,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import click
-from ansible.utils.vars import merge_hash
 
 from tdp.cli.params import collections_option, vars_option
+from tdp.core.ansible_loader import AnsibleLoader
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
 from tdp.core.variables import ClusterVariables, Variables
 
@@ -73,7 +73,7 @@ def service_diff(collections, service):
             with Variables(default_service_vars_filepath).open(
                 "r"
             ) as default_variables:
-                default_service_varfile = merge_hash(
+                default_service_varfile = AnsibleLoader.load_merge_hash()(
                     default_service_varfile, default_variables
                 )
 
