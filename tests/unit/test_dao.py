@@ -208,6 +208,12 @@ def test_get_last_deployment(db_engine):
     with create_session(db_engine) as session:
         session.add(
             DeploymentModel(
+                id=2,
+                state=DeploymentStateEnum.FAILURE,
+            )
+        )
+        session.add(
+            DeploymentModel(
                 id=3,
                 state=DeploymentStateEnum.SUCCESS,
             )
