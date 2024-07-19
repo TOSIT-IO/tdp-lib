@@ -3,7 +3,7 @@
 
 from typing import Iterable, NamedTuple, Optional
 
-from sqlalchemy import Engine, Select, and_, case, func, or_, select
+from sqlalchemy import Engine, Select, and_, case, desc, func, or_, select
 from sqlalchemy.orm import sessionmaker
 
 from tdp.core.cluster_status import ClusterStatus
@@ -288,7 +288,11 @@ class Dao:
     def get_last_deployment(self) -> Optional[DeploymentModel]:
         """Get the last deployment."""
         self._check_session()
-        return self.session.query(DeploymentModel).order_by(DeploymentModel.id).first()
+        return (
+            self.session.query(DeploymentModel)
+            .order_by(desc(DeploymentModel.id))
+            .first()
+        )
 
     def get_deployments(
         self, limit: Optional[int] = None, offset: Optional[int] = None
