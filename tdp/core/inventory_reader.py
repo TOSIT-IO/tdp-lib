@@ -1,11 +1,11 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from typing import Optional, TextIO
+from typing import TYPE_CHECKING, Optional, TextIO
 
 import yaml
-from ansible.cli.inventory import InventoryCLI
-from ansible.inventory.manager import InventoryManager
+
+from tdp.core.ansible_loader import AnsibleLoader
 
 try:
     from yaml import CLoader as Loader
@@ -13,33 +13,15 @@ except ImportError:
     from yaml import Loader
 
 
-# From ansible/cli/inventory.py
-class _CustomInventoryCLI(InventoryCLI):
-    """Represent a custom Ansible inventory CLI which does nothing.
-    This is used to load inventory files with Ansible code.
-    """
-
-    def __init__(self):
-        super().__init__(["program", "--list"])
-        # "run" must be called from CLI (the parent of InventoryCLI), to
-        # initialize context (reading ansible.cfg for example).
-        super(InventoryCLI, self).run()
-        # Get InventoryManager instance
-        _, self.inventory, _ = self._play_prereqs()
-
-    # Avoid call InventoryCLI "run", we do not need to run InventoryCLI
-    def run(self):
-        pass
-
-
-custom_inventory_cli_instance = _CustomInventoryCLI()
+if TYPE_CHECKING:
+    from ansible.inventory.manager import InventoryManager
 
 
 class InventoryReader:
     """Represent an Ansible inventory reader."""
 
-    def __init__(self, inventory: Optional[InventoryManager] = None):
-        self.inventory = inventory or custom_inventory_cli_instance.inventory
+    def __init__(self, inventory: Optional["InventoryManager"] = None):
+        self.inventory = inventory or AnsibleLoader.get_CustomInventoryCLI().inventory
 
     def get_hosts(self, *args, **kwargs) -> list[str]:
         """Takes a pattern or list of patterns and returns a list of matching
