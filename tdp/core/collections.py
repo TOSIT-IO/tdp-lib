@@ -48,6 +48,17 @@ class Collections(Mapping[str, Collection]):
     def __len__(self):
         return self._collections.__len__()
 
+    def get_collections_hosts(self):
+        host_operation_list = [
+            self.operations.__getitem__(operation).host_names
+            for operation in self.operations
+        ]
+        hosts_set = set()
+        for operation_hosts in host_operation_list:
+            hosts_set.update(operation_hosts)
+
+        return {host for host in hosts_set if host != "localhost"}
+
     @staticmethod
     def from_collection_list(collections: Sequence[Collection]) -> Collections:
         """Factory method to build Collections from a sequence of Collection.
