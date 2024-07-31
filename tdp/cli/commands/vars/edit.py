@@ -139,7 +139,7 @@ def edit(
 
         # Generate stale component list and save it to the database
         with Dao(db_engine) as dao:
-            stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
+            stale_status_logs = dao.generate_stale_sch_logs(
                 cluster_variables=cluster_variables, collections=collections
             )
             dao.session.add_all(stale_status_logs)
