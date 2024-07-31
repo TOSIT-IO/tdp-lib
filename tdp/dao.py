@@ -349,6 +349,14 @@ class Dao:
         if len(modified_entities) == 0:
             return set()
 
+        # Get the list of services of the current hosted_entities in the database
+        hosted_entities: list[HostedEntity] = [
+            entity_status.entity for entity_status in hosted_entity_status
+        ]
+        hosted_entity_services: list[str] = [
+            entity.name.service for entity in hosted_entities
+        ]
+
         # Create logs for the modified entities
         for entity in modified_entities:
             config_operation = collections.operations.get(f"{entity.name}_config")
@@ -365,7 +373,12 @@ class Dao:
             # restart operations are available
             # Only source hosts affected by the modified configuration are considered as
             # stale (while all hosts are considered as stale for the descendants)
-            if config_operation or restart_operation:
+            if (
+                config_operation
+                and entity in hosted_entities
+                or restart_operation
+                and entity in hosted_entities
+            ):
                 log = logs.setdefault(
                     entity,
                     SCHStatusLogModel(
@@ -389,7 +402,10 @@ class Dao:
             nodes=list(source_reconfigure_operations), restart=True
         ):
             # Only create a log when config or restart operation is available
-            if operation.action_name not in ["config", "restart"]:
+            if (
+                operation.action_name not in ["config", "restart"]
+                or operation.service_name not in hosted_entity_services
+            ):
                 continue
 
             # Create a log for each host where the entity is deployed
