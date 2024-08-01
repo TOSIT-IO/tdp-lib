@@ -125,6 +125,18 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
                 operation_rec.state = OperationStateEnum.RUNNING
 
+                if host := self._collections.check_collections_hosts():
+                    message = f"{host} has been removed from the inventory file."
+                    logger.error(message)
+                    operation_rec.logs = message.encode("utf-8")
+                    operation_rec.start_time = operation_rec.end_time = (
+                        datetime.utcnow()
+                    )
+                    operation_rec.state = OperationStateEnum.FAILURE
+                    self.deployment.end_time = datetime.utcnow()
+                    self.deployment.state = DeploymentStateEnum.FAILURE
+                    return operation_rec, None
+
                 return operation_rec, partial(self._process_operation_fn, operation_rec)
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
