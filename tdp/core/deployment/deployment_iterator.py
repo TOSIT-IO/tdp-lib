@@ -29,7 +29,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-ProcessOperationFn = Callable[[], Optional[list[SCHStatusLogModel]]]
+ProcessOperationFn = Callable[[], None]
+UpdateClusterFn = Callable[[], Optional[list[SCHStatusLogModel]]]
 
 
 def _group_hosts_by_operation(
@@ -58,7 +59,11 @@ def _group_hosts_by_operation(
     return operation_to_hosts_set
 
 
-class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperationFn]]]):
+class DeploymentIterator(
+    Iterator[
+        tuple[OperationModel, Optional[ProcessOperationFn], Optional[UpdateClusterFn]]
+    ]
+):
     """Iterator that runs an operation at each iteration.
 
     Attributes:
@@ -113,7 +118,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
     def __next__(
         self,
-    ) -> tuple[OperationModel, Optional[ProcessOperationFn]]:
+    ) -> tuple[OperationModel, Optional[ProcessOperationFn], Optional[UpdateClusterFn]]:
         try:
             while True:
                 operation_rec = next(self._iter)
@@ -121,11 +126,19 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
                 # Return early if deployment failed
                 if self.deployment.state == DeploymentStateEnum.FAILURE:
                     operation_rec.state = OperationStateEnum.HELD
-                    return operation_rec, None
+                    return operation_rec, None, None
 
                 operation_rec.state = OperationStateEnum.RUNNING
 
-                return operation_rec, partial(self._process_operation_fn, operation_rec)
+                # Get service version number
+                operation = self._collections.operations[operation_rec.operation]
+                version = self._cluster_variables[operation.service_name].version
+
+                return (
+                    operation_rec,
+                    partial(self._process_operation_fn, operation_rec),
+                    partial(self._update_cluster_fn, operation_rec, version),
+                )
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
             self.deployment.end_time = datetime.utcnow()
@@ -138,9 +151,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
 
-    def _process_operation_fn(
-        self, operation_rec: OperationModel
-    ) -> Optional[list[SCHStatusLogModel]]:
+    def _process_operation_fn(self, operation_rec: OperationModel) -> None:
 
         operation = self._collections.operations[operation_rec.operation]
 
@@ -158,7 +169,11 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             # Return early as status is not updated
             return
 
-        # ===== Update the cluster status if success =====
+    def _update_cluster_fn(
+        self, operation_rec: OperationModel, version: str
+    ) -> Optional[list[SCHStatusLogModel]]:
+
+        operation = self._collections.operations[operation_rec.operation]
 
         # Skip sleep operation
         if operation.name == OPERATION_SLEEP_NAME:
@@ -206,7 +221,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             sch_status_log = self._cluster_status.update_hosted_entity(
                 create_hosted_entity(entity_name, host),
                 action_name=operation.action_name,
-                version=self._cluster_variables[operation.service_name].version,
+                version=version,
                 can_update_stale=can_update_stale,
             )
             if sch_status_log:
