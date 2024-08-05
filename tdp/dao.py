@@ -298,9 +298,16 @@ class Dao:
         self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> Iterable[DeploymentModel]:
         self._check_session()
+        subq = (
+            self.session.query(DeploymentModel)
+            .order_by(desc(DeploymentModel.id))
+            .limit(limit)
+            .subquery()
+        )
         return (
             self.session.query(DeploymentModel)
+            .join(subq, DeploymentModel.id == subq.c.id)
             .order_by(DeploymentModel.id)
-            .limit(limit)
             .offset(offset)
+            .all()
         )
