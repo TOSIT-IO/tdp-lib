@@ -229,5 +229,6 @@ class Collections(Mapping[str, Collection]):
             ServiceComponentName(service_name, operation.component_name)
             for operation in self.operations.values()
             if operation.service_name == service_name
+            and operation.component_name is not None
             and not operation.is_service_operation()
         }
