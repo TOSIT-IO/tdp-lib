@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
+from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
 
 if TYPE_CHECKING:
@@ -50,7 +51,7 @@ class Dag:
         self._graph = self._generate_graph(self.operations)
 
     @property
-    def operations(self) -> dict[str, Operation]:
+    def operations(self) -> Operations:
         """DAG operations dictionary."""
         return self._operations
 
@@ -239,7 +240,7 @@ class Dag:
         )
 
     # TODO: can take a list of operations instead of a dict
-    def _generate_graph(self, nodes: dict[str, Operation]) -> nx.DiGraph:
+    def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
         DG = nx.DiGraph()
         for operation_name, operation in nodes.items():
             DG.add_node(operation_name)
@@ -258,7 +259,7 @@ class Dag:
 
 # TODO: call this method inside of Collections._init_operations instead of the Dag constructor
 # TODO: remove Collections dependency
-def validate_dag_nodes(nodes: dict[str, Operation], collections: Collections) -> None:
+def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
     r"""Validation rules :
     - \*_start operations can only be required from within its own service
     - \*_install operations should only depend on other \*_install operations
