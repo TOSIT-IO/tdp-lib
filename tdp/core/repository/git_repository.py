@@ -7,7 +7,7 @@ import logging
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 
-from git import BadName, InvalidGitRepositoryError, NoSuchPathError, Repo
+from git import BadName, GitError, InvalidGitRepositoryError, NoSuchPathError, Repo
 
 from tdp.core.repository.repository import (
     EmptyCommit,
@@ -74,7 +74,10 @@ class GitRepository(Repository):
             raise NoVersionYet from e
 
     def is_clean(self) -> bool:
-        return not self._repo.is_dirty(untracked_files=True)
+        try:
+            return not self._repo.is_dirty(untracked_files=True)
+        except Exception as e:
+            raise GitError(f"Error for the repository: {self.path}") from e
 
     def is_file_modified(self, commit: str, path: PathLike) -> bool:
         with self._lock:
