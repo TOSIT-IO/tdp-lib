@@ -12,7 +12,7 @@
 
 ## Pre-requisites
 
-To use `tdp-lib`, ensure you have the following prerequisites:
+To use `tdp-lib` on your host, ensure you have the following prerequisites:
 
 - Python 3.9 or higher. Higher version are not guarantee to work, only 3.9 is tested.
 - A relational database management system (RDBMS), such as [PostgreSQL](https://www.postgresql.org/) or [SQLite](https://www.sqlite.org/index.html).
@@ -20,6 +20,8 @@ To use `tdp-lib`, ensure you have the following prerequisites:
 Optional dependencies for DAG visualization:
 
 - [Graphviz](https://graphviz.org/) for graphical representation of DAGs.
+
+For the containerized `tdp-lib` you only need Docker.
 
 ## Installation
 
@@ -40,6 +42,8 @@ inventory=your_inventory,..,~/tdp_vars
 enable_plugins = tosit.tdp.inventory,..,your_plugins
 ```
 
+### Host installation
+
 Install the library:
 
 ```sh
@@ -50,6 +54,20 @@ source .venv/bin/activate
 pip install "tdp-lib[visualization]@https://github.com/TOSIT-IO/tdp-lib/tarball/master"
 # Initialize the database and tdp_vars
 tdp init
+```
+
+### Containerized installation
+
+Build the image:
+
+```sh
+docker build -t tdp-lib . -f dev/Dockerfile
+```
+
+Run and enter the container:
+
+```sh
+docker run -it --rm --network=host -v $PWD:/home/tdp/tdp-lib --env DISPLAY=$DISPLAY --env CONTAINER_UID=$(id -u)  --env CONTAINER_GID=$(id -g) tdp-lib
 ```
 
 ## CLI Usage
