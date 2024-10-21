@@ -33,7 +33,7 @@ def database_dsn_option(
 
     def decorator(fn: FC) -> FC:
         return click.option(
-            "db_engine",
+            "db_engine" if create_engine else "database_dsn",
             "--database-dsn",
             envvar="TDP_DATABASE_DSN",
             required=True,
