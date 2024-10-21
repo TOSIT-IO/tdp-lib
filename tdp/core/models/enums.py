@@ -47,3 +47,4 @@ class SCHStatusLogSourceEnum(BaseEnum):
     FORCED = "Forced"
     STALE = "Stale"
     MANUAL = "Manual"
+    DECOMMISSION = "Decommission"
