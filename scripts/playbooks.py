@@ -49,11 +49,17 @@ def playbooks(services, output_dir, for_collection, collections):
     # services DAG
     dag_services = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
+    operation_dict = {
+        operation.name: operation.collection_name
+        for operation in dag.get_all_operations()
+    }
     dag_service_operations = {}
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.service_name)
         for dependency in operation.depends_on:
-            dependency_operation = Operation(dependency)
+            dependency_operation = Operation(
+                dependency, operation_dict[dependency]
+            )
             if dependency_operation.service_name != operation.service_name:
                 dag_services.add_edge(
                     dependency_operation.service_name, operation.service_name
