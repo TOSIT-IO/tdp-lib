@@ -40,7 +40,7 @@ class Operation:
     def __init__(
         self,
         name: str,
-        collection_name: Optional[str] = None,
+        collection_name: str,
         depends_on: Optional[list[str]] = None,
         noop: bool = False,
         host_names: Optional[set[str]] = None,

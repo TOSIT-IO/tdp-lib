@@ -11,10 +11,10 @@ from tdp.core.operation import Operation
 @pytest.fixture
 def operations():
     return [
-        Operation("service1_component1_config"),
-        Operation("service1_component1_start"),
-        Operation("service1_component2_config"),
-        Operation("service2_component1_start"),
+        Operation("service1_component1_config", "example_collection_name"),
+        Operation("service1_component1_start", "example_collection_name"),
+        Operation("service1_component2_config", "example_collection_name"),
+        Operation("service2_component1_start", "example_collection_name"),
     ]
 
 
