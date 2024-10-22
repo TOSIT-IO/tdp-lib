@@ -43,7 +43,6 @@ class SCHLatestStatus(NamedTuple):
     latest_configured_version: Optional[str]
     latest_to_config: Optional[bool]
     latest_to_restart: Optional[bool]
-    latest_is_active: Optional[bool]
 
 
 def _create_get_sch_latest_status_statement(
@@ -51,7 +50,6 @@ def _create_get_sch_latest_status_statement(
     component_to_filter: Optional[str] = None,
     hosts_to_filter: Optional[Iterable[str]] = None,
     filter_stale: Optional[bool] = None,
-    filter_active: Optional[bool] = None,
 ) -> Select[SCHLatestStatus]:
     """Create a query to get the cluster status.
 
@@ -87,9 +85,6 @@ def _create_get_sch_latest_status_statement(
             _create_last_value_statement(
                 SCHStatusLogModel.to_restart, non_null=True
             ).label("latest_to_restart"),
-            _create_last_value_statement(
-                SCHStatusLogModel.is_active, non_null=True
-            ).label("latest_is_active"),
         )
         .filter(*subquery_filter)
         .distinct()
@@ -111,11 +106,6 @@ def _create_get_sch_latest_status_statement(
                 subq.c.latest_to_restart.is_not(True),
             )
         )
-
-    if filter_active is True:
-        query_filter.append(subq.c.latest_is_active.is_not(False))
-    elif filter_active is False:
-        query_filter.append(subq.c.latest_is_active.is_(False))
 
     return select(subq).filter(*query_filter)
 
@@ -146,7 +136,7 @@ class Dao:
         return self._session
 
     def get_cluster_status(self) -> ClusterStatus:
-        return ClusterStatus(self.get_hosted_entity_statuses(filter_active=True))
+        return ClusterStatus(self.get_hosted_entity_statuses())
 
     def get_hosted_entity_statuses(
         self,
@@ -154,7 +144,6 @@ class Dao:
         component: Optional[str] = None,
         hosts: Optional[Iterable[str]] = None,
         filter_stale: Optional[bool] = None,
-        filter_active: Optional[bool] = None,
     ) -> list[HostedEntityStatus]:
         """Get the status of the hosted entities.
 
@@ -170,7 +159,6 @@ class Dao:
             component_to_filter=component,
             hosts_to_filter=hosts,
             filter_stale=filter_stale,
-            filter_active=filter_active,
         )
         return [
             HostedEntityStatus(
@@ -192,11 +180,6 @@ class Dao:
                     if status.latest_to_restart is not None
                     else None
                 ),
-                is_active=(
-                    bool(status.latest_is_active)
-                    if status.latest_is_active is not None
-                    else None
-                ),
             )
             for status in self.session.execute(stmt).all()
         ]
@@ -208,7 +191,6 @@ class Dao:
         component: Optional[str] = None,
         hosts: Optional[Iterable[str]] = None,
         filter_stale: Optional[bool] = None,
-        filter_active: Optional[bool] = None,
     ) -> list[SCHStatusLogModel]:
         """Get the status of the hosted entities.
 
@@ -218,7 +200,6 @@ class Dao:
             component: Component to filter.
             hosts: Hosts to filter.
             filter_stale: Whether to filter stale statuses.
-            filter_active: Whether to filter active statuses.
         """
         self._check_session()
         query_filter = []
@@ -243,11 +224,6 @@ class Dao:
                     SCHStatusLogModel.to_restart.is_not(True),
                 )
             )
-
-        if filter_active is True:
-            query_filter.append(SCHStatusLogModel.is_active.is_not(False))
-        elif filter_active is False:
-            query_filter.append(SCHStatusLogModel.is_active.is_(False))
         return (
             self.session.query(SCHStatusLogModel)
             .filter(*query_filter)

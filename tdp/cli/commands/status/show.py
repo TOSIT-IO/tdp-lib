@@ -46,18 +46,6 @@ def _filter_stale(stale: Optional[bool], no_stale: Optional[bool]) -> Optional[b
         return None
 
 
-def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional[bool]:
-    """Return the filter_active argument for get_sch_status."""
-    if active is False and inactive is False:
-        raise click.UsageError("Either --active or --inactive must be True.")
-    elif active and inactive:
-        return None
-    elif inactive and not active:
-        return False
-    else:
-        return True
-
-
 @click.command()
 @service_argument_option
 @component_argument_option
@@ -69,10 +57,6 @@ def _filter_active(active: Optional[bool], inactive: Optional[bool]) -> Optional
 @click.option("--stale", is_flag=True, default=None, help="Filter stale components.")
 @click.option(
     "--no-stale", is_flag=True, default=None, help="Filter non stale components."
-)
-@click.option("--active", is_flag=True, default=None, help="Filter active components.")
-@click.option(
-    "--inactive", is_flag=True, default=None, help="Filter inactive components."
 )
 @click.option(
     "--history",
@@ -92,8 +76,6 @@ def show(
     hosts: tuple[str],
     stale: bool,
     no_stale: bool,
-    active: Optional[bool],
-    inactive: Optional[bool],
     history: bool,
     limit: int,
     validate: bool,
@@ -107,9 +89,6 @@ def show(
 
     --stale/--no-stale is used to select only stale or non-stale components. By default,
     both are printed (same as using both flags).
-
-    --active/--inactive is used to select only active or inactive components. By default
-    only active components are printed.
     """
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=validate
@@ -125,7 +104,6 @@ def show(
                     component,
                     hosts,
                     filter_stale=_filter_stale(stale, no_stale),
-                    filter_active=_filter_active(active, inactive),
                 )
             )
             return
@@ -136,7 +114,6 @@ def show(
                 component,
                 hosts,
                 filter_stale=_filter_stale(stale, no_stale),
-                filter_active=_filter_active(active, inactive),
             )
         )
 
