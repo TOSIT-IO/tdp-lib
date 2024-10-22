@@ -4,7 +4,7 @@
 from typing import Iterable, NamedTuple, Optional
 
 from sqlalchemy import Engine, Select, and_, case, desc, func, or_, select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import aliased, sessionmaker
 
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
@@ -294,20 +294,41 @@ class Dao:
             .first()
         )
 
-    def get_deployments(
+    def get_last_deployments(
         self, limit: Optional[int] = None, offset: Optional[int] = None
     ) -> Iterable[DeploymentModel]:
+        """Get last deployments in ascending order.
+
+        Use limit and offset to paginate the results.
+
+        Args:
+            limit: The maximum number of deployments to return.
+            offset: The number of deployments to skip.
+
+        Example:
+            # Get the last 10 deployments.
+            >>> dao.get_last_deployments(limit=10, offset=0)
+            # Get the next 10 deployments.
+            >>> dao.get_last_deployments(limit=10, offset=10)
+        """
         self._check_session()
-        subq = (
-            self.session.query(DeploymentModel)
-            .order_by(desc(DeploymentModel.id))
-            .limit(limit)
-            .subquery()
+
+        # Get the last deployments (in descending order).
+        reversed_deployments_query = self.session.query(DeploymentModel.id).order_by(
+            desc(DeploymentModel.id)
         )
+        # Apply limit and offset.
+        if limit is not None:
+            reversed_deployments_query = reversed_deployments_query.limit(limit)
+        if offset is not None:
+            reversed_deployments_query = reversed_deployments_query.offset(offset)
+        # Alias the subquery for convenience.
+        reversed_deployments = aliased(
+            DeploymentModel, reversed_deployments_query.subquery()
+        )
+        # Return the deployments in ascending order.
         return (
-            self.session.query(DeploymentModel)
-            .join(subq, DeploymentModel.id == subq.c.id)
-            .order_by(DeploymentModel.id)
-            .offset(offset)
+            self.session.query(reversed_deployments)
+            .order_by(reversed_deployments.id)
             .all()
         )
