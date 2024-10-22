@@ -126,7 +126,7 @@ class Collection:
     @property
     def dag_nodes(self) -> Generator[TDPLibDagNodeModel, None, None]:
         """Read DAG nodes."""
-        return get_collection_dag_nodes(self._path)
+        return read_dag_directory(self._path)
 
     @property
     def playbooks(self) -> dict[str, Playbook]:
@@ -254,7 +254,7 @@ def read_hosts_from_playbook(
         raise ValueError(f"Can't parse playbook {playbook_path}.") from e
 
 
-def get_collection_dag_nodes(
+def read_dag_directory(
     collection_path: Path, dag_directory_name=DAG_DIRECTORY_NAME
 ) -> Generator[TDPLibDagNodeModel, None, None]:
     """Get the DAG nodes of a collection.
@@ -288,10 +288,14 @@ class TDPLibDagModel(BaseModel):
 
 
 def read_dag_file(
-    dag_file_path: Path,
+    file_path: Path,
 ) -> Generator[TDPLibDagNodeModel, None, None]:
-    """Read a tdp_lib_dag file and return a list of DAG operations."""
-    with dag_file_path.open("r") as operations_file:
+    """Read a tdp_lib_dag file and return a list of DAG operations.
+
+    Args:
+        file_path: Path to the tdp_lib_dag file.
+    """
+    with file_path.open("r") as operations_file:
         file_content = yaml.load(operations_file, Loader=Loader)
 
     try:
@@ -299,5 +303,5 @@ def read_dag_file(
         for operation in tdp_lib_dag.operations:
             yield operation
     except ValidationError as e:
-        logger.error(f"Error while parsing tdp_lib_dag file {dag_file_path}: {e}")
+        logger.error(f"Error while parsing tdp_lib_dag file {file_path}: {e}")
         raise
