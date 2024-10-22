@@ -247,11 +247,11 @@ def test_get_deployments(db_engine):
         session.commit()
     with Dao(db_engine) as dao:
         assert assert_equal_values_in_model(
-            list(dao.get_deployments())[0],
+            list(dao.get_last_deployments())[0],
             DeploymentModel(id=1, state=DeploymentStateEnum.SUCCESS),
         )
         assert assert_equal_values_in_model(
-            list(dao.get_deployments())[1],
+            list(dao.get_last_deployments())[1],
             DeploymentModel(id=2, state=DeploymentStateEnum.PLANNED),
         )
 

@@ -89,7 +89,7 @@ def browse(
             return
 
         # Print all deployments
-        _print_deployments(dao.get_deployments(limit=limit, offset=offset))
+        _print_deployments(dao.get_last_deployments(limit=limit, offset=offset))
 
 
 def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
