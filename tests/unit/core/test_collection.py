@@ -12,10 +12,10 @@ from tdp.core.collection import (
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
     check_collection_structure,
-    get_collection_dag_nodes,
-    get_collection_playbooks,
+    read_dag_directory,
     read_dag_file,
     read_hosts_from_playbook,
+    read_playbooks_directory,
 )
 from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
@@ -108,7 +108,7 @@ def test_init_collection_playbooks(tmp_path: Path):
       command: echo "Hello, GitHub Copilot!"
 """
     )
-    playbooks = get_collection_playbooks(collection_path, playbook_directory)
+    playbooks = read_playbooks_directory(playbook_directory_path, collection_path.name)
     assert len(playbooks) == 2
     assert "playbook1" in playbooks
     assert "playbook2" in playbooks
@@ -217,7 +217,7 @@ def test_get_collection_dag_nodes(tmp_path: Path):
     - s1_c1_a
 """
     )
-    dag_nodes = list(get_collection_dag_nodes(collection_path, dag_directory))
+    dag_nodes = list(read_dag_directory(dag_directory_path))
     assert len(dag_nodes) == 2
     assert any(
         node.name == "s1_c1_a" and node.depends_on == ["sx_cx_a"] for node in dag_nodes
