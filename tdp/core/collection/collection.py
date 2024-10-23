@@ -8,9 +8,7 @@ from collections.abc import Generator
 from pathlib import Path
 from typing import Optional
 
-import yaml
-from pydantic import BaseModel, ConfigDict, ValidationError
-
+from tdp.core.collection.read_dag import TDPLibDagNodeModel, read_dag_directory
 from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
@@ -24,11 +22,6 @@ from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
 
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
@@ -126,7 +119,7 @@ class Collection:
     @property
     def dag_nodes(self) -> Generator[TDPLibDagNodeModel, None, None]:
         """Read DAG nodes."""
-        return read_dag_directory(self._path)
+        return read_dag_directory(self.dag_directory)
 
     @property
     def playbooks(self) -> dict[str, Playbook]:
@@ -252,56 +245,3 @@ def read_hosts_from_playbook(
             return inventory_reader.get_hosts_from_playbook(fd)
     except Exception as e:
         raise ValueError(f"Can't parse playbook {playbook_path}.") from e
-
-
-def read_dag_directory(
-    collection_path: Path, dag_directory_name=DAG_DIRECTORY_NAME
-) -> Generator[TDPLibDagNodeModel, None, None]:
-    """Get the DAG nodes of a collection.
-
-    Args:
-        collection_path: Path to the collection.
-        dag_directory_name: Name of the DAG directory.
-
-    Returns:
-        List of DAG nodes.
-    """
-    for dag_file in (collection_path / dag_directory_name).glob("*" + YML_EXTENSION):
-        yield from read_dag_file(dag_file)
-
-
-class TDPLibDagNodeModel(BaseModel):
-    """Model for a TDP operation defined in a tdp_lib_dag file."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    name: str
-    depends_on: list[str] = []
-
-
-class TDPLibDagModel(BaseModel):
-    """Model for a TDP DAG defined in a tdp_lib_dag file."""
-
-    model_config = ConfigDict(extra="ignore")
-
-    operations: list[TDPLibDagNodeModel]
-
-
-def read_dag_file(
-    file_path: Path,
-) -> Generator[TDPLibDagNodeModel, None, None]:
-    """Read a tdp_lib_dag file and return a list of DAG operations.
-
-    Args:
-        file_path: Path to the tdp_lib_dag file.
-    """
-    with file_path.open("r") as operations_file:
-        file_content = yaml.load(operations_file, Loader=Loader)
-
-    try:
-        tdp_lib_dag = TDPLibDagModel(operations=file_content)
-        for operation in tdp_lib_dag.operations:
-            yield operation
-    except ValidationError as e:
-        logger.error(f"Error while parsing tdp_lib_dag file {file_path}: {e}")
-        raise
