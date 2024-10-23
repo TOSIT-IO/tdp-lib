@@ -7,25 +7,20 @@ import logging
 from collections.abc import Iterable, MutableMapping
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.dag import Dag
 from tdp.core.entities.hostable_entity_name import (
     HostableEntityName,
-    create_hostable_entity_name,
 )
 from tdp.core.entities.hosted_entity import (
     HostedEntity,
-    HostedServiceComponent,
     create_hosted_entity,
 )
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
-    SCHStatusLogSourceEnum,
 )
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
-    from tdp.core.variables import ClusterVariables
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -58,102 +53,6 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
 
     def __iter__(self):
         return self._cluster_status.__iter__()
-
-    def generate_stale_sch_logs(
-        self,
-        *,
-        cluster_variables: ClusterVariables,
-        collections: Collections,
-    ) -> set[SCHStatusLogModel]:
-        """Generate logs for components that need to be configured or restarted.
-
-        This method identifies components that have undergone changes in their
-        versions and determines if they need to be configured, restarted, or both.
-
-        Note: If a component has neither config or restart operations, it is not
-        considered stale and is excluded from the results.
-
-        Args:
-            cluster_variables: Current configuration.
-            collections: Collections instance.
-
-        Returns:
-            Set of SCHStatusLog.
-        """
-        logs: dict[HostedEntity, SCHStatusLogModel] = {}
-        source_reconfigure_operations: set[str] = set()
-
-        modified_entities = cluster_variables.get_modified_entities(self.values())
-
-        # Return early if no entity has modified configurations
-        if len(modified_entities) == 0:
-            return set()
-
-        # Create logs for the modified entities
-        for entity in modified_entities:
-            config_operation = collections.operations.get(f"{entity.name}_config")
-            start_operation = collections.operations.get(f"{entity.name}_start")
-            restart_operation = collections.operations.get(f"{entity.name}_restart")
-
-            # Add the config and start operations to the set to get their descendants
-            if config_operation:
-                source_reconfigure_operations.add(config_operation.name)
-            if start_operation:
-                source_reconfigure_operations.add(start_operation.name)
-
-            # Create a log to update the stale status of the entity if a config and/or
-            # restart operations are available
-            # Only source hosts affected by the modified configuration are considered as
-            # stale (while all hosts are considered as stale for the descendants)
-            if config_operation or restart_operation:
-                log = logs.setdefault(
-                    entity,
-                    SCHStatusLogModel(
-                        service=entity.name.service,
-                        component=(
-                            entity.name.component
-                            if isinstance(entity, HostedServiceComponent)
-                            else None
-                        ),
-                        host=entity.host,
-                        source=SCHStatusLogSourceEnum.STALE,
-                    ),
-                )
-                if config_operation:
-                    log.to_config = True
-                if restart_operation:
-                    log.to_restart = True
-
-        # Create logs for the descendants of the modified entities
-        for operation in Dag(collections).get_operation_descendants(
-            nodes=list(source_reconfigure_operations), restart=True
-        ):
-            # Only create a log when config or restart operation is available
-            if operation.action_name not in ["config", "restart"]:
-                continue
-
-            # Create a log for each host where the entity is deployed
-            for host in operation.host_names:
-                log = logs.setdefault(
-                    create_hosted_entity(
-                        create_hostable_entity_name(
-                            operation.service_name, operation.component_name
-                        ),
-                        host,
-                    ),
-                    SCHStatusLogModel(
-                        service=operation.service_name,
-                        component=operation.component_name,
-                        host=host,
-                        source=SCHStatusLogSourceEnum.STALE,
-                    ),
-                )
-                if operation.action_name == "config":
-                    log.to_config = True
-                elif operation.action_name == "restart":
-                    log.to_restart = True
-
-        return set(logs.values())
 
     def update_hosted_entity(
         self,
