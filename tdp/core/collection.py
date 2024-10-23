@@ -76,12 +76,13 @@ class Collection:
         check_collection_structure(self._path)
 
         self._inventory_reader = inventory_reader or InventoryReader()
-        self._dag_nodes = list(get_collection_dag_nodes(self._path))
-        self._playbooks = get_collection_playbooks(
-            self._path,
+        self._dag_nodes = list(read_dag_directory(self.dag_directory))
+        self._playbooks = read_playbooks_directory(
+            self.playbooks_directory,
+            self.name,
             inventory_reader=self._inventory_reader,
         )
-        self._schemas = get_collection_schemas(self._path)
+        self._schemas = read_schema_directory(self.default_vars_directory)
 
     @staticmethod
     def from_path(path: PathLike) -> Collection:
@@ -177,10 +178,8 @@ def check_collection_structure(path: Path) -> None:
             )
 
 
-def get_collection_schemas(
-    collection_path: Path, schemas_directory_name=SCHEMA_VARS_DIRECTORY_NAME
-) -> list[ServiceCollectionSchema]:
-    """Get the schemas of a collection.
+def read_schema_directory(directory_path: Path) -> list[ServiceCollectionSchema]:
+    """Read the schemas from a directory.
 
     This function is meant to be used only once during the initialization of a
     collection object.
@@ -188,15 +187,13 @@ def get_collection_schemas(
     Invalid schemas are ignored.
 
     Args:
-        collection_path: Path to the collection.
+        directory_path: Path to the schema directory.
 
     Returns:
         Dictionary of schemas.
     """
     schemas: list[ServiceCollectionSchema] = []
-    for schema_path in (collection_path / schemas_directory_name).glob(
-        "*" + JSON_EXTENSION
-    ):
+    for schema_path in (directory_path).glob("*" + JSON_EXTENSION):
         try:
             schemas.append(ServiceCollectionSchema.from_path(schema_path))
         except InvalidSchemaError as e:
@@ -204,19 +201,19 @@ def get_collection_schemas(
     return schemas
 
 
-def get_collection_playbooks(
-    collection_path: Path,
-    playbooks_directory_name=PLAYBOOKS_DIRECTORY_NAME,
+def read_playbooks_directory(
+    directory_path: Path,
+    collection_name: str,
     inventory_reader: Optional[InventoryReader] = None,
 ) -> dict[str, Playbook]:
-    """Get the playbooks of a collection.
+    """Read the playbooks from a directory.
 
     This function is meant to be used only once during the initialization of a
     collection object.
 
     Args:
-        collection_path: Path to the collection.
-        playbook_directory: Name of the playbook directory.
+        directory_path: Path to the playbooks directory.
+        collection_name: Name of the collection.
         inventory_reader: Inventory reader.
 
     Returns:
@@ -225,12 +222,10 @@ def get_collection_playbooks(
     return {
         playbook_path.stem: Playbook(
             playbook_path,
-            collection_path.name,
+            collection_name,
             read_hosts_from_playbook(playbook_path, inventory_reader),
         )
-        for playbook_path in (collection_path / playbooks_directory_name).glob(
-            "*" + YML_EXTENSION
-        )
+        for playbook_path in (directory_path).glob("*" + YML_EXTENSION)
     }
 
 
@@ -255,19 +250,18 @@ def read_hosts_from_playbook(
         raise ValueError(f"Can't parse playbook {playbook_path}.") from e
 
 
-def get_collection_dag_nodes(
-    collection_path: Path, dag_directory_name=DAG_DIRECTORY_NAME
+def read_dag_directory(
+    directory_path: Path,
 ) -> Generator[TDPLibDagNodeModel, None, None]:
-    """Get the DAG nodes of a collection.
+    """Read the DAG files from a directory.
 
     Args:
-        collection_path: Path to the collection.
-        dag_directory_name: Name of the DAG directory.
+        directory_path: Path to the DAG directory.
 
     Returns:
         List of DAG nodes.
     """
-    for dag_file in (collection_path / dag_directory_name).glob("*" + YML_EXTENSION):
+    for dag_file in (directory_path).glob("*" + YML_EXTENSION):
         yield from read_dag_file(dag_file)
 
 
