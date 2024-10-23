@@ -81,7 +81,6 @@ class CollectionReader:
             self.name,
             inventory_reader=self._inventory_reader,
         )
-        self._schemas = read_schema_directory(self.default_vars_directory)
 
     @staticmethod
     def from_path(path: PathLike) -> CollectionReader:
@@ -133,10 +132,9 @@ class CollectionReader:
         """Dictionary of playbooks."""
         return self._playbooks
 
-    @property
-    def schemas(self) -> list[ServiceCollectionSchema]:
-        """List of schemas."""
-        return self._schemas
+    def read_schemas(self) -> list[ServiceCollectionSchema]:
+        """Read the schemas stored in the schema_directory."""
+        return read_schema_directory(self.schema_directory)
 
     def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
         """Get the default variables for a service.
