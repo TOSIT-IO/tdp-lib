@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 
 from tdp.core.collection import CollectionReader
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
-from tdp.core.entities.operation import Operations
+from tdp.core.entities.operation import Operations, Playbook
 from tdp.core.operation import Operation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
@@ -34,6 +34,7 @@ class Collections(Mapping[str, CollectionReader]):
 
     def __init__(self, collections: Mapping[str, CollectionReader]):
         self._collections = collections
+        self._playbooks = self._init_playbooks(self._collections)
         self._dag_operations, self._other_operations = self._init_operations(
             self._collections
         )
@@ -89,9 +90,30 @@ class Collections(Mapping[str, CollectionReader]):
         return operations
 
     @property
+    def playbooks(self) -> dict[str, Playbook]:
+        """Mapping of playbook name to Playbook instance."""
+        return self._playbooks
+
+    @property
     def schemas(self) -> dict[str, ServiceSchema]:
         """Mapping of service with their variable schemas."""
         return self._schemas
+
+    def _init_playbooks(
+        self, collections: Mapping[str, CollectionReader]
+    ) -> dict[str, Playbook]:
+        playbooks = {}
+        for collection in collections.values():
+            playbooks.update(collection.read_playbooks())
+            for [playbook_name, playbook] in collection.read_playbooks().items():
+                if playbook_name in playbooks:
+                    logger.debug(
+                        f"'{playbook_name}' defined in "
+                        f"'{playbooks[playbook_name].collection_name}' "
+                        f"is overridden by '{collection.name}'"
+                    )
+                playbooks[playbook_name] = playbook
+        return playbooks
 
     def _init_operations(
         self, collections: Mapping[str, CollectionReader]
@@ -106,7 +128,7 @@ class Collections(Mapping[str, CollectionReader]):
 
                 # The read_operation is associated with a playbook defined in the
                 # current collection
-                if playbook := collection.playbooks.get(dag_node.name):
+                if playbook := self.playbooks.get(dag_node.name):
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
                     dag_operation_to_register = Operation(
                         name=dag_node.name,
@@ -119,13 +141,6 @@ class Collections(Mapping[str, CollectionReader]):
                         dag_operation_to_register.depends_on.extend(
                             dag_operations[dag_node.name].depends_on
                         )
-                        # Print a warning if we override a playbook operation
-                        if not existing_operation.noop:
-                            logger.debug(
-                                f"'{dag_node.name}' defined in "
-                                f"'{existing_operation.collection_name}' "
-                                f"is overridden by '{collection.name}'"
-                            )
                     # Register the operation
                     dag_operations[dag_node.name] = dag_operation_to_register
                     continue
@@ -183,7 +198,7 @@ class Collections(Mapping[str, CollectionReader]):
         for collection in collections.values():
             # Load playbook operations to complete the operations list with the
             # operations that are not defined in the DAG files
-            for operation_name, playbook in collection.playbooks.items():
+            for operation_name, playbook in self.playbooks.items():
                 if operation_name in dag_operations:
                     continue
                 if operation_name in other_operations:

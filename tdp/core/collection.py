@@ -74,13 +74,7 @@ class CollectionReader:
         """
         self._path = Path(path)
         check_collection_structure(self._path)
-
         self._inventory_reader = inventory_reader or InventoryReader()
-        self._playbooks = read_playbooks_directory(
-            self.playbooks_directory,
-            self.name,
-            inventory_reader=self._inventory_reader,
-        )
 
     @staticmethod
     def from_path(path: PathLike) -> CollectionReader:
@@ -127,10 +121,13 @@ class CollectionReader:
         """Read the DAG nodes stored in the dag_directory."""
         return read_dag_directory(self.dag_directory)
 
-    @property
-    def playbooks(self) -> dict[str, Playbook]:
-        """Dictionary of playbooks."""
-        return self._playbooks
+    def read_playbooks(self) -> dict[str, Playbook]:
+        """Read the playbooks stored in the playbooks_directory."""
+        return read_playbooks_directory(
+            self.playbooks_directory,
+            self.name,
+            inventory_reader=self._inventory_reader,
+        )
 
     def read_schemas(self) -> list[ServiceCollectionSchema]:
         """Read the schemas stored in the schema_directory."""
