@@ -10,8 +10,7 @@ from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.collection import YML_EXTENSION
-from tdp.core.constants import SERVICE_NAME_MAX_LENGTH
+from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
 from tdp.core.types import PathLike
 from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.variables import (
