@@ -16,7 +16,6 @@ class HostedEntityStatus:
     configured_version: Optional[str] = None
     to_config: Optional[bool] = None
     to_restart: Optional[bool] = None
-    is_active: Optional[bool] = None
 
     @property
     def is_stale(self) -> bool:
@@ -96,7 +95,6 @@ class HostedEntityStatus:
             "configured_version": _format_version(self.configured_version),
             "to_config": _format_true_bool(self.to_config),
             "to_restart": _format_true_bool(self.to_restart),
-            "is_active": _format_false_bool(self.is_active),
         }
 
 
