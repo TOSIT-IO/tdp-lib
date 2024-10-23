@@ -25,7 +25,6 @@ from tdp.core.entities.operation import (
     DagOperation,
     ForgedDagOperation,
     OperationName,
-    OperationNoop,
     PlaybookOperation,
 )
 
@@ -277,7 +276,6 @@ def validate_dag_nodes(
     - \*_start operations can only be required from within its own service
     - \*_install operations should only depend on other \*_install operations
     - Each service (HDFS, HBase, Hive, etc) should have \*_install, \*_config, \*_init and \*_start operations even if they are "empty" (tagged with noop)
-    - Operations tagged with the noop flag should not have a playbook defined in the collection
     - Each service action (config, start, init) except the first (install) must have an explicit dependency with the previous service operation within the same service
     """
     # key: service_name
@@ -350,18 +348,6 @@ def validate_dag_nodes(
                         f"Operation '{operation_name}' is a service action and has to depend on "
                         f"'{operation.name.service}_{previous_action}'"
                     )
-
-        # Operations tagged with the noop flag should not have a playbook defined in the collection
-
-        #! This case can't happen because no operation inherits both PlaybookOperation and NoOp
-        if str(operation_name) in collections.playbooks:
-            if isinstance(operation, OperationNoop):
-                c_warning(
-                    f"Operation '{operation_name}' is noop and the playbook should not exist"
-                )
-        else:
-            if not isinstance(operation, OperationNoop):
-                c_warning(f"Operation '{operation_name}' should have a playbook")
 
     # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
     # even if they are "empty" (tagged with noop)
