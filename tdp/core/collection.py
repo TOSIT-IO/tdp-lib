@@ -76,7 +76,6 @@ class CollectionReader:
         check_collection_structure(self._path)
 
         self._inventory_reader = inventory_reader or InventoryReader()
-        self._dag_nodes = list(read_dag_directory(self.dag_directory))
         self._playbooks = read_playbooks_directory(
             self.playbooks_directory,
             self.name,
@@ -125,10 +124,9 @@ class CollectionReader:
         """Path to the variables schema directory."""
         return self._path / SCHEMA_VARS_DIRECTORY_NAME
 
-    @property
-    def dag_nodes(self) -> list[TDPLibDagNodeModel]:
-        """List of DAG files in the YAML format."""
-        return self._dag_nodes  # TODO: should return a generator
+    def read_dag_nodes(self) -> Generator[TDPLibDagNodeModel, None, None]:
+        """Read the DAG nodes stored in the dag_directory."""
+        return read_dag_directory(self.dag_directory)
 
     @property
     def playbooks(self) -> dict[str, Playbook]:

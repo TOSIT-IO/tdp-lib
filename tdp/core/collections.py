@@ -101,7 +101,7 @@ class Collections(Mapping[str, CollectionReader]):
 
         for collection in collections.values():
             # Load DAG operations from the dag files
-            for dag_node in collection.dag_nodes:
+            for dag_node in collection.read_dag_nodes():
                 existing_operation = dag_operations.get(dag_node.name)
 
                 # The read_operation is associated with a playbook defined in the
