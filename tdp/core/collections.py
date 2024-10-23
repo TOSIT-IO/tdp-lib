@@ -205,7 +205,7 @@ class Collections(Mapping[str, CollectionReader]):
     ) -> dict[str, ServiceSchema]:
         schemas: dict[str, ServiceSchema] = {}
         for collection in collections.values():
-            for schema in collection.schemas:
+            for schema in collection.read_schemas():
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas
 
