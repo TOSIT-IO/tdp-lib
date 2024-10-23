@@ -330,7 +330,7 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
 
         # Operations tagged with the noop flag should not have a playbook defined in the collection
 
-        if operation_name in collections[operation.collection_name].playbooks:
+        if operation_name in collections.playbooks:
             if operation.noop:
                 c_warning(
                     f"Operation '{operation_name}' is noop and the playbook should not exist"

@@ -59,9 +59,9 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
         },
     }
     generate_collection_at_path(collection_path, dag_service_operations, service_vars)
-    collection = CollectionReader.from_path(collection_path)
-    assert "service_install" in collection.playbooks
-    assert "service_config" in collection.playbooks
+    playbooks = CollectionReader.from_path(collection_path).read_playbooks()
+    assert "service_install" in playbooks
+    assert "service_config" in playbooks
 
 
 def test_read_hosts_from_playbook(tmp_path: Path):
