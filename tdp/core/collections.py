@@ -19,6 +19,7 @@ from collections.abc import Mapping, Sequence
 from tdp.core.collection import Collection
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations
+from tdp.core.inventory_reader import InventoryReader
 from tdp.core.operation import Operation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
@@ -47,6 +48,17 @@ class Collections(Mapping[str, Collection]):
 
     def __len__(self):
         return self._collections.__len__()
+
+    def get_collections_hosts(self):
+        host_operation_list = [
+            self.operations.__getitem__(operation).host_names
+            for operation in self.operations
+        ]
+        hosts_set = set()
+        for operation_hosts in host_operation_list:
+            hosts_set.update(operation_hosts)
+
+        return {host for host in hosts_set if host != "localhost"}
 
     @staticmethod
     def from_collection_list(collections: Sequence[Collection]) -> Collections:
@@ -231,3 +243,13 @@ class Collections(Mapping[str, Collection]):
             if operation.service_name == service_name
             and not operation.is_service_operation()
         }
+
+    def check_collections_hosts(self):
+        """Checks if hosts has not been removed from the inventory.ini file"""
+        inventory = InventoryReader().inventory
+        inventory.refresh_inventory()
+
+        inventory_list = [str(name) for name in inventory.get_hosts()]
+        for host in self.get_collections_hosts():
+            if host not in inventory_list:
+                return host
