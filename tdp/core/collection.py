@@ -76,8 +76,12 @@ class CollectionReader:
         check_collection_structure(self._path)
         self._inventory_reader = inventory_reader or InventoryReader()
 
+    # ? Is this method really useful?
     @staticmethod
-    def from_path(path: PathLike) -> CollectionReader:
+    def from_path(
+        path: PathLike,
+        inventory_reader: Optional[InventoryReader] = None,
+    ) -> CollectionReader:
         """Factory method to create a collection from a path.
 
         Args:
@@ -85,7 +89,8 @@ class CollectionReader:
 
         Returns: A collection.
         """
-        return CollectionReader(path=Path(path).expanduser().resolve())
+        inventory_reader = inventory_reader or InventoryReader()
+        return CollectionReader(Path(path).expanduser().resolve(), inventory_reader)
 
     @property
     def name(self) -> str:

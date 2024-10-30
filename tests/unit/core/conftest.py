@@ -4,7 +4,6 @@
 import pytest
 
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collection import CollectionReader
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
 from tdp.core.variables import ClusterVariables
@@ -59,7 +58,7 @@ def mock_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
         },
     }
     generate_collection_at_path(path=temp_collection_path, dag=mock_dag, vars=mock_vars)
-    return Collections([CollectionReader.from_path(temp_collection_path)])
+    return Collections.from_collection_paths([temp_collection_path])
 
 
 @pytest.fixture(scope="session")
