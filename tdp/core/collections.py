@@ -13,45 +13,27 @@ can be extended by other collections.
 from __future__ import annotations
 
 import logging
-from collections import OrderedDict
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from tdp.core.collection import CollectionReader
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations, Playbook
 from tdp.core.operation import Operation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
+if TYPE_CHECKING:
+    from tdp.core.collection import CollectionReader
+
+
 logger = logging.getLogger(__name__)
 
 
-class Collections(Mapping[str, CollectionReader]):
-    """A mapping of collection name to Collection instance.
+class Collections:
+    """Concatenation of in use collections."""
 
-    This class also gather operations from all collections and filter them by their
-    presence or not in the DAG.
-    """
-
-    def __init__(self, collections: Mapping[str, CollectionReader]):
-        self._collections = collections
-        self._playbooks = self._init_playbooks(self._collections)
-        self._dag_operations, self._other_operations = self._init_operations(
-            self._collections
-        )
-        self._schemas = self._init_schemas(self._collections)
-
-    def __getitem__(self, key):
-        return self._collections.__getitem__(key)
-
-    def __iter__(self):
-        return self._collections.__iter__()
-
-    def __len__(self):
-        return self._collections.__len__()
-
-    @staticmethod
-    def from_collection_list(collections: Sequence[CollectionReader]) -> Collections:
-        """Factory method to build Collections from a sequence of Collection.
+    def __init__(self, collections: Iterable[CollectionReader]):
+        """Build Collections from a sequence of Collection.
 
         Ordering of the sequence is what will determine the loading order of the operations.
         An operation can override a previous operation.
@@ -60,14 +42,14 @@ class Collections(Mapping[str, CollectionReader]):
             collections: Ordered Sequence of Collection object.
 
         Returns:
-            A Collections object.
-
-        Raises:
-            ValueError: If a collection name is duplicated.
-        """
-        return Collections(
-            OrderedDict((collection.name, collection) for collection in collections)
+            A Collections object."""
+        self._collections = list(collections)
+        self._playbooks = self._init_playbooks(self._collections)
+        self._dag_operations, self._other_operations = self._init_operations(
+            self._collections
         )
+        self._default_var_directories = self._init_default_vars_dirs(self._collections)
+        self._schemas = self._init_schemas(self._collections)
 
     @property
     def dag_operations(self) -> Operations:
@@ -95,15 +77,29 @@ class Collections(Mapping[str, CollectionReader]):
         return self._playbooks
 
     @property
+    def default_vars_dirs(self) -> dict[str, Path]:
+        """Mapping of collection name to their default vars directory."""
+        return self._default_var_directories
+
+    @property
     def schemas(self) -> dict[str, ServiceSchema]:
         """Mapping of service with their variable schemas."""
         return self._schemas
 
+    def _init_default_vars_dirs(
+        self, collections: Iterable[CollectionReader]
+    ) -> dict[str, Path]:
+        """Mapping of collection name to their default vars directory."""
+        default_var_directories = {}
+        for collection in collections:
+            default_var_directories[collection.name] = collection.default_vars_directory
+        return default_var_directories
+
     def _init_playbooks(
-        self, collections: Mapping[str, CollectionReader]
+        self, collections: Iterable[CollectionReader]
     ) -> dict[str, Playbook]:
         playbooks = {}
-        for collection in collections.values():
+        for collection in collections:
             playbooks.update(collection.read_playbooks())
             for [playbook_name, playbook] in collection.read_playbooks().items():
                 if playbook_name in playbooks:
@@ -116,12 +112,13 @@ class Collections(Mapping[str, CollectionReader]):
         return playbooks
 
     def _init_operations(
-        self, collections: Mapping[str, CollectionReader]
+        self, collections: Iterable[CollectionReader]
     ) -> tuple[Operations, Operations]:
+        collections = list(collections)
         dag_operations = Operations()
         other_operations = Operations()
 
-        for collection in collections.values():
+        for collection in collections:
             # Load DAG operations from the dag files
             for dag_node in collection.read_dag_nodes():
                 existing_operation = dag_operations.get(dag_node.name)
@@ -195,7 +192,7 @@ class Collections(Mapping[str, CollectionReader]):
         # We can't merge the two for loops to handle the case where a playbook operation
         # is defined in a first collection but not used in the DAG and then used in
         # the DAG in a second collection.
-        for collection in collections.values():
+        for collection in collections:
             # Load playbook operations to complete the operations list with the
             # operations that are not defined in the DAG files
             for operation_name, playbook in self.playbooks.items():
@@ -216,10 +213,10 @@ class Collections(Mapping[str, CollectionReader]):
         return dag_operations, other_operations
 
     def _init_schemas(
-        self, collections: Mapping[str, CollectionReader]
+        self, collections: Iterable[CollectionReader]
     ) -> dict[str, ServiceSchema]:
         schemas: dict[str, ServiceSchema] = {}
-        for collection in collections.values():
+        for collection in collections:
             for schema in collection.read_schemas():
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas

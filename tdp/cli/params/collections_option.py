@@ -30,7 +30,7 @@ def _collections_from_paths(
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
     collections_list = [CollectionReader.from_path(path) for path in value]
-    collections = Collections.from_collection_list(collections_list)
+    collections = Collections(collections_list)
 
     return collections
 

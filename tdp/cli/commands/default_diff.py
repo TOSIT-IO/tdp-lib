@@ -35,7 +35,7 @@ def default_diff(collections: Collections, vars: Path, service: Optional[str] = 
             service_diff(collections, service_variables)
 
 
-def service_diff(collections, service):
+def service_diff(collections: Collections, service):
     """Computes the difference between the default variables from a service, and the variables from your service variables inside your tdp_vars.
 
     Args:
@@ -44,12 +44,14 @@ def service_diff(collections, service):
     """
     # key: filename with extension, value: PosixPath(filepath)
     default_service_vars_paths = OrderedDict()
-    for collection in collections.values():
-        default_vars = collection.get_service_default_vars(service.name)
-        if not default_vars:
-            continue
-        for name, path in default_vars:
-            default_service_vars_paths.setdefault(name, []).append(path)
+    for collection_default_vars_dir in collections.default_vars_dirs.values():
+        for service_default_vars_dir in collection_default_vars_dir.iterdir():
+            if not service_default_vars_dir:
+                continue
+            for default_vars_path in service_default_vars_dir.iterdir():
+                default_service_vars_paths.setdefault(
+                    default_vars_path.name, []
+                ).append(default_vars_path)
 
     for (
         default_service_vars_filename,

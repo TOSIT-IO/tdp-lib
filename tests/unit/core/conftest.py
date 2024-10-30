@@ -59,9 +59,7 @@ def mock_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
         },
     }
     generate_collection_at_path(path=temp_collection_path, dag=mock_dag, vars=mock_vars)
-    return Collections.from_collection_list(
-        [CollectionReader.from_path(temp_collection_path)]
-    )
+    return Collections([CollectionReader.from_path(temp_collection_path)])
 
 
 @pytest.fixture(scope="session")
