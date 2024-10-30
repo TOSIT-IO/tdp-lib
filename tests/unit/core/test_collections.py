@@ -3,7 +3,6 @@
 
 import pytest
 
-from tdp.core.collection import CollectionReader
 from tdp.core.collections import Collections
 from tests.conftest import generate_collection_at_path
 
@@ -45,9 +44,9 @@ def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFacto
         collection_path_2, dag_service_operations_2, service_vars_2
     )
 
-    collection1 = CollectionReader.from_path(collection_path_1)
-    collection2 = CollectionReader.from_path(collection_path_2)
-    collections = Collections([collection1, collection2])
+    collections = Collections.from_collection_paths(
+        [collection_path_1, collection_path_2]
+    )
 
     assert collections.dag_operations is not None
     assert "service1_install" in collections.dag_operations

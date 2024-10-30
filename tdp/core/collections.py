@@ -15,15 +15,17 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
+from tdp.core.collection import CollectionReader
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations, Playbook
+from tdp.core.inventory_reader import InventoryReader
 from tdp.core.operation import Operation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 if TYPE_CHECKING:
-    from tdp.core.collection import CollectionReader
+    from tdp.core.types import PathLike
 
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,16 @@ class Collections:
         self._default_var_directories = self._init_default_vars_dirs(self._collections)
         self._schemas = self._init_schemas(self._collections)
         self._services_components = self._init_hostable_entities(self.operations)
+
+    @staticmethod
+    def from_collection_paths(
+        paths: Iterable[PathLike], inventory_reader: Optional[InventoryReader] = None
+    ):
+        inventory_reader = inventory_reader or InventoryReader()
+        collection_readers = [
+            CollectionReader.from_path(path, inventory_reader) for path in paths
+        ]
+        return Collections(collection_readers)
 
     @property
     def dag_operations(self) -> Operations:
