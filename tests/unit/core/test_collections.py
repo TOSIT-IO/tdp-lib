@@ -47,7 +47,7 @@ def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFacto
 
     collection1 = CollectionReader.from_path(collection_path_1)
     collection2 = CollectionReader.from_path(collection_path_2)
-    collections = Collections.from_collection_list([collection1, collection2])
+    collections = Collections([collection1, collection2])
 
     assert collections.dag_operations is not None
     assert "service1_install" in collections.dag_operations

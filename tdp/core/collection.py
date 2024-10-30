@@ -133,20 +133,6 @@ class CollectionReader:
         """Read the schemas stored in the schema_directory."""
         return read_schema_directory(self.schema_directory)
 
-    def get_service_default_vars(self, service_name: str) -> list[tuple[str, Path]]:
-        """Get the default variables for a service.
-
-        Args:
-            service_name: The name of the service.
-
-        Returns:
-            A list of tuples (name, path) of the default variables.
-        """
-        service_path = self.default_vars_directory / service_name
-        if not service_path.exists():
-            return []
-        return [(path.name, path) for path in service_path.glob("*" + YML_EXTENSION)]
-
 
 def check_collection_structure(path: Path) -> None:
     """Check the structure of a collection.

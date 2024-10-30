@@ -111,7 +111,7 @@ def collections(request: pytest.FixtureRequest) -> Collections:
     collections = cast(
         list["CollectionToTest"], request.config.getoption("collection_paths")
     )
-    return Collections.from_collection_list(collections)
+    return Collections(collections)
 
 
 @pytest.fixture(scope="session")

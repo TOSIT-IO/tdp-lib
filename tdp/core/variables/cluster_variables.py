@@ -74,8 +74,11 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         cluster_variables = {}
 
         collections_and_overrides = [
-            (collection_name, collection.default_vars_directory.iterdir())
-            for collection_name, collection in collections.items()
+            (collection_name, default_var_dir.iterdir())
+            for [
+                collection_name,
+                default_var_dir,
+            ] in collections.default_vars_dirs.items()
         ]
 
         for i, override_folder in enumerate(override_folders):
