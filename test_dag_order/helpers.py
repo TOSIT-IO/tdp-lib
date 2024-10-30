@@ -187,7 +187,7 @@ def resolve_components(
     service_component_map: dict[str, str] = {}
     for service_component in service_components:
         if isinstance(parse_hostable_entity_name(service_component), ServiceName):
-            for component in collections.get_components_from_service(service_component):
+            for component in collections.hostable_entities[service_component]:
                 resolved_components.add(component.name)
                 service_component_map[component.name] = service_component
         else:

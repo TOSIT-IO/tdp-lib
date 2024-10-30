@@ -50,6 +50,7 @@ class Collections:
         )
         self._default_var_directories = self._init_default_vars_dirs(self._collections)
         self._schemas = self._init_schemas(self._collections)
+        self._services_components = self._init_hostable_entities(self.operations)
 
     @property
     def dag_operations(self) -> Operations:
@@ -85,6 +86,13 @@ class Collections:
     def schemas(self) -> dict[str, ServiceSchema]:
         """Mapping of service with their variable schemas."""
         return self._schemas
+
+    # ? The mapping is using service name as a string for convenience. Should we keep
+    # ? this or change it to ServiceName?
+    @property
+    def hostable_entities(self) -> dict[str, set[ServiceComponentName]]:
+        """Mapping of services to their set of components."""
+        return self._services_components
 
     def _init_default_vars_dirs(
         self, collections: Iterable[CollectionReader]
@@ -221,25 +229,15 @@ class Collections:
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas
 
-    def get_components_from_service(
-        self, service_name: str
-    ) -> set[ServiceComponentName]:
-        """Retrieve the distinct components associated with a specific service.
-
-        This method fetches and returns the unique component names tied to a given
-        service. The input service is not returned.
-
-        Args:
-            service_name: The name of the service for which to retrieve associated
-              components.
-
-        Returns:
-            A set containing the unique names of components related to the provided
-              service.
-        """
-        return {
-            ServiceComponentName(service_name, operation.component_name)
-            for operation in self.operations.values()
-            if operation.service_name == service_name
-            and not operation.is_service_operation()
-        }
+    def _init_hostable_entities(
+        self, operations: Operations
+    ) -> dict[str, set[ServiceComponentName]]:
+        services_components: dict[str, set[ServiceComponentName]] = {}
+        for operation in operations.values():
+            service = services_components.setdefault(operation.service_name, set())
+            if not operation.component_name:
+                continue
+            service.add(
+                ServiceComponentName(operation.service_name, operation.component_name)
+            )
+        return services_components
