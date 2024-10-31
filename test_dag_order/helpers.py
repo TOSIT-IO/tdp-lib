@@ -11,7 +11,7 @@ from typing import Any, TextIO, Union
 import yaml
 
 from tdp.core.collection import (
-    Collection,
+    CollectionReader,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
@@ -113,7 +113,7 @@ class _Rule(Mapping[str, Any]):
         return len(self.fixtures)
 
 
-class CollectionToTest(Collection):
+class CollectionToTest(CollectionReader):
     """A Collection containing a rules directory"""
 
     def __init__(self, path: Union[str, pathlib.Path]):

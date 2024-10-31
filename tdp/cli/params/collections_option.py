@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 from click.decorators import FC
 
-from tdp.core.collection import Collection
+from tdp.core.collection import CollectionReader
 from tdp.core.collections import Collections
 
 
@@ -29,7 +29,7 @@ def _collections_from_paths(
     if not value:
         raise click.BadParameter("cannot be empty", ctx=ctx, param=param)
 
-    collections_list = [Collection.from_path(path) for path in value]
+    collections_list = [CollectionReader.from_path(path) for path in value]
     collections = Collections.from_collection_list(collections_list)
 
     return collections

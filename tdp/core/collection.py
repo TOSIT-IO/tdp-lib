@@ -51,7 +51,7 @@ class MissingMandatoryDirectoryError(Exception):
     pass
 
 
-class Collection:
+class CollectionReader:
     """An enriched version of an Ansible collection.
 
     A TDP Collection is a directory containing playbooks, DAGs, default variables and variables schemas.
@@ -85,7 +85,7 @@ class Collection:
         self._schemas = read_schema_directory(self.default_vars_directory)
 
     @staticmethod
-    def from_path(path: PathLike) -> Collection:
+    def from_path(path: PathLike) -> CollectionReader:
         """Factory method to create a collection from a path.
 
         Args:
@@ -93,7 +93,7 @@ class Collection:
 
         Returns: A collection.
         """
-        return Collection(path=Path(path).expanduser().resolve())
+        return CollectionReader(path=Path(path).expanduser().resolve())
 
     @property
     def name(self) -> str:
