@@ -45,14 +45,13 @@ class Collections:
 
         Returns:
             A Collections object."""
-        self._collections = list(collections)
-        self._playbooks = self._init_playbooks(self._collections)
-        self._dag_operations, self._other_operations = self._init_operations(
-            self._collections
-        )
-        self._default_var_directories = self._init_default_vars_dirs(self._collections)
-        self._schemas = self._init_schemas(self._collections)
-        self._services_components = self._init_hostable_entities(self.operations)
+        self._collection_readers = list(collections)
+
+        self._playbooks = self._init_playbooks()
+        self._dag_operations, self._other_operations = self._init_operations()
+        self._default_var_directories = self._init_default_vars_dirs()
+        self._schemas = self._init_schemas()
+        self._services_components = self._init_hostable_entities()
 
     @staticmethod
     def from_collection_paths(
@@ -106,20 +105,16 @@ class Collections:
         """Mapping of services to their set of components."""
         return self._services_components
 
-    def _init_default_vars_dirs(
-        self, collections: Iterable[CollectionReader]
-    ) -> dict[str, Path]:
+    def _init_default_vars_dirs(self) -> dict[str, Path]:
         """Mapping of collection name to their default vars directory."""
         default_var_directories = {}
-        for collection in collections:
+        for collection in self._collection_readers:
             default_var_directories[collection.name] = collection.default_vars_directory
         return default_var_directories
 
-    def _init_playbooks(
-        self, collections: Iterable[CollectionReader]
-    ) -> dict[str, Playbook]:
+    def _init_playbooks(self) -> dict[str, Playbook]:
         playbooks = {}
-        for collection in collections:
+        for collection in self._collection_readers:
             playbooks.update(collection.read_playbooks())
             for [playbook_name, playbook] in collection.read_playbooks().items():
                 if playbook_name in playbooks:
@@ -131,14 +126,11 @@ class Collections:
                 playbooks[playbook_name] = playbook
         return playbooks
 
-    def _init_operations(
-        self, collections: Iterable[CollectionReader]
-    ) -> tuple[Operations, Operations]:
-        collections = list(collections)
+    def _init_operations(self) -> tuple[Operations, Operations]:
         dag_operations = Operations()
         other_operations = Operations()
 
-        for collection in collections:
+        for collection in self._collection_readers:
             # Load DAG operations from the dag files
             for dag_node in collection.read_dag_nodes():
                 existing_operation = dag_operations.get(dag_node.name)
@@ -212,7 +204,7 @@ class Collections:
         # We can't merge the two for loops to handle the case where a playbook operation
         # is defined in a first collection but not used in the DAG and then used in
         # the DAG in a second collection.
-        for collection in collections:
+        for collection in self._collection_readers:
             # Load playbook operations to complete the operations list with the
             # operations that are not defined in the DAG files
             for operation_name, playbook in self.playbooks.items():
@@ -232,20 +224,16 @@ class Collections:
 
         return dag_operations, other_operations
 
-    def _init_schemas(
-        self, collections: Iterable[CollectionReader]
-    ) -> dict[str, ServiceSchema]:
+    def _init_schemas(self) -> dict[str, ServiceSchema]:
         schemas: dict[str, ServiceSchema] = {}
-        for collection in collections:
+        for collection in self._collection_readers:
             for schema in collection.read_schemas():
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas
 
-    def _init_hostable_entities(
-        self, operations: Operations
-    ) -> dict[str, set[ServiceComponentName]]:
+    def _init_hostable_entities(self) -> dict[str, set[ServiceComponentName]]:
         services_components: dict[str, set[ServiceComponentName]] = {}
-        for operation in operations.values():
+        for operation in self.operations.values():
             service = services_components.setdefault(operation.service_name, set())
             if not operation.component_name:
                 continue
