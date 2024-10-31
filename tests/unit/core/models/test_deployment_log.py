@@ -9,7 +9,7 @@ import lorem
 import pytest
 from sqlalchemy import Engine
 
-from tdp.core.collection import Collection
+from tdp.core.collection import CollectionReader
 from tdp.core.collections import (
     Collections,
 )
@@ -163,7 +163,7 @@ class TestFromOperations:
             ]
         }
         generate_collection_at_path(collection_path, dag_service_operations, {})
-        collection = Collection(collection_path, MockInventoryReader(hosts))
+        collection = CollectionReader(collection_path, MockInventoryReader(hosts))
         collections = Collections.from_collection_list([collection])
 
         deployment = DeploymentModel.from_operations(

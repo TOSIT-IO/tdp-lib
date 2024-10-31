@@ -16,7 +16,7 @@ import logging
 from collections import OrderedDict
 from collections.abc import Mapping, Sequence
 
-from tdp.core.collection import Collection
+from tdp.core.collection import CollectionReader
 from tdp.core.entities.hostable_entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations
 from tdp.core.operation import Operation
@@ -25,14 +25,14 @@ from tdp.core.variables.schema.service_schema import ServiceSchema
 logger = logging.getLogger(__name__)
 
 
-class Collections(Mapping[str, Collection]):
+class Collections(Mapping[str, CollectionReader]):
     """A mapping of collection name to Collection instance.
 
     This class also gather operations from all collections and filter them by their
     presence or not in the DAG.
     """
 
-    def __init__(self, collections: Mapping[str, Collection]):
+    def __init__(self, collections: Mapping[str, CollectionReader]):
         self._collections = collections
         self._dag_operations, self._other_operations = self._init_operations(
             self._collections
@@ -49,7 +49,7 @@ class Collections(Mapping[str, Collection]):
         return self._collections.__len__()
 
     @staticmethod
-    def from_collection_list(collections: Sequence[Collection]) -> Collections:
+    def from_collection_list(collections: Sequence[CollectionReader]) -> Collections:
         """Factory method to build Collections from a sequence of Collection.
 
         Ordering of the sequence is what will determine the loading order of the operations.
@@ -94,7 +94,7 @@ class Collections(Mapping[str, Collection]):
         return self._schemas
 
     def _init_operations(
-        self, collections: Mapping[str, Collection]
+        self, collections: Mapping[str, CollectionReader]
     ) -> tuple[Operations, Operations]:
         dag_operations = Operations()
         other_operations = Operations()
@@ -201,7 +201,7 @@ class Collections(Mapping[str, Collection]):
         return dag_operations, other_operations
 
     def _init_schemas(
-        self, collections: Mapping[str, Collection]
+        self, collections: Mapping[str, CollectionReader]
     ) -> dict[str, ServiceSchema]:
         schemas: dict[str, ServiceSchema] = {}
         for collection in collections.values():

@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from tdp.core.collection import (
-    Collection,
+    CollectionReader,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
@@ -30,19 +30,19 @@ from tests.unit.core.models.test_deployment_log import (
 
 def test_collection_from_path_does_not_exist():
     with pytest.raises(PathDoesNotExistsError):
-        Collection.from_path("foo")
+        CollectionReader.from_path("foo")
 
 
 def test_collection_from_path_is_not_a_directory(tmp_path: Path):
     empty_file = tmp_path / "foo"
     empty_file.touch()
     with pytest.raises(PathIsNotADirectoryError):
-        Collection.from_path(empty_file)
+        CollectionReader.from_path(empty_file)
 
 
 def test_collection_from_path_missing_mandatory_directory(tmp_path: Path):
     with pytest.raises(MissingMandatoryDirectoryError):
-        Collection.from_path(tmp_path)
+        CollectionReader.from_path(tmp_path)
 
 
 def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
@@ -59,7 +59,7 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
         },
     }
     generate_collection_at_path(collection_path, dag_service_operations, service_vars)
-    collection = Collection.from_path(collection_path)
+    collection = CollectionReader.from_path(collection_path)
     assert "service_install" in collection.playbooks
     assert "service_config" in collection.playbooks
 
