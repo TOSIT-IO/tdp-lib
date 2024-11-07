@@ -10,7 +10,7 @@ from typing import Any, TextIO, Union
 
 import yaml
 
-from tdp.core.collection import (
+from tdp.core.collection_reader import (
     CollectionReader,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
