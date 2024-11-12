@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from tdp.core.collection_reader import (
+from tdp.core.collections.collection_reader import (
     CollectionReader,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
