@@ -45,13 +45,13 @@ def service_diff(collections: Collections, service):
     # key: filename with extension, value: PosixPath(filepath)
     default_service_vars_paths = OrderedDict()
     for collection_default_vars_dir in collections.default_vars_dirs.values():
-        for service_default_vars_dir in collection_default_vars_dir.iterdir():
-            if not service_default_vars_dir:
-                continue
-            for default_vars_path in service_default_vars_dir.iterdir():
-                default_service_vars_paths.setdefault(
-                    default_vars_path.name, []
-                ).append(default_vars_path)
+        service_default_vars_dir = collection_default_vars_dir / service.name
+        if not service_default_vars_dir.exists():
+            continue
+        for default_vars_path in service_default_vars_dir.iterdir():
+            default_service_vars_paths.setdefault(default_vars_path.name, []).append(
+                default_vars_path
+            )
 
     for (
         default_service_vars_filename,
