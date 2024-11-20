@@ -349,8 +349,13 @@ class DeploymentModel(BaseModel):
         dag = Dag(collections)
         reconfigure_operations_sorted = list(
             map(
-                lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
+                lambda x: (
+                    dag.node_to_operation(x.operation_name, restart=True),
+                    x.host_name,
+                ),
+                dag.topological_sort_key(
+                    operation_hosts, key=lambda x: x.operation_name
+                ),
             )
         )
 
@@ -504,7 +509,4 @@ def _get_reconfigure_operation_hosts(
     if len(operation_hosts) == 0:
         raise NothingToReconfigureError("No component needs to be reconfigured.")
     # Sort by hosts to improve readability
-    return sorted(
-        operation_hosts,
-        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
-    )
+    return sorted(operation_hosts, key=lambda x: f"{x.operation_name}_{x.host_name}")
