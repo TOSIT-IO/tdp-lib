@@ -200,7 +200,7 @@ def plan_reconfigure(
     # return the deployment plan (it is neither persisted in the database nor executed)
     return DeploymentModel.from_stale_hosted_entities(
         collections=collections,
-        stale_hosted_entity_statuses=dao.get_hosted_entity_statuses(filter_stale=True),
+        hosted_entity_statuses=dao.get_hosted_entity_statuses(filter_stale=True),
     )
 
 

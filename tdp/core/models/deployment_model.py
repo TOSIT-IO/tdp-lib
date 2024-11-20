@@ -329,21 +329,21 @@ class DeploymentModel(BaseModel):
     @staticmethod
     def from_stale_hosted_entities(
         collections: Collections,
-        stale_hosted_entity_statuses: list[HostedEntityStatus],
+        hosted_entity_statuses: list[HostedEntityStatus],
         rolling_interval: Optional[int] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
-            stale_hosted_entity_statuses: List of stale hosted entity statuses.
+            hosted_entity_statuses: List of hosted entity statuses.
             rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
         operation_hosts: set[OperationHostTuple] = set()
-        for status in stale_hosted_entity_statuses:
+        for status in hosted_entity_statuses:
             if status.to_config:
                 operation_hosts.add(
                     OperationHostTuple(
