@@ -360,18 +360,15 @@ class DeploymentModel(BaseModel):
                 )
         if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
-
         # Sort by hosts to improve readability
         operation_hosts_sorted = sorted(
             operation_hosts, key=lambda x: f"{x.operation_name}_{x.host_name}"
         )
-
         # Sort operations using DAG topological sort.
-        reconfigure_operations_sorted = Dag(collections).topological_sort_key(
+        operation_hosts_sorted = Dag(collections).topological_sort_key(
             operation_hosts_sorted,
             key=lambda x: x.operation_name.replace("_restart", "_start"),
         )
-
         # Generate deployment
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
@@ -385,7 +382,7 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation, host in reconfigure_operations_sorted:
+        for operation, host in operation_hosts_sorted:
             deployment.operations.append(
                 OperationModel(
                     operation=operation,
@@ -410,7 +407,6 @@ class DeploymentModel(BaseModel):
                         state=OperationStateEnum.PLANNED,
                     )
                 )
-
             operation_order += 1
         return deployment
 
