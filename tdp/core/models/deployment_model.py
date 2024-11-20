@@ -342,17 +342,34 @@ class DeploymentModel(BaseModel):
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
+        operation_hosts: set[OperationHostTuple] = set()
+        for status in stale_hosted_entity_statuses:
+            if status.to_config:
+                operation_hosts.add(
+                    OperationHostTuple(
+                        f"{status.entity.name}_config",
+                        status.entity.host,
+                    )
+                )
+            if status.to_restart:
+                operation_hosts.add(
+                    OperationHostTuple(
+                        f"{status.entity.name}_restart",
+                        status.entity.host,
+                    )
+                )
+        if len(operation_hosts) == 0:
+            raise NothingToReconfigureError("No component needs to be reconfigured.")
 
-        # Sort operations using DAG topological sort. Convert operation name to
-        # Operation instance and replace "start" action by "restart".
-        dag = Dag(collections)
-        reconfigure_operations_sorted = map(
-            lambda x: (
-                dag.node_to_operation(x.operation_name),
-                x.host_name,
-            ),
-            dag.topological_sort_key(operation_hosts, key=lambda x: x.operation_name),
+        # Sort by hosts to improve readability
+        operation_hosts_sorted = sorted(
+            operation_hosts, key=lambda x: f"{x.operation_name}_{x.host_name}"
+        )
+
+        # Sort operations using DAG topological sort.
+        reconfigure_operations_sorted = Dag(collections).topological_sort_key(
+            operation_hosts_sorted,
+            key=lambda x: x.operation_name.replace("_restart", "_start"),
         )
 
         # Generate deployment
@@ -371,7 +388,7 @@ class DeploymentModel(BaseModel):
         for operation, host in reconfigure_operations_sorted:
             deployment.operations.append(
                 OperationModel(
-                    operation=operation.name,
+                    operation=operation,
                     operation_order=operation_order,
                     host=host,
                     extra_vars=None,
@@ -379,7 +396,10 @@ class DeploymentModel(BaseModel):
                 )
             )
             # Add sleep operation after each "restart"
-            if rolling_interval is not None and operation.action_name == "restart":
+            if (
+                rolling_interval is not None
+                and Operation(operation).action_name == "restart"
+            ):
                 operation_order += 1
                 deployment.operations.append(
                     OperationModel(
@@ -476,35 +496,3 @@ class OperationHostTuple(NamedTuple):
 
     operation_name: str
     host_name: Optional[str]
-
-
-def _get_reconfigure_operation_hosts(
-    hosted_entity_statuses: list[HostedEntityStatus],
-) -> list[OperationHostTuple]:
-    """Generate a list of config and restart operation associated with their host.
-
-    Args:
-        hosted_entity_statuses: List of hosted entities statuses.
-
-    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
-    """
-    operation_hosts: set[OperationHostTuple] = set()
-    for status in hosted_entity_statuses:
-        if status.to_config:
-            operation_hosts.add(
-                OperationHostTuple(
-                    f"{status.entity.name}_config",
-                    status.entity.host,
-                )
-            )
-        if status.to_restart:
-            operation_hosts.add(
-                OperationHostTuple(
-                    f"{status.entity.name}_restart",
-                    status.entity.host,
-                )
-            )
-    if len(operation_hosts) == 0:
-        raise NothingToReconfigureError("No component needs to be reconfigured.")
-    # Sort by hosts to improve readability
-    return sorted(operation_hosts, key=lambda x: f"{x.operation_name}_{x.host_name}")
