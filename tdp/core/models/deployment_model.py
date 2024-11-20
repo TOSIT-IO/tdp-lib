@@ -350,7 +350,7 @@ class DeploymentModel(BaseModel):
         reconfigure_operations_sorted = list(
             map(
                 lambda x: (
-                    dag.node_to_operation(x.operation_name, restart=True),
+                    dag.node_to_operation(x.operation_name),
                     x.host_name,
                 ),
                 dag.topological_sort_key(
@@ -504,7 +504,7 @@ def _get_reconfigure_operation_hosts(
         if status.to_restart:
             operation_hosts.add(
                 OperationHostTuple(
-                    f"{status.entity.name}_start",
+                    f"{status.entity.name}_restart",
                     status.entity.host,
                 )
             )
