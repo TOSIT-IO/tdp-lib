@@ -476,22 +476,24 @@ def _filter_falsy_options(options: dict) -> dict:
 
 
 class OperationHostTuple(NamedTuple):
+    """Association of an operation string and its optional host."""
+
     operation_name: str
     host_name: Optional[str]
 
 
 def _get_reconfigure_operation_hosts(
-    stale_hosted_entity_statuses: list[HostedEntityStatus],
+    hosted_entity_statuses: list[HostedEntityStatus],
 ) -> list[OperationHostTuple]:
-    """Get the list of reconfigure operations from a list of hosted entities statuses.
+    """Generate a list of config and restart operation associated with their host.
 
     Args:
-        stale_hosted_entity_statuses: List of stale hosted entities statuses.
+        hosted_entity_statuses: List of hosted entities statuses.
 
     Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
     """
     operation_hosts: set[OperationHostTuple] = set()
-    for status in stale_hosted_entity_statuses:
+    for status in hosted_entity_statuses:
         if status.to_config:
             operation_hosts.add(
                 OperationHostTuple(
