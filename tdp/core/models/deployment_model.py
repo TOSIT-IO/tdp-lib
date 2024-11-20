@@ -347,16 +347,12 @@ class DeploymentModel(BaseModel):
         # Sort operations using DAG topological sort. Convert operation name to
         # Operation instance and replace "start" action by "restart".
         dag = Dag(collections)
-        reconfigure_operations_sorted = list(
-            map(
-                lambda x: (
-                    dag.node_to_operation(x.operation_name),
-                    x.host_name,
-                ),
-                dag.topological_sort_key(
-                    operation_hosts, key=lambda x: x.operation_name
-                ),
-            )
+        reconfigure_operations_sorted = map(
+            lambda x: (
+                dag.node_to_operation(x.operation_name),
+                x.host_name,
+            ),
+            dag.topological_sort_key(operation_hosts, key=lambda x: x.operation_name),
         )
 
         # Generate deployment
