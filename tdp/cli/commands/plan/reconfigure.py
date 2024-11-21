@@ -38,9 +38,7 @@ def reconfigure(
     with Dao(db_engine, commit_on_exit=True) as dao:
         deployment = DeploymentModel.from_stale_hosted_entities(
             collections=collections,
-            stale_hosted_entity_statuses=dao.get_hosted_entity_statuses(
-                filter_stale=True
-            ),
+            hosted_entity_statuses=dao.get_hosted_entity_statuses(filter_stale=True),
             rolling_interval=rolling_interval,
         )
         if preview:

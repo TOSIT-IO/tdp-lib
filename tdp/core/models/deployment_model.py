@@ -329,31 +329,46 @@ class DeploymentModel(BaseModel):
     @staticmethod
     def from_stale_hosted_entities(
         collections: Collections,
-        stale_hosted_entity_statuses: list[HostedEntityStatus],
+        hosted_entity_statuses: list[HostedEntityStatus],
         rolling_interval: Optional[int] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
         Args:
             collections: Collections to retrieve the operations from.
-            stale_hosted_entity_statuses: List of stale hosted entity statuses.
+            hosted_entity_statuses: List of hosted entity statuses.
             rolling_interval: Number of seconds to wait between component restart.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
-        operation_hosts = _get_reconfigure_operation_hosts(stale_hosted_entity_statuses)
-
-        # Sort operations using DAG topological sort. Convert operation name to
-        # Operation instance and replace "start" action by "restart".
-        dag = Dag(collections)
-        reconfigure_operations_sorted = list(
-            map(
-                lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
-            )
+        operation_hosts: set[OperationHostTuple] = set()
+        for status in hosted_entity_statuses:
+            if status.to_config:
+                operation_hosts.add(
+                    OperationHostTuple(
+                        f"{status.entity.name}_config",
+                        status.entity.host,
+                    )
+                )
+            if status.to_restart:
+                operation_hosts.add(
+                    OperationHostTuple(
+                        f"{status.entity.name}_restart",
+                        status.entity.host,
+                    )
+                )
+        if len(operation_hosts) == 0:
+            raise NothingToReconfigureError("No component needs to be reconfigured.")
+        # Sort by hosts to improve readability
+        operation_hosts_sorted = sorted(
+            operation_hosts, key=lambda x: f"{x.operation_name}_{x.host_name}"
         )
-
+        # Sort operations using DAG topological sort.
+        operation_hosts_sorted = Dag(collections).topological_sort_key(
+            operation_hosts_sorted,
+            key=lambda x: x.operation_name.replace("_restart", "_start"),
+        )
         # Generate deployment
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RECONFIGURE,
@@ -367,10 +382,10 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation, host in reconfigure_operations_sorted:
+        for operation, host in operation_hosts_sorted:
             deployment.operations.append(
                 OperationModel(
-                    operation=operation.name,
+                    operation=operation,
                     operation_order=operation_order,
                     host=host,
                     extra_vars=None,
@@ -378,7 +393,10 @@ class DeploymentModel(BaseModel):
                 )
             )
             # Add sleep operation after each "restart"
-            if rolling_interval is not None and operation.action_name == "restart":
+            if (
+                rolling_interval is not None
+                and Operation(operation).action_name == "restart"
+            ):
                 operation_order += 1
                 deployment.operations.append(
                     OperationModel(
@@ -389,7 +407,6 @@ class DeploymentModel(BaseModel):
                         state=OperationStateEnum.PLANNED,
                     )
                 )
-
             operation_order += 1
         return deployment
 
@@ -471,40 +488,7 @@ def _filter_falsy_options(options: dict) -> dict:
 
 
 class OperationHostTuple(NamedTuple):
+    """Association of an operation string and its optional host."""
+
     operation_name: str
     host_name: Optional[str]
-
-
-def _get_reconfigure_operation_hosts(
-    stale_hosted_entity_statuses: list[HostedEntityStatus],
-) -> list[OperationHostTuple]:
-    """Get the list of reconfigure operations from a list of hosted entities statuses.
-
-    Args:
-        stale_hosted_entity_statuses: List of stale hosted entities statuses.
-
-    Returns: List of tuple (operation, host) ordered <operation-name>_<host>.
-    """
-    operation_hosts: set[OperationHostTuple] = set()
-    for status in stale_hosted_entity_statuses:
-        if status.to_config:
-            operation_hosts.add(
-                OperationHostTuple(
-                    f"{status.entity.name}_config",
-                    status.entity.host,
-                )
-            )
-        if status.to_restart:
-            operation_hosts.add(
-                OperationHostTuple(
-                    f"{status.entity.name}_start",
-                    status.entity.host,
-                )
-            )
-    if len(operation_hosts) == 0:
-        raise NothingToReconfigureError("No component needs to be reconfigured.")
-    # Sort by hosts to improve readability
-    return sorted(
-        operation_hosts,
-        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
-    )

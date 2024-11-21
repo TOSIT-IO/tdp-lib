@@ -103,9 +103,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             self._reconfigure_operations = _group_hosts_by_operation(
                 DeploymentModel.from_stale_hosted_entities(
                     collections=self._collections,
-                    stale_hosted_entity_statuses=[
-                        status for status in cluster_status.values() if status.is_stale
-                    ],
+                    hosted_entity_statuses=list(cluster_status.values()),
                 )
             )
         except NothingToReconfigureError:
