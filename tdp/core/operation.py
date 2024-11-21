@@ -97,16 +97,16 @@ class Operation:
             noop: If True, the operation will not be executed.
             host_names: Set of host names where the operation can be launched.
         """
-        self._operation_name = OperationName.from_name(name)
-        self.name = self._operation_name.name
+        self.name = OperationName.from_name(name)
+        self.str_name = self.name.name
         self.collection_name = collection_name
         self.depends_on = depends_on or []
         self.noop = noop
         self.host_names = host_names or set()
 
-        self.service_name = self._operation_name.service
-        self.component_name = self._operation_name.component
-        self.action_name = self._operation_name.action
+        self.service_name = self.name.service
+        self.component_name = self.name.component
+        self.action_name = self.name.action
 
         for host_name in self.host_names:
             if len(host_name) > HOST_NAME_MAX_LENGTH:
@@ -116,11 +116,11 @@ class Operation:
 
     def is_service_operation(self) -> bool:
         """Return True if the operation is about a service, False otherwise."""
-        return isinstance(self._operation_name.entity, ServiceName)
+        return isinstance(self.name.entity, ServiceName)
 
     def __repr__(self):
         return (
-            f"Operation(name={self.name}, "
+            f"Operation(name={self.str_name}, "
             f"collection_name={self.collection_name}, "
             f"depends_on={self.depends_on}, "
             f"noop={self.noop}, "

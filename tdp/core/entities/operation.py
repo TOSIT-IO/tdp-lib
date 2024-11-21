@@ -36,9 +36,9 @@ class Operations(MutableMapping[str, Operation]):
             raise KeyError(f"Operation '{key}' not found")
 
     def __setitem__(self, key: str, value: Operation):
-        if key != value.name:
+        if key != value.str_name:
             raise ValueError(
-                f"Operation name '{value.name}' does not match key '{key}'"
+                f"Operation name '{value.str_name}' does not match key '{key}'"
             )
         self._operations[key] = value
 
