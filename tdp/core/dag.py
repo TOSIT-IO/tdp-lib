@@ -21,10 +21,10 @@ import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.entities.operation import Operations
-from tdp.core.operation import Operation
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
+    from tdp.core.operation import Operation
 
 T = TypeVar("T")
 

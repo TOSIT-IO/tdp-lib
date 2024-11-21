@@ -1,15 +1,20 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import click
 from tabulate import tabulate
 
 from tdp.cli.params import collections_option, hosts_option
-from tdp.core.collections import Collections
 from tdp.core.dag import Dag
-from tdp.core.operation import Operation
+
+if TYPE_CHECKING:
+    from tdp.core.collections import Collections
+    from tdp.core.operation import Operation
 
 
 @click.command()
