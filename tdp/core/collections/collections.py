@@ -49,7 +49,7 @@ class Collections:
 
         self._init_playbooks()
         self._dag_operations, self._other_operations = self._init_operations()
-        self._default_var_directories = self._init_default_vars_dirs()
+        self._default_var_dirs = self._init_default_vars_dirs()
         self._schemas = self._init_schemas()
         self._services_components = self._init_entities()
 
@@ -91,26 +91,17 @@ class Collections:
     @property
     def default_vars_dirs(self) -> dict[str, Path]:
         """Mapping of collection name to their default vars directory."""
-        return self._default_var_directories
+        return self._default_var_dirs
 
     @property
     def schemas(self) -> dict[str, ServiceSchema]:
-        """Mapping of service with their variable schemas."""
+        """Mapping of service names with their variable schemas."""
         return self._schemas
 
-    # ? The mapping is using service name as a string for convenience. Should we keep
-    # ? this or change it to ServiceName?
     @property
     def entities(self) -> dict[str, set[ServiceComponentName]]:
-        """Mapping of services to their set of components."""
+        """Mapping of service names to their set of components."""
         return self._services_components
-
-    def _init_default_vars_dirs(self) -> dict[str, Path]:
-        """Mapping of collection name to their default vars directory."""
-        default_var_directories = {}
-        for collection in self._collection_readers:
-            default_var_directories[collection.name] = collection.default_vars_directory
-        return default_var_directories
 
     def _init_playbooks(self) -> None:
         """Initialize the playbooks from the collections.
@@ -233,7 +224,15 @@ class Collections:
 
         return dag_operations, other_operations
 
+    def _init_default_vars_dirs(self) -> dict[str, Path]:
+        """Initialize the default vars directories from the collections."""
+        default_var_dirs: dict[str, Path] = {}
+        for collection in self._collection_readers:
+            default_var_dirs[collection.name] = collection.default_vars_directory
+        return default_var_dirs
+
     def _init_schemas(self) -> dict[str, ServiceSchema]:
+        """Initialize the variables schemas from the collections."""
         schemas: dict[str, ServiceSchema] = {}
         for collection in self._collection_readers:
             for schema in collection.read_schemas():
@@ -241,6 +240,10 @@ class Collections:
         return schemas
 
     def _init_entities(self) -> dict[str, set[ServiceComponentName]]:
+        """Initialize the entities from the collections.
+
+        Needs to be called after the operations are initialized.
+        """
         services_components: dict[str, set[ServiceComponentName]] = {}
         for operation in self.operations.values():
             service = services_components.setdefault(operation.name.service, set())
