@@ -129,7 +129,7 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
             nodes=list(source_reconfigure_operations), restart=True
         ):
             # Only create a log when config or restart operation is available
-            if operation.action_name not in ["config", "restart"]:
+            if operation.name.action not in ["config", "restart"]:
                 continue
 
             # Create a log for each host where the entity is deployed
@@ -148,9 +148,9 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
                         source=SCHStatusLogSourceEnum.STALE,
                     ),
                 )
-                if operation.action_name == "config":
+                if operation.name.action == "config":
                     log.to_config = True
-                elif operation.action_name == "restart":
+                elif operation.name.action == "restart":
                     log.to_restart = True
 
         return set(logs.values())
