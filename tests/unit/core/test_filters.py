@@ -3,9 +3,9 @@
 
 import pytest
 
+from tdp.core.entities.operation import Operation
 from tdp.core.filters import FilterFactory, GlobFilterStrategy, RegexFilterStrategy
 from tdp.core.models.enums import FilterTypeEnum
-from tdp.core.operation import Operation
 
 
 @pytest.fixture

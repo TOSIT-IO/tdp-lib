@@ -27,7 +27,7 @@ from tdp.core.models.operation_model import OperationModel
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
-    from tdp.core.operation import Operation
+    from tdp.core.entities.operation import Operation
 
 logger = logging.getLogger(__name__)
 

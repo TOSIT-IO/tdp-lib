@@ -24,7 +24,7 @@ from tdp.core.entities.operation import Operations
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.operation import Operation
+    from tdp.core.entities.operation import Operation
 
 T = TypeVar("T")
 

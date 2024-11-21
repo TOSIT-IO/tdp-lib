@@ -3,7 +3,7 @@
 
 import networkx as nx
 
-from tdp.core.operation import OperationName
+from tdp.core.entities.operation import OperationName
 
 
 # Needed :
