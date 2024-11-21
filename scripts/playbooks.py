@@ -23,7 +23,7 @@ import networkx as nx
 from tdp.cli.params import collections_option
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.dag import Dag
-from tdp.core.operation import Operation
+from tdp.core.operation import OperationName
 
 
 @click.command()
@@ -53,10 +53,10 @@ def playbooks(services, output_dir, for_collection, collections):
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.name.service)
         for dependency in operation.depends_on:
-            dependency_operation = Operation(dependency)
-            if dependency_operation.name.service != operation.name.service:
+            dependency_operation = OperationName.from_name(dependency)
+            if dependency_operation.service != operation.name.service:
                 dag_services.add_edge(
-                    dependency_operation.name.service, operation.name.service
+                    dependency_operation.service, operation.name.service
                 )
         dag_service_operations.setdefault(operation.name.service, []).append(operation)
 

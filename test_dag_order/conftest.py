@@ -19,7 +19,7 @@ from tdp.core.constants import YML_EXTENSION
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentRunner
 from tdp.core.models import DeploymentModel, init_database
-from tdp.core.operation import Operation
+from tdp.core.operation import OperationName
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 from tests.unit.core.deployment.test_deployment_runner import MockExecutor
@@ -204,15 +204,11 @@ def plan_reconfigure(
     )
 
 
+# TODO: store a set of entities instead of strings
 @pytest.fixture
 def stale_sc(plan_reconfigure: DeploymentModel) -> set[str]:
     """Set of stale service_components"""
     sc: set[str] = set()
     for operation in plan_reconfigure.operations:
-        # TODO: would be nice to use a dedicated class to parse the operation name
-        operation = Operation(operation.operation)
-        if operation.name.component is None:
-            sc.add(operation.name.service)
-        else:
-            sc.add(operation.name.service + "_" + operation.name.component)
+        sc.add(OperationName.from_name(operation.operation).entity.name)
     return sc
