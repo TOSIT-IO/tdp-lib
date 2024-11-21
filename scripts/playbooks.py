@@ -51,14 +51,14 @@ def playbooks(services, output_dir, for_collection, collections):
     # For each service, get all operations with DAG topological_sort order
     dag_service_operations = {}
     for operation in dag.get_all_operations():
-        dag_services.add_node(operation.service_name)
+        dag_services.add_node(operation.name.service)
         for dependency in operation.depends_on:
             dependency_operation = Operation(dependency)
-            if dependency_operation.service_name != operation.service_name:
+            if dependency_operation.name.service != operation.name.service:
                 dag_services.add_edge(
-                    dependency_operation.service_name, operation.service_name
+                    dependency_operation.name.service, operation.name.service
                 )
-        dag_service_operations.setdefault(operation.service_name, []).append(operation)
+        dag_service_operations.setdefault(operation.name.service, []).append(operation)
 
     if not nx.is_directed_acyclic_graph(dag_services):
         raise RuntimeError("dag_services is not a DAG.")
