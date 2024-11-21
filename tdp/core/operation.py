@@ -1,23 +1,66 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import re
-from typing import Any, Optional
+from __future__ import annotations
+
+from typing import Any, Optional, Union
+
+from attr import dataclass
 
 from tdp.core.constants import (
     ACTION_NAME_MAX_LENGTH,
-    COMPONENT_NAME_MAX_LENGTH,
     HOST_NAME_MAX_LENGTH,
     OPERATION_NAME_MAX_LENGTH,
-    SERVICE_NAME_MAX_LENGTH,
+)
+from tdp.core.entities.entity_name import (
+    ServiceComponentName,
+    ServiceName,
+    parse_entity_name,
 )
 
-# service operation: <service>_<action>
-RE_IS_SERVICE = re.compile("^([^_]+)_[^_]+$")
-# component operation: <service>_<component>_<action>
-RE_GET_SERVICE = re.compile("^([^_]+)_.*")
-RE_GET_COMPONENT = re.compile("^[^_]+_(.*)_[^_]+$")
-RE_GET_ACTION = re.compile(".*_([^_]+)$")
+
+@dataclass(frozen=True)
+class OperationName:
+    entity: Union[ServiceName, ServiceComponentName]
+    action: str
+
+    def __post_init__(self):
+        if len(self.action) > ACTION_NAME_MAX_LENGTH:
+            raise ValueError(
+                f"Action '{self.action}' must be less than {ACTION_NAME_MAX_LENGTH} "
+                "characters."
+            )
+        if not self.action:
+            raise ValueError("Action name cannot be empty.")
+        if len(self.name) > OPERATION_NAME_MAX_LENGTH:
+            raise ValueError(
+                f"Operation '{self.name}' must be less than {OPERATION_NAME_MAX_LENGTH}"
+                " characters."
+            )
+
+    @property
+    def service(self) -> str:
+        return self.entity.service
+
+    @property
+    def component(self) -> Optional[str]:
+        return getattr(self.entity, "component", None)
+
+    @property
+    def name(self) -> str:
+        return f"{self.entity.name}_{self.action}"
+
+    @classmethod
+    def from_name(cls, name: str) -> OperationName:
+        entity_name, action_name = name.rsplit("_", 1)
+        entity = parse_entity_name(entity_name)
+        return cls(entity, action_name)
+
+    def __repr__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
 
 
 class Operation:
@@ -54,47 +97,16 @@ class Operation:
             noop: If True, the operation will not be executed.
             host_names: Set of host names where the operation can be launched.
         """
-        self.name = name
+        self._operation_name = OperationName.from_name(name)
+        self.name = self._operation_name.name
         self.collection_name = collection_name
         self.depends_on = depends_on or []
         self.noop = noop
         self.host_names = host_names or set()
 
-        if len(name) > OPERATION_NAME_MAX_LENGTH:
-            raise ValueError(f"{name} is longer than {OPERATION_NAME_MAX_LENGTH}")
-
-        match = RE_GET_SERVICE.search(self.name)
-        if not match:
-            raise ValueError(f"Fail to parse service name from '{self.name}'")
-        self.service_name = match.group(1)
-
-        if len(self.service_name) > SERVICE_NAME_MAX_LENGTH:
-            raise ValueError(
-                f"service {self.service_name} is longer than {SERVICE_NAME_MAX_LENGTH}"
-            )
-
-        match = RE_GET_ACTION.search(self.name)
-        if not match:
-            raise ValueError(f"Fail to parse action name from '{self.name}'")
-        self.action_name = match.group(1)
-
-        if len(self.action_name) > ACTION_NAME_MAX_LENGTH:
-            raise ValueError(
-                f"action {self.action_name} is longer than {ACTION_NAME_MAX_LENGTH}"
-            )
-
-        match = RE_GET_COMPONENT.search(self.name)
-        if not match:
-            self.component_name = None
-        else:
-            self.component_name = match.group(1)
-        if (
-            self.component_name is not None
-            and len(self.component_name) > COMPONENT_NAME_MAX_LENGTH
-        ):
-            raise ValueError(
-                f"component {self.component_name} is longer than {COMPONENT_NAME_MAX_LENGTH}"
-            )
+        self.service_name = self._operation_name.service
+        self.component_name = self._operation_name.component
+        self.action_name = self._operation_name.action
 
         for host_name in self.host_names:
             if len(host_name) > HOST_NAME_MAX_LENGTH:
@@ -104,7 +116,7 @@ class Operation:
 
     def is_service_operation(self) -> bool:
         """Return True if the operation is about a service, False otherwise."""
-        return bool(RE_IS_SERVICE.search(self.name))
+        return isinstance(self._operation_name.entity, ServiceName)
 
     def __repr__(self):
         return (
