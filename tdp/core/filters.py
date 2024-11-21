@@ -1,14 +1,18 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import fnmatch
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
-from typing import Type
+from typing import TYPE_CHECKING, Type
 
 from tdp.core.models.enums import FilterTypeEnum
-from tdp.core.operation import Operation
+
+if TYPE_CHECKING:
+    from tdp.core.operation import Operation
 
 
 class FilterStrategy(ABC):
