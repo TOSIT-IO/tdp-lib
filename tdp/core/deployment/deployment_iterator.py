@@ -161,7 +161,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
         # ===== Update the cluster status if success =====
 
         # Skip sleep operation
-        if operation.name == OPERATION_SLEEP_NAME:
+        if operation.str_name == OPERATION_SLEEP_NAME:
             return
 
         sch_status_logs: list[SCHStatusLogModel] = []

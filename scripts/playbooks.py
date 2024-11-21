@@ -132,10 +132,10 @@ def playbooks(services, output_dir, for_collection, collections):
                 continue
             if not operation.noop:
                 all_fd.write(
-                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.str_name}.yml\n"
                 )
             else:
-                all_fd.write(f"# {operation.name}\n")
+                all_fd.write(f"# {operation.str_name}\n")
 
 
 if __name__ == "__main__":
