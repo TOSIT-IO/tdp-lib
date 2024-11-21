@@ -104,7 +104,6 @@ class Operation:
         self.noop = noop
         self.host_names = host_names or set()
 
-        self.component_name = self.name.component
         self.action_name = self.name.action
 
         for host_name in self.host_names:

@@ -137,13 +137,13 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
                 log = logs.setdefault(
                     create_hosted_entity(
                         create_entity_name(
-                            operation.name.service, operation.component_name
+                            operation.name.service, operation.name.component
                         ),
                         host,
                     ),
                     SCHStatusLogModel(
                         service=operation.name.service,
-                        component=operation.component_name,
+                        component=operation.name.component,
                         host=host,
                         source=SCHStatusLogSourceEnum.STALE,
                     ),
