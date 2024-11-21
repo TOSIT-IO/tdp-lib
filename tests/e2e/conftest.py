@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 import pytest
 from click.testing import CliRunner
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, Table, create_engine
 
 from tdp.cli.commands.init import init
 from tdp.core.models import BaseModel
@@ -37,6 +37,7 @@ def tdp_init(
     yield TDPInitArgs(collection_path, db_dsn, vars)
     engine = create_engine(db_dsn)
     BaseModel.metadata.drop_all(engine)
+    Table("alembic_version", MetaData(), autoload_with=engine).drop(engine)
     engine.dispose()
 
 
