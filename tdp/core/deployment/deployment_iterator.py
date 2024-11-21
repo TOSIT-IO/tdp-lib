@@ -166,7 +166,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
         sch_status_logs: list[SCHStatusLogModel] = []
         entity_name = create_entity_name(
-            operation.name.service, operation.component_name
+            operation.name.service, operation.name.component
         )
 
         if self._cluster_status.is_sc_stale(entity_name, hosts=operation.host_names):

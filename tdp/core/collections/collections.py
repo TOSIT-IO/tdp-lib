@@ -236,9 +236,9 @@ class Collections:
         services_components: dict[str, set[ServiceComponentName]] = {}
         for operation in self.operations.values():
             service = services_components.setdefault(operation.name.service, set())
-            if not operation.component_name:
+            if not operation.name.component:
                 continue
             service.add(
-                ServiceComponentName(operation.name.service, operation.component_name)
+                ServiceComponentName(operation.name.service, operation.name.component)
             )
         return services_components
