@@ -235,10 +235,10 @@ class Collections:
     def _init_hostable_entities(self) -> dict[str, set[ServiceComponentName]]:
         services_components: dict[str, set[ServiceComponentName]] = {}
         for operation in self.operations.values():
-            service = services_components.setdefault(operation.service_name, set())
+            service = services_components.setdefault(operation.name.service, set())
             if not operation.component_name:
                 continue
             service.add(
-                ServiceComponentName(operation.service_name, operation.component_name)
+                ServiceComponentName(operation.name.service, operation.component_name)
             )
         return services_components

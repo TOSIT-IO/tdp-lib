@@ -212,7 +212,7 @@ def stale_sc(plan_reconfigure: DeploymentModel) -> set[str]:
         # TODO: would be nice to use a dedicated class to parse the operation name
         operation = Operation(operation.operation)
         if operation.component_name is None:
-            sc.add(operation.service_name)
+            sc.add(operation.name.service)
         else:
-            sc.add(operation.service_name + "_" + operation.component_name)
+            sc.add(operation.name.service + "_" + operation.component_name)
     return sc

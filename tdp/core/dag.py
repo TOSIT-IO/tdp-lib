@@ -122,7 +122,7 @@ class Dag:
         def priority_key(node: str) -> str:
             operation = self.operations[node]
             operation_priority = SERVICE_PRIORITY.get(
-                operation.service_name, DEFAULT_SERVICE_PRIORITY
+                operation.name.service, DEFAULT_SERVICE_PRIORITY
             )
             return f"{operation_priority:02d}_{node}"
 
@@ -278,13 +278,13 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
         c_warning = functools.partial(warning, operation.collection_name)
         for dependency in operation.depends_on:
             # *_start operations can only be required from within its own service
-            dependency_service = nodes[dependency].service_name
+            dependency_service = nodes[dependency].name.service
             if (
                 dependency.endswith("_start")
-                and dependency_service != operation.service_name
+                and dependency_service != operation.name.service
             ):
                 c_warning(
-                    f"Operation '{operation_name}' is in service '{operation.service_name}', depends on "
+                    f"Operation '{operation_name}' is in service '{operation.name.service}', depends on "
                     f"'{dependency}' which is a start action in service '{dependency_service}' and should "
                     f"only depends on start action within its own service"
                 )
@@ -301,7 +301,7 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
         # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions
         # even if they are "empty" (tagged with noop)
         # Part 1
-        service_actions = services_actions.setdefault(operation.service_name, set())
+        service_actions = services_actions.setdefault(operation.name.service, set())
         if operation.is_service_operation():
             service_actions.add(operation.action_name)
 
@@ -316,7 +316,7 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
                 previous_action = actions_order[
                     actions_order.index(operation.action_name) - 1
                 ]
-                previous_service_action = f"{operation.service_name}_{previous_action}"
+                previous_service_action = f"{operation.name.service}_{previous_action}"
                 previous_service_action_found = False
                 # Loop over dependency and check if the service previous action is found
                 for dependency in operation.depends_on:
@@ -325,7 +325,7 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
                 if not previous_service_action_found:
                     c_warning(
                         f"Operation '{operation_name}' is a service action and has to depend on "
-                        f"'{operation.service_name}_{previous_action}'"
+                        f"'{operation.name.service}_{previous_action}'"
                     )
 
         # Operations tagged with the noop flag should not have a playbook defined in the collection
