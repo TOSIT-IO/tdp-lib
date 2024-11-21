@@ -97,9 +97,9 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
 
             # Add the config and start operations to the set to get their descendants
             if config_operation:
-                source_reconfigure_operations.add(config_operation.str_name)
+                source_reconfigure_operations.add(config_operation.name.name)
             if start_operation:
-                source_reconfigure_operations.add(start_operation.str_name)
+                source_reconfigure_operations.add(start_operation.name.name)
 
             # Create a log to update the stale status of the entity if a config and/or
             # restart operations are available

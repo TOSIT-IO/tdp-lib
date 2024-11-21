@@ -66,7 +66,7 @@ class DeploymentRunner:
             return
 
         # Execute the operation
-        playbook_file = self._collections.playbooks[operation.str_name].path
+        playbook_file = self._collections.playbooks[operation.name.name].path
         state, logs = self._executor.execute(
             playbook=playbook_file,
             host=operation_rec.host,

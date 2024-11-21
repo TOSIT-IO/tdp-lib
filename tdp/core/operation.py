@@ -98,7 +98,6 @@ class Operation:
             host_names: Set of host names where the operation can be launched.
         """
         self.name = OperationName.from_name(name)
-        self.str_name = self.name.name
         self.collection_name = collection_name
         self.depends_on = depends_on or []
         self.noop = noop
@@ -116,7 +115,7 @@ class Operation:
 
     def __repr__(self):
         return (
-            f"Operation(name={self.str_name}, "
+            f"Operation(name={self.name}, "
             f"collection_name={self.collection_name}, "
             f"depends_on={self.depends_on}, "
             f"noop={self.noop}, "

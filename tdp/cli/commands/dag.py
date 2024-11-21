@@ -102,7 +102,7 @@ def dag(
         nodes_to_color.update(
             list(
                 map(
-                    lambda o: o.str_name,
+                    lambda o: o.name.name,
                     dag.get_operations_to_nodes(color_to.split(",")),
                 )
             )
@@ -110,7 +110,7 @@ def dag(
     if color_from:
         nodes_from = list(
             map(
-                lambda o: o.str_name,
+                lambda o: o.name.name,
                 dag.get_operations_from_nodes(color_from.split(",")),
             )
         )

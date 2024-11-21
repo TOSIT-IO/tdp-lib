@@ -22,14 +22,14 @@ def test_regex_filter_strategy(operations):
     regex_filter = RegexFilterStrategy()
     filtered_operations = regex_filter.apply_filter(operations, r"^.+_config$")
     assert len(filtered_operations) == 2
-    assert all(op.str_name.endswith("_config") for op in filtered_operations)
+    assert all(op.name.name.endswith("_config") for op in filtered_operations)
 
 
 def test_glob_filter_strategy(operations):
     glob_filter = GlobFilterStrategy()
     filtered_operations = glob_filter.apply_filter(operations, "*config")
     assert len(filtered_operations) == 2
-    assert all(op.str_name.endswith("_config") for op in filtered_operations)
+    assert all(op.name.name.endswith("_config") for op in filtered_operations)
 
 
 def test_filter_factory_with_regex(operations):
