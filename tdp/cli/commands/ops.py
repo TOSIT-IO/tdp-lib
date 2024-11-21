@@ -49,11 +49,11 @@ def ops(
         ]
         if topo_sort:
             sorted_operations = dag.topological_sort_key(
-                operations, key=lambda operation: operation.str_name
+                operations, key=lambda operation: operation.name.name
             )
         else:
             sorted_operations = sorted(
-                operations, key=lambda operation: operation.str_name
+                operations, key=lambda operation: operation.name.name
             )
         _print_operations(sorted_operations)
     else:
@@ -62,7 +62,9 @@ def ops(
             for operation in collections.operations.values()
             if len(hosts) == 0 or bool(set(operation.host_names) & set(hosts))
         ]
-        sorted_operations = sorted(operations, key=lambda operation: operation.str_name)
+        sorted_operations = sorted(
+            operations, key=lambda operation: operation.name.name
+        )
         _print_operations(sorted_operations)
 
 
@@ -71,7 +73,7 @@ def _print_operations(operations: Iterable[Operation], /):
     click.echo(
         tabulate(
             [
-                [operation.str_name, operation.host_names or ""]
+                [operation.name.name, operation.host_names or ""]
                 for operation in operations
             ],
             headers=["Operation name", "Hosts"],

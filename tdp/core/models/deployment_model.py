@@ -61,7 +61,7 @@ class MissingHostForOperationError(Exception):
         self.operation = operation
         self.host_name = host_name
         super().__init__(
-            f"Host {host_name} not found for operation {operation.str_name}."
+            f"Host {host_name} not found for operation {operation.name}."
             f"Available hosts are {operation.host_names}."
         )
 
@@ -180,7 +180,7 @@ class DeploymentModel(BaseModel):
             )
             deployment.operations.append(
                 OperationModel(
-                    operation=operation.str_name,
+                    operation=operation.name.name,
                     operation_order=operation_order,
                     host=None,
                     extra_vars=None,
@@ -257,7 +257,7 @@ class DeploymentModel(BaseModel):
             ):
                 deployment.operations.append(
                     OperationModel(
-                        operation=operation.str_name,
+                        operation=operation.name.name,
                         operation_order=operation_order,
                         host=host_name,
                         extra_vars=list(extra_vars) if extra_vars else None,
@@ -370,7 +370,7 @@ class DeploymentModel(BaseModel):
         for operation, host in reconfigure_operations_sorted:
             deployment.operations.append(
                 OperationModel(
-                    operation=operation.str_name,
+                    operation=operation.name.name,
                     operation_order=operation_order,
                     host=host,
                     extra_vars=None,

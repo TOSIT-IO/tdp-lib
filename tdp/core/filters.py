@@ -27,14 +27,14 @@ class RegexFilterStrategy(FilterStrategy):
 
     def apply_filter(self, operations, expression):
         compiled_regex = re.compile(expression)
-        return [o for o in operations if compiled_regex.match(o.str_name)]
+        return [o for o in operations if compiled_regex.match(o.name.name)]
 
 
 class GlobFilterStrategy(FilterStrategy):
     """Filter strategy that uses glob patterns."""
 
     def apply_filter(self, operations, expression):
-        return [o for o in operations if fnmatch.fnmatch(o.str_name, expression)]
+        return [o for o in operations if fnmatch.fnmatch(o.name.name, expression)]
 
 
 class FilterFactory:
