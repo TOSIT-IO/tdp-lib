@@ -52,7 +52,7 @@ class Collections:
         self._dag_operations, self._other_operations = self._init_operations()
         self._default_var_directories = self._init_default_vars_dirs()
         self._schemas = self._init_schemas()
-        self._services_components = self._init_hostable_entities()
+        self._services_components = self._init_entities()
 
     @staticmethod
     def from_collection_paths(
@@ -102,7 +102,7 @@ class Collections:
     # ? The mapping is using service name as a string for convenience. Should we keep
     # ? this or change it to ServiceName?
     @property
-    def hostable_entities(self) -> dict[str, set[ServiceComponentName]]:
+    def entities(self) -> dict[str, set[ServiceComponentName]]:
         """Mapping of services to their set of components."""
         return self._services_components
 
@@ -232,7 +232,7 @@ class Collections:
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas
 
-    def _init_hostable_entities(self) -> dict[str, set[ServiceComponentName]]:
+    def _init_entities(self) -> dict[str, set[ServiceComponentName]]:
         services_components: dict[str, set[ServiceComponentName]] = {}
         for operation in self.operations.values():
             service = services_components.setdefault(operation.name.service, set())

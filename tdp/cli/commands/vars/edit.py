@@ -96,7 +96,7 @@ def edit(
     # Check if component exists
     entity_name = parse_entity_name(variables_file.stem)
     if isinstance(entity_name, ServiceComponentName):
-        if entity_name not in collections.hostable_entities[service_name]:
+        if entity_name not in collections.entities[service_name]:
             raise click.ClickException(
                 f"Error unknown component '{entity_name.component}' for service '{entity_name.service}'"
             )
