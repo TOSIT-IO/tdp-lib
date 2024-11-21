@@ -18,9 +18,9 @@ from tdp.core.collections.collection_reader import (
     PathIsNotADirectoryError,
 )
 from tdp.core.constants import YML_EXTENSION
-from tdp.core.entities.hostable_entity_name import (
+from tdp.core.entities.entity_name import (
     ServiceName,
-    parse_hostable_entity_name,
+    parse_entity_name,
 )
 from tdp.core.inventory_reader import InventoryReader
 
@@ -186,7 +186,7 @@ def resolve_components(
     resolved_components: set[str] = set()
     service_component_map: dict[str, str] = {}
     for service_component in service_components:
-        if isinstance(parse_hostable_entity_name(service_component), ServiceName):
+        if isinstance(parse_entity_name(service_component), ServiceName):
             for component in collections.hostable_entities[service_component]:
                 resolved_components.add(component.name)
                 service_component_map[component.name] = service_component

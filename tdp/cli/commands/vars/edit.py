@@ -16,9 +16,9 @@ from tdp.cli.params import (
 )
 from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
-from tdp.core.entities.hostable_entity_name import (
+from tdp.core.entities.entity_name import (
     ServiceComponentName,
-    parse_hostable_entity_name,
+    parse_entity_name,
 )
 from tdp.core.repository.repository import EmptyCommit
 from tdp.core.variables import ClusterVariables
@@ -94,7 +94,7 @@ def edit(
         )
 
     # Check if component exists
-    entity_name = parse_hostable_entity_name(variables_file.stem)
+    entity_name = parse_entity_name(variables_file.stem)
     if isinstance(entity_name, ServiceComponentName):
         if entity_name not in collections.hostable_entities[service_name]:
             raise click.ClickException(
