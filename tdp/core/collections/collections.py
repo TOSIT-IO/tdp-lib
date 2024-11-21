@@ -18,9 +18,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.entities.entity_name import ServiceComponentName
-from tdp.core.entities.operation import Operations, Playbook
+from tdp.core.entities.operation import Operation, Operations, Playbook
 from tdp.core.inventory_reader import InventoryReader
-from tdp.core.operation import Operation
 from tdp.core.variables.schema.service_schema import ServiceSchema
 
 from .collection_reader import CollectionReader

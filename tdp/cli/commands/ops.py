@@ -14,7 +14,7 @@ from tdp.core.dag import Dag
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.operation import Operation
+    from tdp.core.entities.operation import Operation
 
 
 @click.command()

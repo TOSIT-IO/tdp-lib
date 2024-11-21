@@ -18,8 +18,8 @@ from tdp.core.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.dag import Dag
 from tdp.core.deployment import DeploymentRunner
+from tdp.core.entities.operation import OperationName
 from tdp.core.models import DeploymentModel, init_database
-from tdp.core.operation import OperationName
 from tdp.core.variables import ClusterVariables
 from tdp.dao import Dao
 from tests.unit.core.deployment.test_deployment_runner import MockExecutor

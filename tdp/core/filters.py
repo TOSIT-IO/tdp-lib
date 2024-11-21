@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Type
 from tdp.core.models.enums import FilterTypeEnum
 
 if TYPE_CHECKING:
-    from tdp.core.operation import Operation
+    from tdp.core.entities.operation import Operation
 
 
 class FilterStrategy(ABC):

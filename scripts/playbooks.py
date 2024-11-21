@@ -23,7 +23,7 @@ import networkx as nx
 from tdp.cli.params import collections_option
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
 from tdp.core.dag import Dag
-from tdp.core.operation import OperationName
+from tdp.core.entities.operation import OperationName
 
 
 @click.command()
