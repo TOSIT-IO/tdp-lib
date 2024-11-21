@@ -19,7 +19,7 @@ from tdp.core.variables.variables import (
 )
 
 if TYPE_CHECKING:
-    from tdp.core.entities.hostable_entity_name import HostableEntityName
+    from tdp.core.entities.entity_name import EntityName
     from tdp.core.repository.repository import Repository
     from tdp.core.variables.schema.service_schema import ServiceSchema
     from tdp.core.variables.variables import _VariablesIOWrapper
@@ -141,9 +141,7 @@ class ServiceVariables:
         with self.repository.validate(validation_message) as repo:
             repo.add_for_validation(open_files.keys())
 
-    def is_entity_modified_from_version(
-        self, entity: HostableEntityName, version: str
-    ) -> bool:
+    def is_entity_modified_from_version(self, entity: EntityName, version: str) -> bool:
         """Check if a component has been modified since the given version.
 
         A component is modified if the component variable file is modified

@@ -11,7 +11,7 @@ from tdp.core.constants import COMPONENT_NAME_MAX_LENGTH, SERVICE_NAME_MAX_LENGT
 
 
 @dataclass(frozen=True)
-class HostableEntityName(ABC):
+class EntityName(ABC):
     service: str
 
     @property
@@ -33,7 +33,7 @@ class HostableEntityName(ABC):
 
 
 @dataclass(frozen=True)
-class ServiceName(HostableEntityName):
+class ServiceName(EntityName):
 
     @property
     def name(self) -> str:
@@ -41,7 +41,7 @@ class ServiceName(HostableEntityName):
 
 
 @dataclass(frozen=True)
-class ServiceComponentName(HostableEntityName):
+class ServiceComponentName(EntityName):
     component: str
 
     def __post_init__(self):
@@ -64,13 +64,13 @@ class ServiceComponentName(HostableEntityName):
         return cls(service_name, component_name)
 
 
-def parse_hostable_entity_name(name: str) -> Union[ServiceName, ServiceComponentName]:
+def parse_entity_name(name: str) -> Union[ServiceName, ServiceComponentName]:
     if "_" in name:
         return ServiceComponentName.from_name(name)
     return ServiceName(name)
 
 
-def create_hostable_entity_name(
+def create_entity_name(
     service_name: str, component_name: Optional[str]
 ) -> Union[ServiceName, ServiceComponentName]:
     if component_name is None:

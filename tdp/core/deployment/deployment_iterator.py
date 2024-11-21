@@ -11,7 +11,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.constants import OPERATION_SLEEP_NAME
-from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
+from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.models import (
     DeploymentModel,
@@ -165,7 +165,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             return
 
         sch_status_logs: list[SCHStatusLogModel] = []
-        entity_name = create_hostable_entity_name(
+        entity_name = create_entity_name(
             operation.service_name, operation.component_name
         )
 

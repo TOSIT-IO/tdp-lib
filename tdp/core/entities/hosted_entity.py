@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from tdp.core.entities.hostable_entity_name import (
-    HostableEntityName,
+from tdp.core.entities.entity_name import (
+    EntityName,
     ServiceComponentName,
     ServiceName,
 )
@@ -16,7 +16,7 @@ from tdp.core.entities.hostable_entity_name import (
 class HostedEntity(ABC):
     @property
     @abstractmethod
-    def name(self) -> HostableEntityName:
+    def name(self) -> EntityName:
         pass
 
     @property
@@ -54,7 +54,7 @@ class HostedServiceComponent(HostedEntity):
 
 
 def create_hosted_entity(
-    name: HostableEntityName, host: Optional[str]
+    name: EntityName, host: Optional[str]
 ) -> Union[HostedService, HostedServiceComponent]:
     if isinstance(name, ServiceName):
         return HostedService(name, host)

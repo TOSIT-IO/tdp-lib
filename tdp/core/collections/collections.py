@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.entities.hostable_entity_name import ServiceComponentName
+from tdp.core.entities.entity_name import ServiceComponentName
 from tdp.core.entities.operation import Operations, Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.operation import Operation

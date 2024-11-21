@@ -7,7 +7,7 @@ from sqlalchemy import Engine, Select, and_, case, desc, func, or_, select
 from sqlalchemy.orm import aliased, sessionmaker
 
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.entities.hostable_entity_name import create_hostable_entity_name
+from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.models.deployment_model import DeploymentModel
@@ -163,7 +163,7 @@ class Dao:
         return [
             HostedEntityStatus(
                 entity=create_hosted_entity(
-                    name=create_hostable_entity_name(
+                    name=create_entity_name(
                         service_name=status.service, component_name=status.component
                     ),
                     host=status.host,

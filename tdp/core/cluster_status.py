@@ -8,9 +8,9 @@ from collections.abc import Iterable, MutableMapping
 from typing import TYPE_CHECKING, Optional
 
 from tdp.core.dag import Dag
-from tdp.core.entities.hostable_entity_name import (
-    HostableEntityName,
-    create_hostable_entity_name,
+from tdp.core.entities.entity_name import (
+    EntityName,
+    create_entity_name,
 )
 from tdp.core.entities.hosted_entity import (
     HostedEntity,
@@ -136,7 +136,7 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
             for host in operation.host_names:
                 log = logs.setdefault(
                     create_hosted_entity(
-                        create_hostable_entity_name(
+                        create_entity_name(
                             operation.service_name, operation.component_name
                         ),
                         host,
@@ -198,7 +198,7 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
             )
 
     def is_sc_stale(
-        self, entity_name: HostableEntityName, /, hosts: Optional[Iterable[str]]
+        self, entity_name: EntityName, /, hosts: Optional[Iterable[str]]
     ) -> bool:
         """Whether a service or component is stale.
 
