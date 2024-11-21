@@ -175,7 +175,7 @@ class DeploymentModel(BaseModel):
         for operation in operations:
             can_perform_rolling_restart = (
                 rolling_interval is not None
-                and operation.action_name == "restart"
+                and operation.name.action == "restart"
                 and operation.host_names
             )
             deployment.operations.append(
@@ -245,7 +245,7 @@ class DeploymentModel(BaseModel):
         for operation in operations:
             can_perform_rolling_restart = (
                 rolling_interval is not None
-                and operation.action_name == "restart"
+                and operation.name.action == "restart"
                 and operation.host_names
             )
             for host_name in host_names or (
@@ -378,7 +378,7 @@ class DeploymentModel(BaseModel):
                 )
             )
             # Add sleep operation after each "restart"
-            if rolling_interval is not None and operation.action_name == "restart":
+            if rolling_interval is not None and operation.name.action == "restart":
                 operation_order += 1
                 deployment.operations.append(
                     OperationModel(

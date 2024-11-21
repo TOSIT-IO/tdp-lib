@@ -303,18 +303,18 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
         # Part 1
         service_actions = services_actions.setdefault(operation.name.service, set())
         if operation.is_service_operation():
-            service_actions.add(operation.action_name)
+            service_actions.add(operation.name.action)
 
             # Each service action (config, start, init) except the first (install) must have an explicit
             # dependency with the previous service action within the same service
             actions_order = ["install", "config", "start", "init"]
             # Check only if the action is in actions_order and is not the first
             if (
-                operation.action_name in actions_order
-                and operation.action_name != actions_order[0]
+                operation.name.action in actions_order
+                and operation.name.action != actions_order[0]
             ):
                 previous_action = actions_order[
-                    actions_order.index(operation.action_name) - 1
+                    actions_order.index(operation.name.action) - 1
                 ]
                 previous_service_action = f"{operation.name.service}_{previous_action}"
                 previous_service_action_found = False

@@ -104,8 +104,6 @@ class Operation:
         self.noop = noop
         self.host_names = host_names or set()
 
-        self.action_name = self.name.action
-
         for host_name in self.host_names:
             if len(host_name) > HOST_NAME_MAX_LENGTH:
                 raise ValueError(

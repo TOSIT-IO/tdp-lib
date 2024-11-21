@@ -205,7 +205,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
         for host in hosts:
             sch_status_log = self._cluster_status.update_hosted_entity(
                 create_hosted_entity(entity_name, host),
-                action_name=operation.action_name,
+                action_name=operation.name.action,
                 version=self._cluster_variables[operation.name.service].version,
                 can_update_stale=can_update_stale,
             )
