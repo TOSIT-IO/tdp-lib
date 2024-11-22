@@ -140,25 +140,25 @@ class Collections:
         for collection in self._collection_readers:
             # Load DAG operations from the dag files
             for dag_node in collection.read_dag_nodes():
-                existing_operation = dag_operations.get(dag_node.name)
+                existing_operation = dag_operations.get(dag_node.name.name)
 
                 # The read_operation is associated with a playbook defined in the
                 # current collection
-                if playbook := self.playbooks.get(dag_node.name):
+                if playbook := self.playbooks.get(dag_node.name.name):
                     # TODO: would be nice to dissociate the Operation class from the playbook and store the playbook in the Operation
                     dag_operation_to_register = Operation(
-                        name=dag_node.name,
+                        name=dag_node.name.name,
                         collection_name=collection.name,
                         host_names=playbook.hosts,  # TODO: do not store the hosts in the Operation object
-                        depends_on=dag_node.depends_on.copy(),
+                        depends_on=list(dag_node.depends_on),
                     )
                     # If the operation is already registered, merge its dependencies
                     if existing_operation:
                         dag_operation_to_register.depends_on.extend(
-                            dag_operations[dag_node.name].depends_on
+                            dag_operations[dag_node.name.name].depends_on
                         )
                     # Register the operation
-                    dag_operations[dag_node.name] = dag_operation_to_register
+                    dag_operations[dag_node.name.name] = dag_operation_to_register
                     continue
 
                 # The read_operation is already registered
@@ -175,35 +175,37 @@ class Collections:
                 # in the current nor the previous collections
 
                 # Create and register the operation
-                dag_operations[dag_node.name] = Operation(
-                    name=dag_node.name,
+                dag_operations[dag_node.name.name] = Operation(
+                    name=dag_node.name.name,
                     collection_name=collection.name,
-                    depends_on=dag_node.depends_on.copy(),
+                    depends_on=list(dag_node.depends_on),
                     noop=True,
                     host_names=None,
                 )
                 # 'restart' and 'stop' operations are not defined in the DAG file
                 # for noop, they need to be generated from the start operations
-                if dag_node.name.endswith("_start"):
+                if dag_node.name.name.endswith("_start"):
                     logger.debug(
                         f"'{dag_node.name}' is noop, creating the associated "
                         "restart and stop operations"
                     )
                     # Create and register the restart operation
-                    restart_operation_name = dag_node.name.replace("_start", "_restart")
+                    restart_operation_name = dag_node.name.name.replace(
+                        "_start", "_restart"
+                    )
                     other_operations[restart_operation_name] = Operation(
                         name=restart_operation_name,
                         collection_name="replace_restart_noop",
-                        depends_on=dag_node.depends_on.copy(),
+                        depends_on=list(dag_node.depends_on),
                         noop=True,
                         host_names=None,
                     )
                     # Create and register the stop operation
-                    stop_operation_name = dag_node.name.replace("_start", "_stop")
+                    stop_operation_name = dag_node.name.name.replace("_start", "_stop")
                     other_operations[stop_operation_name] = Operation(
                         name=stop_operation_name,
                         collection_name="replace_stop_noop",
-                        depends_on=dag_node.depends_on.copy(),
+                        depends_on=list(dag_node.depends_on),
                         noop=True,
                         host_names=None,
                     )
