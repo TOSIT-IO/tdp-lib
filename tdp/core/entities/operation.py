@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from abc import ABC
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -149,6 +150,43 @@ class Playbook:
     @property
     def name(self) -> str:
         return self.path.stem
+
+
+@dataclass(frozen=True)
+class BaseOperation(ABC):
+
+    name: OperationName
+
+    @classmethod
+    def from_name(
+        cls,
+        name: str,
+    ) -> BaseOperation:
+        return cls(OperationName.from_name(name))
+
+
+@dataclass(frozen=True)
+class DagOperation(BaseOperation):
+    """A DAG node.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        definitions: Set of paths to the playbooks that define the node.
+    """
+
+    depends_on: frozenset[str]
+
+    @classmethod
+    def from_name(
+        cls,
+        name: str,
+        depends_on: Optional[frozenset[str]] = None,
+    ) -> DagOperation:
+        return cls(
+            name=OperationName.from_name(name),
+            depends_on=depends_on or frozenset(),
+        )
 
 
 class Operations(MutableMapping[str, Operation]):

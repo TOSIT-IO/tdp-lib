@@ -18,6 +18,7 @@ from tdp.core.constants import (
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
 )
+from tdp.core.entities.operation import DagOperation
 from tests.conftest import generate_collection_at_path
 from tests.unit.core.models.test_deployment_log import (
     MockInventoryReader,
@@ -147,11 +148,13 @@ def test_collection_reader_read_dag_nodes(mock_empty_collection_reader: Path):
     )
     dag_nodes = list(collection_reader.read_dag_nodes())
     assert len(dag_nodes) == 2
-    assert any(
-        node.name == "s1_c1_a" and node.depends_on == ["sx_cx_a"] for node in dag_nodes
+    assert (
+        DagOperation.from_name(name="s1_c1_a", depends_on=frozenset({"sx_cx_a"}))
+        in dag_nodes
     )
-    assert any(
-        node.name == "s2_c2_a" and node.depends_on == ["s1_c1_a"] for node in dag_nodes
+    assert (
+        DagOperation.from_name(name="s2_c2_a", depends_on=frozenset({"s1_c1_a"}))
+        in dag_nodes
     )
 
 
