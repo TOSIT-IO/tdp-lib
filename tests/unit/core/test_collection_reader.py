@@ -67,7 +67,10 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
         },
     }
     generate_collection_at_path(collection_path, dag_service_operations, service_vars)
-    playbooks = CollectionReader.from_path(collection_path).read_playbooks()
+    playbooks = {
+        playbook.path.stem: playbook
+        for playbook in CollectionReader.from_path(collection_path).read_playbooks()
+    }
     assert "service_install" in playbooks
     assert "service_config" in playbooks
 
@@ -112,7 +115,9 @@ def test_collection_reader_read_playbooks(mock_empty_collection_reader: Path):
       command: echo "Hello, GitHub Copilot!"
 """
     )
-    playbooks = collection_reader.read_playbooks()
+    playbooks = {
+        playbook.path.stem: playbook for playbook in collection_reader.read_playbooks()
+    }
     assert len(playbooks) == 2
     assert "playbook1" in playbooks
     assert "playbook2" in playbooks
