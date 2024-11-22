@@ -47,7 +47,7 @@ class Collections:
             A Collections object."""
         self._collection_readers = list(collections)
 
-        self._playbooks = self._init_playbooks()
+        self._init_playbooks()
         self._dag_operations, self._other_operations = self._init_operations()
         self._default_var_directories = self._init_default_vars_dirs()
         self._schemas = self._init_schemas()
@@ -112,19 +112,26 @@ class Collections:
             default_var_directories[collection.name] = collection.default_vars_directory
         return default_var_directories
 
-    def _init_playbooks(self) -> dict[str, Playbook]:
-        playbooks = {}
+    def _init_playbooks(self) -> None:
+        """Initialize the playbooks from the collections.
+
+        If a playbook is defined in multiple collections, the last one will take
+        precedence over the previous ones.
+        """
+        logger.debug("Initializing playbooks")
+        self._playbooks: dict[str, Playbook] = {}
         for collection in self._collection_readers:
-            playbooks.update(collection.read_playbooks())
-            for [playbook_name, playbook] in collection.read_playbooks().items():
-                if playbook_name in playbooks:
+            for playbook in collection.read_playbooks():
+                if playbook.path.stem in self._playbooks:
                     logger.debug(
-                        f"'{playbook_name}' defined in "
-                        f"'{playbooks[playbook_name].collection_name}' "
+                        f"'{playbook.path.stem}' defined in "
+                        f"'{self._playbooks[playbook.path.stem].collection_name}' "
                         f"is overridden by '{collection.name}'"
                     )
-                playbooks[playbook_name] = playbook
-        return playbooks
+                else:
+                    logger.debug(f"Adding playbook '{playbook.path}'")
+                self._playbooks[playbook.path.stem] = playbook
+        logger.debug("Playbooks initialized")
 
     def _init_operations(self) -> tuple[Operations, Operations]:
         dag_operations = Operations()

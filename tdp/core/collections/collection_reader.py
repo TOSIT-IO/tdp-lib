@@ -153,16 +153,14 @@ class CollectionReader:
                 logger.error(f"Error while parsing tdp_lib_dag file {dag_file}: {e}")
                 raise
 
-    def read_playbooks(self) -> dict[str, Playbook]:
+    def read_playbooks(self) -> Generator[Playbook, None, None]:
         """Read the playbooks stored in the playbooks_directory."""
-        return {
-            playbook_path.stem: Playbook(
+        for playbook_path in (self.playbooks_directory).glob("*" + YML_EXTENSION):
+            yield Playbook(
                 path=playbook_path,
                 collection_name=self.name,
                 hosts=read_hosts_from_playbook(playbook_path, self._inventory_reader),
             )
-            for playbook_path in (self.playbooks_directory).glob("*" + YML_EXTENSION)
-        }
 
     def read_schemas(self) -> list[ServiceCollectionSchema]:
         """Read the schemas stored in the schema_directory.
