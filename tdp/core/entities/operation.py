@@ -146,6 +146,10 @@ class Playbook:
                     "characters."
                 )
 
+    @property
+    def name(self) -> str:
+        return self.path.stem
+
 
 class Operations(MutableMapping[str, Operation]):
 

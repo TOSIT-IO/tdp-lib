@@ -124,13 +124,13 @@ class Collections:
             for playbook in collection.read_playbooks():
                 if playbook.path.stem in self._playbooks:
                     logger.debug(
-                        f"'{playbook.path.stem}' defined in "
-                        f"'{self._playbooks[playbook.path.stem].collection_name}' "
+                        f"'{playbook.name}' defined in "
+                        f"'{self._playbooks[playbook.name].collection_name}' "
                         f"is overridden by '{collection.name}'"
                     )
                 else:
                     logger.debug(f"Adding playbook '{playbook.path}'")
-                self._playbooks[playbook.path.stem] = playbook
+                self._playbooks[playbook.name] = playbook
         logger.debug("Playbooks initialized")
 
     def _init_operations(self) -> tuple[Operations, Operations]:
