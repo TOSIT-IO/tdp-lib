@@ -4,10 +4,10 @@
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import MutableMapping
+from collections.abc import Generator, Iterable, Iterator, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Optional, TypeVar, Union, overload
 
 from tdp.core.constants import (
     ACTION_NAME_MAX_LENGTH,
@@ -19,6 +19,9 @@ from tdp.core.entities.entity_name import (
     ServiceName,
     parse_entity_name,
 )
+
+if TYPE_CHECKING:
+    from tdp.core.collections.collection_reader import TDPLibDagNodeModel
 
 
 @dataclass(frozen=True)
@@ -53,10 +56,21 @@ class OperationName:
         return f"{self.entity.name}_{self.action}"
 
     @classmethod
-    def from_name(cls, name: str) -> OperationName:
+    def from_str(cls, name: str) -> OperationName:
         entity_name, action_name = name.rsplit("_", 1)
         entity = parse_entity_name(entity_name)
         return cls(entity, action_name)
+
+    def clone(self, action: str) -> OperationName:
+        """Clone the operation name with a new action.
+
+        Args:
+            action: The new action name.
+
+        Returns:
+            A new OperationName object with the same entity and the new action.
+        """
+        return OperationName(entity=self.entity, action=action)
 
     def __repr__(self):
         return self.name
@@ -65,79 +79,11 @@ class OperationName:
         return self.name
 
 
-class Operation:
-    """A task that can be executed by Ansible.
-
-    The name of the operation is composed of the service name, the component name and
-    the action name (<service>_<component>_<action>). The component name is optional.
-
-    Args:
-        action: Name of the action.
-        name: Name of the operation.
-        collection_name: Name of the collection where the operation is defined.
-        component: Name of the component.
-        depends_on: List of operations that must be executed before this one.
-        noop: If True, the operation will not be executed.
-        service: Name of the service.
-        host_names: Set of host names where the operation can be launched.
-    """
-
-    def __init__(
-        self,
-        name: str,
-        collection_name: Optional[str] = None,
-        depends_on: Optional[list[str]] = None,
-        noop: bool = False,
-        host_names: Optional[set[str]] = None,
-    ):
-        """Create a new Operation.
-
-        Args:
-            name: Name of the operation.
-            collection_name: Name of the collection where the operation is defined.
-            depends_on: List of operations that must be executed before this one.
-            noop: If True, the operation will not be executed.
-            host_names: Set of host names where the operation can be launched.
-        """
-        self.name = OperationName.from_name(name)
-        self.collection_name = collection_name
-        self.depends_on = depends_on or []
-        self.noop = noop
-        self.host_names = host_names or set()
-
-        for host_name in self.host_names:
-            if len(host_name) > HOST_NAME_MAX_LENGTH:
-                raise ValueError(
-                    f"host {host_name} is longer than {HOST_NAME_MAX_LENGTH}"
-                )
-
-    def is_service_operation(self) -> bool:
-        """Return True if the operation is about a service, False otherwise."""
-        return isinstance(self.name.entity, ServiceName)
-
-    def __repr__(self):
-        return (
-            f"Operation(name={self.name}, "
-            f"collection_name={self.collection_name}, "
-            f"depends_on={self.depends_on}, "
-            f"noop={self.noop}, "
-            f"host_names={self.host_names})"
-        )
-
-    def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, Operation):
-            return NotImplemented
-        return repr(self) == repr(other)
-
-    def __hash__(self) -> int:
-        return hash(repr(self))
-
-
 @dataclass(frozen=True)
 class Playbook:
     path: Path
     collection_name: str
-    hosts: set[str]  # TODO: would be better to use a frozenset
+    hosts: frozenset[str]
 
     def __post_init__(self):
         for host_name in self.hosts:
@@ -153,78 +99,313 @@ class Playbook:
 
 
 @dataclass(frozen=True)
-class BaseOperation(ABC):
+class Operation(ABC):
+    """An operation.
+
+    Not meant to be instantiated directly.
+
+    Args:
+        name: Name of the operation.
+    """
 
     name: OperationName
 
-    @classmethod
-    def from_name(
-        cls,
-        name: str,
-    ) -> BaseOperation:
-        return cls(OperationName.from_name(name))
+    def __post_init__(self):
+        if type(self) is Operation:
+            raise TypeError("Operation class cannot be instantiated directly.")
 
 
 @dataclass(frozen=True)
-class DagOperation(BaseOperation):
-    """A DAG node.
+class PlaybookOperation(Operation):
+    """An operation that is linked to a playbook.
+
+    Not meant to be instantiated directly.
+
+    Args:
+        name: Name of the operation.
+        playbook: The playbook that defines the operation.
+    """
+
+    playbook: Playbook
+
+    def __post_init__(self):
+        if type(self) is PlaybookOperation:
+            raise TypeError("PlaybookOperation class cannot be instantiated directly.")
+
+
+@dataclass(frozen=True)
+class OperationNoop(Operation, ABC):
+    """An operation that does nothing.
+
+    Args:
+        name: Name of the operation.
+    """
+
+    def __post_init__(self):
+        if type(self) is OperationNoop:
+            raise TypeError("OperationNoop class cannot be instantiated directly.")
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        if issubclass(cls, PlaybookOperation):
+            raise TypeError(
+                f"{cls.__name__} cannot inherit both OperationNoop and PlaybookOperation."
+            )
+
+
+@dataclass(frozen=True)
+class DagOperation(Operation, ABC):
+    """An operation that is part of the DAG.
+
+    Not meant to be instantiated directly.
 
     Args:
         name: Name of the operation.
         depends_on: List of operations that must be executed before this one.
-        definitions: Set of paths to the playbooks that define the node.
     """
 
-    depends_on: frozenset[str]
+    depends_on: frozenset[OperationName]
+
+    def __post_init__(self):
+        if type(self) is DagOperation:
+            raise TypeError("DagOperation class cannot be instantiated directly.")
+
+
+@dataclass(frozen=True)
+class DagOperationNoop(DagOperation, OperationNoop):
+    """An operation that is part of the DAG and does nothing.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+    """
+
+    pass
+
+
+@dataclass(frozen=True)
+class DagOperationWithPlaybook(DagOperation, PlaybookOperation):
+    """An operation that is part of the DAG associated with a playbook.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        playbook: The playbook that defines the operation.
+    """
+
+    pass
+
+
+@dataclass
+class DagOperationBuilder:
+    """A builder for a DAG Operation.
+
+    Meant to be short-lived. Allows to aggregate multiple ReadDagNode.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        playbook: The playbook that defines the operation.
+    """
+
+    name: str
+    depends_on: set[OperationName]
+    playbook: Optional[Playbook] = None
 
     @classmethod
-    def from_name(
-        cls,
-        name: str,
-        depends_on: Optional[frozenset[str]] = None,
-    ) -> DagOperation:
+    def from_read_dag_node(
+        cls, dag_node: TDPLibDagNodeModel, playbook: Optional[Playbook] = None
+    ) -> DagOperationBuilder:
         return cls(
-            name=OperationName.from_name(name),
-            depends_on=depends_on or frozenset(),
+            name=dag_node.name,
+            depends_on=set(
+                OperationName.from_str(dependency) for dependency in dag_node.depends_on
+            ),
+            playbook=playbook,
+        )
+
+    def extends(self, dag_node: TDPLibDagNodeModel) -> None:
+        self.depends_on.update(
+            OperationName.from_str(dependency) for dependency in dag_node.depends_on
+        )
+
+    def build(self) -> Union[DagOperationNoop, DagOperationWithPlaybook]:
+        if self.playbook:
+            return DagOperationWithPlaybook(
+                name=OperationName.from_str(self.name),
+                depends_on=frozenset(self.depends_on),
+                playbook=self.playbook,
+            )
+        return DagOperationNoop(
+            name=OperationName.from_str(self.name),
+            depends_on=frozenset(self.depends_on),
         )
 
 
-class Operations(MutableMapping[str, Operation]):
+@dataclass(frozen=True)
+class ForgedDagOperation(DagOperation, ABC):
+    """An operation that is part of the DAG.
 
-    def __init__(self):
-        self._operations: dict[str, Operation] = {}
+    Not meant to be instantiated directly.
 
-    def __getitem__(self, key: str):
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        forged_from: The operation that was forged.
+    """
+
+    forged_from: DagOperation
+
+    def __post_init__(self):
+        if type(self) is ForgedDagOperation:
+            raise TypeError("ForgedDagOperation class cannot be instantiated directly.")
+
+    @staticmethod
+    def create(
+        operation_name: OperationName,
+        source_operation: DagOperation,
+        playbook: Optional[Playbook] = None,
+    ) -> Union[ForgedDagOperationNoop, ForgedDagOperationWithPlaybook]:
+        """Forge a DAG operation."""
+        if not isinstance(source_operation, DagOperation):
+            raise ValueError(f"Operation {source_operation} cannot be forged.")
+        if playbook:
+            return ForgedDagOperationWithPlaybook(
+                name=operation_name,
+                playbook=playbook,
+                depends_on=source_operation.depends_on,
+                forged_from=source_operation,
+            )
+        return ForgedDagOperationNoop(
+            name=operation_name,
+            depends_on=source_operation.depends_on,
+            forged_from=source_operation,
+        )
+
+
+@dataclass(frozen=True)
+class ForgedDagOperationNoop(DagOperationNoop, ForgedDagOperation):
+    """An operation that is part of the DAG and does nothing.
+
+    Created from a start operation.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        forged_from: The operation that was forged.
+    """
+
+    pass
+
+
+@dataclass(frozen=True)
+class ForgedDagOperationWithPlaybook(DagOperationWithPlaybook, ForgedDagOperation):
+    """An operation that is part of the DAG associated with a playbook.
+
+    Created from a start operation.
+
+    Args:
+        name: Name of the operation.
+        playbook: The playbook that defines the operation.
+        depends_on: List of operations that must be executed before this one.
+        forged_from: The operation that was forged.
+    """
+
+    pass
+
+
+@dataclass(frozen=True)
+class OtherPlaybookOperation(PlaybookOperation):
+    """An operation that is not part of the DAG.
+
+    Args:
+        name: Name of the operation.
+        playbook: The playbook that defines the operation.
+    """
+
+    pass
+
+
+T = TypeVar("T", bound=Operation)
+
+
+class Operations(MutableMapping[Union[OperationName, str], Operation]):
+
+    def __init__(self) -> None:
+        self._inner = {}
+
+    def __getitem__(self, key: Union[OperationName, str]):
+        if isinstance(key, str):
+            key = OperationName.from_str(key)
         try:
-            return self._operations[key]
+            return self._inner[key]
         except KeyError:
             raise KeyError(f"Operation '{key}' not found")
 
-    def __setitem__(self, key: str, value: Operation):
-        if key != value.name.name:
+    def __setitem__(self, key: Union[OperationName, str], value: Operation):
+        if isinstance(key, str):
+            key = OperationName.from_str(key)
+        if key != value.name:
             raise ValueError(
                 f"Operation name '{value.name}' does not match key '{key}'"
             )
-        self._operations[key] = value
+        self._inner[key] = value
 
-    def __delitem__(self, key):
-        del self._operations[key]
+    def __delitem__(self, key: Union[OperationName, str]):
+        if isinstance(key, str):
+            key = OperationName.from_str(key)
+        del self._inner[key]
 
-    def __iter__(self):
-        return iter(self._operations)
+    def __iter__(self) -> Iterator[OperationName]:
+        return iter(self._inner)
 
-    def __len__(self):
-        return len(self._operations)
+    def __len__(self) -> int:
+        return len(self._inner)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}({self._operations})"
+    def add(self, operation: Operation) -> None:
+        """Add an operation."""
+        self[operation.name] = operation
 
-    def __str__(self):
-        return f"{self.__class__.__name__}({self._operations})"
+    @overload
+    def get_by_class(
+        self, include: Optional[None] = None, exclude: Optional[None] = None
+    ) -> Generator[Operation, None, None]: ...
 
-    def get(self, key: str, default=None, *, restart: bool = False, stop: bool = False):
-        if restart and key.endswith("_start"):
-            key = key.replace("_start", "_restart")
-        elif stop and key.endswith("_start"):
-            key = key.replace("_start", "_stop")
-        return self._operations.get(key, default)
+    @overload
+    def get_by_class(
+        self,
+        include: Optional[Union[type[T], Iterable[type[T]]]] = None,
+        exclude: Optional[None] = None,
+    ) -> Generator[T, None, None]: ...
+
+    @overload
+    def get_by_class(
+        self,
+        include: Optional[None] = None,
+        exclude: Optional[Union[type[Operation], Iterable[type[Operation]]]] = None,
+    ) -> Generator[Operation, None, None]: ...
+
+    @overload
+    def get_by_class(
+        self,
+        include: Optional[Union[type[T], Iterable[type[T]]]] = None,
+        exclude: Optional[Union[type[T], Iterable[type[T]]]] = None,
+    ) -> Generator[T, None, None]: ...
+
+    def get_by_class(
+        self,
+        include: Optional[Union[type[T], Iterable[type[T]]]] = None,
+        exclude: Optional[Union[type[Operation], Iterable[type[Operation]]]] = None,
+    ) -> Generator[Operation, None, None]:
+        # Normalize include and exclude into sets
+        include_set = {include} if isinstance(include, type) else set(include or [])
+        exclude_set = {exclude} if isinstance(exclude, type) else set(exclude or [])
+
+        for operation in self.values():
+            if include_set and not any(
+                isinstance(operation, inc) for inc in include_set
+            ):
+                continue
+            if any(isinstance(operation, exc) for exc in exclude_set):
+                continue
+            yield operation

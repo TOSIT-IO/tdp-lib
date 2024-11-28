@@ -210,5 +210,5 @@ def stale_sc(plan_reconfigure: DeploymentModel) -> set[str]:
     """Set of stale service_components"""
     sc: set[str] = set()
     for operation in plan_reconfigure.operations:
-        sc.add(OperationName.from_name(operation.operation).entity.name)
+        sc.add(OperationName.from_str(operation.operation).entity.name)
     return sc

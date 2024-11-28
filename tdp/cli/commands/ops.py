@@ -11,10 +11,10 @@ from tabulate import tabulate
 
 from tdp.cli.params import collections_option, hosts_option
 from tdp.core.dag import Dag
+from tdp.core.entities.operation import Operation, PlaybookOperation
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.entities.operation import Operation
 
 
 @click.command()
@@ -50,7 +50,11 @@ def ops(
         operations = [
             operation
             for operation in dag.get_all_operations()
-            if len(hosts) == 0 or bool(set(operation.host_names) & set(hosts))
+            if len(hosts) == 0
+            or (
+                not isinstance(operation, PlaybookOperation)
+                or bool(set(operation.playbook.hosts) & set(hosts))
+            )
         ]
         if topo_sort:
             sorted_operations = dag.topological_sort_key(
@@ -65,7 +69,11 @@ def ops(
         operations = [
             operation
             for operation in collections.operations.values()
-            if len(hosts) == 0 or bool(set(operation.host_names) & set(hosts))
+            if len(hosts) == 0
+            or (
+                not isinstance(operation, PlaybookOperation)
+                or bool(set(operation.playbook.hosts) & set(hosts))
+            )
         ]
         sorted_operations = sorted(
             operations, key=lambda operation: operation.name.name
@@ -78,7 +86,14 @@ def _print_operations(operations: Iterable[Operation], /):
     click.echo(
         tabulate(
             [
-                [operation.name.name, operation.host_names or ""]
+                [
+                    operation.name.name,
+                    (
+                        ", ".join(operation.playbook.hosts)
+                        if isinstance(operation, PlaybookOperation)
+                        else ""
+                    ),
+                ]
                 for operation in operations
             ],
             headers=["Operation name", "Hosts"],

@@ -19,7 +19,7 @@ from tdp.core.constants import (
     SCHEMA_VARS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
-from tdp.core.entities.operation import DagOperation, Playbook
+from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
@@ -49,6 +49,32 @@ class PathIsNotADirectoryError(Exception):
 
 class MissingMandatoryDirectoryError(Exception):
     pass
+
+
+class TDPLibDagNodeModel(BaseModel):
+    """Model for a DAG node read from a DAG file.
+
+    Meant to be used in a DagNodeBuilder.
+
+    Args:
+        name: Name of the operation.
+        depends_on: List of operations that must be executed before this one.
+        noop: Whether the operation is a noop.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    name: str
+    depends_on: frozenset[str] = frozenset()
+    noop: Optional[bool] = False
+
+
+class TDPLibDagModel(BaseModel):
+    """Model for a TDP DAG defined in a tdp_lib_dag file."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    operations: list[TDPLibDagNodeModel]
 
 
 class CollectionReader:
@@ -122,23 +148,8 @@ class CollectionReader:
         """Path to the variables schema directory."""
         return self._path / SCHEMA_VARS_DIRECTORY_NAME
 
-    def read_dag_nodes(self) -> Generator[DagOperation, None, None]:
+    def read_dag_nodes(self) -> Generator[TDPLibDagNodeModel, None, None]:
         """Read the DAG nodes stored in the dag_directory."""
-
-        class TDPLibDagNodeModel(BaseModel):
-            """Model for a TDP operation defined in a tdp_lib_dag file."""
-
-            model_config = ConfigDict(extra="ignore")
-
-            name: str
-            depends_on: frozenset[str] = frozenset()
-
-        class TDPLibDagModel(BaseModel):
-            """Model for a TDP DAG defined in a tdp_lib_dag file."""
-
-            model_config = ConfigDict(extra="ignore")
-
-            operations: list[TDPLibDagNodeModel]
 
         for dag_file in (self.dag_directory).glob("*" + YML_EXTENSION):
             with dag_file.open("r") as operations_file:
@@ -147,9 +158,7 @@ class CollectionReader:
             try:
                 tdp_lib_dag = TDPLibDagModel(operations=file_content)
                 for operation in tdp_lib_dag.operations:
-                    yield DagOperation.from_name(
-                        name=operation.name, depends_on=operation.depends_on
-                    )
+                    yield operation
             except ValidationError as e:
                 logger.error(f"Error while parsing tdp_lib_dag file {dag_file}: {e}")
                 raise
@@ -201,7 +210,7 @@ class CollectionReader:
 
 def read_hosts_from_playbook(
     playbook_path: Path, inventory_reader: Optional[InventoryReader]
-) -> set[str]:
+) -> frozenset[str]:
     """Read the hosts from a playbook.
 
     Args:

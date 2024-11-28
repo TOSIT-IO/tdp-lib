@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Optional
 from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
+from tdp.core.entities.operation import OperationNoop, PlaybookOperation
 from tdp.core.models import (
     DeploymentModel,
     NothingToReconfigureError,
@@ -145,7 +146,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
         operation = self._collections.operations[operation_rec.operation]
 
         # Run the operation
-        if operation.noop:
+        if isinstance(operation, OperationNoop):
             # A noop operation is always successful
             operation_rec.state = OperationStateEnum.SUCCESS
         else:
@@ -169,7 +170,12 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             operation.name.service, operation.name.component
         )
 
-        if self._cluster_status.is_sc_stale(entity_name, hosts=operation.host_names):
+        hosts = (
+            operation.playbook.hosts
+            if isinstance(operation, PlaybookOperation)
+            else None
+        )
+        if self._cluster_status.is_sc_stale(entity_name, hosts=hosts):
             # Get the first reconfigure operation if any
             if self._reconfigure_operations:
                 try:
@@ -195,9 +201,9 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
         # fmt: off
         hosts = (
-            [None] if operation.noop  # A noop operation doesn't have any host
+            [None] if not isinstance(operation, PlaybookOperation)  # A noop operation doesn't have any host
             else [operation_rec.host] if operation_rec.host  # Only one operation is launched on a single host
-            else operation.host_names  # Host is not specified, hence the operation is launched on all host
+            else operation.playbook.hosts  # Host is not specified, hence the operation is launched on all host
         )
         # fmt: on
 
