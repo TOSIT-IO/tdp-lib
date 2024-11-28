@@ -53,7 +53,7 @@ def playbooks(services, output_dir, for_collection, collections):
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.name.service)
         for dependency in operation.depends_on:
-            dependency_operation = OperationName.from_name(dependency)
+            dependency_operation = OperationName.from_str(dependency)
             if dependency_operation.service != operation.name.service:
                 dag_services.add_edge(
                     dependency_operation.service, operation.name.service

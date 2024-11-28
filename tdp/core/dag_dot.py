@@ -54,7 +54,7 @@ def to_pydot(
         for dot_node in dot_nodes:
             # Dot node name can be quoted, remove it
             operation_name = dot_node.get_name().strip('"')
-            operation_name = OperationName.from_name(operation_name)
+            operation_name = OperationName.from_str(operation_name)
             subgraphs.setdefault(
                 operation_name.service,
                 pydot.Cluster(

@@ -20,7 +20,14 @@ from typing import TYPE_CHECKING, Optional, TypeVar
 import networkx as nx
 
 from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
-from tdp.core.entities.operation import Operations
+from tdp.core.entities.entity_name import ServiceName
+from tdp.core.entities.operation import (
+    DagOperation,
+    ForgedDagOperation,
+    OperationName,
+    OperationNoop,
+    PlaybookOperation,
+)
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -46,12 +53,15 @@ class Dag:
             collections: Collections instance.
         """
         self._collections = collections
-        self._operations = self._collections.dag_operations
+        self._operations = {
+            operation.name: operation
+            for operation in collections.operations.get_by_class(DagOperation)
+        }
         validate_dag_nodes(self._operations, self._collections)
         self._graph = self._generate_graph(self.operations)
 
     @property
-    def operations(self) -> Operations:
+    def operations(self) -> dict[OperationName, DagOperation]:
         """DAG operations dictionary."""
         return self._operations
 
@@ -120,7 +130,7 @@ class Dag:
 
         # Define a priority function for nodes based on service priority.
         def priority_key(node: str) -> str:
-            operation = self.operations[node]
+            operation = self.operations[OperationName.from_str(node)]
             operation_priority = SERVICE_PRIORITY.get(
                 operation.name.service, DEFAULT_SERVICE_PRIORITY
             )
@@ -240,16 +250,18 @@ class Dag:
         )
 
     # TODO: can take a list of operations instead of a dict
-    def _generate_graph(self, nodes: Operations) -> nx.DiGraph:
+    def _generate_graph(self, nodes: dict[OperationName, DagOperation]) -> nx.DiGraph:
         DG = nx.DiGraph()
         for operation_name, operation in nodes.items():
-            DG.add_node(operation_name)
+            if isinstance(operation, ForgedDagOperation):
+                continue
+            DG.add_node(str(operation_name))
             for dependency in operation.depends_on:
                 if dependency not in nodes:
                     raise ValueError(
                         f'Dependency "{dependency}" does not exist for operation "{operation_name}"'
                     )
-                DG.add_edge(dependency, operation_name)
+                DG.add_edge(str(dependency), str(operation_name))
 
         if nx.is_directed_acyclic_graph(DG):
             return DG
@@ -257,9 +269,10 @@ class Dag:
             raise ValueError("Not a DAG")
 
 
-# TODO: call this method inside of Collections._init_operations instead of the Dag constructor
 # TODO: remove Collections dependency
-def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
+def validate_dag_nodes(
+    nodes: dict[OperationName, DagOperation], collections: Collections
+) -> None:
     r"""Validation rules :
     - \*_start operations can only be required from within its own service
     - \*_install operations should only depend on other \*_install operations
@@ -269,18 +282,27 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
     """
     # key: service_name
     # value: set of available actions for the service
+    # e.g. {'HDFS': {'install', 'config', 'init', 'start'}}
     services_actions = {}
 
-    def warning(collection_name: str, message: str) -> None:
-        logger.warning(message + f", collection: {collection_name}")
+    def warning(operation: DagOperation, message: str) -> None:
+        if isinstance(operation, PlaybookOperation):
+            collection_name = operation.playbook.collection_name
+            logger.warning(message + f", collection: {collection_name}")
+        else:
+            logger.warning(message)
 
     for operation_name, operation in nodes.items():
-        c_warning = functools.partial(warning, operation.collection_name)
+        # No test are performed on forged operations
+        if isinstance(operation, ForgedDagOperation):
+            continue
+
+        c_warning = functools.partial(warning, operation)
         for dependency in operation.depends_on:
             # *_start operations can only be required from within its own service
             dependency_service = nodes[dependency].name.service
             if (
-                dependency.endswith("_start")
+                dependency.action == "start"
                 and dependency_service != operation.name.service
             ):
                 c_warning(
@@ -290,8 +312,9 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
                 )
 
             # *_install operations should only depend on other *_install operations
-            if operation_name.endswith("_install") and not dependency.endswith(
-                "_install"
+            if (
+                operation.name.action == "install"
+                and not dependency.action == "install"
             ):
                 c_warning(
                     f"Operation '{operation_name}' is an install action, depends on '{dependency}' which is "
@@ -302,7 +325,7 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
         # even if they are "empty" (tagged with noop)
         # Part 1
         service_actions = services_actions.setdefault(operation.name.service, set())
-        if operation.is_service_operation():
+        if isinstance(operation.name.entity, ServiceName):
             service_actions.add(operation.name.action)
 
             # Each service action (config, start, init) except the first (install) must have an explicit
@@ -330,13 +353,14 @@ def validate_dag_nodes(nodes: Operations, collections: Collections) -> None:
 
         # Operations tagged with the noop flag should not have a playbook defined in the collection
 
-        if operation_name in collections.playbooks:
-            if operation.noop:
+        #! This case can't happen because no operation inherits both PlaybookOperation and NoOp
+        if str(operation_name) in collections.playbooks:
+            if isinstance(operation, OperationNoop):
                 c_warning(
                     f"Operation '{operation_name}' is noop and the playbook should not exist"
                 )
         else:
-            if not operation.noop:
+            if not isinstance(operation, OperationNoop):
                 c_warning(f"Operation '{operation_name}' should have a playbook")
 
     # Each service (HDFS, HBase, Hive, etc) should have *_install, *_config, *_init and *_start actions

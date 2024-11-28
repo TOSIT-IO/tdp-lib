@@ -4,6 +4,7 @@
 import pytest
 
 from tdp.core.collections import Collections
+from tdp.core.entities.operation import DagOperation, OperationName
 from tests.conftest import generate_collection_at_path
 
 
@@ -48,17 +49,28 @@ def test_collections_from_collection_list(tmp_path_factory: pytest.TempPathFacto
         [collection_path_1, collection_path_2]
     )
 
-    assert collections.dag_operations is not None
-    assert "service1_install" in collections.dag_operations
-    assert "service1_config" in collections.dag_operations
-    assert "service2_install" in collections.dag_operations
-    assert "service2_config" in collections.dag_operations
+    dag_operations = {
+        str(op.name): op for op in collections.operations.get_by_class(DagOperation)
+    }
 
-    assert [] == collections.dag_operations["service1_install"].depends_on
-    assert sorted(["service1_install", "service2_install"]) == sorted(
-        collections.dag_operations["service1_config"].depends_on
+    assert len(dag_operations) != 0
+    assert "service1_install" in dag_operations
+    assert "service1_config" in dag_operations
+    assert "service2_install" in dag_operations
+    assert "service2_config" in dag_operations
+
+    assert len(dag_operations["service1_install"].depends_on) == 0
+    assert (
+        frozenset(
+            [
+                OperationName.from_str("service1_install"),
+                OperationName.from_str("service2_install"),
+            ]
+        )
+        == dag_operations["service1_config"].depends_on
     )
-    assert [] == collections.dag_operations["service2_install"].depends_on
-    assert ["service2_install"] == collections.dag_operations[
-        "service2_config"
-    ].depends_on
+    assert len(dag_operations["service2_install"].depends_on) == 0
+    assert (
+        frozenset([OperationName.from_str("service2_install")])
+        == dag_operations["service2_config"].depends_on
+    )

@@ -18,6 +18,7 @@ from tdp.core.entities.hosted_entity import (
     create_hosted_entity,
 )
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
@@ -133,7 +134,11 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
                 continue
 
             # Create a log for each host where the entity is deployed
-            for host in operation.host_names:
+            for host in (
+                operation.playbook.hosts
+                if isinstance(operation, PlaybookOperation)
+                else []
+            ):
                 log = logs.setdefault(
                     create_hosted_entity(
                         create_entity_name(

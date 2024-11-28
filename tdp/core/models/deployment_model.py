@@ -14,6 +14,7 @@ from tabulate import tabulate
 
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
+from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.filters import FilterFactory
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import (
@@ -60,9 +61,12 @@ class MissingHostForOperationError(Exception):
     def __init__(self, operation: Operation, host_name: str):
         self.operation = operation
         self.host_name = host_name
+        available_hosts = []
+        if isinstance(operation, PlaybookOperation):
+            available_hosts = operation.playbook.hosts
         super().__init__(
             f"Host {host_name} not found for operation {operation.name}."
-            f"Available hosts are {operation.host_names}."
+            f"Available hosts are {available_hosts}."
         )
 
 
@@ -175,8 +179,9 @@ class DeploymentModel(BaseModel):
         for operation in operations:
             can_perform_rolling_restart = (
                 rolling_interval is not None
+                and isinstance(operation, PlaybookOperation)
                 and operation.name.action == "restart"
-                and operation.host_names
+                and len(operation.playbook.hosts) > 0
             )
             deployment.operations.append(
                 OperationModel(
@@ -225,7 +230,9 @@ class DeploymentModel(BaseModel):
         operations = [collections.operations[o] for o in operation_names]
         for host in host_names or []:
             for operation in operations:
-                if host not in operation.host_names:
+                if not isinstance(operation, PlaybookOperation) or (
+                    host not in operation.playbook.hosts
+                ):
                     raise MissingHostForOperationError(operation, host)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.OPERATIONS,
@@ -245,13 +252,14 @@ class DeploymentModel(BaseModel):
         for operation in operations:
             can_perform_rolling_restart = (
                 rolling_interval is not None
+                and isinstance(operation, PlaybookOperation)
                 and operation.name.action == "restart"
-                and operation.host_names
+                and len(operation.playbook.hosts) > 0
             )
             for host_name in host_names or (
                 # if restart operation with rolling and no host is specified,
                 # run on all hosts
-                operation.host_names
+                operation.playbook.hosts  # type: ignore : operation is a PlaybookOperation
                 if can_perform_rolling_restart
                 else [None]
             ):
@@ -304,13 +312,12 @@ class DeploymentModel(BaseModel):
             operation_host_vars_names, start=1
         ):
             operation_name, host_name, var_names = operation_host_vars
-            if (
-                host_name
-                and host_name not in collections.operations[operation_name].host_names
+            operation = collections.operations[operation_name]
+            if host_name and (
+                not isinstance(operation, PlaybookOperation)
+                or host_name not in operation.playbook.hosts
             ):
-                raise MissingHostForOperationError(
-                    collections.operations[operation_name], host_name
-                )
+                raise MissingHostForOperationError(operation, host_name)
             else:
                 if operation_name not in collections.operations:
                     raise MissingOperationError(operation_name)

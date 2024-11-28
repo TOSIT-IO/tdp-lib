@@ -1,20 +1,27 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from dataclasses import dataclass
+
 import pytest
 
-from tdp.core.entities.operation import Operation
+from tdp.core.entities.operation import Operation, OperationName
 from tdp.core.filters import FilterFactory, GlobFilterStrategy, RegexFilterStrategy
 from tdp.core.models.enums import FilterTypeEnum
+
+
+@dataclass(frozen=True)
+class MockOperation(Operation):
+    pass
 
 
 @pytest.fixture
 def operations():
     return [
-        Operation("service1_component1_config"),
-        Operation("service1_component1_start"),
-        Operation("service1_component2_config"),
-        Operation("service2_component1_start"),
+        MockOperation(OperationName.from_str("service1_component1_config")),
+        MockOperation(OperationName.from_str("service1_component1_start")),
+        MockOperation(OperationName.from_str("service1_component2_config")),
+        MockOperation(OperationName.from_str("service2_component1_start")),
     ]
 
 

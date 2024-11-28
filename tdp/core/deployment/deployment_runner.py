@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
+from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 from tdp.core.variables import ClusterVariables
 
@@ -54,7 +55,10 @@ class DeploymentRunner:
         operation = self._collections.operations[operation_rec.operation]
 
         # Check if the operation is available for the given host
-        if operation_rec.host and operation_rec.host not in operation.host_names:
+        if operation_rec.host and (
+            not isinstance(operation, PlaybookOperation)
+            or operation_rec.host not in operation.playbook.hosts
+        ):
             logs = (
                 f"Operation '{operation_rec.operation}' not available for host "
                 + f"'{operation_rec.host}'"
