@@ -287,7 +287,7 @@ class Dao:
 
     def get_last_deployments(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> Iterable[DeploymentModel]:
+    ) -> list[DeploymentModel]:
         """Get last deployments in ascending order.
 
         Use limit and offset to paginate the results.
