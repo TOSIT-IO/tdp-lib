@@ -57,7 +57,9 @@ def print_deployment(
 
     # Print deployment operations
     click.secho("\nOperations", bold=True)
-    print_operations(deployment.operations, filter_out=filter_out)
+    print_operations(
+        deployment.operations, filter_out=[*(filter_out or []), "deployment_id"]
+    )
 
 
 def print_operations(
