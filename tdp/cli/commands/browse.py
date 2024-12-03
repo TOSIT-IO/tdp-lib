@@ -1,19 +1,21 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Iterable
 from typing import Optional
 
 import click
 from sqlalchemy import Engine
+from tabulate import tabulate
 
 from tdp.cli.params import database_dsn_option
 from tdp.cli.utils import (
     print_deployment,
-    print_object,
     print_operations,
-    print_table,
 )
 from tdp.core.entities.operation import OperationName
+from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.models.operation_model import OperationModel
 from tdp.dao import Dao
 
 
@@ -141,10 +143,7 @@ def browse_operation(dao: Dao, deployment_id: int, operation: str) -> None:
             click.echo("\nUse the operation order to print a specific operation.")
             return
     if record:
-        print_object(record.to_dict(filter_out=["logs"]))
-        if record.logs:
-            click.secho("\nLogs", bold=True)
-            click.echo(str(record.logs, "utf-8"))
+        _print_operation(record)
     else:
         click.echo(f'Operation "{operation}" not found for deployment {deployment_id}')
         click.echo(
@@ -156,9 +155,28 @@ def browse_operation(dao: Dao, deployment_id: int, operation: str) -> None:
 def browse_deployments(dao: Dao, limit: int, offset: int) -> None:
     deployments = dao.get_last_deployments(limit=limit, offset=offset)
     if len(deployments) > 0:
-        print_table(
-            [d.to_dict(filter_out=["options"]) for d in deployments],
-        )
+        _print_deployments(deployments)
     else:
         click.echo("No deployments found.")
         click.echo("Create a deployment plan using the `tdp plan` command.")
+
+
+def _print_operation(operation: OperationModel) -> None:
+    click.echo(
+        tabulate(
+            operation.to_dict(filter_out=["logs"]).items(),
+            tablefmt="plain",
+        )
+    )
+    if operation.logs:
+        click.secho("\nLogs", bold=True)
+        click.echo(str(operation.logs, "utf-8"))
+
+
+def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
+    click.echo(
+        tabulate(
+            [d.to_dict(filter_out=["options"]) for d in deployments],
+            headers="keys",
+        )
+    )

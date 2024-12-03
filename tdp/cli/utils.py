@@ -48,7 +48,12 @@ def print_deployment(
 ) -> None:
     # Print general deployment infos
     click.secho("Deployment details", bold=True)
-    click.echo(print_object(deployment.to_dict(filter_out=filter_out)))
+    click.echo(
+        tabulate(
+            deployment.to_dict(filter_out=filter_out).items(),
+            tablefmt="plain",
+        )
+    )
 
     # Print deployment operations
     click.secho("\nOperations", bold=True)
@@ -63,41 +68,21 @@ def print_operations(
     Args:
         operations: List of operations to print.
     """
-    print_table(
-        [o.to_dict(filter_out=filter_out) for o in operations],
-    )
-
-
-def print_object(obj: dict) -> None:
-    """Print an object in a human readable format.
-
-    Args:
-        obj: Object to print.
-    """
     click.echo(
         tabulate(
-            obj.items(),
-            tablefmt="plain",
-        )
-    )
-
-
-def print_table(rows) -> None:
-    """Print a list of rows in a human readable format.
-
-    Args:
-        rows: List of rows to print.
-    """
-    click.echo(
-        tabulate(
-            rows,
+            [o.to_dict(filter_out=filter_out) for o in operations],
             headers="keys",
         )
     )
 
 
 def print_hosted_entity_status_log(sch_status: Iterable[HostedEntityStatus]) -> None:
-    print_table([status.export_tabulate() for status in sch_status])
+    click.echo(
+        tabulate(
+            [status.export_tabulate() for status in sch_status],
+            headers="keys",
+        )
+    )
 
 
 def _parse_line(line: str) -> tuple[str, Optional[str], Optional[list[str]]]:
