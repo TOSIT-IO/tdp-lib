@@ -78,7 +78,16 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            _print_operations(dao.get_operation(deployment_id, operation))
+            if operations := dao.get_operation(deployment_id, operation):
+                _print_operations(operations)
+            else:
+                click.echo(
+                    f'Operation "{operation}" not found for deployment {deployment_id}'
+                )
+                click.echo(
+                    "Either the deployment does not exist or the operation is not"
+                    + " found for the deployment."
+                )
             return
 
         # Print a specific deployment
