@@ -11,6 +11,7 @@ from tdp.cli.params import database_dsn_option
 from tdp.cli.utils import (
     print_deployment,
     print_object,
+    print_operations,
     print_table,
 )
 from tdp.core.entities.operation import OperationName
@@ -93,8 +94,20 @@ def browse(
                 except ValueError:
                     click.echo(f"Operation {operation} is not a valid operation name.")
                     return
-                if operations := dao.get_operations_by_name(deployment_id, operation):
-                    _print_operations(operations)
+                operations = dao.get_operations_by_name(deployment_id, operation)
+                if len(operations) > 1:
+                    click.secho(
+                        f'Multiple operations "{operations[0].operation}" found for '
+                        + f"deployment {deployment_id}:",
+                        bold=True,
+                    )
+                    print_operations(operations, filter_out=["logs"])
+                    click.echo(
+                        "\nUse the operation order to print a specific operation."
+                    )
+                    return
+                elif len(operations) == 1:
+                    _print_operation(operations[0])
                     return
             click.echo(
                 f'Operation "{operation}" not found for deployment {deployment_id}'
@@ -144,19 +157,6 @@ def _print_deployment(deployment: DeploymentModel) -> None:
         return
 
     print_deployment(deployment, filter_out=["logs"])
-
-
-def _print_operations(operations: list[OperationModel]) -> None:
-    """Print a list of operations in a human readable format.
-
-    Args:
-        operation: Operation to print.
-    """
-    # Print general operation infos
-    click.secho("Operation(s) details", bold=True)
-    for operation in operations:
-        _print_operation(operation)
-        click.echo("\n")
 
 
 def _print_operation(operation: OperationModel) -> None:
