@@ -240,10 +240,10 @@ class Dao:
         self._check_session()
         return self.session.get(DeploymentModel, id)
 
-    def get_operation(
+    def get_operations_by_name(
         self, deployment_id: int, operation_name: str
     ) -> list[OperationModel]:
-        """Get an operation.
+        """Get all operations for a deployment from their name.
 
         Args:
             deployment_id: The deployment ID.
