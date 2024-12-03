@@ -271,7 +271,9 @@ def test_operation(db_engine):
         session.commit()
     with Dao(db_engine) as dao:
         assert assert_equal_values_in_model(
-            dao.get_operation(deployment_id=1, operation_name="test_operation")[0],
+            dao.get_operations_by_name(
+                deployment_id=1, operation_name="test_operation"
+            )[0],
             OperationModel(
                 deployment_id=1,
                 operation_order=1,

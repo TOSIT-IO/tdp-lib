@@ -78,7 +78,7 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            if operations := dao.get_operation(deployment_id, operation):
+            if operations := dao.get_operations_by_name(deployment_id, operation):
                 _print_operations(operations)
             else:
                 click.echo(
