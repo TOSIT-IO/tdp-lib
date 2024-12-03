@@ -1,7 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Iterable
 from typing import Optional
 
 import click
@@ -15,7 +14,6 @@ from tdp.cli.utils import (
     print_table,
 )
 from tdp.core.entities.operation import OperationName
-from tdp.core.models import DeploymentModel, OperationModel
 from tdp.dao import Dao
 
 
@@ -60,112 +58,107 @@ def browse(
 ):
     """Browse deployments."""
     with Dao(db_engine) as dao:
-        # Print last deployment plan
+        if plan and last:
+            raise click.BadOptionUsage(
+                "--plan", "Cannot use --plan and --last together."
+            )
+        if deployment_id and (plan or last):
+            raise click.BadOptionUsage(
+                "deployment_id", "Cannot use deployment_id with --plan or --last."
+            )
+        # Print the planned deployment
         if plan:
-            deployment_plan = dao.get_planned_deployment()
-            if deployment_plan:
-                _print_deployment(deployment_plan)
-            else:
-                click.echo("No planned deployment found")
-                click.echo("Create a deployment plan using the `tdp plan` command")
+            browse_plan(dao)
             return
+        # Print the last deployment
         elif last:
-            deployment = dao.get_last_deployment()
-            if deployment:
-                _print_deployment(deployment)
-            else:
-                click.echo("No deployment found")
-                click.echo("Create a deployment plan using the `tdp plan` command")
+            browse_last(dao)
             return
-
-        # Print a specific operation
-        if deployment_id and operation:
-            # Try to parse the operation argument as an integer
-            try:
-                operation_order = int(operation)
-                if record := dao.get_operation(deployment_id, operation_order):
-                    _print_operation(record)
-                    return
-            # If the operation argument is not an integer, consider that it is an
-            # operation name
-            except ValueError:
-                try:
-                    OperationName.from_str(operation)
-                except ValueError:
-                    click.echo(f"Operation {operation} is not a valid operation name.")
-                    return
-                operations = dao.get_operations_by_name(deployment_id, operation)
-                if len(operations) > 1:
-                    click.secho(
-                        f'Multiple operations "{operations[0].operation}" found for '
-                        + f"deployment {deployment_id}:",
-                        bold=True,
-                    )
-                    print_operations(operations, filter_out=["logs"])
-                    click.echo(
-                        "\nUse the operation order to print a specific operation."
-                    )
-                    return
-                elif len(operations) == 1:
-                    _print_operation(operations[0])
-                    return
-            click.echo(
-                f'Operation "{operation}" not found for deployment {deployment_id}'
-            )
-            click.echo(
-                "Either the deployment does not exist or the operation is not"
-                + " found for the deployment."
-            )
-            return
-
         # Print a specific deployment
-        if deployment_id:
-            deployment = dao.get_deployment(deployment_id)
-            if deployment:
-                _print_deployment(deployment)
-            else:
-                click.echo(f"Deployment {deployment_id} does not exist.")
+        elif deployment_id and not operation:
+            browse_deployment(dao, deployment_id)
             return
-
+        # Print a specific operation
+        elif deployment_id and operation:
+            browse_operation(dao, deployment_id, operation)
+            return
         # Print all deployments
-        _print_deployments(dao.get_last_deployments(limit=limit, offset=offset))
+        else:
+            browse_deployments(dao, limit, offset)
 
 
-def _print_deployments(deployments: Iterable[DeploymentModel]) -> None:
-    """Print a list of deployments in a human readable format.
+def browse_plan(dao: Dao) -> None:
+    if deployment_plan := dao.get_planned_deployment():
+        print_deployment(deployment_plan, filter_out=["logs"])
+    else:
+        click.echo("No planned deployment found")
+        click.echo("Create a deployment plan using the `tdp plan` command")
 
-    Args:
-        deployments: List of deployments to print.
-    """
-    if not deployments:
+
+def browse_last(dao: Dao) -> None:
+    if last_deployment := dao.get_last_deployment():
+        print_deployment(last_deployment, filter_out=["logs"])
+    else:
         click.echo("No deployment found")
         click.echo("Create a deployment plan using the `tdp plan` command")
 
-    print_table(
-        [d.to_dict(filter_out=["options"]) for d in deployments],
-    )
+
+def browse_deployment(dao: Dao, deployment_id: int) -> None:
+    if deployment := dao.get_deployment(deployment_id):
+        print_deployment(deployment, filter_out=["logs"])
+    else:
+        click.echo(f"Deployment {deployment_id} does not exist.")
 
 
-def _print_deployment(deployment: DeploymentModel) -> None:
-    """Print a deployment in a human readable format.
+def browse_operation(dao: Dao, deployment_id: int, operation: str) -> None:
+    record = None
+    # Try to parse the operation argument as an integer
+    try:
+        operation_order = int(operation)
+        record = dao.get_operation(deployment_id, operation_order)
+    # If the operation argument is not an integer, consider that it is an
+    # operation name
+    except ValueError:
+        # Check if the operation name is valid
+        try:
+            OperationName.from_str(operation)
+        except ValueError as e:
+            raise click.BadParameter(
+                f"Operation {operation} is not a valid operation name."
+            ) from e
+        operations = dao.get_operations_by_name(deployment_id, operation)
+        if len(operations) == 1:
+            record = operations[0]
+        # If there are multiple operations with the given name, print them asking for a
+        # specific operation order
+        elif len(operations) > 1:
+            click.secho(
+                f'Multiple operations "{operations[0].operation}" found for '
+                + f"deployment {deployment_id}:",
+                bold=True,
+            )
+            print_operations(operations, filter_out=["logs"])
+            click.echo("\nUse the operation order to print a specific operation.")
+            return
+    if record:
+        print_object(record.to_dict(filter_out=["logs"]))
+        if record.logs:
+            click.secho("\nLogs", bold=True)
+            click.echo(str(record.logs, "utf-8"))
+    else:
+        click.echo(f'Operation "{operation}" not found for deployment {deployment_id}')
+        click.echo(
+            "Either the deployment does not exist or the operation is not"
+            + " found for the deployment."
+        )
 
-    Args:
-        deployment: Deployment to print.
-    """
-    if not deployment:
-        click.echo("Deployment does not exist.")
-        return
 
-    print_deployment(deployment, filter_out=["logs"])
-
-
-def _print_operation(operation: OperationModel) -> None:
-    """Print an operation in a human readable format.
-
-    Args:
-        operation: Operation to print.
-    """
-    print_object(operation.to_dict(filter_out=["logs"]))
-    if operation.logs:
-        click.secho("\nLogs", bold=True)
-        click.echo(str(operation.logs, "utf-8"))
+def browse_deployments(dao: Dao, limit: int, offset: int) -> None:
+    deployments = dao.get_last_deployments(limit=limit, offset=offset)
+    if len(deployments) > 0:
+        print_table(
+            [d.to_dict(filter_out=["options"]) for d in deployments],
+        )
+    else:
+        click.echo("No deployments found.")
+        click.echo("Create a deployment plan using the `tdp plan` command.")
