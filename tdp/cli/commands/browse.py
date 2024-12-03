@@ -88,6 +88,11 @@ def browse(
             # If the operation argument is not an integer, consider that it is an
             # operation name
             except ValueError:
+                try:
+                    OperationName.from_str(operation)
+                except ValueError:
+                    click.echo(f"Operation {operation} is not a valid operation name.")
+                    return
                 if operations := dao.get_operations_by_name(deployment_id, operation):
                     _print_operations(operations)
                     return
