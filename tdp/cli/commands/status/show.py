@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Iterable, Optional
 
 import click
 from sqlalchemy import Engine
+from tabulate import tabulate
 
 from tdp.cli.params import (
     collections_option,
@@ -22,7 +23,6 @@ from tdp.cli.params.status import (
 from tdp.cli.utils import (
     check_services_cleanliness,
     print_hosted_entity_status_log,
-    print_table,
 )
 from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 from tdp.core.variables import ClusterVariables
@@ -119,6 +119,9 @@ def show(
 
 
 def _print_sch_status_logs(sch_status: Iterable[SCHStatusLogModel]) -> None:
-    print_table(
-        [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],
+    click.echo(
+        tabulate(
+            [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],
+            headers="keys",
+        )
     )
