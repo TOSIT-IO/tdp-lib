@@ -11,6 +11,7 @@ import click
 from tabulate import tabulate
 
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel
@@ -47,45 +48,43 @@ def print_deployment(
 ) -> None:
     # Print general deployment infos
     click.secho("Deployment details", bold=True)
-    click.echo(print_object(deployment.to_dict(filter_out=filter_out)))
-
-    # Print deployment operations
-    click.secho("\nOperations", bold=True)
-    print_table(
-        [o.to_dict(filter_out=filter_out) for o in deployment.operations],
-    )
-
-
-def print_object(obj: dict) -> None:
-    """Print an object in a human readable format.
-
-    Args:
-        obj: Object to print.
-    """
     click.echo(
         tabulate(
-            obj.items(),
+            deployment.to_dict(filter_out=filter_out).items(),
             tablefmt="plain",
         )
     )
 
+    # Print deployment operations
+    click.secho("\nOperations", bold=True)
+    print_operations(
+        deployment.operations, filter_out=[*(filter_out or []), "deployment_id"]
+    )
 
-def print_table(rows) -> None:
-    """Print a list of rows in a human readable format.
+
+def print_operations(
+    operations: Iterable[OperationModel], /, *, filter_out: Optional[list[str]] = None
+) -> None:
+    """Print a list of operations in a human readable format.
 
     Args:
-        rows: List of rows to print.
+        operations: List of operations to print.
     """
     click.echo(
         tabulate(
-            rows,
+            [o.to_dict(filter_out=filter_out) for o in operations],
             headers="keys",
         )
     )
 
 
 def print_hosted_entity_status_log(sch_status: Iterable[HostedEntityStatus]) -> None:
-    print_table([status.export_tabulate() for status in sch_status])
+    click.echo(
+        tabulate(
+            [status.export_tabulate() for status in sch_status],
+            headers="keys",
+        )
+    )
 
 
 def _parse_line(line: str) -> tuple[str, Optional[str], Optional[list[str]]]:

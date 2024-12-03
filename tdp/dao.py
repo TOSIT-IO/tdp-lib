@@ -240,10 +240,10 @@ class Dao:
         self._check_session()
         return self.session.get(DeploymentModel, id)
 
-    def get_operation(
+    def get_operations_by_name(
         self, deployment_id: int, operation_name: str
     ) -> list[OperationModel]:
-        """Get an operation.
+        """Get all operations for a deployment from their name.
 
         Args:
             deployment_id: The deployment ID.
@@ -253,6 +253,21 @@ class Dao:
             self.session.query(OperationModel)
             .filter_by(deployment_id=deployment_id, operation=operation_name)
             .all()
+        )
+
+    def get_operation(
+        self, deployment_id: int, operation_order: int
+    ) -> Optional[OperationModel]:
+        """Get an operation by deployment ID and operation order.
+
+        Args:
+            deployment_id: The deployment ID.
+            operation_order: The operation order.
+        """
+        return (
+            self.session.query(OperationModel)
+            .filter_by(deployment_id=deployment_id, operation_order=operation_order)
+            .one_or_none()
         )
 
     def get_planned_deployment(self) -> Optional[DeploymentModel]:
@@ -272,7 +287,7 @@ class Dao:
 
     def get_last_deployments(
         self, limit: Optional[int] = None, offset: Optional[int] = None
-    ) -> Iterable[DeploymentModel]:
+    ) -> list[DeploymentModel]:
         """Get last deployments in ascending order.
 
         Use limit and offset to paginate the results.
