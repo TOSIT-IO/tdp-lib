@@ -110,6 +110,8 @@ def browse(
             deployment = dao.get_deployment(deployment_id)
             if deployment:
                 _print_deployment(deployment)
+            else:
+                click.echo(f"Deployment {deployment_id} does not exist.")
             return
 
         # Print all deployments
