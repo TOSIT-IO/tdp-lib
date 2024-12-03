@@ -11,6 +11,7 @@ import click
 from tabulate import tabulate
 
 from tdp.core.entities.hosted_entity_status import HostedEntityStatus
+from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel
@@ -51,8 +52,19 @@ def print_deployment(
 
     # Print deployment operations
     click.secho("\nOperations", bold=True)
+    print_operations(deployment.operations, filter_out=filter_out)
+
+
+def print_operations(
+    operations: Iterable[OperationModel], /, *, filter_out: Optional[list[str]] = None
+) -> None:
+    """Print a list of operations in a human readable format.
+
+    Args:
+        operations: List of operations to print.
+    """
     print_table(
-        [o.to_dict(filter_out=filter_out) for o in deployment.operations],
+        [o.to_dict(filter_out=filter_out) for o in operations],
     )
 
 
