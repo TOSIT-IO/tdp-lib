@@ -255,6 +255,21 @@ class Dao:
             .all()
         )
 
+    def get_operation(
+        self, deployment_id: int, operation_order: int
+    ) -> Optional[OperationModel]:
+        """Get an operation by deployment ID and operation order.
+
+        Args:
+            deployment_id: The deployment ID.
+            operation_order: The operation order.
+        """
+        return (
+            self.session.query(OperationModel)
+            .filter_by(deployment_id=deployment_id, operation_order=operation_order)
+            .one_or_none()
+        )
+
     def get_planned_deployment(self) -> Optional[DeploymentModel]:
         self._check_session()
         return (
