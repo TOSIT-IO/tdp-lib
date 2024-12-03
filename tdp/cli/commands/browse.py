@@ -13,6 +13,7 @@ from tdp.cli.utils import (
     print_object,
     print_table,
 )
+from tdp.core.entities.operation import OperationName
 from tdp.core.models import DeploymentModel, OperationModel
 from tdp.dao import Dao
 
@@ -78,16 +79,25 @@ def browse(
 
         # Print a specific operation
         if deployment_id and operation:
-            if operations := dao.get_operations_by_name(deployment_id, operation):
-                _print_operations(operations)
-            else:
-                click.echo(
-                    f'Operation "{operation}" not found for deployment {deployment_id}'
-                )
-                click.echo(
-                    "Either the deployment does not exist or the operation is not"
-                    + " found for the deployment."
-                )
+            # Try to parse the operation argument as an integer
+            try:
+                operation_order = int(operation)
+                if record := dao.get_operation(deployment_id, operation_order):
+                    _print_operation(record)
+                    return
+            # If the operation argument is not an integer, consider that it is an
+            # operation name
+            except ValueError:
+                if operations := dao.get_operations_by_name(deployment_id, operation):
+                    _print_operations(operations)
+                    return
+            click.echo(
+                f'Operation "{operation}" not found for deployment {deployment_id}'
+            )
+            click.echo(
+                "Either the deployment does not exist or the operation is not"
+                + " found for the deployment."
+            )
             return
 
         # Print a specific deployment
@@ -138,8 +148,17 @@ def _print_operations(operations: list[OperationModel]) -> None:
     # Print general operation infos
     click.secho("Operation(s) details", bold=True)
     for operation in operations:
-        click.echo(print_object(operation.to_dict()))
-        # Print operation records
-        if operation.logs:
-            click.secho("\nOperations", bold=True)
-            click.echo(str(operation.logs, "utf-8"))
+        _print_operation(operation)
+        click.echo("\n")
+
+
+def _print_operation(operation: OperationModel) -> None:
+    """Print an operation in a human readable format.
+
+    Args:
+        operation: Operation to print.
+    """
+    print_object(operation.to_dict(filter_out=["logs"]))
+    if operation.logs:
+        click.secho("\nLogs", bold=True)
+        click.echo(str(operation.logs, "utf-8"))
