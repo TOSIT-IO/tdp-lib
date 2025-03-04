@@ -339,7 +339,9 @@ def validate_dag_nodes(
                 previous_action = actions_order[
                     actions_order.index(operation.name.action) - 1
                 ]
-                previous_service_action = f"{operation.name.service}_{previous_action}"
+                previous_service_action = OperationName(
+                    operation.name.entity, previous_action
+                )
                 previous_service_action_found = False
                 # Loop over dependency and check if the service previous action is found
                 for dependency in operation.depends_on:
@@ -348,7 +350,7 @@ def validate_dag_nodes(
                 if not previous_service_action_found:
                     c_warning(
                         f"Operation '{operation_name}' is a service action and has to depend on "
-                        f"'{operation.name.service}_{previous_action}'"
+                        f"'{previous_service_action}'"
                     )
 
         # Operations tagged with the noop flag should not have a playbook defined in the collection
