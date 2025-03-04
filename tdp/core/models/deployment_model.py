@@ -50,14 +50,12 @@ class UnsupportedDeploymentTypeError(Exception):
 
 
 class MissingOperationError(Exception):
-
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
         super().__init__(f"Operation {operation_name} not found.")
 
 
 class MissingHostForOperationError(Exception):
-
     def __init__(self, operation: Operation, host_name: str):
         self.operation = operation
         self.host_name = host_name
@@ -356,8 +354,13 @@ class DeploymentModel(BaseModel):
         dag = Dag(collections)
         reconfigure_operations_sorted = list(
             map(
-                lambda x: (dag.node_to_operation(x[0], restart=True), x[1]),
-                dag.topological_sort_key(operation_hosts, key=lambda x: x[0]),
+                lambda x: (
+                    dag.node_to_operation(x.operation_name, restart=True),
+                    x.host_name,
+                ),
+                dag.topological_sort_key(
+                    operation_hosts, key=lambda x: x.operation_name
+                ),
             )
         )
 
@@ -513,5 +516,5 @@ def _get_reconfigure_operation_hosts(
     # Sort by hosts to improve readability
     return sorted(
         operation_hosts,
-        key=lambda x: f"{x[0]}_{x[1]}",  # order by <operation-name>_<host-name>
+        key=lambda x: f"{x.operation_name}_{x.host_name}",
     )
