@@ -132,7 +132,7 @@ class Collections:
             operations.add(operation)
             # 2. Forge restart and stop operations from start operations
             if operation.name.action == "start":
-                restart_operation_name = operation.name.clone("restart")
+                restart_operation_name = OperationName(operation.name.entity, "restart")
                 operations.add(
                     ForgedDagOperation.create(
                         operation_name=restart_operation_name,
@@ -140,7 +140,7 @@ class Collections:
                         playbook=self._playbooks.get(str(restart_operation_name)),
                     )
                 )
-                stop_operation_name = operation.name.clone("stop")
+                stop_operation_name = OperationName(operation.name.entity, "stop")
                 operations.add(
                     ForgedDagOperation.create(
                         operation_name=stop_operation_name,
