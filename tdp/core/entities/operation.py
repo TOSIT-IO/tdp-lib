@@ -61,17 +61,6 @@ class OperationName:
         entity = parse_entity_name(entity_name)
         return cls(entity, action_name)
 
-    def clone(self, action: str) -> OperationName:
-        """Clone the operation name with a new action.
-
-        Args:
-            action: The new action name.
-
-        Returns:
-            A new OperationName object with the same entity and the new action.
-        """
-        return OperationName(entity=self.entity, action=action)
-
     def __repr__(self):
         return self.name
 
@@ -330,7 +319,6 @@ T = TypeVar("T", bound=Operation)
 
 
 class Operations(MutableMapping[Union[OperationName, str], Operation]):
-
     def __init__(self) -> None:
         self._inner = {}
 
