@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Optional
 from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
-from tdp.core.entities.operation import OperationNoop, PlaybookOperation
+from tdp.core.entities.operation import OperationName, OperationNoop, PlaybookOperation
 from tdp.core.models import (
     DeploymentModel,
     NothingToReconfigureError,
@@ -142,7 +142,6 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
     def _process_operation_fn(
         self, operation_rec: OperationModel
     ) -> Optional[list[SCHStatusLogModel]]:
-
         operation = self._collections.operations[operation_rec.operation]
 
         # Run the operation
@@ -175,7 +174,9 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
             if isinstance(operation, PlaybookOperation)
             else None
         )
-        if self._cluster_status.is_sc_stale(entity_name, hosts=hosts):
+        if is_reconfigure_operation(
+            operation.name
+        ) and self._cluster_status.is_sc_stale(entity_name, hosts=hosts):
             # Get the first reconfigure operation if any
             if self._reconfigure_operations:
                 try:
@@ -237,3 +238,14 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
                 self._reconfigure_operations.pop(operation_rec.operation, None)
 
         return sch_status_logs
+
+
+def is_reconfigure_operation(operation_name: OperationName) -> bool:
+    """Check if an operation is a reconfigure operation.
+
+    Hence, check if its action is config or restart.
+    """
+    return operation_name.action in [
+        "config",
+        "restart",
+    ]
