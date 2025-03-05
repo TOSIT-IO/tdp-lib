@@ -10,7 +10,7 @@ from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 from ansible.vars.manager import VariableManager
 
-from tdp.core.variables import Variables
+from tdp.core.variables.variables import Variables
 
 _DummyInventory = tuple[DataLoader, InventoryManager, VariableManager, Path]
 

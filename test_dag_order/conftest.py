@@ -14,13 +14,14 @@ from typing import TYPE_CHECKING, Any, cast
 import pytest
 from sqlalchemy import Engine, create_engine
 
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.dag import Dag
-from tdp.core.deployment import DeploymentRunner
+from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.entities.operation import OperationName
-from tdp.core.models import DeploymentModel, init_database
-from tdp.core.variables import ClusterVariables
+from tdp.core.models.base_model import init_database
+from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.variables.cluster_variables import ClusterVariables
 from tdp.dao import Dao
 from tests.unit.core.deployment.test_deployment_runner import MockExecutor
 

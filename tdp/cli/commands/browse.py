@@ -8,7 +8,7 @@ import click
 from sqlalchemy import Engine
 from tabulate import tabulate
 
-from tdp.cli.params import database_dsn_option
+from tdp.cli.params.database_dsn_option import database_dsn_option
 from tdp.cli.utils import (
     print_deployment,
     print_operations,

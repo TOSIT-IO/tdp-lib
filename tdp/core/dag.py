@@ -30,7 +30,7 @@ from tdp.core.entities.operation import (
 )
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
     from tdp.core.entities.operation import Operation
 
 T = TypeVar("T")

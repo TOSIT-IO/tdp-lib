@@ -9,12 +9,13 @@ from typing import TYPE_CHECKING
 import click
 from tabulate import tabulate
 
-from tdp.cli.params import collections_option, hosts_option
+from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.hosts_option import hosts_option
 from tdp.core.dag import Dag
 from tdp.core.entities.operation import Operation, PlaybookOperation
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 @click.command()

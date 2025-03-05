@@ -3,12 +3,12 @@
 
 import click
 
-from tdp.cli.commands.plan.dag import dag
-from tdp.cli.commands.plan.edit import edit
-from tdp.cli.commands.plan.import_file import import_file
-from tdp.cli.commands.plan.ops import ops
-from tdp.cli.commands.plan.reconfigure import reconfigure
-from tdp.cli.commands.plan.resume import resume
+from .dag import dag
+from .edit import edit
+from .import_file import import_file
+from .ops import ops
+from .reconfigure import reconfigure
+from .resume import resume
 
 
 @click.group()

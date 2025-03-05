@@ -3,9 +3,9 @@
 
 import click
 
-from tdp.cli.commands.status.edit import edit
-from tdp.cli.commands.status.generate_stales import generate_stales
-from tdp.cli.commands.status.show import show
+from .edit import edit
+from .generate_stales import generate_stales
+from .show import show
 
 
 @click.group()

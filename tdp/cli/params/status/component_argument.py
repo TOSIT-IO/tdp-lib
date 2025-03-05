@@ -9,7 +9,7 @@ import click
 from click.decorators import FC
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 def _check_component(

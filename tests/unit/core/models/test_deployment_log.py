@@ -9,16 +9,17 @@ import lorem
 import pytest
 from sqlalchemy import Engine
 
-from tdp.core.collections import (
-    Collections,
-)
+from tdp.core.collections.collections import Collections
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.models.deployment_model import (
     DeploymentModel,
-    DeploymentTypeEnum,
     NothingToResumeError,
 )
-from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.enums import (
+    DeploymentStateEnum,
+    DeploymentTypeEnum,
+    OperationStateEnum,
+)
 from tdp.core.models.operation_model import OperationModel
 from tests.conftest import create_session, generate_collection_at_path
 

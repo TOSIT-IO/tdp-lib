@@ -15,7 +15,7 @@ from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.service_variables import ServiceVariables
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
     from tdp.core.entities.hosted_entity import HostedEntity
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.repository.repository import Repository

@@ -7,7 +7,9 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy.engine import Engine
 
-from tdp.core.models import DeploymentModel, OperationModel, SCHStatusLogModel
+from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.models.operation_model import OperationModel
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 from tests.conftest import create_session
 
 logger = logging.getLogger(__name__)

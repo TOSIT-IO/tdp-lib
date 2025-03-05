@@ -8,21 +8,20 @@ from typing import TYPE_CHECKING, Optional
 import click
 from sqlalchemy import Engine
 
-from tdp.cli.params import (
-    collections_option,
-    database_dsn_option,
-    validate_option,
-    vars_option,
-)
-from tdp.cli.params.status import component_argument_option, service_argument_option
+from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.database_dsn_option import database_dsn_option
+from tdp.cli.params.status.component_argument import component_argument_option
+from tdp.cli.params.status.service_argument import service_argument_option
+from tdp.cli.params.validate_option import validate_option
+from tdp.cli.params.vars_option import vars_option
 from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
-from tdp.core.variables import ClusterVariables
+from tdp.core.variables.cluster_variables import ClusterVariables
 from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 @click.command()

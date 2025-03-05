@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 from click.decorators import FC
 
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 
 
 def _collections_from_paths(
