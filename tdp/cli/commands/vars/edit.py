@@ -8,20 +8,18 @@ from typing import Optional
 import click
 from sqlalchemy import Engine
 
-from tdp.cli.params import (
-    collections_option,
-    database_dsn_option,
-    validate_option,
-    vars_option,
-)
-from tdp.core.collections import Collections
+from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.database_dsn_option import database_dsn_option
+from tdp.cli.params.validate_option import validate_option
+from tdp.cli.params.vars_option import vars_option
+from tdp.core.collections.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.entities.entity_name import (
     ServiceComponentName,
     parse_entity_name,
 )
 from tdp.core.repository.repository import EmptyCommit
-from tdp.core.variables import ClusterVariables
+from tdp.core.variables.cluster_variables import ClusterVariables
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
 from tdp.dao import Dao
 
