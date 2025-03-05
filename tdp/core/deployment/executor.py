@@ -28,7 +28,6 @@ class Executor:
             ExecutableNotFoundError: If the ansible-playbook command is not found in PATH.
         """
         # TODO configurable via config file
-        self._rundir = run_directory
         self._dry = dry
 
         # Resolve ansible-playbook command
@@ -57,7 +56,6 @@ class Executor:
                     command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    cwd=self._rundir,
                     universal_newlines=True,
                 )
                 if res.stdout is None:

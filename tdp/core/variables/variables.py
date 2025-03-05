@@ -10,10 +10,8 @@ from typing import Optional
 from weakref import proxy
 
 import yaml
-from ansible.parsing.utils.yaml import from_yaml
-from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.utils.vars import merge_hash
 
+from tdp.core.ansible_loader import AnsibleLoader
 from tdp.core.types import PathLike
 
 
@@ -90,7 +88,7 @@ class VariablesDict(MutableMapping):
         Args:
             mapping: Mapping to merge.
         """
-        self._content = merge_hash(self._content, mapping)
+        self._content = AnsibleLoader.load_merge_hash()(self._content, mapping)
 
     def __getitem__(self, key):
         return self._content.__getitem__(key)
@@ -131,7 +129,10 @@ class _VariablesIOWrapper(VariablesDict):
         self._file_path = path
         self._file_descriptor = open(self._file_path, mode or "r+")
         # Initialize the content of the variables file
-        super().__init__(content=from_yaml(self._file_descriptor) or {}, name=path.name)
+        super().__init__(
+            content=AnsibleLoader.load_from_yaml()(self._file_descriptor) or {},
+            name=path.name,
+        )
 
     def __enter__(self) -> _VariablesIOWrapper:
         return proxy(self)
@@ -152,7 +153,12 @@ class _VariablesIOWrapper(VariablesDict):
         # Write the content of the variables file on disk
         self._file_descriptor.seek(0)
         self._file_descriptor.write(
-            yaml.dump(self._content, Dumper=AnsibleDumper, sort_keys=False, width=1000)
+            yaml.dump(
+                self._content,
+                Dumper=AnsibleLoader.load_AnsibleDumper(),
+                sort_keys=False,
+                width=1000,
+            )
         )
         self._file_descriptor.truncate()
         self._file_descriptor.flush()
