@@ -6,10 +6,9 @@ This module contains base tests that will be used to generate tests for each rul
 rules directory of each collection.
 """
 
-
 from collections.abc import Iterable
 
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 from test_dag_order.helpers import resolve_components
 
 

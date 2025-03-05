@@ -10,13 +10,13 @@ from typing import Any, TextIO, Union
 
 import yaml
 
-from tdp.core.collections import Collections
 from tdp.core.collections.collection_reader import (
     CollectionReader,
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
 )
+from tdp.core.collections.collections import Collections
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.entities.entity_name import (
     ServiceName,

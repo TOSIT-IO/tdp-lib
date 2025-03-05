@@ -7,7 +7,7 @@ from typing import Optional
 import click
 from click.decorators import FC
 
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 from tdp.core.variables.cluster_variables import ClusterVariables
 
 

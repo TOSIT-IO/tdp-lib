@@ -12,12 +12,14 @@ from typing import TYPE_CHECKING, Optional
 import click
 from ansible.utils.vars import merge_hash
 
-from tdp.cli.params import collections_option, vars_option
+from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.vars_option import vars_option
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
-from tdp.core.variables import ClusterVariables, Variables
+from tdp.core.variables.cluster_variables import ClusterVariables
+from tdp.core.variables.variables import Variables
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 @click.command()

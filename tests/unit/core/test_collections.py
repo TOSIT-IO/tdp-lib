@@ -3,7 +3,7 @@
 
 import pytest
 
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 from tdp.core.entities.operation import DagOperation, OperationName
 from tests.conftest import generate_collection_at_path
 

@@ -3,8 +3,8 @@
 
 import click
 
-from tdp.cli.commands.vars.edit import edit
-from tdp.cli.commands.vars.validate import validate
+from .edit import edit
+from .validate import validate
 
 
 @click.group()
