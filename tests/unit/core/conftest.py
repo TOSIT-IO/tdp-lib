@@ -4,9 +4,9 @@
 import pytest
 
 from tdp.core.cluster_status import ClusterStatus
-from tdp.core.collections import Collections
+from tdp.core.collections.collections import Collections
 from tdp.core.dag import Dag
-from tdp.core.variables import ClusterVariables
+from tdp.core.variables.cluster_variables import ClusterVariables
 from tests.conftest import generate_collection_at_path
 
 

@@ -11,11 +11,11 @@ from typing import TYPE_CHECKING, Optional
 import click
 import networkx as nx
 
-from tdp.cli.params import collections_option
+from tdp.cli.params.collections_option import collections_option
 from tdp.core.dag import Dag
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 @click.command()

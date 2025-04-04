@@ -14,7 +14,7 @@ from tdp.core.entities.hosted_entity_status import HostedEntityStatus
 from tdp.core.models.operation_model import OperationModel
 
 if TYPE_CHECKING:
-    from tdp.core.models import DeploymentModel
+    from tdp.core.models.deployment_model import DeploymentModel
     from tdp.core.variables.cluster_variables import ClusterVariables
 
 
