@@ -47,7 +47,7 @@ Install the library:
 python -m venv .venv
 source .venv/bin/activate
 # Install the dependencies
-pip install "tdp-lib[visualization]@https://github.com/TOSIT-IO/tdp-lib/tarball/master"
+pip install "tdp-lib[visualization]@https://github.com/TOSIT-IO/tdp-lib/tarball/1.0.0"
 # Initialize the database and tdp_vars
 tdp init
 ```
