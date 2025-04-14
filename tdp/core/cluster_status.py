@@ -25,8 +25,8 @@ from tdp.core.models.sch_status_log_model import (
 )
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
-    from tdp.core.variables import ClusterVariables
+    from tdp.core.collections.collections import Collections
+    from tdp.core.variables.cluster_variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
 

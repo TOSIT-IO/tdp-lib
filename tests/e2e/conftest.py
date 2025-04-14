@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from sqlalchemy import create_engine
 
 from tdp.cli.commands.init import init
-from tdp.core.models import BaseModel
+from tdp.core.models.base_model import BaseModel
 from tests.conftest import generate_collection_at_path
 
 

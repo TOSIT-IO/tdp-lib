@@ -1,12 +1,18 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from sqlalchemy.orm import DeclarativeBase
 
 from tdp.core.utils import BaseEnum
+
+if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
 
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 
@@ -66,3 +72,7 @@ class BaseModel(DeclarativeBase):
         elif value is None:
             return ""
         return str(value)
+
+
+def init_database(engine: Engine) -> None:
+    BaseModel.metadata.create_all(engine)

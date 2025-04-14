@@ -9,13 +9,14 @@ from typing import List, Optional
 import pytest
 from sqlalchemy.engine import Engine
 
-from tdp.core.models import (
-    DeploymentModel,
-    OperationModel,
-    SCHStatusLogModel,
+from tdp.core.models.deployment_model import DeploymentModel
+from tdp.core.models.enums import (
+    DeploymentStateEnum,
+    OperationStateEnum,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.operation_model import OperationModel
+from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 from tdp.dao import Dao
 from tests.conftest import assert_equal_values_in_model, create_session
 

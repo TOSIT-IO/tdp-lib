@@ -14,19 +14,18 @@ from tdp.core.constants import OPERATION_SLEEP_NAME
 from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.hosted_entity import create_hosted_entity
 from tdp.core.entities.operation import OperationName, OperationNoop, PlaybookOperation
-from tdp.core.models import (
-    DeploymentModel,
-    NothingToReconfigureError,
-    OperationModel,
+from tdp.core.models.deployment_model import DeploymentModel, NothingToReconfigureError
+from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.operation_model import OperationModel
+from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
-from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
-    from tdp.core.collections import Collections
-    from tdp.core.variables import ClusterVariables
+    from tdp.core.collections.collections import Collections
+    from tdp.core.variables.cluster_variables import ClusterVariables
 
 logger = logging.getLogger(__name__)
 
