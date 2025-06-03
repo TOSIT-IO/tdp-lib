@@ -43,7 +43,7 @@ jobs:
       - name: Check code linting with Ruff
         uses: chartboost/ruff-action@v1
         with:
-          version: 0.0.285
+          version: 0.11.12
 
   pytest:
     name: Run pytest
