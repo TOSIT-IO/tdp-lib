@@ -62,7 +62,7 @@ class TDPLibDagNodeModel(BaseModel):
         noop: Whether the operation is a noop.
     """
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="ignore", frozen=True)
 
     name: str
     depends_on: frozenset[str] = frozenset()

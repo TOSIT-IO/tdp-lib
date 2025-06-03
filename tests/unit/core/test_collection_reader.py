@@ -11,6 +11,7 @@ from tdp.core.collections.collection_reader import (
     MissingMandatoryDirectoryError,
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
+    TDPLibDagNodeModel,
     read_hosts_from_playbook,
 )
 from tdp.core.constants import (
@@ -145,12 +146,12 @@ def test_collection_reader_read_dag_nodes(mock_empty_collection_reader: Path):
     - s1_c1_a
 """
     )
-    dag_nodes = list(collection_reader.read_dag_nodes())
-    assert len(dag_nodes) == 2
-    assert dag_nodes[0].name == "s1_c1_a"
-    assert dag_nodes[0].depends_on == frozenset({"sx_cx_a"})
-    assert dag_nodes[1].name == "s2_c2_a"
-    assert dag_nodes[1].depends_on == frozenset({"s1_c1_a"})
+    assert set(collection_reader.read_dag_nodes()) == set(
+        [
+            TDPLibDagNodeModel(name="s1_c1_a", depends_on=frozenset(["sx_cx_a"])),
+            TDPLibDagNodeModel(name="s2_c2_a", depends_on=frozenset(["s1_c1_a"])),
+        ]
+    )
 
 
 def test_collection_reader_read_dag_nodes_empty_file(
