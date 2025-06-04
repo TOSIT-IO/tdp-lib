@@ -4,6 +4,7 @@
 import click
 
 from tdp.cli.commands.vars.edit import edit
+from tdp.cli.commands.vars.update import update
 from tdp.cli.commands.vars.validate import validate
 
 
@@ -15,3 +16,4 @@ def vars():
 
 vars.add_command(edit)
 vars.add_command(validate)
+vars.add_command(update)
