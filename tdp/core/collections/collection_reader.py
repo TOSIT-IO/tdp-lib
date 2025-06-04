@@ -21,6 +21,8 @@ from tdp.core.constants import (
 )
 from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
+from tdp.core.repository.git_repository import GitRepository
+from tdp.core.repository.repository import NotARepository, Repository
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
@@ -87,6 +89,7 @@ class CollectionReader:
         self,
         path: PathLike,
         inventory_reader: Optional[InventoryReader] = None,
+        repository_class: Optional[type[Repository]] = None,
     ):
         """Initialize a collection.
 
@@ -184,6 +187,31 @@ class CollectionReader:
             except InvalidSchemaError as e:
                 logger.warning(f"{e}. Ignoring schema.")
         return schemas
+
+    def read_galaxy_version(self) -> Optional[str]:
+        """Read the galaxy version from MANIFEST.json file in the collection root.
+
+        Returns:
+            The galaxy version if it exists, otherwise None.
+        """
+        manifest_path = self._path / "MANIFEST.json"
+        if not manifest_path.exists():
+            return None
+        try:
+            with manifest_path.open("r") as fd:
+                import json
+
+                manifest = json.load(fd)
+                return manifest.get("collection_info.version")
+        except (json.JSONDecodeError, FileNotFoundError) as e:
+            logger.error(f"Error reading galaxy version from {manifest_path}: {e}")
+            return None
+
+    def get_repository(self) -> Optional[GitRepository]:
+        try:
+            return GitRepository(self._path)
+        except NotARepository:
+            return None
 
     def _check_collection_structure(self, path: Path) -> None:
         """Check the structure of a collection.

@@ -15,6 +15,7 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
+from tdp.cli.params.overrides_option import overrides_option
 from tdp.core.models import init_database
 from tdp.core.variables import ClusterVariables
 
@@ -23,14 +24,7 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@click.option(
-    "--overrides",
-    envvar="TDP_OVERRIDES",
-    required=False,
-    type=click.Path(exists=True, resolve_path=True, path_type=Path),
-    multiple=True,
-    help="Path to TDP variables overrides. Can be used multiple times. Last one takes precedence.",
-)
+@overrides_option
 @collections_option
 @database_dsn_option
 @validate_option

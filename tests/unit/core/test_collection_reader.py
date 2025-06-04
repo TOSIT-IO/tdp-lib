@@ -1,6 +1,8 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -162,3 +164,42 @@ def test_collection_reader_read_dag_nodes_empty_file(
     dag_file.write_text("")
     with pytest.raises(ValidationError):
         list(collection_reader.read_dag_nodes())
+
+
+# Tests for CollectionReader.read_galaxy_version
+
+
+def test_read_galaxy_version_no_manifest(mock_empty_collection_reader: Path):
+    """If MANIFEST.json doesn't exist, read_galaxy_version returns None."""
+    cr = CollectionReader(mock_empty_collection_reader)
+    assert cr.read_galaxy_version() is None
+
+
+def test_read_galaxy_version_missing_key(mock_empty_collection_reader: Path):
+    """If MANIFEST.json exists but lacks 'collection_info.version', return None."""
+    manifest = mock_empty_collection_reader / "MANIFEST.json"
+    manifest.write_text(json.dumps({"something": "else"}))
+
+    cr = CollectionReader(mock_empty_collection_reader)
+    assert cr.read_galaxy_version() is None
+
+
+def test_read_galaxy_version_valid(mock_empty_collection_reader: Path):
+    """If MANIFEST.json contains 'collection_info.version', return its value."""
+    manifest = mock_empty_collection_reader / "MANIFEST.json"
+    manifest.write_text(json.dumps({"collection_info.version": "5.6.7"}))
+
+    cr = CollectionReader(mock_empty_collection_reader)
+    assert cr.read_galaxy_version() == "5.6.7"
+
+
+def test_read_galaxy_version_invalid_json(mock_empty_collection_reader: Path, caplog):
+    """If MANIFEST.json contains invalid JSON, log error and return None."""
+    manifest = mock_empty_collection_reader / "MANIFEST.json"
+    manifest.write_text("{invalid: json,}")
+    caplog.set_level(logging.ERROR)
+
+    cr = CollectionReader(mock_empty_collection_reader)
+    result = cr.read_galaxy_version()
+    assert result is None
+    assert any("Error reading galaxy version" in r.message for r in caplog.records)

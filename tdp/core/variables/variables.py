@@ -76,6 +76,10 @@ class VariablesDict(MutableMapping):
         """Name of the variables file."""
         return self._name
 
+    def clear(self) -> None:
+        """Empty the variable dict."""
+        self._content = {}
+
     def copy(self) -> dict:
         """Copy the content of the variables file.
 

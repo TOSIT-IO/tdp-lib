@@ -4,11 +4,12 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections import OrderedDict
 from collections.abc import Generator, Iterable
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
 from tdp.core.types import PathLike
@@ -78,11 +79,16 @@ class ServiceVariables:
         return self.repository.path
 
     def update_from_dir(
-        self, input_dir: PathLike, /, *, validation_message: str
+        self,
+        dirs: Union[PathLike, Iterable[PathLike]],
+        /,
+        *,
+        validation_message: str,
+        clear: bool = False,
     ) -> None:
-        """Update the service variables from an input directory.
+        """Update the service variables from one or more input directories.
 
-        Input variables are merged with the existing ones. If a variable file is not
+        Input files are merged with the existing ones. If a variable file is not already
         present in the repository, it is created. If a variable file is present in the
         repository but not in the input directory, it is not modified.
 
@@ -90,19 +96,34 @@ class ServiceVariables:
         validation message.
 
         Args:
-            message: Validation message to use for the repository.
-            input_dir: Path to the directory containing the variables files to import.
+            dirs: One or more paths to the directories containing the variables files to
+              import.
+            validation_message: Validation message to use for the repository.
+            erase: Remove existing variables inside the file before importing.
         """
-        input_file_paths = list(Path(input_dir).glob("*" + YML_EXTENSION))
-        # Open corresponding files in the repository.
-        files_to_open = (input_file_path.name for input_file_path in input_file_paths)
+        # Convert input dirs to a list of Path
+        if isinstance(dirs, (str, os.PathLike)):
+            input_dirs = [Path(dirs)]
+        else:
+            input_dirs = [Path(path) for path in dirs]
+
+        # Group list of input files by their file name
+        input_files: dict[str, list[Path]] = dict()
+        for input_dir in input_dirs:
+            for input_file in list(input_dir.glob("*" + YML_EXTENSION)):
+                input_files.setdefault(input_file.name, []).append(input_file)
+
+        # Open the files to update (eventually creating the ones missing) and perform
+        #   the update
         with self.open_files(
-            files_to_open, validation_message=validation_message, create_if_missing=True
+            input_files, validation_message=validation_message, create_if_missing=True
         ) as files:
-            # Merge the input files into the repository files.
-            for input_file_path in input_file_paths:
-                with Variables(input_file_path).open("r") as input_file:
-                    files[input_file_path.name].merge(input_file)
+            for file_name, input_file_paths in input_files.items():
+                if clear:
+                    files[file_name].clear()
+                for input_file_path in input_file_paths:
+                    with Variables(input_file_path).open("r") as input_file:
+                        files[file_name].merge(input_file)
 
     @contextmanager
     def open_files(
