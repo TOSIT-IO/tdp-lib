@@ -10,9 +10,7 @@ import pytest
 
 from tdp.core.deployment.deployment_runner import DeploymentRunner
 from tdp.core.deployment.executor import Executor
-from tdp.core.models import (
-    DeploymentModel,
-)
+from tdp.core.models.deployment_model import DeploymentModel
 from tdp.core.models.enums import (
     DeploymentStateEnum,
     DeploymentTypeEnum,
@@ -21,9 +19,9 @@ from tdp.core.models.enums import (
 
 if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
     from tdp.core.dag import Dag
-    from tdp.core.variables import ClusterVariables
+    from tdp.core.variables.cluster_variables import ClusterVariables
 
 
 class MockExecutor(Executor):

@@ -22,8 +22,8 @@ from tdp.core.constants import (
 from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.types import PathLike
-from tdp.core.variables.schema import ServiceCollectionSchema
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
+from tdp.core.variables.schema.service_collection_schema import ServiceCollectionSchema
 
 try:
     from yaml import CLoader as Loader

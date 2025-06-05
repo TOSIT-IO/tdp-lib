@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
 from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
-from tdp.core.variables import ClusterVariables
+from tdp.core.variables.cluster_variables import ClusterVariables
 
 if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
     from tdp.core.deployment.executor import Executor
-    from tdp.core.models import DeploymentModel, OperationModel
+    from tdp.core.models.deployment_model import DeploymentModel
+    from tdp.core.models.operation_model import OperationModel
 
 logger = logging.getLogger(__name__)
 

@@ -9,17 +9,15 @@ from typing import TYPE_CHECKING
 import click
 from sqlalchemy import Engine
 
-from tdp.cli.params import (
-    collections_option,
-    database_dsn_option,
-    validate_option,
-    vars_option,
-)
-from tdp.core.models import init_database
-from tdp.core.variables import ClusterVariables
+from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.database_dsn_option import database_dsn_option
+from tdp.cli.params.validate_option import validate_option
+from tdp.cli.params.vars_option import vars_option
+from tdp.core.models.base_model import init_database
+from tdp.core.variables.cluster_variables import ClusterVariables
 
 if TYPE_CHECKING:
-    from tdp.core.collections import Collections
+    from tdp.core.collections.collections import Collections
 
 
 @click.command()
