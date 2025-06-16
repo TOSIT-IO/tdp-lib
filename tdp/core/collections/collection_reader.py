@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Generator
 from pathlib import Path
@@ -21,8 +22,7 @@ from tdp.core.constants import (
 )
 from tdp.core.entities.operation import Playbook
 from tdp.core.inventory_reader import InventoryReader
-from tdp.core.repository.git_repository import GitRepository
-from tdp.core.repository.repository import NotARepository, Repository
+from tdp.core.repository.utils.get_repository_version import get_repository_version
 from tdp.core.types import PathLike
 from tdp.core.variables.schema import ServiceCollectionSchema
 from tdp.core.variables.schema.exceptions import InvalidSchemaError
@@ -89,7 +89,6 @@ class CollectionReader:
         self,
         path: PathLike,
         inventory_reader: Optional[InventoryReader] = None,
-        repository_class: Optional[type[Repository]] = None,
     ):
         """Initialize a collection.
 
@@ -189,29 +188,10 @@ class CollectionReader:
         return schemas
 
     def read_galaxy_version(self) -> Optional[str]:
-        """Read the galaxy version from MANIFEST.json file in the collection root.
+        return _get_galaxy_version(self._path)
 
-        Returns:
-            The galaxy version if it exists, otherwise None.
-        """
-        manifest_path = self._path / "MANIFEST.json"
-        if not manifest_path.exists():
-            return None
-        try:
-            with manifest_path.open("r") as fd:
-                import json
-
-                manifest = json.load(fd)
-                return manifest.get("collection_info.version")
-        except (json.JSONDecodeError, FileNotFoundError) as e:
-            logger.error(f"Error reading galaxy version from {manifest_path}: {e}")
-            return None
-
-    def get_repository(self) -> Optional[GitRepository]:
-        try:
-            return GitRepository(self._path)
-        except NotARepository:
-            return None
+    def read_repository_version(self) -> Optional[str]:
+        return get_repository_version(self.path)
 
     def _check_collection_structure(self, path: Path) -> None:
         """Check the structure of a collection.
@@ -255,3 +235,33 @@ def read_hosts_from_playbook(
             return inventory_reader.get_hosts_from_playbook(fd)
     except Exception as e:
         raise ValueError(f"Can't parse playbook {playbook_path}.") from e
+
+
+def _get_galaxy_version(
+    path: Path,
+) -> Optional[str]:
+    """Read the galaxy version from MANIFEST.json file in the collection root.
+
+    Returns:
+        The galaxy version if it exists, otherwise None.
+    """
+    try:
+        manifest_path = path / "MANIFEST.json"
+        with manifest_path.open("r") as fd:
+            manifest = json.load(fd)
+            return manifest["collection_info.version"]
+    except FileNotFoundError:
+        pass
+    except json.JSONDecodeError:
+        _log_get_galaxy_version_error(f"can't parse ${manifest_path}.")
+    except KeyError:
+        _log_get_galaxy_version_error(
+            f"'collection_info.version' not found in ${manifest_path}."
+        )
+    except Exception as e:
+        _log_get_galaxy_version_error(str(e))
+    return None
+
+
+def _log_get_galaxy_version_error(msg: str) -> None:
+    logger.error("Error while reading ansible galaxy version: " + msg)

@@ -5,12 +5,14 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.collections.collection_reader import CollectionReader
+from tdp.core.constants import YML_EXTENSION
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet
+from tdp.core.repository.utils.get_repository_version import get_repository_version
 from tdp.core.types import PathLike
 from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.service_variables import ServiceVariables
@@ -25,6 +27,25 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_VALIDATION_MESSAGE = "Updated from one or more directories"
 VALIDATION_MESSAGE_FILE = "COMMIT_EDITMSG"
+
+
+@dataclass(frozen=True)
+class UnknownService:
+    service_name: str
+    source_definition: str
+
+
+class ServicesNotInitializedError(Exception):
+    """Exception raised when multiple services are not initialized."""
+
+    def __init__(self, services: list[UnknownService]):
+        """Initialize the ServicesNotInitializedError with a list of unknown services."""
+        super().__init__(
+            "The following services are not initialized:\n"
+            + "\n".join(
+                f"{e.service_name} (from {e.source_definition})" for e in services
+            )
+        )
 
 
 class ServiceToUpdate:
@@ -245,25 +266,33 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         if override_folders is None:
             override_folders = []
 
-        # Check if all services in the default variables and overrides directories are defined in the collections
+        # Check if all services in the default variables and overrides directories are initialized
         # If not, raise an error with the list of unknown services
         sources = [
             default_vars_path
             for default_vars_path in self._collections.default_vars_dirs.values()
         ]
         sources += [Path(override) for override in override_folders]
-        unknown_services: list[str] = []
+        unknown_services: list[UnknownService] = []
         for source_path in sources:
             for service_path in source_path.iterdir():
-                if not service_path.is_dir():
+                # Skip if it is not a service directory
+                if not self._is_service_directory(service_path):
+                    logger.debug(
+                        f"Skipping {service_path} as it is not a service directory."
+                    )
                     continue
                 service_name = service_path.name
                 if service_name not in self:
-                    unknown_services.append(service_name)
+                    unknown_services.append(
+                        UnknownService(
+                            service_name,
+                            source_definition=source_path.as_posix(),
+                        )
+                    )
+        # If there are unknown services, raise an error
         if unknown_services:
-            raise ValueError(
-                f"The following services are not defined in the collections: {', '.join(unknown_services)}"
-            )
+            raise ServicesNotInitializedError(unknown_services)
 
         # Initialize a dictionary to store services to update
         # Key: service name, Value: ServiceToUpdate instance
@@ -275,12 +304,13 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         # overrides directories.
 
         # Handle default variables directories
-        for collection in self._collections._collection_readers:
-            default_vars_dir = collection.default_vars_directory
-
+        for (
+            collection_name,
+            default_vars_dir,
+        ) in self._collections.default_vars_dirs.items():
             # Base validation message that will be used for all services in this collection
             collection_validation_msg = self._get_collection_base_validation_msg(
-                collection,
+                collection_name,
             )
 
             # Add default variables for each service in the collection
@@ -314,8 +344,11 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
             # Add variables for each service in the override directory
             for service_path in overide.iterdir():
-                # Skip if not a directory
-                if not service_path.is_dir():
+                # Skip if not a service directory
+                if not self._is_service_directory(service_path):
+                    logger.debug(
+                        f"Skipping {service_path} as it is not a service directory."
+                    )
                     continue
 
                 service_name = service_path.name
@@ -346,42 +379,38 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
 
         # Update each service with the collected input paths
         # Exceptions are collected and raised at the end
-        excs = []
+        success = []
+        failures = []
         for service_name, service_to_update in services_to_update.items():
             service_variables = self[service_name]
             try:
                 # Add input paths to the service variables
-                # ? En cas d'erreur, est ce que le repo est dirty ?
                 service_variables.update_from_dir(
                     service_to_update.input_paths,
                     validation_message=service_to_update.validation_message,
+                    clear=True,
                 )
+                logger.info(
+                    f"Service '{service_name}' updated with {len(service_to_update.input_paths)} input paths."
+                )
+                success.append(service_name)
             except EmptyCommit:
                 logger.info(
                     f"Service '{service_name}' will not cause any change, no commit has been made."
                 )
             except Exception as e:
-                logger.error(
-                    f"Error while updating service '{service_name}': {e}",
-                    exc_info=True,
-                )
-                excs.append(e)
-        # If there were exceptions, raise them
-        if excs:
-            raise RuntimeError(
-                "Errors occurred while updating services: "
-                + ", ".join(str(e) for e in excs)
-            )
+                logger.error(f"Error while updating service '{service_name}': {e}")
+                failures.append([service_name, str(e)])
 
         # Validate all services schemas if requested
         if validate:
             self._validate_services_schemas()
 
-        logger.info("All services have been updated successfully.")
+        return [success, failures]
 
     def _get_collection_base_validation_msg(
         self,
-        collection: CollectionReader,
+        collection_name: str,
     ) -> list[str]:
         """Get the base validation message for a collection.
 
@@ -392,29 +421,18 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
             List of strings representing the validation message.
         """
         validation_msg = [
-            f"Update variables from collection: {collection.name}",
-            f"Path: {collection.default_vars_directory.as_posix()}",
+            f"Update variables from collection: {collection_name}",
+            f"Path: {self._collections.default_vars_dirs[collection_name].as_posix()}",
         ]
-        if galaxy_version := collection.read_galaxy_version():
+        versions = self._collections.get_version(collection_name)
+        if galaxy_version := versions.galaxy:
             validation_msg.append(f"Galaxy collection version: {galaxy_version}")
-        if repo := collection.get_repository():
-            if not repo.is_clean():
-                logger.warning(f"{collection.path} is a repository but is not clean.")
-            try:
-                repo_version = repo.current_version()
-            except NoVersionYet:
-                logger.warning(
-                    f"{collection.path} is a repository but has no version yet."
-                )
-                repo_version = "No version yet"
+        if repo_version := versions.repo:
             validation_msg.append(f"Repository version: {repo_version}")
         return validation_msg
 
     def _get_override_base_validation_msg(
-        self,
-        override: Path,
-        *,
-        repository_class: type[Repository] = GitRepository,
+        self, override: Path, *, repository_class: type[Repository] = GitRepository
     ) -> list[str]:
         """Get the base validation message for an override directory.
 
@@ -425,14 +443,10 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
             List of strings representing the validation message.
         """
         validation_msg = [f"Update variables from override: {override.as_posix()}"]
-        if repo := repository_class(override):
-            if not repo.is_clean():
-                logger.warning(f"{override} is a repository but is not clean.")
-            try:
-                repo_version = repo.current_version()
-            except NoVersionYet:
-                logger.warning(f"{override} is a repository but has no version yet.")
-                repo_version = "No version yet"
+        # Add repository information if it is a repository
+        if repo_version := get_repository_version(
+            override, repository_class=repository_class
+        ):
             validation_msg.append(f"Repository version: {repo_version}")
         return validation_msg
 
@@ -458,6 +472,25 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         except FileNotFoundError:
             pass
         return None
+
+    def _is_service_directory(self, path: Path) -> bool:
+        """Check if the given path is a potential service directory.
+
+        This method checks if the path is a directory and contains at least one YML file.
+
+        Args:
+          path: Path to check.
+        Returns:
+          True if the path is a potential service directory, False otherwise.
+        """
+        # Check if the path is a directory
+        if not path.is_dir():
+            return False
+        # Check if there are any YML files in the directory
+        if any(path.glob("*" + YML_EXTENSION)):
+            return True
+        # If no .yml, .yaml or .json files are found, return False
+        return False
 
     def _validate_services_schemas(self):
         """Validate all services schemas.
