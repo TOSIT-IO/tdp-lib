@@ -1,7 +1,6 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-import json
 import logging
 from pathlib import Path
 
@@ -14,6 +13,7 @@ from tdp.core.collections.collection_reader import (
     PathDoesNotExistsError,
     PathIsNotADirectoryError,
     TDPLibDagNodeModel,
+    _get_galaxy_version,
     read_hosts_from_playbook,
 )
 from tdp.core.constants import (
@@ -166,40 +166,65 @@ def test_collection_reader_read_dag_nodes_empty_file(
         list(collection_reader.read_dag_nodes())
 
 
-# Tests for CollectionReader.read_galaxy_version
+# Tests for _get_galaxy_version
 
 
-def test_read_galaxy_version_no_manifest(mock_empty_collection_reader: Path):
-    """If MANIFEST.json doesn't exist, read_galaxy_version returns None."""
-    cr = CollectionReader(mock_empty_collection_reader)
-    assert cr.read_galaxy_version() is None
+def test_get_galaxy_version_no_manifest(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    """Test when not a galaxy collection, i.e. no manifest file."""
+    msg = _get_galaxy_version(tmp_path)
+
+    assert msg == None
+    # No error
+    assert not any(r.levelno == logging.ERROR for r in caplog.records)
 
 
-def test_read_galaxy_version_missing_key(mock_empty_collection_reader: Path):
-    """If MANIFEST.json exists but lacks 'collection_info.version', return None."""
-    manifest = mock_empty_collection_reader / "MANIFEST.json"
-    manifest.write_text(json.dumps({"something": "else"}))
+def test_get_galaxy_version_no_parent_directory(tmp_path: Path):
+    collection_dir = tmp_path / "collection"
+    collection_dir.write_text("not a directory")
+    msg = _get_galaxy_version(collection_dir)
 
-    cr = CollectionReader(mock_empty_collection_reader)
-    assert cr.read_galaxy_version() is None
-
-
-def test_read_galaxy_version_valid(mock_empty_collection_reader: Path):
-    """If MANIFEST.json contains 'collection_info.version', return its value."""
-    manifest = mock_empty_collection_reader / "MANIFEST.json"
-    manifest.write_text(json.dumps({"collection_info.version": "5.6.7"}))
-
-    cr = CollectionReader(mock_empty_collection_reader)
-    assert cr.read_galaxy_version() == "5.6.7"
+    assert msg == None
 
 
-def test_read_galaxy_version_invalid_json(mock_empty_collection_reader: Path, caplog):
-    """If MANIFEST.json contains invalid JSON, log error and return None."""
-    manifest = mock_empty_collection_reader / "MANIFEST.json"
-    manifest.write_text("{invalid: json,}")
-    caplog.set_level(logging.ERROR)
+def test_get_galaxy_version_bad_json(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+    collection_dir = tmp_path / "collection"
+    collection_dir.mkdir()
+    manifest_file = collection_dir / "MANIFEST.json"
+    manifest_file.write_text("bad json")
 
-    cr = CollectionReader(mock_empty_collection_reader)
-    result = cr.read_galaxy_version()
-    assert result is None
-    assert any("Error reading galaxy version" in r.message for r in caplog.records)
+    msg = _get_galaxy_version(collection_dir)
+
+    assert msg == None
+    # Error log
+    errors = [r.message for r in caplog.records if r.levelno == logging.ERROR]
+    assert any("can't parse" in str(w) for w in errors)
+
+
+def test_get_galaxy_version_undefined_version(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    collection_dir = tmp_path / "collection"
+    collection_dir.mkdir()
+    manifest_file = collection_dir / "MANIFEST.json"
+    manifest_file.write_text("{}")
+
+    msg = _get_galaxy_version(collection_dir)
+
+    assert msg == None
+    # Error log
+    errors = [r.message for r in caplog.records if r.levelno == logging.ERROR]
+    assert any("'collection_info.version' not found in" in str(w) for w in errors)
+
+
+def test_get_galaxy_version_manifest_not_readable(tmp_path):
+    collection_dir = tmp_path / "collection"
+    collection_dir.mkdir()
+    manifest_file = collection_dir / "MANIFEST.json"
+    manifest_file.touch()
+    manifest_file.chmod(0o000)
+
+    msg = _get_galaxy_version(collection_dir)
+
+    assert msg == None

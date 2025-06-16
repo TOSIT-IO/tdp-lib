@@ -17,6 +17,7 @@ from tdp.core.variables.cluster_variables import (
     DEFAULT_VALIDATION_MESSAGE,
     VALIDATION_MESSAGE_FILE,
     ClusterVariables,
+    ServicesNotInitializedError,
 )
 from tdp.dao import Dao
 
@@ -55,15 +56,26 @@ def update(
     """Update configuration from the given directories."""
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
     try:
-        cluster_variables.update(
+        res = cluster_variables.update(
             overrides,
             validate=validate,
             validation_msg_file_name=msg_file,
             base_validation_msg=msg,
         )
-    except Exception as e:
-        logger.error("Error while updating cluster variables: %s", e)
-        raise
+    except ServicesNotInitializedError as e:
+        raise click.ClickException(str(e)) from e
+    except Exception:
+        logger.error("Unexpeced error", exc_info=True)
+
+    if res:
+        click.echo("Successfully updated services:")
+        if res[0]:
+            for success in res[0]:
+                click.echo(f"- {success}")
+        if res[1]:
+            click.echo("Failure while updating services:")
+            for failure in res[1]:
+                click.echo(f"- {failure[0]}: {failure[1]}")
 
     # Generate stale component list and save it to the database
     with Dao(db_engine) as dao:

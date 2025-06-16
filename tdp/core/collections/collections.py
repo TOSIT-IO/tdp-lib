@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -36,6 +37,12 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class CollectionVersion:
+    repo: Optional[str]
+    galaxy: Optional[str]
 
 
 class Collections:
@@ -94,6 +101,18 @@ class Collections:
     def entities(self) -> dict[str, set[ServiceComponentName]]:
         """Mapping of service names to their set of components."""
         return self._services_components
+
+    def get_version(self, collection_name: str) -> CollectionVersion:
+        for collection in self._collection_readers:
+            if collection.name == collection_name:
+                return CollectionVersion(
+                    repo=collection.read_repository_version(),
+                    galaxy=collection.read_galaxy_version(),
+                )
+        else:
+            raise ValueError(
+                f"Can't access collection's verions. Collection '{collection_name}' is not registered."
+            )
 
     def _read_playbooks(self) -> dict[str, Playbook]:
         playbooks: dict[str, Playbook] = {}
