@@ -53,7 +53,7 @@ def collection_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
     }
     service_vars = {
         "service": {
-            "service": {},
+            "service.yml": {},
         },
     }
     generate_collection_at_path(collection_path, dag_service_operations, service_vars)

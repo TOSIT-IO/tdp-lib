@@ -51,7 +51,7 @@ def mock_collections(tmp_path_factory: pytest.TempPathFactory) -> Collections:
     # Mock vars for the "serv" service
     mock_vars = {
         "serv": {
-            "serv": {
+            "serv.yml": {
                 "key": "value",
                 "another_key": "another_value",
             },
