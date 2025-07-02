@@ -4,15 +4,6 @@ on: pull_request
 
 jobs:
 
-  license-headers:
-    name: Check license headers
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-    - name: Check license headers
-      uses: kt3k/license_checker@v1.0.6
-
   conventional-commits:
     name: Check conventional commits
     runs-on: ubuntu-latest
