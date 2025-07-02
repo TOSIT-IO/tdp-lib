@@ -34,7 +34,6 @@ class EntityName(ABC):
 
 @dataclass(frozen=True)
 class ServiceName(EntityName):
-
     @property
     def name(self) -> str:
         return self.service

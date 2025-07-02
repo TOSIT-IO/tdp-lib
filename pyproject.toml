@@ -35,7 +35,6 @@ numpy = { version = "<2.0.0", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
-black = "24.1.1"
 taskipy = "^1.12.0"
 ruff = "^0.11.12"
 pytest-xdist = "^3.5.0"
@@ -60,9 +59,10 @@ docs-generate = { cmd = "sphinx-apidoc --output-dir {docs_source_path} --module-
 docs-clean = { cmd = "make -C {docs_path} clean", use_vars = true }
 docs-html = { cmd = "make -C {docs_path} html", use_vars = true }
 docs = { cmd = "task docs-generate && task docs-clean && task docs-html" }
-format = { cmd = "black ." }
-lint = { cmd = "ruff check . --fix" }
-precommit-fix = { cmd = "task format && task lint" }
+format = { cmd = "ruff check --select I --fix && ruff format" }
+lint-check = { cmd = "ruff check" }
+lint-fix = { cmd = "ruff check --fix" }
+precommit-fix = { cmd = "task format && task lint-fix" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
