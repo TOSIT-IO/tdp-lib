@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Union
 
 from tdp.core.constants import SERVICE_NAME_MAX_LENGTH, YML_EXTENSION
+from tdp.core.repository.git_repository import GitRepository
 from tdp.core.types import PathLike
 from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.variables import (
@@ -77,6 +78,25 @@ class ServiceVariables:
     def path(self) -> Path:
         """Path of the service repository."""
         return self.repository.path
+
+    @classmethod
+    def from_path(
+        cls,
+        path: Path,
+        *,
+        repository_class: type[Repository] = GitRepository,
+        schema: Optional[ServiceSchema],
+    ):
+        try:
+            path.mkdir(parents=True)
+            logger.info(
+                f"{path.name} configuration directory created at {path.absolute()}"
+            )
+        except FileExistsError:
+            if not path.is_dir():
+                raise ValueError(f"{path.absolute()} should be a directory")
+
+        return cls(repository_class.init(path), schema=schema)
 
     def update_from_dir(
         self,

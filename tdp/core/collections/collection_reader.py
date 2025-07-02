@@ -249,7 +249,7 @@ def _get_galaxy_version(
         manifest_path = path / "MANIFEST.json"
         with manifest_path.open("r") as fd:
             manifest = json.load(fd)
-            return manifest["collection_info.version"]
+            return manifest["collection_info"]["version"]
     except FileNotFoundError:
         pass
     except json.JSONDecodeError:

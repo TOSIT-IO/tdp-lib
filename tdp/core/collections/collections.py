@@ -109,10 +109,9 @@ class Collections:
                     repo=collection.read_repository_version(),
                     galaxy=collection.read_galaxy_version(),
                 )
-        else:
-            raise ValueError(
-                f"Can't access collection's verions. Collection '{collection_name}' is not registered."
-            )
+        raise ValueError(
+            f"Can't access collection's versions. Collection '{collection_name}' is not registered."
+        )
 
     def _read_playbooks(self) -> dict[str, Playbook]:
         playbooks: dict[str, Playbook] = {}

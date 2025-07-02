@@ -40,3 +40,6 @@ SERVICE_PRIORITY = {
     "knox": 11,
 }
 DEFAULT_SERVICE_PRIORITY = 99
+# Validation message logic (used in variables update)
+VALIDATION_MESSAGE_FILE = "COMMIT_EDITMSG"
+DEFAULT_VALIDATION_MESSAGE = "Updated from one or more directories"

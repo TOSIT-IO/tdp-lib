@@ -23,6 +23,7 @@ from tdp.core.models.sch_status_log_model import (
     SCHStatusLogModel,
     SCHStatusLogSourceEnum,
 )
+from tdp.core.variables.inspection import get_modified_entities
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -84,7 +85,7 @@ class ClusterStatus(MutableMapping[HostedEntity, HostedEntityStatus]):
         logs: dict[HostedEntity, SCHStatusLogModel] = {}
         source_reconfigure_operations: set[str] = set()
 
-        modified_entities = cluster_variables.get_modified_entities(self.values())
+        modified_entities = get_modified_entities(cluster_variables, self.values())
 
         # Return early if no entity has modified configurations
         if len(modified_entities) == 0:
