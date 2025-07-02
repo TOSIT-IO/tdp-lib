@@ -22,18 +22,6 @@ jobs:
       - name: Check conventional commits
         uses: webiny/action-conventional-commits@v1.0.3
 
-  black:
-    name: Check format with Black
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Check code formatting with Black
-        uses: psf/black@stable
-        with:
-          options: "--check --verbose"
-          version: 24.1.1
-  
   ruff:
     name: Check linting with Ruff
     runs-on: ubuntu-latest

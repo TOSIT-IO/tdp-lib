@@ -35,7 +35,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     """Pytest hook to generate tests based on the database dsn option."""
     if "db_dsn" in metafunc.fixturenames:
         metafunc.parametrize(
-            "db_dsn", metafunc.config.getoption("database_dsn"), indirect=True  # type: ignore
+            "db_dsn",
+            metafunc.config.getoption("database_dsn"),
+            indirect=True,  # type: ignore
         )
 
 

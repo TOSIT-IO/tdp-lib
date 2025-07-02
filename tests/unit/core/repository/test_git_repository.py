@@ -60,9 +60,10 @@ def test_git_repository_multiple_validations(git_repository: GitRepository):
         "group_vars/hive_metastore.yml",
     ]
     with git_repository.validate("[HIVE] setup hive high availability") as repository:
-        with (repository.path / file_list[0]).open("w") as hive_s2_fd, (
-            repository.path / file_list[1]
-        ).open("w") as hive_metastore_fd:
+        with (
+            (repository.path / file_list[0]).open("w") as hive_s2_fd,
+            (repository.path / file_list[1]).open("w") as hive_metastore_fd,
+        ):
             hive_s2_fd.write(
                 """
             hive_site:
