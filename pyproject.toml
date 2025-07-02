@@ -69,7 +69,12 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff.lint]
-select = ["F", "W", "I"]
+preview = true
+select = ["F", "W", "I", "CPY"]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "\\A# Copyright \\d{4} TOSIT\\.IO\r?\n# SPDX-License-Identifier: Apache-2\\.0"
+
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]
