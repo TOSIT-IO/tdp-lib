@@ -13,12 +13,12 @@ from tdp.cli.params.overrides_option import overrides_option
 from tdp.cli.params.validate_option import validate_option
 from tdp.cli.params.vars_option import vars_option
 from tdp.core.collections.collections import Collections
+from tdp.core.constants import DEFAULT_VALIDATION_MESSAGE, VALIDATION_MESSAGE_FILE
 from tdp.core.variables.cluster_variables import (
-    DEFAULT_VALIDATION_MESSAGE,
-    VALIDATION_MESSAGE_FILE,
     ClusterVariables,
     ServicesNotInitializedError,
 )
+from tdp.core.variables.exceptions import ServicesUpdateError
 from tdp.dao import Dao
 
 logger = logging.getLogger(__name__)
@@ -56,26 +56,32 @@ def update(
     """Update configuration from the given directories."""
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
     try:
-        res = cluster_variables.update(
+        cluster_variables.update(
             overrides,
             validate=validate,
             validation_msg_file_name=msg_file,
             base_validation_msg=msg,
         )
+    # Stop the update process if some services are not initialized
     except ServicesNotInitializedError as e:
-        raise click.ClickException(str(e)) from e
+        error_messages = "\n".join(
+            f"{error.service_name} (from {error.source_definition})"
+            for error in e.services
+        )
+        raise click.ClickException(
+            f"The following services are not initialized:\n{error_messages}"
+        ) from e
+    # Do not stop the update as some services may have been updated successfully
+    except ServicesUpdateError as e:
+        error_messages = "\n".join(
+            f"{error.service_name}: {error.message}" for error in e.errors
+        )
+        logger.error(
+            f"Errors occurred during service updates:\n{error_messages}",
+            exc_info=True,
+        )
     except Exception:
         logger.error("Unexpeced error", exc_info=True)
-
-    if res:
-        click.echo("Successfully updated services:")
-        if res[0]:
-            for success in res[0]:
-                click.echo(f"- {success}")
-        if res[1]:
-            click.echo("Failure while updating services:")
-            for failure in res[1]:
-                click.echo(f"- {failure[0]}: {failure[1]}")
 
     # Generate stale component list and save it to the database
     with Dao(db_engine) as dao:

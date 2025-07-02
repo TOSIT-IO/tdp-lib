@@ -58,7 +58,7 @@ class GitRepository(Repository):
                     f"error during diff: {e}. Probably because the repo is still empty."
                 )
             commit = self._repo.index.commit(msg)
-            logger.info(f"commit: [{commit.hexsha}] {msg}")
+            logger.info(f"commit on {self.path} [{commit.hexsha}]")
 
     def add_for_validation(self, paths: Iterable[PathLike]) -> None:
         logger.debug(paths)
