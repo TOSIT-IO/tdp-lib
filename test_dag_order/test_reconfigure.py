@@ -6,7 +6,6 @@ This module contains base tests that will be used to generate tests for each rul
 rules directory of each collection.
 """
 
-
 from collections.abc import Iterable
 
 from tdp.core.collections import Collections
@@ -80,9 +79,9 @@ def test_must_include_and_must_exclude_should_not_intersect(
     must_include: set[str], must_exclude: set[str]
 ):
     intersection = must_include.intersection(must_exclude)
-    assert (
-        intersection == set()
-    ), f"must_include and must_exclude should not intersect: {', '.join(intersection)}"
+    assert intersection == set(), (
+        f"must_include and must_exclude should not intersect: {', '.join(intersection)}"
+    )
 
 
 def test_reconfigure_plan_has_included_services(

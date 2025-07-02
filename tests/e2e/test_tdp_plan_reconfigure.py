@@ -21,6 +21,6 @@ def test_tdp_plan_reconfigure(
             tdp_init.db_dsn,
         ],
     )
-    assert (
-        result.exit_code == 1
-    ), result.output  # No stale components, hence nothing to reconfigure.
+    assert result.exit_code == 1, (
+        result.output
+    )  # No stale components, hence nothing to reconfigure.
