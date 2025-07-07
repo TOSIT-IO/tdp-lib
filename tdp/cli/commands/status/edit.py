@@ -9,12 +9,13 @@ import click
 
 from tdp.cli.params import (
     collections_option,
+    component_argument_option,
     database_dsn_option,
     hosts_option,
+    service_argument_option,
     validate_option,
     vars_option,
 )
-from tdp.cli.params.status import component_argument_option, service_argument_option
 
 if TYPE_CHECKING:
     from pathlib import Path

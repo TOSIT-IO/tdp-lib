@@ -10,11 +10,11 @@ import click
 
 from tdp.cli.params import (
     collections_option,
+    conf_option,
     database_dsn_option,
     validate_option,
     vars_option,
 )
-from tdp.cli.params.conf_option import conf_option
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine

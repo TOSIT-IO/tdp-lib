@@ -9,11 +9,13 @@ from typing import TYPE_CHECKING
 
 import click
 
-from tdp.cli.params.collections_option import collections_option
-from tdp.cli.params.conf_option import conf_option
-from tdp.cli.params.database_dsn_option import database_dsn_option
-from tdp.cli.params.validate_option import validate_option
-from tdp.cli.params.vars_option import vars_option
+from tdp.cli.params import (
+    collections_option,
+    conf_option,
+    database_dsn_option,
+    validate_option,
+    vars_option,
+)
 from tdp.core.constants import DEFAULT_VALIDATION_MESSAGE, VALIDATION_MESSAGE_FILE
 
 if TYPE_CHECKING:
