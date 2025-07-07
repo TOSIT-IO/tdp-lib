@@ -11,10 +11,10 @@ import click
 from tdp.cli.params import (
     collections_option,
     database_dsn_option,
+    overrides_option,
     validate_option,
     vars_option,
 )
-from tdp.cli.params.overrides_option import overrides_option
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine
