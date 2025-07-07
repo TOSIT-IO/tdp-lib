@@ -7,8 +7,14 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from tdp.cli.params import collections_option, database_dsn_option, hosts_option
-from tdp.cli.params.plan import force_option, preview_option, rolling_interval_option
+from tdp.cli.params import (
+    collections_option,
+    database_dsn_option,
+    force_option,
+    hosts_option,
+    preview_option,
+    rolling_interval_option,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine
