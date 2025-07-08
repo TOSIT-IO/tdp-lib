@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
@@ -18,6 +19,19 @@ from tdp.core.repository.repository import (
 from tdp.core.types import PathLike
 
 logger = logging.getLogger(__name__)
+
+
+def with_repo_path(func):
+    """Decorator to annotate exceptions with the repository path."""
+
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except Exception as e:
+            raise type(e)(f"[Repo: {self.path}] {e}").with_traceback(e.__traceback__)
+
+    return wrapper
 
 
 class GitRepository(Repository):
@@ -44,6 +58,7 @@ class GitRepository(Repository):
             with Repo.init(path, mkdir=True):
                 return GitRepository(path)
 
+    @with_repo_path
     @contextmanager
     def validate(self, msg: str) -> Generator[GitRepository, None, None]:
         with self._lock:
@@ -60,6 +75,7 @@ class GitRepository(Repository):
             commit = self._repo.index.commit(msg)
             logger.info(f"commit on {self.path} [{commit.hexsha}]")
 
+    @with_repo_path
     def add_for_validation(self, paths: Iterable[PathLike]) -> None:
         logger.debug(paths)
         logger.debug(list(paths))
@@ -67,15 +83,18 @@ class GitRepository(Repository):
             self._repo.index.add(list(paths))
             logger.debug(f"{', '.join([str(p) for p in paths])} staged")
 
+    @with_repo_path
     def current_version(self) -> str:
         try:
             return str(self._repo.head.commit)
         except ValueError as e:
             raise NoVersionYet from e
 
+    @with_repo_path
     def is_clean(self) -> bool:
         return not self._repo.is_dirty(untracked_files=True)
 
+    @with_repo_path
     def is_file_modified(self, commit: str, path: PathLike) -> bool:
         with self._lock:
             diff_index = self._repo.head.commit.diff(commit)
@@ -84,5 +103,6 @@ class GitRepository(Repository):
                     return True
             return False
 
+    @with_repo_path
     def restore_file(self, file_names: str) -> None:
         self._repo.index.checkout(paths=[file_names], force=True)
