@@ -91,18 +91,13 @@ Contributions are welcome! Here are some guidelines specific to this project:
 
 ### Developer Documentation
 
-Developer documentation is available here: [docs/Developer](docs/developer/index.rst)
-
-Docstrings are used to generate Sphinx documentation. Install the `docs`` extra dependency:
+Linting and formatting are enforced using [Ruff](https://beta.ruff.rs/docs/). To ensure code quality, run the following commands:
 
 ```sh
-poetry install -E docs
+# Format the code and reoder imports
+poetry run ruff check --select I --fix && ruff format
+# Check the code for linting issues
+poetry run ruff check
+# Lint the code
+poetry run ruff check --fix
 ```
-
-Build the documentation:
-
-```sh
-poetry run task docs
-```
-
-The built documentation is available at `docs/_build/html/index.html`.
