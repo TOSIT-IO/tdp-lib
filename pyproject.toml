@@ -21,10 +21,8 @@ GitPython = "3.1.18"
 SQLAlchemy = "^2.0.19"
 click = "8.0.4"
 tabulate = "0.8.9"
-Sphinx = { version = "6.2.1", optional = true }
 python-dotenv = "0.20.0"
 jsonschema = "4.10.3"
-sphinx-rtd-theme = { version = "^1.2.2", optional = true }
 pydantic = "^2.6.0"
 psycopg2 = { version = "^2.9.9", optional = true }
 psycopg2-binary = { version = "^2.9.9", optional = true }
@@ -41,7 +39,6 @@ pytest-xdist = "^3.5.0"
 python-lorem = "^1.3.0.post1"
 
 [tool.poetry.extras]
-docs = ["Sphinx", "sphinx_rtd_theme"]
 visualization = ["matplotlib", "pydot", "numpy"]
 postgresql = ["psycopg2"]
 postgresql-binary = ["psycopg2-binary"]
@@ -50,15 +47,7 @@ mysql = ["pymysql"]
 [tool.poetry.scripts]
 tdp = "tdp.cli.__main__:main"
 
-[tool.taskipy.variables]
-docs_path = "docs"
-docs_source_path = "docs/source"
-
 [tool.taskipy.tasks]
-docs-generate = { cmd = "sphinx-apidoc --output-dir {docs_source_path} --module-first --force tdp '*test*'", use_vars = true }
-docs-clean = { cmd = "make -C {docs_path} clean", use_vars = true }
-docs-html = { cmd = "make -C {docs_path} html", use_vars = true }
-docs = { cmd = "task docs-generate && task docs-clean && task docs-html" }
 format = { cmd = "ruff check --select I --fix && ruff format" }
 lint-check = { cmd = "ruff check" }
 lint-fix = { cmd = "ruff check --fix" }
