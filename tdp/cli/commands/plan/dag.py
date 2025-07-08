@@ -20,14 +20,6 @@ if TYPE_CHECKING:
     from tdp.core.collections import Collections
 
 
-def _validate_filtertype(
-    ctx: click.Context, param: click.Parameter, value: FilterTypeEnum
-):
-    if value is not None:
-        return FilterTypeEnum[value]
-    return value
-
-
 @click.command()
 @click.option(
     "--source",
@@ -47,9 +39,8 @@ def _validate_filtertype(
 @click.option(
     "--regex",
     "-r",
-    "filter_type",
-    callback=_validate_filtertype,
-    flag_value=FilterTypeEnum.REGEX.name,
+    "is_regex",
+    is_flag=True,
     help="Filter expression matched as a regex.",
 )
 @click.option(
@@ -83,10 +74,13 @@ def dag(
     reverse: bool,
     stop: bool,
     filter: Optional[str] = None,
-    filter_type: Optional[FilterTypeEnum] = None,
+    is_regex: bool = False,
     rolling_interval: Optional[int] = None,
 ):
     """Deploy from the DAG."""
+    filter_type = None
+    if filter:
+        filter_type = FilterTypeEnum.REGEX if is_regex else FilterTypeEnum.GLOB
     if stop and restart:
         click.UsageError("Cannot use `--restart` and `--stop` at the same time.")
     dag = Dag(collections)
