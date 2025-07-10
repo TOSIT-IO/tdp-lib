@@ -10,7 +10,6 @@ import click
 from tabulate import tabulate
 
 from tdp.cli.params import collections_option, hosts_option
-from tdp.core.dag import Dag
 from tdp.core.entities.operation import Operation, PlaybookOperation
 
 if TYPE_CHECKING:
@@ -40,6 +39,9 @@ def ops(
     topo_sort: bool,
 ):
     """Display all available operations."""
+
+    from tdp.core.dag import Dag
+
     if topo_sort and not display_dag_operations:
         click.echo(
             "Warning: `--topo-sort` can only be used with `--dag` or `--dag-operations`."

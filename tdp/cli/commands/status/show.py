@@ -6,8 +6,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, Optional
 
 import click
-from sqlalchemy import Engine
-from tabulate import tabulate
 
 from tdp.cli.params import (
     collections_option,
@@ -20,18 +18,14 @@ from tdp.cli.params.status import (
     component_argument_option,
     service_argument_option,
 )
-from tdp.cli.utils import (
-    check_services_cleanliness,
-    print_hosted_entity_status_log,
-)
-from tdp.core.models.sch_status_log_model import SCHStatusLogModel
-from tdp.core.variables import ClusterVariables
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
+    from tdp.core.models.sch_status_log_model import SCHStatusLogModel
 
 
 def _filter_stale(stale: Optional[bool], no_stale: Optional[bool]) -> Optional[bool]:
@@ -90,6 +84,14 @@ def show(
     --stale/--no-stale is used to select only stale or non-stale components. By default,
     both are printed (same as using both flags).
     """
+
+    from tdp.cli.utils import (
+        check_services_cleanliness,
+        print_hosted_entity_status_log,
+    )
+    from tdp.core.variables import ClusterVariables
+    from tdp.dao import Dao
+
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=validate
     )
@@ -119,6 +121,8 @@ def show(
 
 
 def _print_sch_status_logs(sch_status: Iterable[SCHStatusLogModel]) -> None:
+    from tabulate import tabulate
+
     click.echo(
         tabulate(
             [status.to_dict(filter_out=["id", "timestamp"]) for status in sch_status],

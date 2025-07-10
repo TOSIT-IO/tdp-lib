@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -15,13 +14,10 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
-from tdp.cli.utils import check_services_cleanliness
-from tdp.core.deployment import DeploymentRunner, Executor
-from tdp.core.models.enums import DeploymentStateEnum
-from tdp.core.variables import ClusterVariables
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
 
 
@@ -62,6 +58,13 @@ def deploy(
     vars: Path,
 ):
     """Execute a planned deployment."""
+
+    from tdp.cli.utils import check_services_cleanliness
+    from tdp.core.deployment import DeploymentRunner, Executor
+    from tdp.core.models.enums import DeploymentStateEnum
+    from tdp.core.variables import ClusterVariables
+    from tdp.dao import Dao
+
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
     )

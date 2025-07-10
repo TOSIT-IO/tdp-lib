@@ -1,12 +1,13 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -14,16 +15,12 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
-from tdp.core.collections import Collections
-from tdp.core.constants import YML_EXTENSION
-from tdp.core.entities.entity_name import (
-    ServiceComponentName,
-    parse_entity_name,
-)
-from tdp.core.repository.repository import EmptyCommit
-from tdp.core.variables import ClusterVariables
-from tdp.core.variables.schema.exceptions import InvalidSchemaError
-from tdp.dao import Dao
+
+if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
+    from tdp.core.collections import Collections
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +59,17 @@ def edit(
         tdp vars edit hdfs datanode --commit_message "updated datanode variables"
         tdp vars edit hdfs hdfs_datanode.yml
     """
+
+    from tdp.core.constants import YML_EXTENSION
+    from tdp.core.entities.entity_name import (
+        ServiceComponentName,
+        parse_entity_name,
+    )
+    from tdp.core.repository.repository import EmptyCommit
+    from tdp.core.variables import ClusterVariables
+    from tdp.core.variables.schema.exceptions import InvalidSchemaError
+    from tdp.dao import Dao
+
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
     )

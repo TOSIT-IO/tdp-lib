@@ -10,11 +10,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import click
-from ansible.utils.vars import merge_hash
 
 from tdp.cli.params import collections_option, vars_option
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
-from tdp.core.variables import ClusterVariables, Variables
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -26,6 +24,9 @@ if TYPE_CHECKING:
 @vars_option
 def default_diff(collections: Collections, vars: Path, service: Optional[str] = None):
     """Difference between tdp_vars and defaults."""
+
+    from tdp.core.variables import ClusterVariables
+
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
 
     if service:
@@ -42,6 +43,10 @@ def service_diff(collections: Collections, service):
         collections (Collections): Collections object.
         service (ServiceManager): Service to compare's manager.
     """
+    from ansible.utils.vars import merge_hash
+
+    from tdp.core.variables import Variables
+
     # key: filename with extension, value: PosixPath(filepath)
     default_service_vars_paths = OrderedDict()
     for collection_default_vars_dir in collections.default_vars_dirs.values():

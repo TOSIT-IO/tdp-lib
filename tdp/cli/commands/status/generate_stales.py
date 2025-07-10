@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -15,12 +14,11 @@ from tdp.cli.params import (
     vars_option,
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
-from tdp.core.variables import ClusterVariables
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from sqlalchemy import Engine
 
     from tdp.core.collections import Collections
 
@@ -45,6 +43,11 @@ def generate_stales(
     Stales components are components that have been modified and need to be
     reconfigured and/or restarted.
     """
+
+    from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+    from tdp.core.variables import ClusterVariables
+    from tdp.dao import Dao
+
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=validate
     )

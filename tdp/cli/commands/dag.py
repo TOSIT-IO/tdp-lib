@@ -12,7 +12,6 @@ import click
 import networkx as nx
 
 from tdp.cli.params import collections_option
-from tdp.core.dag import Dag
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
@@ -71,6 +70,8 @@ def dag(
 
     Add node names to get a subgraph.
     """
+    from tdp.core.dag import Dag
+
     show = import_show()
     dag = Dag(collections)
     graph = dag.graph
