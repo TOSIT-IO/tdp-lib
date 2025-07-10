@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import (
     collections_option,
@@ -16,16 +15,11 @@ from tdp.cli.params import (
     vars_option,
 )
 from tdp.cli.params.status import component_argument_option, service_argument_option
-from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
-from tdp.core.models.sch_status_log_model import (
-    SCHStatusLogModel,
-    SCHStatusLogSourceEnum,
-)
-from tdp.core.variables import ClusterVariables
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from sqlalchemy import Engine
 
     from tdp.core.collections import Collections
 
@@ -70,6 +64,15 @@ def edit(
 
     Provide a SERVICE and a COMPONENT (optional) to edit.
     """
+
+    from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+    from tdp.core.models.sch_status_log_model import (
+        SCHStatusLogModel,
+        SCHStatusLogSourceEnum,
+    )
+    from tdp.core.variables import ClusterVariables
+    from tdp.dao import Dao
+
     if to_config is not None and to_restart is not None:
         raise click.UsageError(
             "You must provide either `--to-config` or `--to-restart` option."

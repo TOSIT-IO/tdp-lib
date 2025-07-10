@@ -1,11 +1,12 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 from collections.abc import Iterable
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 from tabulate import tabulate
 
 from tdp.cli.params import database_dsn_option
@@ -13,10 +14,13 @@ from tdp.cli.utils import (
     print_deployment,
     print_operations,
 )
-from tdp.core.entities.operation import OperationName
-from tdp.core.models.deployment_model import DeploymentModel
-from tdp.core.models.operation_model import OperationModel
-from tdp.dao import Dao
+
+if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
+    from tdp.core.models.deployment_model import DeploymentModel
+    from tdp.core.models.operation_model import OperationModel
+    from tdp.dao import Dao
 
 
 @click.command()
@@ -59,6 +63,8 @@ def browse(
     operation: Optional[str] = None,
 ):
     """Browse deployments."""
+    from tdp.dao import Dao
+
     with Dao(db_engine) as dao:
         if plan and last:
             raise click.BadOptionUsage(
@@ -113,6 +119,8 @@ def browse_deployment(dao: Dao, deployment_id: int) -> None:
 
 
 def browse_operation(dao: Dao, deployment_id: int, operation: str) -> None:
+    from tdp.core.entities.operation import OperationName
+
     record = None
     # Try to parse the operation argument as an integer
     try:

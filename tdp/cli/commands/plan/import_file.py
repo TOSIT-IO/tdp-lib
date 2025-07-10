@@ -7,15 +7,13 @@ import logging
 from typing import TYPE_CHECKING
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import force_option
-from tdp.cli.utils import parse_file
-from tdp.core.models.deployment_model import DeploymentModel
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
 
 logger = logging.getLogger(__name__)
@@ -33,6 +31,11 @@ def import_file(
     force: bool,
 ):
     """Import a deployment from a file."""
+
+    from tdp.cli.utils import parse_file
+    from tdp.core.models.deployment_model import DeploymentModel
+    from tdp.dao import Dao
+
     with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = dao.get_planned_deployment()
         with open(file_name) as file:

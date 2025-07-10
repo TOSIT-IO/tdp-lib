@@ -10,14 +10,12 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
-from tdp.cli.utils import parse_file
-from tdp.core.models.deployment_model import DeploymentModel
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
 
 logger = logging.getLogger(__name__)
@@ -73,6 +71,11 @@ def edit(
     db_engine: Engine,
 ):
     """Edit the planned deployment."""
+
+    from tdp.cli.utils import parse_file
+    from tdp.core.models.deployment_model import DeploymentModel
+    from tdp.dao import Dao
+
     with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = dao.get_planned_deployment()
         if planned_deployment is None:

@@ -1,25 +1,25 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from __future__ import annotations
+
 import logging
 import pathlib
+from typing import TYPE_CHECKING
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params.collections_option import collections_option
 from tdp.cli.params.database_dsn_option import database_dsn_option
 from tdp.cli.params.overrides_option import overrides_option
 from tdp.cli.params.validate_option import validate_option
 from tdp.cli.params.vars_option import vars_option
-from tdp.core.collections.collections import Collections
 from tdp.core.constants import DEFAULT_VALIDATION_MESSAGE, VALIDATION_MESSAGE_FILE
-from tdp.core.variables.cluster_variables import (
-    ClusterVariables,
-    ServicesNotInitializedError,
-)
-from tdp.core.variables.exceptions import ServicesUpdateError
-from tdp.dao import Dao
+
+if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
+    from tdp.core.collections import Collections
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,14 @@ def update(
     msg_file: str,
 ):
     """Update configuration from the given directories."""
+
+    from tdp.core.variables.cluster_variables import (
+        ClusterVariables,
+        ServicesNotInitializedError,
+    )
+    from tdp.core.variables.exceptions import ServicesUpdateError
+    from tdp.dao import Dao
+
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
     try:
         cluster_variables.update(

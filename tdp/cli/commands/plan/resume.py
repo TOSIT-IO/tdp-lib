@@ -6,15 +6,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import preview_option
-from tdp.cli.utils import print_deployment
-from tdp.core.models import DeploymentModel
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
 
 
@@ -30,6 +28,11 @@ def resume(
     id: Optional[int] = None,
 ):
     """Resume a failed deployment."""
+
+    from tdp.cli.utils import print_deployment
+    from tdp.core.models import DeploymentModel
+    from tdp.dao import Dao
+
     with Dao(db_engine, commit_on_exit=True) as dao:
         if id is None:
             deployment_to_resume = dao.get_last_deployment()

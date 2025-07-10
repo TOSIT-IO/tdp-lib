@@ -6,17 +6,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 import click
-from sqlalchemy import Engine
 
 from tdp.cli.params import collections_option, database_dsn_option
 from tdp.cli.params.plan import force_option, preview_option, rolling_interval_option
-from tdp.cli.utils import (
-    print_deployment,
-)
-from tdp.core.models import DeploymentModel
-from tdp.dao import Dao
 
 if TYPE_CHECKING:
+    from sqlalchemy import Engine
+
     from tdp.core.collections import Collections
 
 
@@ -34,6 +30,11 @@ def reconfigure(
     rolling_interval: Optional[int] = None,
 ):
     """Reconfigure required TDP services."""
+
+    from tdp.cli.utils import print_deployment
+    from tdp.core.models import DeploymentModel
+    from tdp.dao import Dao
+
     click.echo("Creating a deployment plan to reconfigure services.")
     with Dao(db_engine, commit_on_exit=True) as dao:
         deployment = DeploymentModel.from_stale_hosted_entities(
