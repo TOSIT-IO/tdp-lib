@@ -83,21 +83,13 @@ Contributions are welcome! Here are some guidelines specific to this project:
     docker compose -f dev/docker-compose.yaml down -v
     ```
 
-- Format and lint code using ([Black](https://black.readthedocs.io/en/stable/)) and ([Ruff](https://beta.ruff.rs/docs/)):
+- Format and lint code using [Ruff](https://beta.ruff.rs/docs/):
 
     ```sh
-    poetry run task precommit-fix
+    # Format the code and reoder imports
+    poetry run ruff check --select I --fix && ruff format
+    # Check the code for linting issues
+    poetry run ruff check
+    # Lint the code
+    poetry run ruff check --fix
     ```
-
-### Developer Documentation
-
-Linting and formatting are enforced using [Ruff](https://beta.ruff.rs/docs/). To ensure code quality, run the following commands:
-
-```sh
-# Format the code and reoder imports
-poetry run ruff check --select I --fix && ruff format
-# Check the code for linting issues
-poetry run ruff check
-# Lint the code
-poetry run ruff check --fix
-```
