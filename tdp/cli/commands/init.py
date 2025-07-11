@@ -14,7 +14,7 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
-from tdp.cli.params.overrides_option import overrides_option
+from tdp.cli.params.conf_option import conf_option
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine
@@ -23,13 +23,13 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@overrides_option
+@conf_option
 @collections_option
 @database_dsn_option
 @validate_option
 @vars_option(exists=False)
 def init(
-    overrides: tuple[Path],
+    conf: tuple[Path],
     collections: Collections,
     db_engine: Engine,
     validate: bool,
@@ -42,5 +42,5 @@ def init(
 
     init_database(db_engine)
     ClusterVariables.initialize_cluster_variables(
-        collections, vars, overrides, validate=validate
+        collections, vars, conf, validate=validate
     )

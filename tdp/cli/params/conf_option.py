@@ -7,13 +7,13 @@ import click
 from click.decorators import FC
 
 
-def overrides_option(func: FC) -> FC:
-    """Click option that adds an overrides option to the command."""
+def conf_option(func: FC) -> FC:
+    """Add the `--conf` option to a Click command."""
     return click.option(
-        "--overrides",
-        envvar="TDP_OVERRIDES",
+        "--conf",
+        envvar="TDP_CONF",
         required=False,
         type=click.Path(exists=True, resolve_path=True, path_type=pathlib.Path),
         multiple=True,
-        help="Path to TDP variables overrides. Can be used multiple times. Last one takes precedence.",
+        help="Path to the user variable configuration directory. Can be used multiple times. Last one takes precedence.",
     )(func)

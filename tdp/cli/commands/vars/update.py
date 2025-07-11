@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 import click
 
 from tdp.cli.params.collections_option import collections_option
+from tdp.cli.params.conf_option import conf_option
 from tdp.cli.params.database_dsn_option import database_dsn_option
-from tdp.cli.params.overrides_option import overrides_option
 from tdp.cli.params.validate_option import validate_option
 from tdp.cli.params.vars_option import vars_option
 from tdp.core.constants import DEFAULT_VALIDATION_MESSAGE, VALIDATION_MESSAGE_FILE
@@ -39,13 +39,13 @@ logger = logging.getLogger(__name__)
     help="Name of the file containing a custom validation message to read in each imported service. When multiple validations message are provided (default --validation-message and/or service imported from multiple import directories), they will be concatenated.",
     default=VALIDATION_MESSAGE_FILE,
 )
-@overrides_option
+@conf_option
 @vars_option
 @database_dsn_option
 @collections_option
 @validate_option
 def update(
-    overrides: tuple[pathlib.Path],
+    conf: tuple[pathlib.Path],
     vars: pathlib.Path,
     db_engine: Engine,
     collections: Collections,
@@ -65,7 +65,7 @@ def update(
     cluster_variables = ClusterVariables.get_cluster_variables(collections, vars)
     try:
         cluster_variables.update(
-            overrides,
+            conf,
             validate=validate,
             validation_msg_file_name=msg_file,
             base_validation_msg=msg,
