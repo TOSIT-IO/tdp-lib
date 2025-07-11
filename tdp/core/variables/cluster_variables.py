@@ -9,16 +9,18 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.constants import DEFAULT_VALIDATION_MESSAGE, VALIDATION_MESSAGE_FILE
+from tdp.core.constants import (
+    DEFAULT_VALIDATION_MESSAGE,
+    VALIDATION_MESSAGE_FILE,
+)
+from tdp.core.exceptions import (
+    ServiceVariablesNotInitializedError,
+    ServiceVariablesNotInitializedErrorList,
+)
 from tdp.core.repository.git_repository import GitRepository
 from tdp.core.repository.repository import EmptyCommit, NoVersionYet, Repository
 from tdp.core.types import PathLike
-from tdp.core.variables.exceptions import (
-    ServicesNotInitializedError,
-    ServicesUpdateError,
-    UnknownService,
-    UpdateError,
-)
+from tdp.core.variables.exceptions import ServicesUpdateError, UpdateError
 from tdp.core.variables.messages import ValidationMessageBuilder
 from tdp.core.variables.planner import ServiceUpdatePlanner
 from tdp.core.variables.scanner import ServiceDirectoryScanner
@@ -156,13 +158,17 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
             (name, path) for name, path in self._collections.default_vars_dirs.items()
         ] + [("override", Path(p)) for p in override_folders]
 
-        unknown = []
+        unknown: list[ServiceVariablesNotInitializedError] = []
         for _, source_path in sources:
             for name, _ in ServiceDirectoryScanner.scan(source_path).items():
                 if name not in self:
-                    unknown.append(UnknownService(name, source_path.as_posix()))
+                    unknown.append(
+                        ServiceVariablesNotInitializedError(
+                            name, source_path.as_posix()
+                        )
+                    )
         if unknown:
-            raise ServicesNotInitializedError(unknown)
+            raise ServiceVariablesNotInitializedErrorList(unknown)
 
         validation_builder = ValidationMessageBuilder(
             self._collections,

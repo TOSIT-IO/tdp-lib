@@ -7,6 +7,11 @@ import logging
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
+from tdp.core.exceptions import (
+    ServiceVariablesNotInitializedError,
+    ServiceVariablesNotInitializedErrorList,
+)
+
 if TYPE_CHECKING:
     from tdp.core.entities.hosted_entity import HostedEntity
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
@@ -31,16 +36,17 @@ def get_modified_entities(
         RuntimeError: If a service is deployed but its repository is missing.
     """
     modified_entities: set[HostedEntity] = set()
+    not_initialized_services: set[ServiceVariablesNotInitializedError] = set()
     for status in entity_statuses:
         # Skip if the entity has already been listed as modified
         if status.entity in modified_entities:
             continue
         # Raise an error if the service is deployed but its repository is missing
         if status.entity.name.service not in cluster_variables:
-            raise RuntimeError(
-                f"Service '{status.entity.name.service}' is deployed but its"
-                + "repository is missing."
+            not_initialized_services.add(
+                ServiceVariablesNotInitializedError(status.entity.name.service)
             )
+            continue
         # Check if the entity has been modified
         if status.configured_version and cluster_variables[
             status.entity.name.service
@@ -52,4 +58,6 @@ def get_modified_entities(
                 + (f" for host {status.entity.host}" if status.entity.host else "")
             )
             modified_entities.add(status.entity)
+    if not_initialized_services:
+        raise ServiceVariablesNotInitializedErrorList(list(not_initialized_services))
     return modified_entities
