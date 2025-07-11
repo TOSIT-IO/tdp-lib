@@ -43,8 +43,8 @@ def generate_stales(
     Stales components are components that have been modified and need to be
     reconfigured and/or restarted.
     """
-
     from tdp.cli.utils import check_services_cleanliness, print_hosted_entity_status_log
+    from tdp.core.exceptions import ServiceVariablesNotInitializedErrorList
     from tdp.core.variables import ClusterVariables
     from tdp.dao import Dao
 
@@ -54,9 +54,13 @@ def generate_stales(
     check_services_cleanliness(cluster_variables)
 
     with Dao(db_engine) as dao:
-        stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
-            cluster_variables=cluster_variables, collections=collections
-        )
+        try:
+            stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
+                cluster_variables=cluster_variables, collections=collections
+            )
+        except ServiceVariablesNotInitializedErrorList as e:
+            click.echo(str(e))
+            click.echo("Their status will not be updated.")
 
         dao.session.add_all(stale_status_logs)
         dao.session.commit()

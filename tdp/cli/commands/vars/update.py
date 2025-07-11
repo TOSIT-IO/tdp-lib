@@ -55,10 +55,8 @@ def update(
 ):
     """Update configuration from the given directories."""
 
-    from tdp.core.variables.cluster_variables import (
-        ClusterVariables,
-        ServicesNotInitializedError,
-    )
+    from tdp.core.exceptions import ServiceVariablesNotInitializedErrorList
+    from tdp.core.variables.cluster_variables import ClusterVariables
     from tdp.core.variables.exceptions import ServicesUpdateError
     from tdp.dao import Dao
 
@@ -71,14 +69,8 @@ def update(
             base_validation_msg=msg,
         )
     # Stop the update process if some services are not initialized
-    except ServicesNotInitializedError as e:
-        error_messages = "\n".join(
-            f"{error.service_name} (from {error.source_definition})"
-            for error in e.services
-        )
-        raise click.ClickException(
-            f"The following services are not initialized:\n{error_messages}"
-        ) from e
+    except ServiceVariablesNotInitializedErrorList as e:
+        raise click.ClickException(str(e)) from e
     # Do not stop the update as some services may have been updated successfully
     except ServicesUpdateError as e:
         error_messages = "\n".join(
