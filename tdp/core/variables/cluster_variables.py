@@ -58,7 +58,10 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         override_folders: Optional[Iterable[PathLike]] = None,
         validate: bool = False,
     ) -> ClusterVariables:
-        """Initializes ClusterVariables by applying overrides and performing commits per input path."""
+        """Initializes ClusterVariables at vars using the base vars from the collections and optional overrides.
+
+        If a service already exists in the vars directory, it will not be re-initialized.
+        """
         tdp_vars = Path(tdp_vars)
         override_folders = override_folders or []
 
