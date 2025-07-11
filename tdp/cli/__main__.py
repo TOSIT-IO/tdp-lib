@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 from tdp.cli.commands.browse import browse
 from tdp.cli.commands.dag import dag
-from tdp.cli.commands.default_diff import default_diff
 from tdp.cli.commands.deploy import deploy
 from tdp.cli.commands.init import init
 from tdp.cli.commands.ops import ops
@@ -58,7 +57,6 @@ def cli(log_level: str):
 def main():
     cli.add_command(browse)
     cli.add_command(dag)
-    cli.add_command(default_diff)
     cli.add_command(deploy)
     cli.add_command(init)
     cli.add_command(ops)
