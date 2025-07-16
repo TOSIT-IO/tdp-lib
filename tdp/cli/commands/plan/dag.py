@@ -86,15 +86,20 @@ def dag(
         filter_type = FilterTypeEnum.REGEX if is_regex else FilterTypeEnum.GLOB
     if stop and restart:
         click.UsageError("Cannot use `--restart` and `--stop` at the same time.")
+
     dag = Dag(collections)
-    set_nodes = set()
+
+    # Check that sources and targets are valid DAG nodes
+    set_nodes: set[str] = set()
     if sources:
         set_nodes.update(sources)
     if targets:
         set_nodes.update(targets)
-    set_difference = set_nodes.difference(dag.operations)
-    if set_difference:
-        raise click.BadParameter(f"{set_difference} are not valid nodes.")
+    if set_nodes:
+        dag_nodes = [str(op.name) for op in dag.operations]
+        set_difference = set_nodes.difference(dag_nodes)
+        if set_difference:
+            raise click.BadParameter(f"{set_difference} are not valid nodes.")
 
     if sources:
         click.echo(f"Creating a deployment plan from: {sources}")
@@ -102,6 +107,7 @@ def dag(
         click.echo(f"Creating a deployment plan to: {targets}")
     else:
         click.echo("Creating a deployment plan for the whole DAG.")
+
     deployment = DeploymentModel.from_dag(
         dag,
         sources=sources,
