@@ -99,7 +99,9 @@ def dag(
         dag_nodes = [str(op.name) for op in dag.operations]
         set_difference = set_nodes.difference(dag_nodes)
         if set_difference:
-            raise click.BadParameter(f"{set_difference} are not valid nodes.")
+            raise click.BadParameter(
+                f"{set_difference} are not valid DAG operation(s)."
+            )
 
     if sources:
         click.echo(f"Creating a deployment plan from: {sources}")
