@@ -65,6 +65,7 @@ def edit(
         ServiceComponentName,
         parse_entity_name,
     )
+    from tdp.core.exceptions import ServiceVariablesNotInitializedErrorList
     from tdp.core.repository.repository import EmptyCommit
     from tdp.core.variables import ClusterVariables
     from tdp.core.variables.schema.exceptions import InvalidSchemaError
@@ -147,9 +148,13 @@ def edit(
 
         # Generate stale component list and save it to the database
         with Dao(db_engine) as dao:
-            stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
-                cluster_variables=cluster_variables, collections=collections
-            )
+            try:
+                stale_status_logs = dao.get_cluster_status().generate_stale_sch_logs(
+                    cluster_variables=cluster_variables, collections=collections
+                )
+            except ServiceVariablesNotInitializedErrorList as e:
+                click.echo(str(e))
+                click.echo("Their status will not be updated.")
             dao.session.add_all(stale_status_logs)
             dao.session.commit()
 
