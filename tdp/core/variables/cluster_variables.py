@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -63,6 +64,12 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         If a service already exists in the vars directory, it will not be re-initialized.
         """
         tdp_vars = Path(tdp_vars)
+        if not tdp_vars.exists():
+            raise FileNotFoundError(f"{tdp_vars} does not exist.")
+        if not tdp_vars.is_dir():
+            raise NotADirectoryError(f"{tdp_vars} is not a directory.")
+        if not os.access(tdp_vars, os.W_OK):
+            raise PermissionError(f"{tdp_vars} is not writable.")
         override_folders = override_folders or []
 
         current = cls.get_cluster_variables(collections, tdp_vars)
