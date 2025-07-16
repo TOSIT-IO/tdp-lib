@@ -20,7 +20,14 @@ def vars_option(func: Optional[FC] = None, *, exists=True) -> Callable[[FC], FC]
             "--vars",
             envvar="TDP_VARS",
             required=True,
-            type=click.Path(resolve_path=True, path_type=Path, exists=exists),
+            type=click.Path(
+                resolve_path=True,
+                path_type=Path,
+                exists=exists,
+                file_okay=False,
+                dir_okay=True,
+                writable=True,
+            ),
             help="Path to the TDP variables.",
             is_eager=True,  # This option is used by other options, so we need to parse it first
         )(fn)

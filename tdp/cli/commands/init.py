@@ -40,6 +40,10 @@ def init(
     from tdp.core.models import init_database
     from tdp.core.variables import ClusterVariables
 
+    if not vars.exists():
+        vars.mkdir(parents=True)
+        click.echo(f"Created TDP variables directory: {vars}")
+
     init_database(db_engine)
     ClusterVariables.initialize_cluster_variables(
         collections, vars, conf, validate=validate
