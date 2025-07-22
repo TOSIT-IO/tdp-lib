@@ -11,10 +11,24 @@ import click
 from tabulate import tabulate
 
 if TYPE_CHECKING:
+    from tdp.core.collections.collections import Collections
     from tdp.core.entities.hosted_entity_status import HostedEntityStatus
     from tdp.core.models import DeploymentModel
     from tdp.core.models.operation_model import OperationModel
     from tdp.core.variables.cluster_variables import ClusterVariables
+
+
+def validate_service_component(
+    service: str, component: Optional[str] = None, *, collections: Collections
+):
+    """Wraps the validation of service and component arguments to display a
+    user-friendly error message."""
+    try:
+        collections.validate_service_component(service, component)
+    except ValueError as e:
+        raise click.UsageError(
+            f"Invalid SERVICE or COMPONENT argument: {f'{service}_{component}' if component else service}"
+        ) from e
 
 
 def check_services_cleanliness(cluster_variables: ClusterVariables) -> None:

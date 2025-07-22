@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.entities.entity_name import ServiceComponentName
+from tdp.core.entities.entity_name import ServiceComponentName, create_entity_name
 from tdp.core.entities.operation import (
     DagOperationBuilder,
     ForgedDagOperation,
@@ -199,3 +199,13 @@ class Collections:
             if isinstance(operation.name, ServiceComponentName):
                 service.add(operation.name)
         return services_components
+
+    def validate_service_component(
+        self, service: str, component: Optional[str]
+    ) -> None:
+        """Validate that the service and component are registered in the collections."""
+        entity_name = create_entity_name(service, component)
+        if not entity_name in [op.name.entity for op in self.operations.values()]:
+            raise ValueError(
+                f"Entity '{entity_name}' does not exist in the collections."
+            )
