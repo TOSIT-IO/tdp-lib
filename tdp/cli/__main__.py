@@ -3,10 +3,8 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 import click
-from dotenv import load_dotenv
 
 from tdp.cli.commands.browse import browse
 from tdp.cli.commands.dag import dag
@@ -17,7 +15,7 @@ from tdp.cli.commands.ops import ops
 from tdp.cli.commands.plan import plan
 from tdp.cli.commands.status import status
 from tdp.cli.commands.vars import vars
-from tdp.cli.logger import DEFAULT_LOG_LEVEL, get_early_logger, setup_logging
+from tdp.cli.logger import DEFAULT_LOG_LEVEL, get_early_logger
 
 # Set up early logging before any other operations
 logger = get_early_logger(__name__)
@@ -27,18 +25,28 @@ logger = get_early_logger(__name__)
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
-def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optional[Path]:
+def _load_env_callback(
+    _ctx: click.Context, _param: click.Parameter, value: Path
+) -> None:
     """Click callback to load the environment file."""
-    if value.exists():
-        load_dotenv(value)
-        logger.info(f"Loaded environment from {value}")
-        return value
-    else:
-        logger.warning(f"Environment file {value} does not exist.")
+    from dotenv import load_dotenv
+
+    if not value.exists():
+        logger.warning(
+            f"Environment file {value} does not exist. Skipping environment loading."
+        )
+        return
+
+    load_dotenv(value)
+    logger.info(f"Loaded environment from {value}")
 
 
-def logging_callback(ctx: click.Context, param: click.Parameter, value: str) -> None:
+def _setup_logging_callback(
+    _ctx: click.Context, _param: click.Parameter, value: str
+) -> None:
     """Click callback to set up logging."""
+    from tdp.cli.logger import setup_logging
+
     setup_logging(value)
     logger.info(f"Logging level set to {value}")
 
@@ -48,8 +56,8 @@ def logging_callback(ctx: click.Context, param: click.Parameter, value: str) -> 
     "--env",
     default=".env",
     envvar="TDP_ENV",
-    callback=load_env,
-    type=Path,
+    type=click.Path(dir_okay=False, path_type=Path),
+    callback=_load_env_callback,
     help="Path to environment configuration file.",
     expose_value=False,
     is_eager=True,
@@ -59,7 +67,7 @@ def logging_callback(ctx: click.Context, param: click.Parameter, value: str) -> 
     default=logging.getLevelName(DEFAULT_LOG_LEVEL),
     envvar="TDP_LOG_LEVEL",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
-    callback=logging_callback,
+    callback=_setup_logging_callback,
     help="Set the level of log output.",
     show_default=True,
     expose_value=False,
