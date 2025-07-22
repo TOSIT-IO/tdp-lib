@@ -43,8 +43,7 @@ def service_diff(collections: Collections, service):
         collections (Collections): Collections object.
         service (ServiceManager): Service to compare's manager.
     """
-    from ansible.utils.vars import merge_hash
-
+    from tdp.core.ansible_loader import AnsibleLoader
     from tdp.core.variables import Variables
 
     # key: filename with extension, value: PosixPath(filepath)
@@ -80,7 +79,7 @@ def service_diff(collections: Collections, service):
             with Variables(default_service_vars_filepath).open(
                 "r"
             ) as default_variables:
-                default_service_varfile = merge_hash(
+                default_service_varfile = AnsibleLoader.get_merge_hash()(
                     default_service_varfile, default_variables
                 )
 
