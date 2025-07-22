@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from tdp.core.entities.entity_name import ServiceComponentName, create_entity_name
+from tdp.core.entities.entity_name import create_entity_name
 from tdp.core.entities.operation import (
     DagOperationBuilder,
     ForgedDagOperation,
@@ -65,7 +65,6 @@ class Collections:
         self._operations = self._generate_operations()
         self._default_var_dirs = self._init_default_vars_dirs()
         self._schemas = self._init_schemas()
-        self._services_components = self._init_entities()
 
     @staticmethod
     def from_collection_paths(
@@ -96,11 +95,6 @@ class Collections:
     def schemas(self) -> dict[str, ServiceSchema]:
         """Mapping of service names with their variable schemas."""
         return self._schemas
-
-    @property
-    def entities(self) -> dict[str, set[ServiceComponentName]]:
-        """Mapping of service names to their set of components."""
-        return self._services_components
 
     def get_version(self, collection_name: str) -> CollectionVersion:
         for collection in self._collection_readers:
@@ -187,18 +181,6 @@ class Collections:
             for schema in collection.read_schemas():
                 schemas.setdefault(schema.service, ServiceSchema()).add_schema(schema)
         return schemas
-
-    def _init_entities(self) -> dict[str, set[ServiceComponentName]]:
-        """Initialize the entities from the collections.
-
-        Needs to be called after the operations are initialized.
-        """
-        services_components: dict[str, set[ServiceComponentName]] = {}
-        for operation in self.operations.values():
-            service = services_components.setdefault(operation.name.service, set())
-            if isinstance(operation.name, ServiceComponentName):
-                service.add(operation.name)
-        return services_components
 
     def validate_service_component(
         self, service: str, component: Optional[str]

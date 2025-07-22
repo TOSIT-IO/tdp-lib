@@ -19,6 +19,7 @@ from tdp.core.collections.collection_reader import (
 )
 from tdp.core.constants import YML_EXTENSION
 from tdp.core.entities.entity_name import (
+    ServiceComponentName,
     ServiceName,
     parse_entity_name,
 )
@@ -166,30 +167,49 @@ class append_collection_list_action(argparse.Action):
 def resolve_components(
     service_components: Iterable[str], collections: Collections
 ) -> tuple[frozenset[str], dict[str, str]]:
-    """Resolve the components from the service components.
+    """Resolve service and component names into their constituent components.
 
-    If a service is given, all the components of the service are returned.
+    This function takes a mixed list of service names and service component names
+    and expands any service names into their individual components. It's used in
+    testing scenarios where operations need to be resolved at the component level.
+
+    When a service name is provided (e.g., "hdfs"), it gets expanded to all its
+    components (e.g., "hdfs_namenode", "hdfs_datanode", etc.). When a component
+    name is provided (e.g., "hdfs_namenode"), it's kept as-is.
 
     Args:
-        service_components: Iterable of service components.
-        collections: Collections to use to resolve the components.
+        service_components: An iterable of strings that can contain service names
+            (e.g., "hdfs") or service component names (e.g., "hdfs_namenode").
+        collections: Collections object containing the operations and their
+            service/component relationships.
 
     Returns:
-        Tuple of the resolved components and the service component map.
+        A tuple containing:
+        - A frozenset of resolved component names (all individual components)
+        - A dictionary mapping component names to their parent service names
+          (only for components that were expanded from services)
 
     Examples:
         >>> resolve_components(["service1", "service2"])
         (frozenset({"service1", "service2"}), {})
         >>> resolve_components(["service1", "service2_component1"])
         (frozenset({"service1", "service2_component1"}), {"service2_component1": "service2"})
+        >>> resolve_components(["hdfs", "yarn_nodemanager"])
+        (frozenset({"hdfs_namenode", "hdfs_datanode", "yarn_nodemanager"}),
+         {"hdfs_namenode": "hdfs", "hdfs_datanode": "hdfs"})
     """
     resolved_components: set[str] = set()
     service_component_map: dict[str, str] = {}
     for service_component in service_components:
         if isinstance(parse_entity_name(service_component), ServiceName):
-            for component in collections.entities[service_component]:
-                resolved_components.add(component.name)
-                service_component_map[component.name] = service_component
+            # Find all components for this service by iterating through operations
+            for operation in collections.operations.values():
+                if operation.name.service == service_component and isinstance(
+                    operation.name.entity, ServiceComponentName
+                ):
+                    component_name = operation.name.entity.name
+                    resolved_components.add(component_name)
+                    service_component_map[component_name] = service_component
         else:
             resolved_components.add(service_component)
     return frozenset(resolved_components), service_component_map
