@@ -57,51 +57,22 @@ def rolling_interval_option(func: FC) -> FC:
 def component_argument_option(func: FC) -> FC:
     """Add the COMPONENT argument to a Click command."""
 
-    if TYPE_CHECKING:
-        from tdp.core.collections import Collections
-
-    def _check_component(
-        ctx: click.Context, param: click.Parameter, value: Optional[str]
-    ) -> Optional[str]:
-        """Click callback that check if the component exists."""
-        collections: Collections = ctx.params["collections"]
-        service: str = ctx.params["service"]
-        if value and value not in [
-            sc_name.component for sc_name in collections.entities[service]
-        ]:
-            raise click.UsageError(
-                f"Component '{value}' does not exists in service '{service}'."
-            )
-        return value
-
-    return click.argument(
-        "component", nargs=1, required=False, callback=_check_component
-    )(func)
+    return click.argument("component", nargs=1, required=False)(func)
 
 
-def service_argument_option(func: FC) -> FC:
+def service_argument_option(
+    func: Optional[FC] = None, *, required=False
+) -> Callable[[FC], FC]:
     """Add the SERVICE argument to a Click command."""
 
-    from tdp.core.collections import Collections
-    from tdp.core.variables.cluster_variables import ClusterVariables
+    def decorator(fn: FC) -> FC:
+        return click.argument("service", nargs=1, required=required)(fn)
 
-    def _check_service(
-        ctx: click.Context, param: click.Parameter, value: Optional[str]
-    ) -> Optional[str]:
-        """Click callback that check if the service exists."""
-        collections: Collections = ctx.params["collections"]
-        vars: pathlib.Path = ctx.params["vars"]
-        # TODO: would be nice if services can be retrieved from the collections
-        cluster_variables = ClusterVariables.get_cluster_variables(
-            collections=collections, tdp_vars=vars, validate=False
-        )
-        if value and value not in cluster_variables.keys():
-            raise click.UsageError(f"Service '{value}' does not exists.")
-        return value
-
-    return click.argument("service", nargs=1, required=False, callback=_check_service)(
-        func
-    )
+    # Checks if the decorator was used without parentheses.
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)
 
 
 def collections_option(func: FC) -> FC:
@@ -121,7 +92,6 @@ def collections_option(func: FC) -> FC:
         type=click.Path(resolve_path=True, path_type=pathlib.Path),
         callback=lambda ctx, param, value: Collections.from_collection_paths(value),
         help="Path to the collection. Can be used multiple times.",
-        is_eager=True,  # This option is used by other options, so we need to parse it first
     )(func)
 
 
@@ -221,7 +191,6 @@ def vars_option(func: Optional[FC] = None, *, exists=True) -> Callable[[FC], FC]
                 writable=True,
             ),
             help="Path to the TDP variables.",
-            is_eager=True,  # This option is used by other options, so we need to parse it first
         )(fn)
 
     # Checks if the decorator was used without parentheses.

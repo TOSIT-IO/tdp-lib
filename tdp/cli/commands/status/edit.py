@@ -16,6 +16,7 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
+from tdp.cli.utils import validate_service_component
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -26,7 +27,7 @@ if TYPE_CHECKING:
 
 
 @click.command()
-@service_argument_option
+@service_argument_option(required=True)
 @component_argument_option
 @collections_option
 @database_dsn_option
@@ -55,7 +56,7 @@ def edit(
     vars: Path,
     validate: bool,
     hosts: tuple[str],
-    service: Optional[str] = None,
+    service: str,
     component: Optional[str] = None,
     message: Optional[str] = None,
     to_config: Optional[bool] = None,
@@ -74,6 +75,13 @@ def edit(
     from tdp.core.variables import ClusterVariables
     from tdp.dao import Dao
 
+    # Validate hosts option
+    # TODO: would be nice if host is optional and we can edit all hosts at once
+    if not hosts:
+        raise click.UsageError("At least one `--host` is required.")
+    # Validate service and component arguments
+    validate_service_component(service, component, collections=collections)
+    # Validate to_config and to_restart options
     if to_config is not None and to_restart is not None:
         raise click.UsageError(
             "You must provide either `--to-config` or `--to-restart` option."
@@ -85,13 +93,6 @@ def edit(
     check_services_cleanliness(cluster_variables)
 
     with Dao(db_engine) as dao:
-        if not service:
-            raise click.UsageError("SERVICE argument is required.")
-
-        # TODO: would be nice if host is optional and we can edit all hosts at once
-        if not hosts:
-            raise click.UsageError("At least one `--host` is required.")
-
         # Create a new SCHStatusLog for each host
         for host in hosts:
             dao.session.add(

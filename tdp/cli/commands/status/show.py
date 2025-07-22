@@ -16,6 +16,7 @@ from tdp.cli.params import (
     validate_option,
     vars_option,
 )
+from tdp.cli.utils import validate_service_component
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -89,6 +90,14 @@ def show(
     )
     from tdp.core.variables import ClusterVariables
     from tdp.dao import Dao
+
+    # Validate service and component argument
+    if not service and component:
+        raise click.UsageError(
+            "Component argument cannot be used without a service argument."
+        )
+    elif service:
+        validate_service_component(service, component, collections=collections)
 
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections=collections, tdp_vars=vars, validate=validate
