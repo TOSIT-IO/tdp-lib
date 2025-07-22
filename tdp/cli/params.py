@@ -110,7 +110,14 @@ def collections_option(func: FC) -> FC:
     Takes multiple paths (required) and transforms them into a Collections object.
     Available as "collections" in the command context.
     """
-    from tdp.core.collections import Collections
+
+    def _create_collections_callback(
+        _ctx: click.Context, _param: click.Parameter, value
+    ):
+        """Click callback that creates a Collections object."""
+        from tdp.core.collections import Collections
+
+        return Collections.from_collection_paths(value)
 
     return click.option(
         "--collection-path",
@@ -119,7 +126,7 @@ def collections_option(func: FC) -> FC:
         required=True,
         multiple=True,
         type=click.Path(resolve_path=True, path_type=pathlib.Path),
-        callback=lambda ctx, param, value: Collections.from_collection_paths(value),
+        callback=_create_collections_callback,
         help="Path to the collection. Can be used multiple times.",
         is_eager=True,  # This option is used by other options, so we need to parse it first
     )(func)
@@ -131,7 +138,11 @@ def database_dsn_option(func: FC) -> FC:
     Return a SQLAlchemy Engine instance, available as "db_engine" in the command context.
     """
 
-    from tdp.core.db import get_engine
+    def _get_engine_callback(_ctx: click.Context, _param: click.Parameter, value):
+        """Click callback that returns a SQLAlchemy Engine instance."""
+        from tdp.core.db import get_engine
+
+        return get_engine(value)
 
     return click.option(
         "db_engine",
@@ -139,7 +150,7 @@ def database_dsn_option(func: FC) -> FC:
         envvar="TDP_DATABASE_DSN",
         required=True,
         type=str,
-        callback=lambda _ctx, _param, value: get_engine(value),
+        callback=_get_engine_callback,
         help=(
             "Database Data Source Name, in sqlalchemy driver form "
             "example: sqlite:////data/tdp.db or sqlite+pysqlite:////data/tdp.db. "
