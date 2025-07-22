@@ -77,19 +77,16 @@ def cli():
     pass
 
 
-def main():
-    cli.add_command(browse)
-    cli.add_command(dag)
-    cli.add_command(default_diff)
-    cli.add_command(deploy)
-    cli.add_command(init)
-    cli.add_command(ops)
-    cli.add_command(plan)
-    cli.add_command(status)
-    cli.add_command(vars)
-
-    cli()
+cli.add_command(browse)
+cli.add_command(dag)
+cli.add_command(default_diff)
+cli.add_command(deploy)
+cli.add_command(init)
+cli.add_command(ops)
+cli.add_command(plan)
+cli.add_command(status)
+cli.add_command(vars)
 
 
 if __name__ == "__main__":
-    main()
+    cli()
