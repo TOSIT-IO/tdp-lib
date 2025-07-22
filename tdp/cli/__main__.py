@@ -42,6 +42,7 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     type=Path,
     help="Path to environment configuration file.",
     expose_value=False,
+    is_eager=True,  # Load the environment file before any command is executed.
 )
 @click.option(
     "--log-level",
