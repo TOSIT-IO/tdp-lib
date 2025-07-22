@@ -17,7 +17,10 @@ from tdp.cli.commands.ops import ops
 from tdp.cli.commands.plan import plan
 from tdp.cli.commands.status import status
 from tdp.cli.commands.vars import vars
-from tdp.cli.logger import setup_logging
+from tdp.cli.logger import DEFAULT_LOG_LEVEL, get_early_logger, setup_logging
+
+# Set up early logging before any other operations
+logger = get_early_logger(__name__)
 
 # Add `-h` shortcut to print the help for the whole cli.
 # Click only uses `--help` by default.
@@ -28,9 +31,16 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     """Click callback to load the environment file."""
     if value.exists():
         load_dotenv(value)
+        logger.info(f"Loaded environment from {value}")
         return value
     else:
-        logging.warning(f"Environment file {value} does not exist.")
+        logger.warning(f"Environment file {value} does not exist.")
+
+
+def logging_callback(ctx: click.Context, param: click.Parameter, value: str) -> None:
+    """Click callback to set up logging."""
+    setup_logging(value)
+    logger.info(f"Logging level set to {value}")
 
 
 @click.group("tdp", context_settings=CONTEXT_SETTINGS)
@@ -42,18 +52,21 @@ def load_env(ctx: click.Context, param: click.Parameter, value: Path) -> Optiona
     type=Path,
     help="Path to environment configuration file.",
     expose_value=False,
-    is_eager=True,  # Load the environment file before any command is executed.
+    is_eager=True,
 )
 @click.option(
     "--log-level",
-    default="INFO",
+    default=logging.getLevelName(DEFAULT_LOG_LEVEL),
     envvar="TDP_LOG_LEVEL",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    callback=logging_callback,
     help="Set the level of log output.",
+    show_default=True,
+    expose_value=False,
+    is_eager=True,
 )
-def cli(log_level: str):
-    setup_logging(log_level)
-    logging.info("Logging is configured.")
+def cli():
+    pass
 
 
 def main():
