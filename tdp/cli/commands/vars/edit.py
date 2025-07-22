@@ -11,10 +11,13 @@ import click
 
 from tdp.cli.params import (
     collections_option,
+    component_argument_option,
     database_dsn_option,
+    service_argument_option,
     validate_option,
     vars_option,
 )
+from tdp.cli.utils import validate_service_component
 
 if TYPE_CHECKING:
     from sqlalchemy import Engine
@@ -26,8 +29,8 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.argument("service_name", nargs=1, required=True)
-@click.argument("service_component_parameter", nargs=1, required=False)
+@service_argument_option(required=True)
+@component_argument_option
 @click.option(
     "--commit_message",
     "-c",
@@ -45,8 +48,8 @@ def edit(
     db_engine: Engine,
     validate: bool,
     vars: Path,
-    service_name: str,
-    service_component_parameter: Optional[str] = None,
+    service: str,
+    component: Optional[str] = None,
 ):
     """Edit a variables file.
 
@@ -61,56 +64,37 @@ def edit(
     """
 
     from tdp.core.constants import YML_EXTENSION
-    from tdp.core.entities.entity_name import (
-        ServiceComponentName,
-        parse_entity_name,
-    )
+    from tdp.core.entities.entity_name import create_entity_name
     from tdp.core.exceptions import ServiceVariablesNotInitializedErrorList
     from tdp.core.repository.repository import EmptyCommit
     from tdp.core.variables import ClusterVariables
     from tdp.core.variables.schema.exceptions import InvalidSchemaError
     from tdp.dao import Dao
 
+    # Validate service and component arguments
+    if component and component.endswith(YML_EXTENSION):
+        component = component[: -len(YML_EXTENSION)]
+    if component == service or not component:
+        component = None
+    validate_service_component(service, component, collections=collections)
+
     cluster_variables = ClusterVariables.get_cluster_variables(
         collections, vars, validate=validate
     )
-
-    # Check if service exists
-    if service_name not in cluster_variables:
-        raise click.ClickException(f"Error unknown service '{service_name}'")
-
-    service_variables = cluster_variables[service_name]
+    service_variables = cluster_variables[service]
     repo = service_variables.repository
 
     # Check if service is clean
     if not service_variables.clean:
         raise click.ClickException(
-            f"Error service '{service_name}' is not clean. Commit or stash your changes before editing variables."
+            f"Error service '{service}' is not clean. Commit or stash your changes before editing variables."
         )
 
     # Get the variable file to edit
-    base_path = vars / service_name
-    if service_component_parameter is None:
-        # tdp vars edit service
-        variables_file = base_path / (service_name + YML_EXTENSION)
-    elif service_component_parameter.endswith(YML_EXTENSION):
-        # tdp vars edit service service.yml OR tdp vars edit service service_component.yml
-        variables_file = base_path / service_component_parameter
-    else:
-        # tdp vars edit service component
-        variables_file = base_path / (
-            service_name + "_" + service_component_parameter + YML_EXTENSION
-        )
+    entity = create_entity_name(service, component)
+    variables_file = vars / service / (entity.name + YML_EXTENSION)
 
-    # Check if component exists
-    entity_name = parse_entity_name(variables_file.stem)
-    if isinstance(entity_name, ServiceComponentName):
-        if entity_name not in collections.entities[service_name]:
-            raise click.ClickException(
-                f"Error unknown component '{entity_name.component}' for service '{entity_name.service}'"
-            )
-
-    logger.debug(f"Editing {variables_file.name} for service {service_name}")
+    logger.debug(f"Editing {entity.name} for service {service}")
 
     # Loop until variables file format has no errors or user aborts editing file
     while True:
@@ -134,7 +118,7 @@ def edit(
         try:
             service_variables.validate()
         except InvalidSchemaError:
-            click.echo(f"Variables does not match '{service_name}' schema")
+            click.echo(f"Variables does not match '{service}' schema")
             continue
 
         # Commit
