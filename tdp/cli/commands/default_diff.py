@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Optional
 import click
 
 from tdp.cli.params import collections_option, vars_option
+from tdp.core.ansible_loader import AnsibleLoader
 from tdp.core.constants import DEFAULT_VARS_DIRECTORY_NAME
 
 if TYPE_CHECKING:
@@ -80,7 +81,7 @@ def service_diff(collections: Collections, service):
             with Variables(default_service_vars_filepath).open(
                 "r"
             ) as default_variables:
-                default_service_varfile = merge_hash(
+                default_service_varfile = AnsibleLoader.load_merge_hash()(
                     default_service_varfile, default_variables
                 )
 
