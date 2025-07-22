@@ -38,13 +38,6 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Mock the deploy, do not actually run the ansible playbook.",
 )
-@click.option(
-    "--run-directory",
-    envvar="TDP_RUN_DIRECTORY",
-    type=click.Path(resolve_path=True, path_type=Path, exists=True),
-    help="Working directory where the executor is launched (`ansible-playbook` for Ansible).",
-    required=True,
-)
 @validate_option
 @vars_option
 def deploy(
@@ -53,7 +46,6 @@ def deploy(
     db_engine: Engine,
     force_stale_update: bool,
     mock_deploy: bool,
-    run_directory: Path,
     validate: bool,
     vars: Path,
 ):
@@ -79,10 +71,7 @@ def deploy(
 
         deployment_iterator = DeploymentRunner(
             collections=collections,
-            executor=Executor(
-                run_directory=run_directory.absolute() if run_directory else None,
-                dry=dry or mock_deploy,
-            ),
+            executor=Executor(dry=dry or mock_deploy),
             cluster_variables=cluster_variables,
             cluster_status=dao.get_cluster_status(),
         ).run(planned_deployment, force_stale_update=force_stale_update)

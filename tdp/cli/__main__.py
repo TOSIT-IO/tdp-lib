@@ -3,6 +3,7 @@
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -51,6 +52,24 @@ def _setup_logging_callback(
     logger.info(f"Logging level set to {value}")
 
 
+def _chdir_callback(
+    _ctx: click.Context, _param: click.Parameter, value: Optional[Path]
+) -> None:
+    """Click callback to change the current working directory."""
+    import os
+
+    if value is None:
+        logger.info("Working directory set to .")
+        return
+
+    if value.resolve() == Path.cwd().resolve():
+        logger.debug("Current working directory is already set to the specified path.")
+        return
+
+    os.chdir(value)
+    logger.info(f"Changed working directory to {value}")
+
+
 @click.group("tdp", context_settings=CONTEXT_SETTINGS)
 @click.option(
     "--env",
@@ -70,6 +89,16 @@ def _setup_logging_callback(
     callback=_setup_logging_callback,
     help="Set the level of log output.",
     show_default=True,
+    expose_value=False,
+    is_eager=True,
+)
+@click.option(
+    "--current-working-directory",
+    "--cwd",
+    envvar="TDP_CWD",
+    type=click.Path(resolve_path=True, exists=True, file_okay=False, path_type=Path),
+    help="Current working directory, where the command will be executed.",
+    callback=_chdir_callback,
     expose_value=False,
     is_eager=True,
 )
