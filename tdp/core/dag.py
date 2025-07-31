@@ -124,11 +124,7 @@ class Dag:
                     item
                 )
 
-        # If specific items are provided, restrict the graph to those nodes.
-        # Otherwise, use the entire graph.
-        graph = self.graph.subgraph(key_items.keys()) if key_items else self.graph
-
-        # Define a priority function for nodes based on service priority.
+        # Define a priority function for nodes based on service priority
         def priority_key(node: str) -> str:
             operation = self.operations[OperationName.from_str(node)]
             operation_priority = SERVICE_PRIORITY.get(
@@ -136,14 +132,16 @@ class Dag:
             )
             return f"{operation_priority:02d}_{node}"
 
-        topo_sorted = nx.lexicographical_topological_sort(graph, priority_key)
+        topo_sorted = nx.lexicographical_topological_sort(self.graph, priority_key)
+
         # Yield the sorted items. If custom items are provided, map the sorted nodes
         # back to the original items.
         if key_items:
             for node in topo_sorted:
-                for item in key_items[node]:
-                    yield item
-        return topo_sorted
+                if node in key_items:
+                    yield from key_items[node]
+        else:
+            return topo_sorted
 
     def topological_sort(
         self,
