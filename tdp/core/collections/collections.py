@@ -128,12 +128,15 @@ class Collections:
         for collection in self._collection_readers:
             for dag_node in collection.read_dag_nodes():
                 if dag_node.name in dag_operation_builders:
-                    dag_operation_builders[dag_node.name].extends(dag_node)
+                    dag_operation_builders[dag_node.name].extends(
+                        dag_node, collection.name
+                    )
                 else:
                     dag_operation_builders[dag_node.name] = (
                         DagOperationBuilder.from_read_dag_node(
                             dag_node=dag_node,
                             playbook=self._playbooks.get(dag_node.name),
+                            collection_name=collection.name,
                         )
                     )
         # Generate the operations

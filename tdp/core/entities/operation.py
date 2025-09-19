@@ -154,6 +154,7 @@ class DagOperation(Operation, ABC):
     """
 
     depends_on: frozenset[OperationName]
+    collection_names: tuple[str, ...]
 
     def __post_init__(self):
         if type(self) is DagOperation:
@@ -199,11 +200,16 @@ class DagOperationBuilder:
 
     name: str
     depends_on: set[OperationName]
+    collection_names: list[str]
     playbook: Optional[Playbook] = None
 
     @classmethod
     def from_read_dag_node(
-        cls, dag_node: TDPLibDagNodeModel, playbook: Optional[Playbook] = None
+        cls,
+        *,
+        collection_name: str,
+        dag_node: TDPLibDagNodeModel,
+        playbook: Optional[Playbook] = None,
     ) -> DagOperationBuilder:
         return cls(
             name=dag_node.name,
@@ -211,12 +217,14 @@ class DagOperationBuilder:
                 OperationName.from_str(dependency) for dependency in dag_node.depends_on
             ),
             playbook=playbook,
+            collection_names=[collection_name],
         )
 
-    def extends(self, dag_node: TDPLibDagNodeModel) -> None:
+    def extends(self, dag_node: TDPLibDagNodeModel, collection_name: str) -> None:
         self.depends_on.update(
             OperationName.from_str(dependency) for dependency in dag_node.depends_on
         )
+        self.collection_names.append(collection_name)
 
     def build(self) -> Union[DagOperationNoop, DagOperationWithPlaybook]:
         if self.playbook:
@@ -224,10 +232,12 @@ class DagOperationBuilder:
                 name=OperationName.from_str(self.name),
                 depends_on=frozenset(self.depends_on),
                 playbook=self.playbook,
+                collection_names=tuple(self.collection_names),
             )
         return DagOperationNoop(
             name=OperationName.from_str(self.name),
             depends_on=frozenset(self.depends_on),
+            collection_names=tuple(self.collection_names),
         )
 
 
@@ -264,11 +274,13 @@ class ForgedDagOperation(DagOperation, ABC):
                 playbook=playbook,
                 depends_on=source_operation.depends_on,
                 forged_from=source_operation,
+                collection_names=source_operation.collection_names,
             )
         return ForgedDagOperationNoop(
             name=operation_name,
             depends_on=source_operation.depends_on,
             forged_from=source_operation,
+            collection_names=source_operation.collection_names,
         )
 
 
