@@ -15,15 +15,21 @@ The command `python path/to/playbooks.py` will execute the script with all colle
 Use the `-h` or `--help` option to get further information about the options.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
 from tdp.cli.params import collections_option
 
+if TYPE_CHECKING:
+    from tdp.core.collections.collections import Collections
+
 
 @click.command()
-@click.argument("services", required=False, nargs=-1)
+@click.argument("services_in", metavar="SERVICES", required=False, nargs=-1)
 @click.option(
     "--output-dir",
     type=Path,
@@ -39,7 +45,12 @@ from tdp.cli.params import collections_option
     multiple=True,
 )
 @collections_option
-def playbooks(services, output_dir, for_collection, collections):
+def playbooks(
+    services_in: tuple[str, ...],
+    output_dir: Path,
+    for_collection: tuple[str, ...],
+    collections: Collections,
+):
     """Generate meta playbooks in order to use a TDP like collection without tdp-lib."""
     import networkx as nx
 
@@ -47,11 +58,14 @@ def playbooks(services, output_dir, for_collection, collections):
     from tdp.core.dag import Dag
     from tdp.core.entities.operation import OperationName
 
+    if TYPE_CHECKING:
+        from tdp.core.entities.operation import DagOperation
+
     dag = Dag(collections)
     # services DAG
-    dag_services = nx.DiGraph()
+    dag_services: nx.DiGraph[str] = nx.DiGraph()
     # For each service, get all operations with DAG topological_sort order
-    dag_service_operations = {}
+    dag_service_operations: dict[str, list[DagOperation]] = {}
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.name.service)
         for dependency in operation.depends_on:
@@ -71,8 +85,8 @@ def playbooks(services, output_dir, for_collection, collections):
 
     dag_services_order = nx.lexicographical_topological_sort(dag_services, custom_key)
 
-    if services:
-        services = set(services)
+    if services_in:
+        services = set(services_in)
 
         for service in services:
             if service not in dag_services.nodes:
