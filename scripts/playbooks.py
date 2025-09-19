@@ -18,12 +18,8 @@ Use the `-h` or `--help` option to get further information about the options.
 from pathlib import Path
 
 import click
-import networkx as nx
 
 from tdp.cli.params import collections_option
-from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
-from tdp.core.dag import Dag
-from tdp.core.entities.operation import OperationName
 
 
 @click.command()
@@ -45,6 +41,12 @@ from tdp.core.entities.operation import OperationName
 @collections_option
 def playbooks(services, output_dir, for_collection, collections):
     """Generate meta playbooks in order to use a TDP like collection without tdp-lib."""
+    import networkx as nx
+
+    from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
+    from tdp.core.dag import Dag
+    from tdp.core.entities.operation import OperationName
+
     dag = Dag(collections)
     # services DAG
     dag_services = nx.DiGraph()
