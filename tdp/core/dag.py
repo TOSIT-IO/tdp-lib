@@ -31,7 +31,6 @@ from tdp.core.entities.operation import (
 
 if TYPE_CHECKING:
     from tdp.core.collections import Collections
-    from tdp.core.entities.operation import Operation
 
 T = TypeVar("T")
 
@@ -72,7 +71,7 @@ class Dag:
 
     def node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
-    ) -> Operation:
+    ) -> DagOperation:
         # ? Restart operations are now stored in collections.operations they can be
         # ? directly retrieved using the collections.get_operation method.
         # ? This method could be removed in the future.
@@ -148,7 +147,7 @@ class Dag:
         nodes: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         """Perform a topological sort on the DAG.
 
         Args:
@@ -171,7 +170,7 @@ class Dag:
         targets: Optional[Iterable[str]] = None,
         restart: bool = False,
         stop: bool = False,
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         if sources and targets:
             raise NotImplementedError("Cannot specify both sources and targets.")
         if sources:
@@ -182,7 +181,7 @@ class Dag:
 
     def get_operations_to_nodes(
         self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -192,7 +191,7 @@ class Dag:
 
     def get_operations_from_nodes(
         self, nodes: Iterable[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         nodes_set = set(nodes)
         for node in nodes:
             if not self.graph.has_node(node):
@@ -202,7 +201,7 @@ class Dag:
 
     def get_all_operations(
         self, restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         """gets all operations from the graph sorted topologically and lexicographically.
 
         :return: a topologically and lexicographically sorted string list
@@ -212,7 +211,7 @@ class Dag:
 
     def get_operation_descendants(
         self, nodes: list[str], restart: bool = False, stop: bool = False
-    ) -> list[Operation]:
+    ) -> list[DagOperation]:
         """
         Retrieve all descendant operations for the specified nodes in the DAG.
 
