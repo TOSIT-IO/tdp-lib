@@ -56,7 +56,7 @@ def playbooks(
 
     from tdp.core.constants import DEFAULT_SERVICE_PRIORITY, SERVICE_PRIORITY
     from tdp.core.dag import Dag
-    from tdp.core.entities.operation import OperationName
+    from tdp.core.entities.operation import OperationNoop
 
     if TYPE_CHECKING:
         from tdp.core.entities.operation import DagOperation
@@ -69,11 +69,8 @@ def playbooks(
     for operation in dag.get_all_operations():
         dag_services.add_node(operation.name.service)
         for dependency in operation.depends_on:
-            dependency_operation = OperationName.from_str(dependency)
-            if dependency_operation.service != operation.name.service:
-                dag_services.add_edge(
-                    dependency_operation.service, operation.name.service
-                )
+            if dependency.service != operation.name.service:
+                dag_services.add_edge(dependency.service, operation.name.service)
         dag_service_operations.setdefault(operation.name.service, []).append(operation)
 
     if not nx.is_directed_acyclic_graph(dag_services):
@@ -107,12 +104,19 @@ def playbooks(
         fd.write("# Copyright 2022 TOSIT.IO\n")
         fd.write("# SPDX-License-Identifier: Apache-2.0\n\n")
 
+    def is_noop(operation: DagOperation) -> bool:
+        return isinstance(operation, OperationNoop)
+
+    def is_in_collection(operation: DagOperation) -> bool:
+        return any(
+            collection_name in for_collection
+            for collection_name in operation.collection_names
+        )
+
     playbooks_prefix = "../"
     with Path(meta_dir, "all_per_service.yml").open("w") as all_per_service_fd:
         write_copyright_licence_headers(all_per_service_fd)
         all_per_service_fd.write("---\n")
-        is_noop = lambda op: op.noop
-        is_in_collection = lambda op: op.collection_name in for_collection
         for service in services:
             if for_collection and not any(
                 map(is_in_collection, dag_service_operations[service])
@@ -128,12 +132,9 @@ def playbooks(
                 write_copyright_licence_headers(service_fd)
                 service_fd.write("---\n")
                 for operation in dag_service_operations[service]:
-                    if (
-                        for_collection
-                        and operation.collection_name not in for_collection
-                    ):
+                    if for_collection and not is_in_collection(operation):
                         continue
-                    if not operation.noop:
+                    if not is_noop(operation):
                         service_fd.write(
                             f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                         )
@@ -144,9 +145,9 @@ def playbooks(
         write_copyright_licence_headers(all_fd)
         all_fd.write("---\n")
         for operation in dag.get_all_operations():
-            if for_collection and operation.collection_name not in for_collection:
+            if for_collection and not is_in_collection(operation):
                 continue
-            if not operation.noop:
+            if not is_noop(operation):
                 all_fd.write(
                     f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
                 )
