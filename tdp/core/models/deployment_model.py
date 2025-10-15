@@ -118,6 +118,7 @@ class DeploymentModel(BaseModel):
         reverse: bool = False,
         stop: bool = False,
         rolling_interval: Optional[int] = None,
+        host_name: Optional[str] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
@@ -181,15 +182,30 @@ class DeploymentModel(BaseModel):
                 and operation.name.action == "restart"
                 and len(operation.playbook.hosts) > 0
             )
-            deployment.operations.append(
-                OperationModel(
-                    operation=operation.name.name,
-                    operation_order=operation_order,
-                    host=None,
-                    extra_vars=None,
-                    state=OperationStateEnum.PLANNED,
+            if host_name:
+                if (
+                    isinstance(operation, PlaybookOperation)
+                    and host_name in operation.playbook.hosts
+                ):
+                    deployment.operations.append(
+                        OperationModel(
+                            operation=operation.name.name,
+                            operation_order=operation_order,
+                            host=host_name,
+                            extra_vars=None,
+                            state=OperationStateEnum.PLANNED,
+                        )
+                    )
+            else:
+                deployment.operations.append(
+                    OperationModel(
+                        operation=operation.name.name,
+                        operation_order=operation_order,
+                        host=None,
+                        extra_vars=None,
+                        state=OperationStateEnum.PLANNED,
+                    )
                 )
-            )
             operation_order += 1
             if can_perform_rolling_restart:
                 deployment.operations.append(

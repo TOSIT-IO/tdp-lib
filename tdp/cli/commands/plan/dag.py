@@ -59,6 +59,12 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
+@click.option(
+    "--host",
+    envvar="host",
+    type=str,
+    help="Plan the dag with operations from one single host machine."
+)
 @rolling_interval_option
 @preview_option
 @force_option
@@ -77,6 +83,7 @@ def dag(
     filter: Optional[str] = None,
     is_regex: bool = False,
     rolling_interval: Optional[int] = None,
+    host: Optional[str] = None,
 ):
     """Deploy from the DAG."""
 
@@ -125,6 +132,7 @@ def dag(
         reverse=reverse,
         stop=stop,
         rolling_interval=rolling_interval,
+        host_name=host
     )
     if preview:
         print_deployment(deployment)
