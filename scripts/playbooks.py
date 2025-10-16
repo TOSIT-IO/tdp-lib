@@ -154,6 +154,53 @@ def playbooks(
             else:
                 all_fd.write(f"# {operation.name}\n")
 
+    with Path(meta_dir, "start.yml").open("w") as start_fd:
+        write_copyright_licence_headers(start_fd)
+        start_fd.write("---\n")
+        for operation in dag.get_all_operations(restart=False, stop=False):
+            if for_collection and not is_in_collection(operation):
+                continue
+            if is_noop(operation):
+                start_fd.write(f"## {operation.name}\n")
+            elif "start" == operation.name.action:
+                start_fd.write(
+                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                )
+            else:
+                start_fd.write(
+                    f"# - ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                )
+
+    with Path(meta_dir, "restart.yml").open("w") as restart_fd:
+        write_copyright_licence_headers(restart_fd)
+        restart_fd.write("---\n")
+        for operation in dag.get_all_operations(restart=True, stop=False):
+            if for_collection and not is_in_collection(operation):
+                continue
+            if is_noop(operation):
+                restart_fd.write(f"## {operation.name}\n")
+            elif "restart" == operation.name.action:
+                restart_fd.write(
+                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                )
+            else:
+                restart_fd.write(
+                    f"# - ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                )
+
+    with Path(meta_dir, "stop.yml").open("w") as stop_fd:
+        write_copyright_licence_headers(stop_fd)
+        stop_fd.write("---\n")
+        for operation in reversed(dag.get_all_operations(restart=False, stop=True)):
+            if for_collection and not is_in_collection(operation):
+                continue
+            if is_noop(operation) and "stop" == operation.name.action:
+                stop_fd.write(f"# {operation.name}\n")
+            elif "stop" == operation.name.action:
+                stop_fd.write(
+                    f"- ansible.builtin.import_playbook: {playbooks_prefix}{operation.name}.yml\n"
+                )
+
 
 if __name__ == "__main__":
     playbooks()
