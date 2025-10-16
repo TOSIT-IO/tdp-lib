@@ -11,6 +11,7 @@ from tdp.cli.params import (
     collections_option,
     database_dsn_option,
     force_option,
+    hosts_option,
     preview_option,
     rolling_interval_option,
 )
@@ -59,12 +60,7 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
-@click.option(
-    "--host",
-    envvar="host",
-    type=str,
-    help="Plan the dag with operations from one single host machine."
-)
+@hosts_option(help="Hosts where operations are launched. Can be used multiple times.")
 @rolling_interval_option
 @preview_option
 @force_option
@@ -83,7 +79,7 @@ def dag(
     filter: Optional[str] = None,
     is_regex: bool = False,
     rolling_interval: Optional[int] = None,
-    host: Optional[str] = None,
+    hosts: Optional[tuple[str]] = None,
 ):
     """Deploy from the DAG."""
 
@@ -132,7 +128,7 @@ def dag(
         reverse=reverse,
         stop=stop,
         rolling_interval=rolling_interval,
-        host_name=host
+        host_names=hosts
     )
     if preview:
         print_deployment(deployment)

@@ -118,7 +118,7 @@ class DeploymentModel(BaseModel):
         reverse: bool = False,
         stop: bool = False,
         rolling_interval: Optional[int] = None,
-        host_name: Optional[str] = None,
+        host_names: Optional[Iterable[str]] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
@@ -182,42 +182,35 @@ class DeploymentModel(BaseModel):
                 and operation.name.action == "restart"
                 and len(operation.playbook.hosts) > 0
             )
-            if host_name:
-                if (
+
+            for host in host_names or [None]:
+                if host is None or (
                     isinstance(operation, PlaybookOperation)
-                    and host_name in operation.playbook.hosts
+                    and host in operation.playbook.hosts
                 ):
                     deployment.operations.append(
                         OperationModel(
                             operation=operation.name.name,
                             operation_order=operation_order,
-                            host=host_name,
+                            host=host,
                             extra_vars=None,
                             state=OperationStateEnum.PLANNED,
                         )
                     )
-            else:
-                deployment.operations.append(
-                    OperationModel(
-                        operation=operation.name.name,
-                        operation_order=operation_order,
-                        host=None,
-                        extra_vars=None,
-                        state=OperationStateEnum.PLANNED,
-                    )
-                )
-            operation_order += 1
-            if can_perform_rolling_restart:
-                deployment.operations.append(
-                    OperationModel(
-                        operation=OPERATION_SLEEP_NAME,
-                        operation_order=operation_order,
-                        host=None,
-                        extra_vars=[f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"],
-                        state=OperationStateEnum.PLANNED,
-                    )
-                )
-                operation_order += 1
+                    operation_order += 1
+                    if can_perform_rolling_restart:
+                        deployment.operations.append(
+                            OperationModel(
+                                operation=OPERATION_SLEEP_NAME,
+                                operation_order=operation_order,
+                                host=None,
+                                extra_vars=[
+                                    f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+                                ],
+                                state=OperationStateEnum.PLANNED,
+                            )
+                        )
+                        operation_order += 1
         return deployment
 
     @staticmethod
