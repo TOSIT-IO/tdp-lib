@@ -51,8 +51,18 @@ def ops(
     """Run a list of operations."""
 
     from tdp.cli.utils import print_deployment
+    from tdp.core.constants import NO_HOST_LIMIT_OPERATION_SUFFIX
     from tdp.core.models import DeploymentModel
     from tdp.dao import Dao
+
+    if hosts and any(
+        operation
+        for operation in operation_names
+        for operation in NO_HOST_LIMIT_OPERATION_SUFFIX
+    ):
+        click.echo(
+            f"WARNING: {', '.join([operation for operation in operation_names if any(operation_suffix in operation for operation_suffix in NO_HOST_LIMIT_OPERATION_SUFFIX)])} can not be limited to certain hosts"
+        )
 
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."

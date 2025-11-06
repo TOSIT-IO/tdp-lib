@@ -84,6 +84,7 @@ def dag(
     """Deploy from the DAG."""
 
     from tdp.cli.utils import print_deployment
+    from tdp.core.constants import NO_HOST_LIMIT_OPERATION_SUFFIX
     from tdp.core.dag import Dag
     from tdp.core.models import DeploymentModel
     from tdp.core.models.enums import FilterTypeEnum
@@ -128,11 +129,20 @@ def dag(
         reverse=reverse,
         stop=stop,
         rolling_interval=rolling_interval,
-        host_names=hosts
+        host_names=hosts,
     )
     if preview:
         print_deployment(deployment)
         return
+    if hosts and any(
+        operation_suffix
+        for operation_suffix in NO_HOST_LIMIT_OPERATION_SUFFIX
+        for operation_suffix in deployment.operations
+    ):
+        click.echo(
+            f"WARNING: {', '.join([operation.operation for operation in deployment.operations if any(operation_suffix in operation.operation for operation_suffix in NO_HOST_LIMIT_OPERATION_SUFFIX)])} can not be limited to certain hosts"
+        )
+
     with Dao(db_engine, commit_on_exit=True) as dao:
         planned_deployment = dao.get_planned_deployment()
         if planned_deployment:
