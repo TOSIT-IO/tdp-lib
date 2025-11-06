@@ -12,7 +12,11 @@ from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
-from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
+from tdp.core.constants import (
+    NO_HOST_LIMIT_OPERATION_SUFFIX,
+    OPERATION_SLEEP_NAME,
+    OPERATION_SLEEP_VARIABLE,
+)
 from tdp.core.dag import Dag
 from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.filters import FilterFactory
@@ -192,7 +196,12 @@ class DeploymentModel(BaseModel):
                         OperationModel(
                             operation=operation.name.name,
                             operation_order=operation_order,
-                            host=host,
+                            host=host
+                            if not any(
+                                operation_suffix in operation.name.name
+                                for operation_suffix in NO_HOST_LIMIT_OPERATION_SUFFIX
+                            )
+                            else None,
                             extra_vars=None,
                             state=OperationStateEnum.PLANNED,
                         )
@@ -274,7 +283,12 @@ class DeploymentModel(BaseModel):
                     OperationModel(
                         operation=operation.name.name,
                         operation_order=operation_order,
-                        host=host_name,
+                        host=host_name
+                        if not any(
+                            operation_suffix in operation.name.name
+                            for operation_suffix in NO_HOST_LIMIT_OPERATION_SUFFIX
+                        )
+                        else None,
                         extra_vars=list(extra_vars) if extra_vars else None,
                         state=OperationStateEnum.PLANNED,
                     )

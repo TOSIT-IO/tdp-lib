@@ -43,3 +43,5 @@ DEFAULT_SERVICE_PRIORITY = 99
 # Validation message logic (used in variables update)
 VALIDATION_MESSAGE_FILE = "COMMIT_EDITMSG"
 DEFAULT_VALIDATION_MESSAGE = "Updated from one or more directories"
+# Operations which cannot be limited to certain hosts
+NO_HOST_LIMIT_OPERATION_SUFFIX = ["_kerberos_install", "_spnego_install"]
