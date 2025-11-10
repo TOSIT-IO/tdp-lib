@@ -115,6 +115,8 @@ def playbooks(
 
     playbooks_prefix = "../"
     with Path(meta_dir, "all_per_service.yml").open("w") as all_per_service_fd:
+        services = list(services)
+        services.insert(services.index("yarn"), services.pop(services.index("spark3")))
         write_copyright_licence_headers(all_per_service_fd)
         all_per_service_fd.write("---\n")
         for service in services:
