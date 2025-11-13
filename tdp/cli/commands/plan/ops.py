@@ -12,6 +12,7 @@ from tdp.cli.params import (
     database_dsn_option,
     force_option,
     hosts_option,
+    no_hosts_limit_option,
     preview_option,
     rolling_interval_option,
 )
@@ -37,6 +38,9 @@ if TYPE_CHECKING:
 @database_dsn_option
 @preview_option
 @force_option
+@no_hosts_limit_option(
+    help="Works with --host and does not limit the operation to the specified hosts."
+)
 @rolling_interval_option
 def ops(
     operation_names: tuple[str],
@@ -47,6 +51,7 @@ def ops(
     preview: bool,
     force: bool,
     rolling_interval: Optional[int] = None,
+    no_host_limit: Optional[tuple[str]] = None,
 ):
     """Run a list of operations."""
 
@@ -57,8 +62,10 @@ def ops(
     click.echo(
         f"Creating a deployment plan to run {len(operation_names)} operation(s)."
     )
+    if no_host_limit and not hosts:
+        click.BadOptionUsage("Cannot use `--no-host-limit` without --host argument.")
     deployment = DeploymentModel.from_operations(
-        collections, operation_names, hosts, extra_vars, rolling_interval
+        collections, operation_names, hosts, no_host_limit, extra_vars, rolling_interval
     )
     if preview:
         print_deployment(deployment)

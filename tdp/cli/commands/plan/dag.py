@@ -12,6 +12,7 @@ from tdp.cli.params import (
     database_dsn_option,
     force_option,
     hosts_option,
+    no_hosts_limit_option,
     preview_option,
     rolling_interval_option,
 )
@@ -60,6 +61,9 @@ if TYPE_CHECKING:
     is_flag=True,
     help="Replace 'start' operations by 'stop' operations. This option should be used with `--reverse`.",
 )
+@no_hosts_limit_option(
+    help="Works with --host and does not limit the operation to the specified hosts."
+)
 @hosts_option(help="Hosts where operations are launched. Can be used multiple times.")
 @rolling_interval_option
 @preview_option
@@ -80,6 +84,7 @@ def dag(
     is_regex: bool = False,
     rolling_interval: Optional[int] = None,
     hosts: Optional[tuple[str]] = None,
+    no_host_limit: Optional[list[str]] = None,
 ):
     """Deploy from the DAG."""
 
@@ -118,6 +123,9 @@ def dag(
     else:
         click.echo("Creating a deployment plan for the whole DAG.")
 
+    if no_host_limit and not hosts:
+        click.BadOptionUsage("Cannot use `--no-host-limit` without --host argument.")
+
     deployment = DeploymentModel.from_dag(
         dag,
         sources=sources,
@@ -128,7 +136,8 @@ def dag(
         reverse=reverse,
         stop=stop,
         rolling_interval=rolling_interval,
-        host_names=hosts
+        host_names=hosts,
+        no_host_limit_operation=no_host_limit,
     )
     if preview:
         print_deployment(deployment)

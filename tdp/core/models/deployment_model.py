@@ -119,6 +119,7 @@ class DeploymentModel(BaseModel):
         stop: bool = False,
         rolling_interval: Optional[int] = None,
         host_names: Optional[Iterable[str]] = None,
+        no_host_limit_operation: Optional[Iterable[str]] = None,
     ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
@@ -174,6 +175,10 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
+        if no_host_limit_operation:
+            NO_HOST_LIMIT_OPERATION = no_host_limit_operation
+        else:
+            NO_HOST_LIMIT_OPERATION = [None]
         operation_order = 1
         for operation in operations:
             can_perform_rolling_restart = (
@@ -187,12 +192,21 @@ class DeploymentModel(BaseModel):
                 if host is None or (
                     isinstance(operation, PlaybookOperation)
                     and host in operation.playbook.hosts
+                    and (
+                        operation.name.name
+                        not in [op.operation for op in deployment.operations]
+                        or operation.name.name not in NO_HOST_LIMIT_OPERATION
+                    )
                 ):
                     deployment.operations.append(
                         OperationModel(
                             operation=operation.name.name,
                             operation_order=operation_order,
-                            host=host,
+                            host=(
+                                host
+                                if not operation.name.name in NO_HOST_LIMIT_OPERATION
+                                else None
+                            ),
                             extra_vars=None,
                             state=OperationStateEnum.PLANNED,
                         )
@@ -218,6 +232,7 @@ class DeploymentModel(BaseModel):
         collections: Collections,
         operation_names: list[str],
         host_names: Optional[Iterable[str]] = None,
+        no_host_limit_operation: Optional[Iterable[str]] = None,
         extra_vars: Optional[Iterable[str]] = None,
         rolling_interval: Optional[int] = None,
     ) -> DeploymentModel:
@@ -255,6 +270,10 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
+        if no_host_limit_operation:
+            NO_HOST_LIMIT_OPERATION = no_host_limit_operation
+        else:
+            NO_HOST_LIMIT_OPERATION = [None]
         operation_order = 1
         for operation in operations:
             can_perform_rolling_restart = (
@@ -270,29 +289,38 @@ class DeploymentModel(BaseModel):
                 if can_perform_rolling_restart
                 else [None]
             ):
-                deployment.operations.append(
-                    OperationModel(
-                        operation=operation.name.name,
-                        operation_order=operation_order,
-                        host=host_name,
-                        extra_vars=list(extra_vars) if extra_vars else None,
-                        state=OperationStateEnum.PLANNED,
-                    )
-                )
-                if can_perform_rolling_restart:
-                    operation_order += 1
+                if (
+                    operation.name.name
+                    not in [op.operation for op in deployment.operations]
+                    or operation.name.name not in NO_HOST_LIMIT_OPERATION
+                ):
                     deployment.operations.append(
                         OperationModel(
-                            operation=OPERATION_SLEEP_NAME,
+                            operation=operation.name.name,
                             operation_order=operation_order,
-                            host=None,
-                            extra_vars=[
-                                f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-                            ],
+                            host=(
+                                host_name
+                                if not operation.name.name in NO_HOST_LIMIT_OPERATION
+                                else None
+                            ),
+                            extra_vars=list(extra_vars) if extra_vars else None,
                             state=OperationStateEnum.PLANNED,
                         )
                     )
-                operation_order += 1
+                    if can_perform_rolling_restart:
+                        operation_order += 1
+                        deployment.operations.append(
+                            OperationModel(
+                                operation=OPERATION_SLEEP_NAME,
+                                operation_order=operation_order,
+                                host=None,
+                                extra_vars=[
+                                    f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
+                                ],
+                                state=OperationStateEnum.PLANNED,
+                            )
+                        )
+                    operation_order += 1
         return deployment
 
     @staticmethod
