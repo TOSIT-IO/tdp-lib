@@ -157,6 +157,34 @@ def hosts_option(func: Optional[FC] = None, *, help: str) -> Callable[[FC], FC]:
         return decorator(func)
 
 
+def no_hosts_limit_option(
+    func: Optional[FC] = None, *, help: str
+) -> Callable[[FC], FC]:
+    """Add the `--no-host-limit` option to a Click command.
+
+    Takes multiple operations and transforms them into a tuple of strings. Available as
+    "no_host_limit" in the command context.
+
+    Args:
+        help: The help text for the option.
+    """
+
+    def decorator(fn: FC) -> FC:
+        return click.option(
+            "--no-host-limit",
+            "no_host_limit",
+            type=str,
+            multiple=True,
+            help=help,
+        )(fn)
+
+    # Checks if the decorator was used without parentheses.
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)
+
+
 def conf_option(func: FC) -> FC:
     """Add the `--conf` option to a Click command."""
     return click.option(
