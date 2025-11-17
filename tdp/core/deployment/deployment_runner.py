@@ -54,20 +54,19 @@ class DeploymentRunner:
 
         operation = self._collections.operations[operation_rec.operation]
 
-        # Check if the operation is available for the given host
-        if operation_rec.host and (
-            not isinstance(operation, PlaybookOperation)
-            or operation_rec.host not in operation.playbook.hosts
-        ):
-            logs = (
-                f"Operation '{operation_rec.operation}' not available for host "
-                + f"'{operation_rec.host}'"
-            )
-            logger.error(logs)
-            operation_rec.state = OperationStateEnum.FAILURE
-            operation_rec.logs = logs.encode("utf-8")
-            operation_rec.end_time = datetime.utcnow()
-            return
+        if operation_rec.host:
+            logs = None
+            if not isinstance(operation, PlaybookOperation):
+                logs = f"Operation '{operation_rec.operation}' is not related to any playbook (noop). It can't be limited to any host."
+            elif operation_rec.host not in operation.playbook.hosts:
+                logs = f"Operation '{operation_rec.operation}' is not available on host '{operation_rec.host}'."
+
+            if logs:
+                logger.error(logs)
+                operation_rec.state = OperationStateEnum.FAILURE
+                operation_rec.logs = logs.encode("utf-8")
+                operation_rec.end_time = datetime.utcnow()
+                return
 
         # Execute the operation
         playbook_file = self._collections.playbooks[operation.name.name].path
