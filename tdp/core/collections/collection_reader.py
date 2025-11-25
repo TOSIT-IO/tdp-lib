@@ -7,11 +7,12 @@ import json
 import logging
 from collections.abc import Generator
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import yaml
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from tdp.core.collections.playbook_validate import validate_playbook
 from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
@@ -20,7 +21,7 @@ from tdp.core.constants import (
     SCHEMA_VARS_DIRECTORY_NAME,
     YML_EXTENSION,
 )
-from tdp.core.entities.operation import Playbook
+from tdp.core.entities.operation import Playbook, PlaybookMeta
 from tdp.core.inventory_reader import InventoryReader
 from tdp.core.repository.utils.get_repository_version import get_repository_version
 from tdp.core.types import PathLike
@@ -31,6 +32,9 @@ try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
+if TYPE_CHECKING:
+    from tdp.core.collections.playbook_validate import PlaybookIn
 
 MANDATORY_DIRECTORIES = [
     DAG_DIRECTORY_NAME,
@@ -168,10 +172,12 @@ class CollectionReader:
     def read_playbooks(self) -> Generator[Playbook, None, None]:
         """Read the playbooks stored in the playbooks_directory."""
         for playbook_path in (self.playbooks_directory).glob("*" + YML_EXTENSION):
+            playbook: PlaybookIn = validate_playbook(playbook_path)
             yield Playbook(
                 path=playbook_path,
                 collection_name=self.name,
-                hosts=read_hosts_from_playbook(playbook_path, self._inventory_reader),
+                hosts=self._inventory_reader.get_hosts_from_playbook(playbook),
+                meta=_get_playbook_meta(playbook, playbook_path),
             )
 
     def read_schemas(self) -> list[ServiceCollectionSchema]:
@@ -216,25 +222,28 @@ class CollectionReader:
                 )
 
 
-def read_hosts_from_playbook(
-    playbook_path: Path, inventory_reader: Optional[InventoryReader]
-) -> frozenset[str]:
-    """Read the hosts from a playbook.
+def _get_playbook_meta(playbook: PlaybookIn, playbook_path: Path) -> PlaybookMeta:
+    can_limit = True
+    can_limit_true_plays = list[str]()
 
-    Args:
-        playbook_path: Path to the playbook.
-        inventory_reader: Inventory reader.
+    for play_nb, play in enumerate(playbook):
+        play_name = f"{play.name}[{play_nb}]" if play.name else f"play[{play_nb}]"
+        if vars := play.vars:
+            if tdp_lib := vars.tdp_lib:
+                if tdp_lib.can_limit == True:
+                    can_limit_true_plays.append(play_name)
+                elif can_limit == True and tdp_lib.can_limit == False:
+                    can_limit = False
 
-    Returns:
-        Set of hosts.
-    """
-    if not inventory_reader:
-        inventory_reader = InventoryReader()
-    try:
-        with playbook_path.open() as fd:
-            return inventory_reader.get_hosts_from_playbook(fd)
-    except Exception as e:
-        raise ValueError(f"Can't parse playbook {playbook_path}.") from e
+    if can_limit == False and len(can_limit_true_plays) > 0:
+        logger.warning(
+            f"Playbook '{playbook_path}': tdp_lib.can_limit is both true and false "
+            "accross plays. Because a play sets 'can_limit: false', the playbook "
+            "can_limit is false; the 'can_limit: true' flags on these plays are "
+            "ignored: " + ", ".join(can_limit_true_plays)
+        )
+
+    return PlaybookMeta(can_limit=can_limit)
 
 
 def _get_galaxy_version(

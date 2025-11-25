@@ -3,16 +3,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, TextIO
-
-import yaml
+from typing import TYPE_CHECKING, Optional
 
 from tdp.core.ansible_loader import AnsibleLoader
-
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
+from tdp.core.collections.playbook_validate import PlaybookIn
 
 if TYPE_CHECKING:
     from ansible.inventory.manager import InventoryManager
@@ -39,29 +33,13 @@ class InventoryReader:
         # so we convert them to "str"
         return [str(host) for host in self.inventory.get_hosts(*args, **kwargs)]
 
-    def get_hosts_from_playbook(self, fd: TextIO) -> frozenset[str]:
+    def get_hosts_from_playbook(self, playbook: PlaybookIn) -> frozenset[str]:
         """Takes a playbook content, read all plays inside and return a set
         of matching host like "ansible-playbook --list-hosts playbook.yml".
-
-        Args:
-            fd: file-like object from which the playbook content must be read.
-
-        Returns:
-            Set of hosts.
         """
-        plays = yaml.load(fd, Loader=Loader)
-        if not isinstance(plays, list):
-            raise TypeError(f"Playbook content is not a list, given {type(plays)}")
-
         hosts: set[str] = set()
 
-        for play in plays:
-            if not isinstance(play, dict):
-                raise TypeError(f"A play must be a dict, given {type(play)}")
-            if "hosts" not in play:
-                raise ValueError(
-                    f"'hosts' key is mandatory for a play, keys are {play.keys()}"
-                )
-            hosts.update(self.get_hosts(play["hosts"]))
+        for play in playbook:
+            hosts.update(self.get_hosts(play.hosts))
 
         return frozenset(hosts)
