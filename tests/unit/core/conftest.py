@@ -1,11 +1,14 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
+from unittest.mock import create_autospec
+
 import pytest
 
 from tdp.core.cluster_status import ClusterStatus
 from tdp.core.collections import Collections
 from tdp.core.dag import Dag
+from tdp.core.inventory_reader import InventoryReader
 from tdp.core.variables import ClusterVariables
 from tests.conftest import generate_collection_at_path
 
@@ -74,6 +77,11 @@ def mock_cluster_variables(
     return ClusterVariables.initialize_cluster_variables(
         collections=mock_collections, tdp_vars=tmp_path_factory.mktemp("tdp_vars")
     )
+
+
+@pytest.fixture
+def mock_inventory_reader() -> InventoryReader:
+    return create_autospec(InventoryReader, instance=True)
 
 
 @pytest.fixture

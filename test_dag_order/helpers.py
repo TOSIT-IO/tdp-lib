@@ -6,7 +6,8 @@ import logging
 import pathlib
 from collections.abc import Generator, Iterable, Mapping
 from pathlib import Path
-from typing import Any, TextIO, Union
+from typing import Any, Union
+from unittest.mock import create_autospec
 
 import yaml
 
@@ -30,20 +31,6 @@ from .constants import RULES_DIRECTORY_NAME
 logger = logging.getLogger(__name__)
 
 logger.setLevel(logging.DEBUG)
-
-
-# * Duplicated from tdp.core.models.test_deployment_log.py
-class _MockInventoryReader(InventoryReader):
-    """A mock InventoryReader which always return the same hosts"""
-
-    def __init__(self, hosts: list[str]):
-        self.hosts = hosts
-
-    def get_hosts(self, *args, **kwargs) -> list[str]:
-        return self.hosts
-
-    def get_hosts_from_playbook(self, fd: TextIO) -> set[str]:
-        return set(self.hosts)
 
 
 class _Rule(Mapping[str, Any]):
@@ -114,11 +101,15 @@ class _Rule(Mapping[str, Any]):
         return len(self.fixtures)
 
 
+mock_inventory_reader = create_autospec(InventoryReader, instance=True)
+mock_inventory_reader.get_hosts_from_playbook.return_value = frozenset(["localhost"])
+
+
 class CollectionToTest(CollectionReader):
     """A Collection containing a rules directory"""
 
     def __init__(self, path: Union[str, pathlib.Path]):
-        super().__init__(path)
+        super().__init__(path, mock_inventory_reader)
 
     @property
     def rules_directory(self) -> Path:
@@ -154,7 +145,6 @@ class append_collection_list_action(argparse.Action):
         # Append the path to the namespace
         try:
             collection = CollectionToTest(values)
-            collection._inventory_reader = _MockInventoryReader(["localhost"])
             getattr(namespace, self.dest).append(collection)
         except (
             PathDoesNotExistsError,

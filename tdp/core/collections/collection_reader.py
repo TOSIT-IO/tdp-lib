@@ -92,7 +92,7 @@ class CollectionReader:
     def __init__(
         self,
         path: PathLike,
-        inventory_reader: Optional[InventoryReader] = None,
+        inventory_reader: InventoryReader,
     ):
         """Initialize a collection.
 
@@ -106,13 +106,13 @@ class CollectionReader:
         """
         self._path = Path(path)
         self._check_collection_structure(self._path)
-        self._inventory_reader = inventory_reader or InventoryReader()
+        self._inventory_reader = inventory_reader
 
     # ? Is this method really useful?
     @staticmethod
     def from_path(
         path: PathLike,
-        inventory_reader: Optional[InventoryReader] = None,
+        inventory_reader: InventoryReader,
     ) -> CollectionReader:
         """Factory method to create a collection from a path.
 
@@ -121,7 +121,6 @@ class CollectionReader:
 
         Returns: A collection.
         """
-        inventory_reader = inventory_reader or InventoryReader()
         return CollectionReader(Path(path).expanduser().resolve(), inventory_reader)
 
     @property
