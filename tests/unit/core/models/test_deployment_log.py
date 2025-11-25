@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator, TextIO
+from typing import TYPE_CHECKING, Iterator
 
 import lorem
 import pytest
@@ -24,17 +24,6 @@ from tests.conftest import create_session, generate_collection_at_path
 
 if TYPE_CHECKING:
     from tdp.core.dag import Dag
-
-
-class MockInventoryReader(InventoryReader):
-    def __init__(self, hosts: list[str]):
-        self.hosts = hosts
-
-    def get_hosts(self, *args, **kwargs) -> list[str]:
-        return self.hosts
-
-    def get_hosts_from_playbook(self, fd: TextIO) -> set[str]:
-        return set(self.hosts)
 
 
 def fail_deployment(deployment: DeploymentModel, index_to_fail: int):
@@ -151,7 +140,11 @@ class TestFromOperations:
         }
         assert deployment.state == DeploymentStateEnum.PLANNED
 
-    def test_multiple_host(self, tmp_path_factory: pytest.TempPathFactory):
+    def test_multiple_host(
+        self,
+        tmp_path_factory: pytest.TempPathFactory,
+        mock_inventory_reader: InventoryReader,
+    ):
         operations_names = ["serv_comp_config", "serv_comp_start"]
         hosts = ["host2", "host3", "host1"]
         collection_path = tmp_path_factory.mktemp("multiple_host_collection")
@@ -162,8 +155,9 @@ class TestFromOperations:
             ]
         }
         generate_collection_at_path(collection_path, dag_service_operations, {})
+        mock_inventory_reader.get_hosts_from_playbook.return_value = set(hosts)  # type: ignore
         collections = Collections.from_collection_paths(
-            [collection_path], MockInventoryReader(hosts)
+            [collection_path], mock_inventory_reader
         )
 
         deployment = DeploymentModel.from_operations(

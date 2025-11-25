@@ -22,6 +22,7 @@ from tdp.core.constants import (
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
 )
+from tdp.core.inventory_reader import InventoryReader
 from tests.conftest import generate_collection_at_path
 
 
@@ -37,24 +38,30 @@ def mock_empty_collection_reader(tmp_path_factory: pytest.TempPathFactory) -> Pa
     return temp_collection_path
 
 
-def test_collection_from_path_does_not_exist():
+def test_collection_from_path_does_not_exist(mock_inventory_reader: InventoryReader):
     with pytest.raises(PathDoesNotExistsError):
-        CollectionReader.from_path("foo")
+        CollectionReader.from_path("foo", mock_inventory_reader)
 
 
-def test_collection_from_path_is_not_a_directory(tmp_path: Path):
+def test_collection_from_path_is_not_a_directory(
+    tmp_path: Path, mock_inventory_reader: InventoryReader
+):
     empty_file = tmp_path / "foo"
     empty_file.touch()
     with pytest.raises(PathIsNotADirectoryError):
-        CollectionReader.from_path(empty_file)
+        CollectionReader.from_path(empty_file, mock_inventory_reader)
 
 
-def test_collection_from_path_missing_mandatory_directory(tmp_path: Path):
+def test_collection_from_path_missing_mandatory_directory(
+    tmp_path: Path, mock_inventory_reader: InventoryReader
+):
     with pytest.raises(MissingMandatoryDirectoryError):
-        CollectionReader.from_path(tmp_path)
+        CollectionReader.from_path(tmp_path, mock_inventory_reader)
 
 
-def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
+def test_collection_from_path(
+    tmp_path_factory: pytest.TempPathFactory, mock_inventory_reader: InventoryReader
+):
     collection_path = tmp_path_factory.mktemp("collection")
     dag_service_operations = {
         "service": [
@@ -67,17 +74,24 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
             "service": {},
         },
     }
+
     generate_collection_at_path(collection_path, dag_service_operations, service_vars)
     playbooks = {
         playbook.path.stem: playbook
-        for playbook in CollectionReader.from_path(collection_path).read_playbooks()
+        for playbook in CollectionReader.from_path(
+            collection_path, mock_inventory_reader
+        ).read_playbooks()
     }
     assert "service_install" in playbooks
     assert "service_config" in playbooks
 
 
-def test_collection_reader_read_playbooks(mock_empty_collection_reader: Path):
-    collection_reader = CollectionReader(mock_empty_collection_reader)
+def test_collection_reader_read_playbooks(
+    mock_empty_collection_reader: Path, mock_inventory_reader: InventoryReader
+):
+    collection_reader = CollectionReader(
+        mock_empty_collection_reader, mock_inventory_reader
+    )
     playbook_path_1 = collection_reader.playbooks_directory / "playbook1.yml"
     playbook_path_2 = collection_reader.playbooks_directory / "playbook2.yml"
     playbook_path_1.write_text(
@@ -110,8 +124,12 @@ def test_collection_reader_read_playbooks(mock_empty_collection_reader: Path):
     assert playbooks["playbook2"].collection_name == collection_reader.name
 
 
-def test_collection_reader_read_dag_nodes(mock_empty_collection_reader: Path):
-    collection_reader = CollectionReader(mock_empty_collection_reader)
+def test_collection_reader_read_dag_nodes(
+    mock_empty_collection_reader: Path, mock_inventory_reader: InventoryReader
+):
+    collection_reader = CollectionReader(
+        mock_empty_collection_reader, mock_inventory_reader
+    )
     dag_file_1 = collection_reader.dag_directory / "dag1.yml"
     dag_file_2 = collection_reader.dag_directory / "dag2.yml"
     dag_file_1.write_text(
@@ -138,8 +156,11 @@ def test_collection_reader_read_dag_nodes(mock_empty_collection_reader: Path):
 
 def test_collection_reader_read_dag_nodes_empty_file(
     mock_empty_collection_reader: Path,
+    mock_inventory_reader: InventoryReader,
 ):
-    collection_reader = CollectionReader(mock_empty_collection_reader)
+    collection_reader = CollectionReader(
+        mock_empty_collection_reader, mock_inventory_reader
+    )
     dag_file = collection_reader.dag_directory / "dag.yml"
     dag_file.write_text("")
     with pytest.raises(ValidationError):
