@@ -58,6 +58,8 @@ class DeploymentRunner:
             logs = None
             if not isinstance(operation, PlaybookOperation):
                 logs = f"Operation '{operation_rec.operation}' is not related to any playbook (noop). It can't be limited to any host."
+            elif not operation.playbook.meta.can_limit:
+                logs = f"Operation '{operation_rec.operation}' can't be limited to specific host."
             elif operation_rec.host not in operation.playbook.hosts:
                 logs = f"Operation '{operation_rec.operation}' is not available on host '{operation_rec.host}'."
 

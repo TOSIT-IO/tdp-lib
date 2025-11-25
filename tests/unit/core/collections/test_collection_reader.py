@@ -14,17 +14,15 @@ from tdp.core.collections.collection_reader import (
     PathIsNotADirectoryError,
     TDPLibDagNodeModel,
     _get_galaxy_version,
-    read_hosts_from_playbook,
+    _get_playbook_meta,
 )
+from tdp.core.collections.playbook_validate import PlaybookIn
 from tdp.core.constants import (
     DAG_DIRECTORY_NAME,
     DEFAULT_VARS_DIRECTORY_NAME,
     PLAYBOOKS_DIRECTORY_NAME,
 )
 from tests.conftest import generate_collection_at_path
-from tests.unit.core.models.test_deployment_log import (
-    MockInventoryReader,
-)
 
 
 @pytest.fixture(scope="session")
@@ -76,24 +74,6 @@ def test_collection_from_path(tmp_path_factory: pytest.TempPathFactory):
     }
     assert "service_install" in playbooks
     assert "service_config" in playbooks
-
-
-def test_read_hosts_from_playbook(tmp_path: Path):
-    playbook_path = tmp_path / "playbook.yml"
-    playbook_path.write_text(
-        """---
-- name: Play 1
-  hosts: host1, host2
-  tasks:
-    - name: Task 1
-      command: echo "Hello, World!"
-
-"""
-    )
-    hosts = read_hosts_from_playbook(
-        playbook_path, MockInventoryReader(["host1", "host2"])
-    )
-    assert hosts == {"host1", "host2"}
 
 
 def test_collection_reader_read_playbooks(mock_empty_collection_reader: Path):
@@ -228,3 +208,126 @@ def test_get_galaxy_version_manifest_not_readable(tmp_path):
     msg = _get_galaxy_version(collection_dir)
 
     assert msg == None
+
+
+class TestGetCollectionMeta:
+    def test_get_collection_meta_can_validate_default_true(self):
+        playbook = PlaybookIn.model_validate(
+            [
+                {
+                    "name": "play1",
+                    "hosts": "ignored",
+                }
+            ]
+        )
+        meta = _get_playbook_meta(playbook, Path("playbook.yml"))
+
+        assert meta.can_limit is True
+
+    def test_get_collection_meta_can_validate_explicit_false(self):
+        playbook = PlaybookIn.model_validate(
+            [
+                {
+                    "name": "play1",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": False,
+                        }
+                    },
+                }
+            ]
+        )
+        meta = _get_playbook_meta(playbook, Path("playbook.yml"))
+
+        assert meta.can_limit is False
+
+    def test_get_collection_meta_can_validate_explicit_true(self):
+        playbook = PlaybookIn.model_validate(
+            [
+                {
+                    "name": "play1",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": True,
+                        }
+                    },
+                }
+            ]
+        )
+        meta = _get_playbook_meta(playbook, Path("playbook.yml"))
+
+        assert meta.can_limit is True
+
+    def test_get_collection_meta_can_validate_true_false(
+        self, caplog: pytest.LogCaptureFixture
+    ):
+        playbook = PlaybookIn.model_validate(
+            [
+                {
+                    "name": "play1",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": True,
+                        }
+                    },
+                },
+                {
+                    "name": "play2",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": False,
+                        }
+                    },
+                },
+            ]
+        )
+        with caplog.at_level(logging.WARNING):
+            meta = _get_playbook_meta(playbook, Path("playbook.yml"))
+            # False takes precedence
+            assert meta.can_limit is False
+
+        # Check that a warning was logged
+        warnings = [r.message for r in caplog.records if r.levelno == logging.WARNING]
+        assert any(
+            "tdp_lib.can_limit is both true and false" in str(w) for w in warnings
+        )
+
+    def test_get_collection_meta_can_validate_false_true(
+        self, caplog: pytest.LogCaptureFixture
+    ):
+        playbook = PlaybookIn.model_validate(
+            [
+                {
+                    "name": "play1",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": False,
+                        }
+                    },
+                },
+                {
+                    "name": "play2",
+                    "hosts": "ignored",
+                    "vars": {
+                        "tdp_lib": {
+                            "can_limit": True,
+                        }
+                    },
+                },
+            ]
+        )
+        with caplog.at_level(logging.WARNING):
+            meta = _get_playbook_meta(playbook, Path("playbook.yml"))
+            # False takes precedence
+            assert meta.can_limit is False
+
+        # Check that a warning was logged
+        warnings = [r.message for r in caplog.records if r.levelno == logging.WARNING]
+        assert any(
+            "tdp_lib.can_limit is both true and false" in str(w) for w in warnings
+        )

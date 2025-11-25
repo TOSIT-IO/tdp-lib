@@ -69,10 +69,21 @@ class OperationName:
 
 
 @dataclass(frozen=True)
+class PlaybookMeta:
+    """Playbook metadata.
+
+    Aggregate data from each playbook's play.
+    """
+
+    can_limit: bool = True
+
+
+@dataclass(frozen=True)
 class Playbook:
     path: Path
     collection_name: str
     hosts: frozenset[str]
+    meta: PlaybookMeta
 
     def __post_init__(self):
         for host_name in self.hosts:
