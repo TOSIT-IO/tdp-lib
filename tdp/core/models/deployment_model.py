@@ -437,24 +437,14 @@ class DeploymentModel(BaseModel):
                 f"Nothing to resume, deployment #{failed_deployment.id} has no operations."
             )
 
-        failed_operation_id = next(
+        failed_operation_index = next(
             (
-                operation_order
-                for operation_order, operation in enumerate(
-                    failed_deployment.operations
-                )
-                if operation.state == OperationStateEnum.FAILURE
+                index
+                for index, op in enumerate(failed_deployment.operations)
+                if op.state == OperationStateEnum.FAILURE
             ),
             None,
         )
-        operations_tuple_to_resume = [
-            (operation.operation, operation.host, operation.extra_vars)
-            for operation in failed_deployment.operations[failed_operation_id:]
-        ]
-        operations_names_to_resume = [i[0] for i in operations_tuple_to_resume]
-        for operation_name_to_resume in operations_names_to_resume:
-            if operation_name_to_resume not in collections.operations:
-                raise MissingOperationError(operation_name_to_resume)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.RESUME,
             options={
@@ -462,18 +452,20 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
-        deployment.operations = [
-            OperationModel(
-                operation=operation,
-                operation_order=operation_order,
-                host=host,
-                extra_vars=extra_vars,
-                state=OperationStateEnum.PLANNED,
+        for operation_order, operation in enumerate(
+            failed_deployment.operations[failed_operation_index:], 1
+        ):
+            if operation.operation not in collections.operations:
+                raise MissingOperationError(operation.operation)
+            deployment.operations.append(
+                OperationModel(
+                    operation=operation.operation,
+                    operation_order=operation_order,
+                    host=operation.host,
+                    extra_vars=operation.extra_vars,
+                    state=OperationStateEnum.PLANNED,
+                )
             )
-            for operation_order, (operation, host, extra_vars) in enumerate(
-                operations_tuple_to_resume, 1
-            )
-        ]
         return deployment
 
 
