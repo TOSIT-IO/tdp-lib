@@ -69,7 +69,7 @@ class Dag:
         """DAG graph."""
         return self._graph
 
-    def node_to_operation(
+    def _node_to_operation(
         self, node: str, restart: bool = False, stop: bool = False
     ) -> DagOperation:
         # ? Restart operations are now stored in collections.operations they can be
@@ -159,7 +159,7 @@ class Dag:
         """
         return list(
             map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
+                lambda node: self._node_to_operation(node, restart=restart, stop=stop),
                 self.topological_sort_key(nodes),
             )
         )
@@ -241,7 +241,7 @@ class Dag:
         nodes_filtered = filter(lambda node: node not in nodes, nodes_set)
         return list(
             map(
-                lambda node: self.node_to_operation(node, restart=restart, stop=stop),
+                lambda node: self._node_to_operation(node, restart=restart, stop=stop),
                 nodes_filtered,
             )
         )
