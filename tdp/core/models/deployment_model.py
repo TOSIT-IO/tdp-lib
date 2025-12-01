@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from datetime import datetime
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, Literal, NamedTuple, Optional
 
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -14,7 +14,7 @@ from tabulate import tabulate
 
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
-from tdp.core.entities.operation import PlaybookOperation
+from tdp.core.entities.operation import OperationName, PlaybookOperation
 from tdp.core.filters import FilterFactory
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import (
@@ -358,22 +358,34 @@ class DeploymentModel(BaseModel):
         """
 
         class OperationHostTuple(NamedTuple):
-            operation_name: str
+            operation: Operation
             host_name: Optional[str]
+
+        def _get_operation(
+            status: HostedEntityStatus, action: Literal["config", "restart"]
+        ) -> Optional[Operation]:
+            operation_name = OperationName(status.entity.name, action)
+            try:
+                operation = collections.operations[operation_name]
+            except KeyError as e:
+                logger.warning(str(e), "skipping")
+                return
+            return operation
 
         operation_hosts: set[OperationHostTuple] = set()
         for status in stale_hosted_entity_statuses:
-            if status.to_config:
+            if status.to_config and (
+                config_operation := _get_operation(status, "config")
+            ):
                 operation_hosts.add(
-                    OperationHostTuple(
-                        f"{status.entity.name}_config",
-                        status.entity.host,
-                    )
+                    OperationHostTuple(config_operation, status.entity.host)
                 )
-            if status.to_restart:
+            if status.to_restart and (
+                restart_operation := _get_operation(status, "restart")
+            ):
                 operation_hosts.add(
                     OperationHostTuple(
-                        f"{status.entity.name}_start",
+                        restart_operation,
                         status.entity.host,
                     )
                 )
@@ -383,22 +395,15 @@ class DeploymentModel(BaseModel):
         # Sort by hosts to improve readability
         sorted_operation_hosts = sorted(
             operation_hosts,
-            key=lambda x: f"{x.operation_name}_{x.host_name}",
+            key=lambda x: f"{x.operation.name}_{x.host_name}",
         )
 
-        # Sort operations using DAG topological sort. Convert operation name to
-        # Operation instance and replace "start" action by "restart".
+        # Sort operations using DAG topological sort
         dag = Dag(collections)
-        reconfigure_operations_sorted = list(
-            map(
-                lambda x: (
-                    dag.node_to_operation(x.operation_name, restart=True),
-                    x.host_name,
-                ),
-                dag.topological_sort_key(
-                    sorted_operation_hosts, key=lambda x: x.operation_name
-                ),
-            )
+        reconfigure_operations_sorted = dag.topological_sort_key(
+            sorted_operation_hosts,
+            # topological sort only applies to start operations
+            key=lambda x: str(x.operation.name).replace("_restart", "_start"),
         )
 
         # Generate deployment
