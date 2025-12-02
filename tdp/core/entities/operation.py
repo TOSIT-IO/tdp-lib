@@ -132,11 +132,13 @@ class Operation(ABC):
         if type(self) is Operation:
             raise TypeError("Operation class cannot be instantiated directly.")
 
-    def limit_to(self, hosts: Optional[str | Iterable[str]]) -> None:
+    def check_limit(self, hosts: Optional[str | Iterable[str]]) -> None:
         """Limit the operation to the given hosts.
 
         Raises:
-            ValueError: If the operation cannot be limited to the given hosts.
+            NotPlaybookOperationError: If a limit is specified but the operation is not linked to a playbook (noop)
+            OperationNotAvailableOnHostError: If a limit is specified but is not available for the operation.
+            OperationCannotBeLimitedError: if a limit is specified but the operation can't be limited.
         """
         if hosts is None:
             return

@@ -56,7 +56,7 @@ class DeploymentRunner:
 
         if operation_rec.host:
             try:
-                operation.limit_to(operation_rec.host)
+                operation.check_limit(operation_rec.host)
             except Exception as e:
                 logs = str(e)
                 logger.error(logs)
