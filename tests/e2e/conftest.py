@@ -3,63 +3,105 @@
 
 from collections.abc import Generator
 from pathlib import Path
-from typing import NamedTuple
+from typing import Callable
 
 import pytest
-from click.testing import CliRunner
-from sqlalchemy import create_engine
+from click.testing import CliRunner, Result
 
-from tdp.cli.commands.init import init
-from tdp.core.models import BaseModel
-from tests.conftest import generate_collection_at_path
-
-
-class TDPInitArgs(NamedTuple):
-    collection_path: Path
-    db_dsn: str
-    vars: Path
-
-
-@pytest.fixture
-def tdp_init(
-    collection_path: Path, db_dsn: str, vars: Path
-) -> Generator[TDPInitArgs, None, None]:
-    base_args = [
-        "--collection-path",
-        str(collection_path),
-        "--database-dsn",
-        db_dsn,
-        "--vars",
-        str(vars),
-    ]
-    runner = CliRunner()
-    runner.invoke(init, base_args)
-    yield TDPInitArgs(collection_path, db_dsn, vars)
-    engine = create_engine(db_dsn)
-    BaseModel.metadata.drop_all(engine)
-    engine.dispose()
+from tdp.cli.__main__ import cli
+from tdp.core.constants import (
+    DAG_DIRECTORY_NAME,
+    DEFAULT_VARS_DIRECTORY_NAME,
+    PLAYBOOKS_DIRECTORY_NAME,
+)
+from tests.conftest import (
+    generate_collection_at_path,
+    init_dag_directory,
+    init_default_vars_directory,
+    init_playbooks_directory,
+)
 
 
 @pytest.fixture
-def collection_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    collection_path = tmp_path_factory.mktemp("collection")
-    dag_service_operations = {
-        "service": [
-            {"name": "service_install"},
-            {"name": "service_config", "depends_on": ["service_install"]},
-            {"name": "service_start", "depends_on": ["service_config"]},
-            {"name": "service_init", "depends_on": ["service_start"]},
-        ],
-    }
-    service_vars = {
-        "service": {
-            "service.yml": {},
-        },
-    }
-    generate_collection_at_path(collection_path, dag_service_operations, service_vars)
-    return collection_path
+def runner() -> Generator[CliRunner, None, None]:
+    """Fixture to provide a Click test runner."""
+    runner = CliRunner(env={"TDP_MOCK_DEPLOY": "True"})
+    # Run tests in an isolated filesystem to avoid side effects (e.g. local .env file)
+    with runner.isolated_filesystem():
+        yield runner
 
 
 @pytest.fixture
-def vars(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return tmp_path_factory.mktemp("collection")
+def tdp(runner):
+    """Fixture to provide a function that invokes the TDP CLI with given arguments."""
+
+    def invoke(args: str) -> Result:
+        return runner.invoke(cli, args.split())
+
+    return invoke
+
+
+@pytest.fixture
+def vars(tmp_path) -> Path:
+    """Fixture to create a temporary directory for storing variable files."""
+    vars_path = tmp_path / "vars"
+    vars_path.mkdir(parents=True)
+    return vars_path
+
+
+class CollectionPath:
+    """A collection path object that provides methods to create collection directories."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        generate_collection_at_path(self.path)
+
+    def __str__(self) -> str:
+        """Return the path as a string."""
+        return str(self.path)
+
+    def init_dag_directory(self, dag: dict[str, list]) -> None:
+        """Create and populate the DAG directory with service DAG files."""
+        init_dag_directory(self.path / DAG_DIRECTORY_NAME, dag)
+
+    def init_playbooks_directory(self, dag: dict[str, list]) -> None:
+        """Create and populate the playbooks directory with operation playbooks."""
+        init_playbooks_directory(self.path / PLAYBOOKS_DIRECTORY_NAME, dag)
+
+    def init_default_vars_directory(self, vars: dict[str, dict[str, dict]]) -> None:
+        """Create and populate the default vars directory with service variables."""
+        init_default_vars_directory(self.path / DEFAULT_VARS_DIRECTORY_NAME, vars)
+
+
+@pytest.fixture
+def collection_path_factory(
+    tmp_path,
+) -> Generator[Callable[[], CollectionPath], None, None]:
+    """Fixture that provides a factory function for creating CollectionPath objects.
+
+    The factory function can be called multiple times within a test to create multiple
+    collections. Each call will create a new temporary directory with a unique name.
+
+    Returns:
+        A factory function that, when called, returns a new CollectionPath object.
+
+    Example usage:
+        def test_something(collection_path_factory):
+            collection1 = collection_path_factory()
+            collection2 = collection_path_factory()
+            # Both collections are separate with unique paths
+    """
+    collection_counter = 0
+
+    def _create_collection_path() -> CollectionPath:
+        nonlocal collection_counter
+        collection_counter += 1
+        collection_dir = tmp_path / f"collection_{collection_counter}"
+        return CollectionPath(collection_dir)
+
+    yield _create_collection_path
+
+
+@pytest.fixture
+def collection_path(collection_path_factory) -> CollectionPath:
+    return collection_path_factory()
