@@ -8,13 +8,20 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal, NamedTuple, Optional
 
+from exceptiongroup import ExceptionGroup
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
 
 from tdp.core.constants import OPERATION_SLEEP_NAME, OPERATION_SLEEP_VARIABLE
 from tdp.core.dag import Dag
-from tdp.core.entities.operation import OperationName, PlaybookOperation
+from tdp.core.entities.operation import (
+    NotPlaybookOperationError,
+    OperationCannotBeLimitedError,
+    OperationName,
+    OperationNotAvailableOnHostError,
+    PlaybookOperation,
+)
 from tdp.core.filters import FilterFactory
 from tdp.core.models.base_model import BaseModel
 from tdp.core.models.enums import (
@@ -47,10 +54,6 @@ class NothingToResumeError(Exception):
 class NothingToDeployError(Exception):
     pass
 
-class UnsupportedDeploymentTypeError(Exception):
-    pass
-
-
 class MissingOperationError(Exception):
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
@@ -68,6 +71,11 @@ class MissingHostForOperationError(Exception):
             f"Host {host_name} not found for operation {operation.name}."
             f"Available hosts are {available_hosts}."
         )
+
+
+class _OperationHost(NamedTuple):
+    operation: Operation
+    host: Optional[str]
 
 
 class DeploymentModel(BaseModel):
@@ -124,16 +132,10 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
-        Args:
-            dag: DAG to generate the deployment plan from.
-            targets: List of targets to which to deploy.
-            sources: List of sources from which to deploy.
-            filter_expression: Filter expression to apply on the DAG.
-            filter_type: Filter type to apply on the DAG.
-            restart: Whether or not to transform start operations to restart.
+        Log if an operation can't be limited on the provided host (if specified).
 
         Raises:
-            EmptyDeploymentPlanError: If the deployment plan is empty.
+            NoOperationMatchError: if no operation match the provided parameters.
         """
         operations = dag.get_operations(
             sources=sources,
@@ -159,6 +161,34 @@ class DeploymentModel(BaseModel):
         if reverse:
             operations = reversed(operations)
 
+        if host_names is None or len(list(host_names)) == 0:
+            operation_hosts = [
+                _OperationHost(operation, None) for operation in operations
+            ]
+        else:
+            # Use a dict with None values to mimic an ordered set
+            # (dict preserves insertion order since Python 3.7)
+            operation_hosts_tmp: dict[_OperationHost, None] = {}
+            for operation in operations:
+                for host in host_names:
+                    try:
+                        operation.check_limit(host)
+                    except OperationNotAvailableOnHostError:
+                        # Skip host if operation is not available on it
+                        continue
+                    except OperationCannotBeLimitedError as e:
+                        # Display an info if operation cannot be limited to host
+                        logger.info(str(e))
+                        host = None
+                    except NotPlaybookOperationError:
+                        host = None
+                    operation_hosts_tmp[_OperationHost(operation, host)] = None
+            operation_hosts = list(operation_hosts_tmp.keys())
+            if len(operation_hosts) == 0:
+                raise NoOperationMatchError(
+                    "Combination of parameters resulted into an empty list of Operations."
+                )
+
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
@@ -177,42 +207,34 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation in operations:
+        for operation, host in operation_hosts:
             can_perform_rolling_restart = (
                 rolling_interval is not None
                 and isinstance(operation, PlaybookOperation)
                 and operation.name.action == "restart"
                 and len(operation.playbook.hosts) > 0
             )
-
-            for host in host_names or [None]:
-                if host is None or (
-                    isinstance(operation, PlaybookOperation)
-                    and host in operation.playbook.hosts
-                ):
-                    deployment.operations.append(
-                        OperationModel(
-                            operation=operation.name.name,
-                            operation_order=operation_order,
-                            host=host,
-                            extra_vars=None,
-                            state=OperationStateEnum.PLANNED,
-                        )
+            deployment.operations.append(
+                OperationModel(
+                    operation=operation.name.name,
+                    operation_order=operation_order,
+                    host=host,
+                    extra_vars=None,
+                    state=OperationStateEnum.PLANNED,
+                )
+            )
+            operation_order += 1
+            if can_perform_rolling_restart:
+                deployment.operations.append(
+                    OperationModel(
+                        operation=OPERATION_SLEEP_NAME,
+                        operation_order=operation_order,
+                        host=None,
+                        extra_vars=[f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"],
+                        state=OperationStateEnum.PLANNED,
                     )
-                    operation_order += 1
-                    if can_perform_rolling_restart:
-                        deployment.operations.append(
-                            OperationModel(
-                                operation=OPERATION_SLEEP_NAME,
-                                operation_order=operation_order,
-                                host=None,
-                                extra_vars=[
-                                    f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-                                ],
-                                state=OperationStateEnum.PLANNED,
-                            )
-                        )
-                        operation_order += 1
+                )
+                operation_order += 1
         return deployment
 
     @staticmethod
@@ -225,24 +247,9 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan from a list of operations.
 
-        Args:
-            collections: Collections to retrieve the operations from.
-            operations: List of operations names to perform.
-            host_names: Set of host for each operation.
-            extra_vars: List of extra vars for each operation.
-            rolling_interval: Number of seconds to wait between component restart.
-
         Raises:
-            UnsupportedOperationError: If an operation is a noop.
-            ValueError: If an operation is not found in the collections.
+            ExceptionGroup: With the list of operations that are missing from the collections or invalid.
         """
-        operations = [collections.operations[o] for o in operation_names]
-        for host in host_names or []:
-            for operation in operations:
-                if not isinstance(operation, PlaybookOperation) or (
-                    host not in operation.playbook.hosts
-                ):
-                    raise MissingHostForOperationError(operation, host)
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.OPERATIONS,
             options={
@@ -257,8 +264,22 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
+
+        exceptions = []
         operation_order = 1
-        for operation in operations:
+        for operation_name in operation_names:
+            # Check if operation is valid.
+            try:
+                operation: Operation = collections.operations[operation_name]
+                operation.check_limit(host_names)
+            except Exception as e:
+                exceptions.append(e)
+                continue
+
+            # Skip filling up operation array if at list 1 operation is invalid.
+            if len(exceptions) > 0:
+                continue
+
             can_perform_rolling_restart = (
                 rolling_interval is not None
                 and isinstance(operation, PlaybookOperation)
@@ -295,6 +316,11 @@ class DeploymentModel(BaseModel):
                         )
                     )
                 operation_order += 1
+
+        # Raise all exceptions at once if any.
+        if len(exceptions):
+            raise ExceptionGroup("At least one operation is invalid.", exceptions)
+
         return deployment
 
     @staticmethod
@@ -304,32 +330,26 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan from a list of operations, hosts and extra vars.
 
-        Args:
-            collections: Collections to retrieve the operations from.
-            operation_host_vars_names: List of operations, hosts and extra vars to perform.
-
         Raises:
-            MissingOperationError: If an operation is a noop.
-            MissingHostForOperationError: If an operation is not found in the collections.
+            ExceptionGroup: With the list of operations that are missing from the collections or invalid.
         """
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.CUSTOM,
             state=DeploymentStateEnum.PLANNED,
         )
 
+        exceptions = []
         for operation_order, operation_host_vars in enumerate(
             operation_host_vars_names, start=1
         ):
             operation_name, host_name, var_names = operation_host_vars
-            operation = collections.operations[operation_name]
-            if host_name and (
-                not isinstance(operation, PlaybookOperation)
-                or host_name not in operation.playbook.hosts
-            ):
-                raise MissingHostForOperationError(operation, host_name)
-            else:
-                if operation_name not in collections.operations:
-                    raise MissingOperationError(operation_name)
+            # Check if operation is valid
+            try:
+                operation: Operation = collections.operations[operation_name]
+                operation.check_limit(host_name)
+            except Exception as e:
+                exceptions.append(e)
+                continue
 
             deployment.operations.append(
                 OperationModel(
@@ -340,6 +360,11 @@ class DeploymentModel(BaseModel):
                     state=OperationStateEnum.PLANNED,
                 )
             )
+
+        # Raise all exceptions at once if any.
+        if len(exceptions) > 0:
+            raise ExceptionGroup("At least one operation is invalid", exceptions)
+
         return deployment
 
     @staticmethod
@@ -350,54 +375,50 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan for stale components.
 
-        Args:
-            collections: Collections to retrieve the operations from.
-            stale_hosted_entity_statuses: List of stale hosted entity statuses.
-            rolling_interval: Number of seconds to wait between component restart.
+        Log a warning if an operation is missing from the collections.
 
         Raises:
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
 
-        class OperationHostTuple(NamedTuple):
-            operation: Operation
-            host_name: Optional[str]
-
-        def _get_operation(
+        def _get_operation_host(
             status: HostedEntityStatus, action: Literal["config", "restart"]
-        ) -> Optional[Operation]:
+        ) -> Optional[_OperationHost]:
             operation_name = OperationName(status.entity.name, action)
+            host = status.entity.host
             try:
-                operation = collections.operations[operation_name]
+                operation: Operation = collections.operations[operation_name]
+                operation.check_limit(status.entity.host)
             except KeyError as e:
-                logger.warning(str(e), "skipping")
+                logger.warning(str(e) + "Skipping.")
                 return
-            return operation
+            except (
+                NotPlaybookOperationError,
+                OperationNotAvailableOnHostError,
+                OperationCannotBeLimitedError,
+            ):
+                host = None
+            return _OperationHost(operation, host)
 
-        operation_hosts: set[OperationHostTuple] = set()
+        # Using a set is important here as some operation-host will be identical
+        # (at least the ones were the host was set to None by _get_operation_host)
+        operation_hosts: set[_OperationHost] = set()
         for status in stale_hosted_entity_statuses:
             if status.to_config and (
-                config_operation := _get_operation(status, "config")
+                config_operation := _get_operation_host(status, "config")
             ):
-                operation_hosts.add(
-                    OperationHostTuple(config_operation, status.entity.host)
-                )
+                operation_hosts.add(config_operation)
             if status.to_restart and (
-                restart_operation := _get_operation(status, "restart")
+                restart_operation := _get_operation_host(status, "restart")
             ):
-                operation_hosts.add(
-                    OperationHostTuple(
-                        restart_operation,
-                        status.entity.host,
-                    )
-                )
+                operation_hosts.add(restart_operation)
         if len(operation_hosts) == 0:
             raise NothingToReconfigureError("No component needs to be reconfigured.")
 
         # Sort by hosts to improve readability
         sorted_operation_hosts = sorted(
             operation_hosts,
-            key=lambda x: f"{x.operation.name}_{x.host_name}",
+            key=lambda x: f"{x.operation.name}_{x.host}",
         )
 
         # Sort operations using DAG topological sort
@@ -453,13 +474,10 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan from a failed deployment.
 
-        Args:
-            collections: Collections to retrieve the operation from.
-            deployment: deployment.
+        Log a warning if an operation is missing from the collections or is invalid.
 
         Raises:
             NothingToResumeError: If the deployment was successful.
-            UnsupportedDeploymentTypeError: If the deployment type is not supported.
         """
         if failed_deployment.state != DeploymentStateEnum.FAILURE:
             raise NothingToResumeError(
@@ -487,17 +505,33 @@ class DeploymentModel(BaseModel):
             },
             state=DeploymentStateEnum.PLANNED,
         )
-        for operation_order, operation in enumerate(
+        for operation_order, failed_operation in enumerate(
             failed_deployment.operations[failed_operation_index:], 1
         ):
-            if operation.operation not in collections.operations:
-                raise MissingOperationError(operation.operation)
+            try:
+                operation: Operation = collections.operations[
+                    failed_operation.operation
+                ]
+                operation.check_limit(failed_operation.host)
+            except KeyError:
+                logger.warning(
+                    f"Operation {failed_operation.operation} not found in collections. "
+                    "You'll need to fix the deployment plan manually."
+                )
+            except (
+                NotPlaybookOperationError,
+                OperationNotAvailableOnHostError,
+                OperationCannotBeLimitedError,
+            ) as e:
+                logger.warning(
+                    str(e) + "You'll need to fix the deployment plan manually."
+                )
             deployment.operations.append(
                 OperationModel(
-                    operation=operation.operation,
+                    operation=failed_operation.operation,
                     operation_order=operation_order,
-                    host=operation.host,
-                    extra_vars=operation.extra_vars,
+                    host=failed_operation.host,
+                    extra_vars=failed_operation.extra_vars,
                     state=OperationStateEnum.PLANNED,
                 )
             )
