@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
-from tdp.core.entities.operation import PlaybookOperation
 from tdp.core.models.enums import OperationStateEnum
 from tdp.core.variables import ClusterVariables
 
@@ -16,6 +15,7 @@ if TYPE_CHECKING:
     from tdp.core.cluster_status import ClusterStatus
     from tdp.core.collections import Collections
     from tdp.core.deployment.executor import Executor
+    from tdp.core.entities.operation import Operation
     from tdp.core.models import DeploymentModel, OperationModel
 
 logger = logging.getLogger(__name__)
@@ -52,18 +52,13 @@ class DeploymentRunner:
         """
         operation_rec.start_time = datetime.utcnow()
 
-        operation = self._collections.operations[operation_rec.operation]
+        operation: Operation = self._collections.operations[operation_rec.operation]
 
         if operation_rec.host:
-            logs = None
-            if not isinstance(operation, PlaybookOperation):
-                logs = f"Operation '{operation_rec.operation}' is not related to any playbook (noop). It can't be limited to any host."
-            elif not operation.playbook.meta.can_limit:
-                logs = f"Operation '{operation_rec.operation}' can't be limited to specific host."
-            elif operation_rec.host not in operation.playbook.hosts:
-                logs = f"Operation '{operation_rec.operation}' is not available on host '{operation_rec.host}'."
-
-            if logs:
+            try:
+                operation.check_limit(operation_rec.host)
+            except Exception as e:
+                logs = str(e)
                 logger.error(logs)
                 operation_rec.state = OperationStateEnum.FAILURE
                 operation_rec.logs = logs.encode("utf-8")
