@@ -98,6 +98,24 @@ class Playbook:
         return self.path.stem
 
 
+class NotPlaybookOperationError(Exception):
+    """Raised when an operation is not linked to a playbook."""
+
+    pass
+
+
+class OperationCannotBeLimitedError(Exception):
+    """Raised when an operation cannot be limited to a specific host."""
+
+    pass
+
+
+class OperationNotAvailableOnHostError(Exception):
+    """Raised when an operation is not available on a specific host."""
+
+    pass
+
+
 @dataclass(frozen=True)
 class Operation(ABC):
     """An operation.
@@ -113,6 +131,31 @@ class Operation(ABC):
     def __post_init__(self):
         if type(self) is Operation:
             raise TypeError("Operation class cannot be instantiated directly.")
+
+    def limit_to(self, hosts: Optional[str | Iterable[str]]) -> None:
+        """Limit the operation to the given hosts.
+
+        Raises:
+            ValueError: If the operation cannot be limited to the given hosts.
+        """
+        if hosts is None:
+            return
+        if not isinstance(self, PlaybookOperation):
+            raise NotPlaybookOperationError(
+                f"Operation '{self.name}' is not related to any playbook (noop). "
+                "It can't be limited to any host."
+            )
+        if isinstance(hosts, str):
+            hosts = [hosts]
+        for host in hosts:
+            if host not in self.playbook.hosts:
+                raise OperationNotAvailableOnHostError(
+                    f"Operation '{self.name}' is not available on host '{host}'."
+                )
+        if not self.playbook.meta.can_limit:
+            raise OperationCannotBeLimitedError(
+                f"Operation '{self.name}' can't be limited to specific host."
+            )
 
 
 @dataclass(frozen=True)
