@@ -14,7 +14,7 @@
 
 To use `tdp-lib`, ensure you have the following prerequisites:
 
-- Python 3.9 or higher. Higher version are not guarantee to work, only 3.9 is tested.
+- Python 3.9.13 or higher. Higher versions than 3.9 are not guaranteed to work, only 3.9 versions are tested.
 - A relational database management system (RDBMS), such as [PostgreSQL](https://www.postgresql.org/) or [SQLite](https://www.sqlite.org/index.html).
 
 Optional dependencies for DAG visualization:
