@@ -71,6 +71,11 @@ class MissingHostForOperationError(Exception):
         )
 
 
+class _OperationHost(NamedTuple):
+    operation: Operation
+    host: Optional[str]
+
+
 class DeploymentModel(BaseModel):
     """Deployment model.
 
@@ -154,6 +159,34 @@ class DeploymentModel(BaseModel):
         if reverse:
             operations = reversed(operations)
 
+        if host_names is None or len(list(host_names)) == 0:
+            operation_hosts = [
+                _OperationHost(operation, None) for operation in operations
+            ]
+        else:
+            # Use a dict with None values to mimic an ordered set
+            # (dict preserves insertion order since Python 3.7)
+            operation_hosts_tmp: dict[_OperationHost, None] = {}
+            for operation in operations:
+                for host in host_names:
+                    try:
+                        operation.check_limit(host)
+                    except OperationNotAvailableOnHostError:
+                        # Skip host if operation is not available on it
+                        continue
+                    except OperationCannotBeLimitedError as e:
+                        # Display an info if operation cannot be limited to host
+                        logger.info(str(e))
+                        host = None
+                    except NotPlaybookOperationError:
+                        host = None
+                    operation_hosts_tmp[_OperationHost(operation, host)] = None
+            operation_hosts = list(operation_hosts_tmp.keys())
+            if len(operation_hosts) == 0:
+                raise NoOperationMatchError(
+                    "Combination of parameters resulted into an empty list of Operations."
+                )
+
         deployment = DeploymentModel(
             deployment_type=DeploymentTypeEnum.DAG,
             options={
@@ -172,51 +205,34 @@ class DeploymentModel(BaseModel):
             state=DeploymentStateEnum.PLANNED,
         )
         operation_order = 1
-        for operation in operations:
+        for operation, host in operation_hosts:
             can_perform_rolling_restart = (
                 rolling_interval is not None
                 and isinstance(operation, PlaybookOperation)
                 and operation.name.action == "restart"
                 and len(operation.playbook.hosts) > 0
             )
-
-            for host in host_names or [None]:
-                limit = host
-                try:
-                    operation.check_limit(host)
-                except OperationNotAvailableOnHostError:
-                    # Skip host if operation is not available on it
-                    continue
-                except OperationCannotBeLimitedError as e:
-                    # Display an info if operation cannot be limited to host
-                    logger.info(str(e))
-                    limit = None
-                except NotPlaybookOperationError:
-                    limit = None
-
+            deployment.operations.append(
+                OperationModel(
+                    operation=operation.name.name,
+                    operation_order=operation_order,
+                    host=host,
+                    extra_vars=None,
+                    state=OperationStateEnum.PLANNED,
+                )
+            )
+            operation_order += 1
+            if can_perform_rolling_restart:
                 deployment.operations.append(
                     OperationModel(
-                        operation=operation.name.name,
+                        operation=OPERATION_SLEEP_NAME,
                         operation_order=operation_order,
-                        host=limit,
-                        extra_vars=None,
+                        host=None,
+                        extra_vars=[f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"],
                         state=OperationStateEnum.PLANNED,
                     )
                 )
                 operation_order += 1
-                if can_perform_rolling_restart:
-                    deployment.operations.append(
-                        OperationModel(
-                            operation=OPERATION_SLEEP_NAME,
-                            operation_order=operation_order,
-                            host=None,
-                            extra_vars=[
-                                f"{OPERATION_SLEEP_VARIABLE}={rolling_interval}"
-                            ],
-                            state=OperationStateEnum.PLANNED,
-                        )
-                    )
-                    operation_order += 1
         return deployment
 
     @staticmethod
@@ -363,13 +379,9 @@ class DeploymentModel(BaseModel):
             NothingToReconfigureError: If no component needs to be reconfigured.
         """
 
-        class OperationHostTuple(NamedTuple):
-            operation: Operation
-            host_name: Optional[str]
-
         def _get_operation_host(
             status: HostedEntityStatus, action: Literal["config", "restart"]
-        ) -> Optional[OperationHostTuple]:
+        ) -> Optional[_OperationHost]:
             operation_name = OperationName(status.entity.name, action)
             host = status.entity.host
             try:
@@ -384,11 +396,11 @@ class DeploymentModel(BaseModel):
                 OperationCannotBeLimitedError,
             ):
                 host = None
-            return OperationHostTuple(operation, host)
+            return _OperationHost(operation, host)
 
         # Using a set is important here as some operation-host will be identical
         # (at least the ones were the host was set to None by _get_operation_host)
-        operation_hosts: set[OperationHostTuple] = set()
+        operation_hosts: set[_OperationHost] = set()
         for status in stale_hosted_entity_statuses:
             if status.to_config and (
                 config_operation := _get_operation_host(status, "config")
@@ -404,7 +416,7 @@ class DeploymentModel(BaseModel):
         # Sort by hosts to improve readability
         sorted_operation_hosts = sorted(
             operation_hosts,
-            key=lambda x: f"{x.operation.name}_{x.host_name}",
+            key=lambda x: f"{x.operation.name}_{x.host}",
         )
 
         # Sort operations using DAG topological sort
