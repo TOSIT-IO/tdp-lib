@@ -130,7 +130,7 @@ class DeploymentModel(BaseModel):
     ) -> DeploymentModel:
         """Generate a deployment plan from a DAG.
 
-        Log if an operation can't be limited on the provided host (if sepcified).
+        Log if an operation can't be limited on the provided host (if specified).
 
         Raises:
             NoOperationMatchError: if no operation match the provided parameters.
