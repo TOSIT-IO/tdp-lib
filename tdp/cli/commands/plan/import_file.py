@@ -31,12 +31,13 @@ def import_file(
 ):
     """Import a deployment from a file."""
 
-    from tdp.cli.utils import parse_file
+    from tdp.cli.utils import parse_file, validate_plan_creation
     from tdp.core.models.deployment_model import DeploymentModel
     from tdp.dao import Dao
 
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = dao.get_planned_deployment()
+        if last_deployment := dao.get_last_deployment():
+            validate_plan_creation(last_deployment.state, force)
         with open(file_name) as file:
             # Remove empty elements and comments
             # and get the operations, hosts and extra vars in a list
@@ -46,15 +47,9 @@ def import_file(
             deployment = DeploymentModel.from_operations_hosts_vars(
                 collections, new_operations_hosts_vars
             )
-            # if a planned deployment is present, update it instead of creating it
-            if planned_deployment:
-                if force or click.confirm(
-                    "A deployment plan already exists, do you want to override it?"
-                ):
-                    deployment.id = planned_deployment.id
-                else:
-                    click.echo("No new deployment plan has been created.")
-                    return
+            # if a planned deployment is present, update it
+            if last_deployment:
+                deployment.id = last_deployment.id
             dao.session.merge(deployment)
             dao.session.commit()
             click.echo("Deployment plan successfully imported.")

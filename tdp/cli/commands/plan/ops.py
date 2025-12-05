@@ -50,28 +50,24 @@ def ops(
 ):
     """Run a list of operations."""
 
-    from tdp.cli.utils import print_deployment
+    from tdp.cli.utils import print_deployment, validate_plan_creation
     from tdp.core.models import DeploymentModel
     from tdp.dao import Dao
 
-    click.echo(
-        f"Creating a deployment plan to run {len(operation_names)} operation(s)."
-    )
-    deployment = DeploymentModel.from_operations(
-        collections, operation_names, hosts, extra_vars, rolling_interval
-    )
-    if preview:
-        print_deployment(deployment)
-        return
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = dao.get_planned_deployment()
-        if planned_deployment:
-            if force or click.confirm(
-                "A deployment plan already exists, do you want to override it?"
-            ):
-                deployment.id = planned_deployment.id
-            else:
-                click.echo("No new deployment plan has been created.")
-                return
+        if last_deployment := dao.get_last_deployment():
+            validate_plan_creation(last_deployment.state, force)
+
+        click.echo(
+            f"Creating a deployment plan to run {len(operation_names)} operation(s)."
+        )
+        deployment = DeploymentModel.from_operations(
+            collections, operation_names, hosts, extra_vars, rolling_interval
+        )
+        if preview:
+            print_deployment(deployment)
+            return
+        if last_deployment:
+            deployment.id = last_deployment.id
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
