@@ -83,65 +83,61 @@ def dag(
 ):
     """Deploy from the DAG."""
 
-    from tdp.cli.utils import print_deployment
+    from tdp.cli.utils import print_deployment, validate_plan_creation
     from tdp.core.dag import Dag
     from tdp.core.models import DeploymentModel
     from tdp.core.models.enums import FilterTypeEnum
     from tdp.dao import Dao
 
-    filter_type = None
-    if filter:
-        filter_type = FilterTypeEnum.REGEX if is_regex else FilterTypeEnum.GLOB
-    if stop and restart:
-        click.UsageError("Cannot use `--restart` and `--stop` at the same time.")
-
-    dag = Dag(collections)
-
-    # Check that sources and targets are valid DAG nodes
-    set_nodes: set[str] = set()
-    if sources:
-        set_nodes.update(sources)
-    if targets:
-        set_nodes.update(targets)
-    if set_nodes:
-        dag_nodes = [str(op.name) for op in dag.operations]
-        set_difference = set_nodes.difference(dag_nodes)
-        if set_difference:
-            raise click.BadParameter(
-                f"{set_difference} are not valid DAG operation(s)."
-            )
-
-    if sources:
-        click.echo(f"Creating a deployment plan from: {sources}")
-    elif targets:
-        click.echo(f"Creating a deployment plan to: {targets}")
-    else:
-        click.echo("Creating a deployment plan for the whole DAG.")
-
-    deployment = DeploymentModel.from_dag(
-        dag,
-        sources=sources,
-        targets=targets,
-        filter_expression=filter,
-        filter_type=filter_type,
-        restart=restart,
-        reverse=reverse,
-        stop=stop,
-        rolling_interval=rolling_interval,
-        host_names=hosts
-    )
-    if preview:
-        print_deployment(deployment)
-        return
     with Dao(db_engine, commit_on_exit=True) as dao:
-        planned_deployment = dao.get_planned_deployment()
-        if planned_deployment:
-            if force or click.confirm(
-                "A deployment plan already exists, do you want to override it?"
-            ):
-                deployment.id = planned_deployment.id
-            else:
-                click.echo("No new deployment plan has been created.")
-                return
+        if last_deployment := dao.get_last_deployment():
+            validate_plan_creation(last_deployment.state, force)
+
+        filter_type = None
+        if filter:
+            filter_type = FilterTypeEnum.REGEX if is_regex else FilterTypeEnum.GLOB
+        if stop and restart:
+            click.UsageError("Cannot use `--restart` and `--stop` at the same time.")
+
+        dag = Dag(collections)
+
+        # Check that sources and targets are valid DAG nodes
+        set_nodes: set[str] = set()
+        if sources:
+            set_nodes.update(sources)
+        if targets:
+            set_nodes.update(targets)
+        if set_nodes:
+            dag_nodes = [str(op.name) for op in dag.operations]
+            set_difference = set_nodes.difference(dag_nodes)
+            if set_difference:
+                raise click.BadParameter(
+                    f"{set_difference} are not valid DAG operation(s)."
+                )
+
+        if sources:
+            click.echo(f"Creating a deployment plan from: {sources}")
+        elif targets:
+            click.echo(f"Creating a deployment plan to: {targets}")
+        else:
+            click.echo("Creating a deployment plan for the whole DAG.")
+
+        deployment = DeploymentModel.from_dag(
+            dag,
+            sources=sources,
+            targets=targets,
+            filter_expression=filter,
+            filter_type=filter_type,
+            restart=restart,
+            reverse=reverse,
+            stop=stop,
+            rolling_interval=rolling_interval,
+            host_names=hosts,
+        )
+        if preview:
+            print_deployment(deployment)
+            return
+        if last_deployment:
+            deployment.id = last_deployment.id
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")

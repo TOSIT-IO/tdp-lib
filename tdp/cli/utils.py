@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from logging import getLogger
 from typing import TYPE_CHECKING, Optional
 
 import click
 from tabulate import tabulate
+
+from tdp.core.models.enums import DeploymentStateEnum
 
 if TYPE_CHECKING:
     from tdp.core.collections.collections import Collections
@@ -16,6 +19,8 @@ if TYPE_CHECKING:
     from tdp.core.models import DeploymentModel
     from tdp.core.models.operation_model import OperationModel
     from tdp.core.variables.cluster_variables import ClusterVariables
+
+logger = getLogger(__name__)
 
 
 def validate_service_component(
@@ -170,3 +175,36 @@ def parse_file(file_name) -> list[tuple[str, Optional[str], Optional[list[str]]]
         for line in file_content.split("\n")
         if line and not line.startswith("#")
     ]
+
+
+def validate_plan_creation(status: Optional[DeploymentStateEnum], force: bool) -> None:
+    """Validates if a new deployment plan can be created based on the last deployment status.
+
+    Args:
+        status: Status of the last deployment.
+        force: Whether to force the creation of a new deployment plan.
+
+    Raises:
+        click.ClickException: If a new deployment plan cannot be created.
+    """
+    if status == DeploymentStateEnum.SUCCESS or status == DeploymentStateEnum.FAILURE:
+        return
+    elif force:
+        logger.debug("Force option enabled, overriding existing deployment plan.")
+        return
+    elif status == DeploymentStateEnum.PLANNED and click.confirm(
+        "A deployment plan already exists, do you want to override it?"
+    ):
+        return
+    elif status == DeploymentStateEnum.RUNNING and click.confirm(
+        "Last deployment is still identified as running, do you want to perform a cleanup?"
+    ):
+        # TODO: implement cleanup
+        return
+    elif (status is None or status not in DeploymentStateEnum) and click.confirm(
+        f"Last deployment is in an unknown state ('{status}'), do you want to perform a cleanup?"
+    ):
+        # TODO: implement cleanup
+        return
+
+    raise click.ClickException("No new deployment plan has been created.")
