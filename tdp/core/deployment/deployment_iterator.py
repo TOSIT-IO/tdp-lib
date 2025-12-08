@@ -87,9 +87,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
         """
         # Initialize the deployment state
         self.deployment = deployment
-        self.deployment.start_time = datetime.utcnow()
-        for operation in deployment.operations:
-            operation.state = OperationStateEnum.PENDING
+        self.deployment.start_running()
         # Initialize the iterator
         self._cluster_status = cluster_status
         self._collections = collections
