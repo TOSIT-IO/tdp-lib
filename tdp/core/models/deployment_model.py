@@ -501,6 +501,33 @@ class DeploymentModel(BaseModel):
             )
         return deployment
 
+    def fix_running(self):
+        # Only RUNNING deployment can be fixed
+        if self.state != DeploymentStateEnum.RUNNING:
+            raise Exception("Nothing to fix")
+
+        held = False
+        for operation in self.operations:
+            # Set operation status to HELD if a previous operation is FAILURE or HELD
+            if held is True:
+                operation.state = OperationStateEnum.HELD
+                continue
+
+            # If an operation is RUNNING, set it to FAILURE
+            if operation.state == OperationStateEnum.RUNNING:
+                operation.state = OperationStateEnum.FAILURE
+                held = True
+            # If an operation is PENDING, set it to HELD
+            elif operation.state == OperationStateEnum.PENDING:
+                operation.state = OperationStateEnum.HELD
+                held = True
+            # If an operation is HELD, leave it as is
+            elif operation.state == OperationStateEnum.HELD:
+                held = True
+
+        # Update deployment to FAILURE
+        self.state = DeploymentStateEnum.FAILURE
+
 
 def _filter_falsy_options(options: dict) -> dict:
     """Get options without falsy values.
