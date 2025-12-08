@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
 from tdp.core.entities.operation import PlaybookOperation
-from tdp.core.models.enums import DeploymentStateEnum, OperationStateEnum
+from tdp.core.models.enums import OperationStateEnum
 from tdp.core.variables import ClusterVariables
 
 if TYPE_CHECKING:
@@ -105,7 +105,6 @@ class DeploymentRunner:
         Returns:
             DeploymentIterator object, to iterate over operations logs.
         """
-        deployment.state = DeploymentStateEnum.RUNNING
         return DeploymentIterator(
             deployment=deployment,
             collections=self._collections,

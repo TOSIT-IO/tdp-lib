@@ -44,6 +44,8 @@ class NothingToReconfigureError(Exception):
 class NothingToResumeError(Exception):
     pass
 
+class NothingToDeployError(Exception):
+    pass
 
 class UnsupportedDeploymentTypeError(Exception):
     pass
@@ -500,6 +502,14 @@ class DeploymentModel(BaseModel):
                 )
             )
         return deployment
+
+    def start_running(self) -> None:
+        if self.state != DeploymentStateEnum.PLANNED:
+            raise NothingToDeployError()
+        self.state = DeploymentStateEnum.RUNNING
+        for operation in self.operations:
+            operation.state = OperationStateEnum.PENDING
+        self.start_time = datetime.utcnow()
 
 
 def _filter_falsy_options(options: dict) -> dict:
