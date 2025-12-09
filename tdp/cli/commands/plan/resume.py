@@ -28,7 +28,7 @@ def resume(
 ):
     """Resume a failed deployment."""
 
-    from tdp.cli.utils import print_deployment
+    from tdp.cli.utils import print_deployment, validate_plan_creation
     from tdp.core.models import DeploymentModel
     from tdp.dao import Dao
 
@@ -49,8 +49,8 @@ def resume(
         if preview:
             print_deployment(deployment)
             return
-        planned_deployment = dao.get_planned_deployment()
-        if planned_deployment:
-            deployment.id = planned_deployment.id
+        if last_deployment := dao.get_last_deployment():
+            validate_plan_creation(last_deployment.state)
+            deployment.id = last_deployment.id
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
