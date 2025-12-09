@@ -36,7 +36,7 @@ def reconfigure(
 ):
     """Reconfigure required TDP services."""
 
-    from tdp.cli.utils import print_deployment
+    from tdp.cli.utils import print_deployment, validate_plan_creation
     from tdp.core.models import DeploymentModel
     from tdp.dao import Dao
 
@@ -52,14 +52,8 @@ def reconfigure(
         if preview:
             print_deployment(deployment)
             return
-        planned_deployment = dao.get_planned_deployment()
-        if planned_deployment:
-            if force or click.confirm(
-                "A deployment plan already exists, do you want to override it?"
-            ):
-                deployment.id = planned_deployment.id
-            else:
-                click.echo("No new deployment plan has been created.")
-                return
+        if last_deployment := dao.get_last_deployment():
+            validate_plan_creation(last_deployment.state, force)
+            deployment.id = last_deployment.id
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
