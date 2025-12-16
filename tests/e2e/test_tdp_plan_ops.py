@@ -1,25 +1,24 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-
-from click.testing import CliRunner
-
 from tdp.cli.commands.plan.ops import ops
-from tests.e2e.conftest import TDPInitArgs
 
 
-def test_tdp_plan_run(
-    tdp_init: TDPInitArgs,
-):
-    runner = CliRunner()
+def test_tdp_plan_run(tdp, vars, runner, collection_path, db_dsn):
+    collection_path.init_dag_directory(
+        {
+            "service": [
+                {"name": "service_install"},
+            ]
+        }
+    )
+    result = tdp(
+        f"init --collection-path {collection_path} --vars {vars} --database-dsn {db_dsn}"
+    )
+    assert result.exit_code == 0, result.output
+
     result = runner.invoke(
         ops,
-        [
-            "--collection-path",
-            str(tdp_init.collection_path),
-            "--database-dsn",
-            tdp_init.db_dsn,
-            "service_install",
-        ],
+        f"--collection-path {collection_path} --database-dsn {db_dsn} service_install".split(),
     )
     assert result.exit_code == 0, result.output
