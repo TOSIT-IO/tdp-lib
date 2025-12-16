@@ -342,7 +342,9 @@ class Test_multiple_db:
 
         with create_session(db_engine) as session:
             # All databases except SQLite have a constraint on foreignkey deployment_id.
-            deployment_content = DeploymentModel(id=1)
+            deployment_content = DeploymentModel(
+                id=1, state=DeploymentStateEnum.PLANNED
+            )
             session.add(deployment_content)
             # Add the lorem ipsum text in bytes to the logs column in the operation table.
             operation_content = OperationModel(

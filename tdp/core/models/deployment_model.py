@@ -96,9 +96,7 @@ class DeploymentModel(BaseModel):
     )
     start_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment start time.")
     end_time: Mapped[Optional[datetime]] = mapped_column(doc="Deployment end time.")
-    state: Mapped[Optional[DeploymentStateEnum]] = mapped_column(
-        doc="Deployment state."
-    )
+    state: Mapped[DeploymentStateEnum] = mapped_column(doc="Deployment state.")
     deployment_type: Mapped[Optional[DeploymentTypeEnum]] = mapped_column(
         doc="Deployment type."
     )
