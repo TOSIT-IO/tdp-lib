@@ -21,7 +21,8 @@ if TYPE_CHECKING:
     from tdp.core.collections import Collections
 
 
-@click.command()
+@click.group(invoke_without_command=True)
+@click.pass_context
 @click.option(
     "--force-stale-update",
     "--fsu",
@@ -40,7 +41,13 @@ if TYPE_CHECKING:
 )
 @validate_option
 @vars_option
-def deploy(
+def deploy(ctx, *args, **kwargs):
+    """Execute a planned deployment."""
+    if ctx.invoked_subcommand is None:
+        _handle_deploy(*args, **kwargs)
+
+
+def _handle_deploy(
     dry: bool,
     collections: Collections,
     db_engine: Engine,
@@ -49,8 +56,6 @@ def deploy(
     validate: bool,
     vars: Path,
 ):
-    """Execute a planned deployment."""
-
     from tdp.cli.utils import check_services_cleanliness
     from tdp.core.deployment import DeploymentRunner, Executor
     from tdp.core.models.enums import DeploymentStateEnum
