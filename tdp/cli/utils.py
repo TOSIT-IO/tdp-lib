@@ -219,7 +219,10 @@ def validate_plan_creation(
         raise click.ClickException(
             "Last deployment is in a RUNNING state. Wait for it to finish "
             "before planning a new deployment.\n\n"
-            "Use '--force' to create a plan anyway (not recommended)."
+            "Use '--force' to create a plan anyway (not recommended).\n"
+            "If no Ansible deployment is running it means that the database has been "
+            "left in an incorect state. Use 'tdp deploy danger-fix-running' to fix the "
+            "last deployment state from RUNNING to FAILURE."
         )
 
     raise click.ClickException("Unknown deployment state.")

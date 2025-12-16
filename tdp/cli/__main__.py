@@ -11,6 +11,7 @@ from tdp.cli.commands.browse import browse
 from tdp.cli.commands.dag import dag
 from tdp.cli.commands.default_diff import default_diff
 from tdp.cli.commands.deploy import deploy
+from tdp.cli.commands.deploy_danger_fix_running import danger_fix_running
 from tdp.cli.commands.init import init
 from tdp.cli.commands.ops import ops
 from tdp.cli.commands.plan import plan
@@ -110,6 +111,7 @@ cli.add_command(browse)
 cli.add_command(dag)
 cli.add_command(default_diff)
 cli.add_command(deploy)
+deploy.add_command(danger_fix_running)
 cli.add_command(init)
 cli.add_command(ops)
 cli.add_command(plan)

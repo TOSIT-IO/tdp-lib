@@ -54,6 +54,10 @@ class NothingToResumeError(Exception):
 class NothingToDeployError(Exception):
     pass
 
+class NothingToFixError(Exception):
+    pass
+
+
 class MissingOperationError(Exception):
     def __init__(self, operation_name: str):
         self.operation_name = operation_name
@@ -544,6 +548,33 @@ class DeploymentModel(BaseModel):
         for operation in self.operations:
             operation.state = OperationStateEnum.PENDING
         self.start_time = datetime.utcnow()
+
+    def fix_running(self):
+        # Only RUNNING deployment can be fixed
+        if self.state != DeploymentStateEnum.RUNNING:
+            raise NothingToFixError()
+
+        held = False
+        for operation in self.operations:
+            # Set operation status to HELD if a previous operation is FAILURE or HELD
+            if held is True:
+                operation.state = OperationStateEnum.HELD
+                continue
+
+            # If an operation is RUNNING, set it to FAILURE
+            if operation.state == OperationStateEnum.RUNNING:
+                operation.state = OperationStateEnum.FAILURE
+                held = True
+            # If an operation is PENDING, set it to HELD
+            elif operation.state == OperationStateEnum.PENDING:
+                operation.state = OperationStateEnum.HELD
+                held = True
+            # If an operation is HELD, leave it as is
+            elif operation.state == OperationStateEnum.HELD:
+                held = True
+
+        # Update deployment to FAILURE
+        self.state = DeploymentStateEnum.FAILURE
 
 
 def _filter_falsy_options(options: dict) -> dict:
