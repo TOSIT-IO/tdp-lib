@@ -2,12 +2,12 @@
 name = "tdp-lib"
 version = "1.0.0"
 description = "TDP library for TDP Manager"
-authors = ["Xavier Hermand <diode-hermand.consultant@dgfip.finances.gouv.fr>"]
+authors = ["TOSIT"]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/TOSIT-FR/tdp-lib"
-repository = "https://github.com/TOSIT-FR/tdp-lib"
-documentation = "https://github.com/TOSIT-FR/tdp-lib"
+homepage = "https://github.com/TOSIT-IO/tdp-lib"
+repository = "https://github.com/TOSIT-IO/tdp-lib"
+documentation = "https://github.com/TOSIT-IO/tdp-lib"
 packages = [{ include = "tdp" }]
 
 [tool.poetry.dependencies]
