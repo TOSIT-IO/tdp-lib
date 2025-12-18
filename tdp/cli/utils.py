@@ -6,7 +6,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 from logging import getLogger
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import click
 from tabulate import tabulate
@@ -177,9 +177,13 @@ def parse_file(file_name) -> list[tuple[str, Optional[str], Optional[list[str]]]
     ]
 
 
-def validate_plan_creation(
+def validate_clean_last_deployment_state(
     last_deployment_state: Optional[DeploymentStateEnum], force: Optional[bool] = None
-) -> None:
+) -> Literal[
+    DeploymentStateEnum.SUCCESS,
+    DeploymentStateEnum.FAILURE,
+    DeploymentStateEnum.PLANNED,
+]:
     """Validates that a new deployment plan can be created.
 
     Args:
@@ -199,12 +203,12 @@ def validate_plan_creation(
         DeploymentStateEnum.SUCCESS,
         DeploymentStateEnum.FAILURE,
     ):
-        return
+        return last_deployment_state
 
     # OK if forced
     if force:
         logger.debug("Force option enabled, overriding existing deployment plan.")
-        return
+        return DeploymentStateEnum.PLANNED
 
     # Ask to confirm overriding if last deployment is PLANNED
     if last_deployment_state == DeploymentStateEnum.PLANNED:
@@ -212,7 +216,7 @@ def validate_plan_creation(
             "A deployment plan already exists, do you want to override it?",
             abort=True,
         )
-        return
+        return DeploymentStateEnum.PLANNED
 
     # Display an error is last deployment is RUNNING
     if last_deployment_state == DeploymentStateEnum.RUNNING:

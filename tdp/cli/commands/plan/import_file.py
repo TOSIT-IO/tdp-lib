@@ -31,8 +31,9 @@ def import_file(
 ):
     """Import a deployment from a file."""
 
-    from tdp.cli.utils import parse_file, validate_plan_creation
+    from tdp.cli.utils import parse_file, validate_clean_last_deployment_state
     from tdp.core.models.deployment_model import DeploymentModel
+    from tdp.core.models.enums import DeploymentStateEnum
     from tdp.dao import Dao
 
     with Dao(db_engine, commit_on_exit=True) as dao:
@@ -46,9 +47,15 @@ def import_file(
                 collections, new_operations_hosts_vars
             )
             if last_deployment := dao.get_last_deployment():
-                validate_plan_creation(last_deployment.state, force)
+                validated_plan = validate_clean_last_deployment_state(
+                    last_deployment.state, force
+                )
                 # if a planned deployment is present, update it
-                deployment.id = last_deployment.id
+                deployment.id = (
+                    last_deployment.id
+                    if validated_plan is DeploymentStateEnum.PLANNED
+                    else last_deployment.id + 1
+                )
             dao.session.merge(deployment)
             dao.session.commit()
             click.echo("Deployment plan successfully imported.")

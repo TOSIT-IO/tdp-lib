@@ -50,8 +50,9 @@ def ops(
 ):
     """Run a list of operations."""
 
-    from tdp.cli.utils import print_deployment, validate_plan_creation
+    from tdp.cli.utils import print_deployment, validate_clean_last_deployment_state
     from tdp.core.models import DeploymentModel
+    from tdp.core.models.enums import DeploymentStateEnum
     from tdp.dao import Dao
 
     click.echo(
@@ -65,7 +66,13 @@ def ops(
         return
     with Dao(db_engine, commit_on_exit=True) as dao:
         if last_deployment := dao.get_last_deployment():
-            validate_plan_creation(last_deployment.state, force)
-            deployment.id = last_deployment.id
+            validated_plan = validate_clean_last_deployment_state(
+                last_deployment.state, force
+            )
+            deployment.id = (
+                last_deployment.id
+                if validated_plan is DeploymentStateEnum.PLANNED
+                else last_deployment.id + 1
+            )
         dao.session.merge(deployment)
     click.echo("Deployment plan successfully created.")
