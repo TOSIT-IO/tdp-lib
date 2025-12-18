@@ -36,20 +36,19 @@ def import_file(
     from tdp.core.models.enums import DeploymentStateEnum
     from tdp.dao import Dao
 
-    with Dao(db_engine, commit_on_exit=True) as dao:
-        with open(file_name) as file:
-            # Remove empty elements and comments
-            # and get the operations, hosts and extra vars in a list
-            new_operations_hosts_vars = parse_file(file)
-            if not new_operations_hosts_vars:
-                raise click.ClickException("Plan must not be empty.")
-            deployment = DeploymentModel.from_operations_hosts_vars(
-                collections, new_operations_hosts_vars
-            )
+    with open(file_name) as file:
+        # Remove empty elements and comments
+        # and get the operations, hosts and extra vars in a list
+        new_operations_hosts_vars = parse_file(file)
+        if not new_operations_hosts_vars:
+            raise click.ClickException("Plan must not be empty.")
+        deployment = DeploymentModel.from_operations_hosts_vars(
+            collections, new_operations_hosts_vars
+        )
+        with Dao(db_engine, commit_on_exit=True) as dao:
             if last_deployment := dao.get_last_deployment():
                 validate_plan_creation(last_deployment.state, force)
                 if last_deployment.state is DeploymentStateEnum.PLANNED:
                     deployment.id = last_deployment.id
             dao.session.merge(deployment)
-            dao.session.commit()
-            click.echo("Deployment plan successfully imported.")
+        click.echo("Deployment plan successfully imported.")
