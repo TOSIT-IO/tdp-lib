@@ -1,55 +1,59 @@
-[tool.poetry]
+[project]
 name = "tdp-lib"
 version = "1.0.0"
 description = "TDP library for TDP Manager"
-authors = ["TOSIT"]
+authors = [{ name = "TOSIT" }]
 license = "Apache-2.0"
 readme = "README.md"
-homepage = "https://github.com/TOSIT-IO/tdp-lib"
-repository = "https://github.com/TOSIT-IO/tdp-lib"
-documentation = "https://github.com/TOSIT-IO/tdp-lib"
-packages = [{ include = "tdp" }]
+requires-python = ">=3.9.0,!=3.9.7,<4.0"
+dependencies = [
+    "ansible-core==2.15.1",
+    "networkx==2.5.1",
+    "PyYAML>=6.0.1,<7",
+    "GitPython==3.1.18",
+    "SQLAlchemy>=2.0.19,<3",
+    "click==8.0.4",
+    "tabulate==0.8.9",
+    "python-dotenv==0.20.0",
+    "jsonschema==4.10.3",
+    "pydantic>=2.6.0,<3",
+    "alembic>=1.13.1,<2",
+    "alembic-postgresql-enum>=1.2.0,<2",
+    "exceptiongroup>=1.3.1,<2",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9.0,!=3.9.7,<4.0"
-ansible-core = "2.15.1"
-networkx = "2.5.1"
-PyYAML = "^6.0.1"
-matplotlib = { version = "3.3.4", optional = true }
-pydot = { version = "1.4.2", optional = true }
-GitPython = "3.1.18"
-SQLAlchemy = "^2.0.19"
-click = "8.0.4"
-tabulate = "0.8.9"
-python-dotenv = "0.20.0"
-jsonschema = "4.10.3"
-pydantic = "^2.6.0"
-psycopg2 = { version = "^2.9.9", optional = true }
-psycopg2-binary = { version = "^2.9.9", optional = true }
-pymysql = { version = "^1.1.0", optional = true }
-alembic = "^1.13.1"
-alembic-postgresql-enum = "^1.2.0"
-numpy = { version = "<2.0.0", optional = true }
-exceptiongroup = "^1.3.1"
+[project.optional-dependencies]
+visualization = [
+    "matplotlib==3.3.4",
+    "pydot==1.4.2",
+    "numpy<2.0.0",
+]
+postgresql = ["psycopg2>=2.9.9,<3"]
+postgresql-binary = ["psycopg2-binary>=2.9.9,<3"]
+mysql = ["pymysql>=1.1.0,<2"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
-ruff = "^0.11.12"
-pytest-xdist = "^3.5.0"
-python-lorem = "^1.3.0.post1"
-
-[tool.poetry.extras]
-visualization = ["matplotlib", "pydot", "numpy"]
-postgresql = ["psycopg2"]
-postgresql-binary = ["psycopg2-binary"]
-mysql = ["pymysql"]
-
-[tool.poetry.scripts]
+[project.scripts]
 tdp = "tdp.cli.__main__:cli"
 
+[project.urls]
+Homepage = "https://github.com/TOSIT-IO/tdp-lib"
+Repository = "https://github.com/TOSIT-IO/tdp-lib"
+Documentation = "https://github.com/TOSIT-IO/tdp-lib"
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4.0,<8",
+    "ruff>=0.11.12,<1",
+    "pytest-xdist>=3.5.0,<4",
+    "python-lorem>=1.3.0.post1,<2",
+]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tdp"]
 
 [tool.ruff.lint]
 preview = true
@@ -57,7 +61,6 @@ select = ["F", "W", "I", "CPY"]
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "\\A# Copyright \\d{4} TOSIT\\.IO\r?\n# SPDX-License-Identifier: Apache-2\\.0"
-
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]
