@@ -15,7 +15,7 @@ Where `--collection-path` is the path to the TDP collection to test. It can be u
 For example, to test the `tdp` collection:
 
 ```bash
-poetry run pytest -n 12 --show-capture=no --traceback=short test_dag_order --collection-path /home/paul/code/tosit/getting-started/ansible_collections/tosit/tdp
+uv run pytest -n 12 --show-capture=no --traceback=short test_dag_order --collection-path /home/paul/code/tosit/getting-started/ansible_collections/tosit/tdp
 ```
 
 Recommended options are:
