@@ -127,7 +127,7 @@ def import_show():
         if importlib.util.find_spec(package) is None:
             raise click.ClickException(
                 "You need to install the 'visualization' extras to be able to use the "
-                + "`tdp dag` command. Run `poetry install --extras visualization`."
+                + "`tdp dag` command. Run `pip install .[visualization]`."
             )
 
     from tdp.core.dag_dot import show
