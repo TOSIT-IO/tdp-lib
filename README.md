@@ -1,5 +1,5 @@
 [![Python Version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 # TDP Lib
 
@@ -49,15 +49,6 @@ source .venv/bin/activate
 # Install the dependencies
 pip install "tdp-lib[visualization]@https://github.com/TOSIT-IO/tdp-lib/tarball/1.0.0"
 # Initialize the database and tdp_vars
-tdp init
-```
-
-## CLI Usage
-
-> [!NOTE]
-> This section is a work in progress.
-
-```sh
 tdp --help
 ```
 
@@ -65,31 +56,42 @@ tdp --help
 
 Contributions are welcome! Here are some guidelines specific to this project:
 
-- Use [Poetry](https://python-poetry.org/) for development:
+### Dev environment
 
-    ```sh
-    # Install Poetry
-    curl -sSL https://install.python-poetry.org | python3 -
-    # Install the dependencies
-    poetry install -E postgresql-binary -E mysql
-    ```
+Use [uv](https://docs.astral.sh/uv/) for development:
 
-- Commit messages must adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
-- Run tests on all supported databases before submitting a PR:
+```sh
+# Install dependencies
+uv sync --all-extras
+```
 
-    ```sh
-    docker compose -f dev/docker-compose.yaml up -d
-    poetry run pytest tests --database-dsn 'postgresql+psycopg2://postgres:postgres@localhost:5432/tdp' --database-dsn 'mysql+pymysql://mysql:mysql@localhost:3306/tdp' --database-dsn 'mysql+pymysql://mariadb:mariadb@localhost:3307/tdp'
-    docker compose -f dev/docker-compose.yaml down -v
-    ```
+### Testing
 
-- Format and lint code using [Ruff](https://beta.ruff.rs/docs/):
+Tests are based on [Pytest](https://docs.pytest.org/en/stable/):
 
-    ```sh
-    # Format the code and reoder imports
-    poetry run ruff check --select I --fix && ruff format
-    # Check the code for linting issues
-    poetry run ruff check
-    # Lint the code
-    poetry run ruff check --fix
-    ```
+```sh
+uv run pytest
+```
+
+`tdp-lib` is supporting SQLite, PostgreSQL and MariaDB. A `compose.yaml` is provided to run test accross all suported environments:
+
+```sh
+docker compose -f dev/docker-compose.yaml up -d
+uv run pytest tests --database-dsn 'postgresql+psycopg2://postgres:postgres@localhost:5432/tdp' --database-dsn 'mysql+pymysql://mysql:mysql@localhost:3306/tdp' --database-dsn 'mysql+pymysql://mariadb:mariadb@localhost:3307/tdp'
+docker compose -f dev/docker-compose.yaml down -v
+```
+
+### Contributions
+
+Commit messages must adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
+
+Code must be formated and ensure the linting rules before being merged. This project use [Ruff](https://docs.astral.sh/ruff/):
+
+```sh
+# Format the code and reorder imports
+uv run ruff check --select I --fix && uv run ruff format
+# Check the code for linting issues
+uv run ruff check
+# Lint the code
+uv run ruff check
+```
