@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tdp-lib"
-version = "1.0.0"
+version = "2.0.0"
 description = "TDP library for TDP Manager"
 authors = ["TOSIT"]
 license = "Apache-2.0"
