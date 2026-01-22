@@ -920,7 +920,6 @@ description = "psycopg2 - Python-PostgreSQL Database Adapter"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"postgresql\""
 files = [
     {file = "psycopg2-2.9.11-cp310-cp310-win_amd64.whl", hash = "sha256:103e857f46bb76908768ead4e2d0ba1d1a130e7b8ed77d3ae91e8b33481813e8"},
     {file = "psycopg2-2.9.11-cp311-cp311-win_amd64.whl", hash = "sha256:210daed32e18f35e3140a1ebe059ac29209dd96468f2f7559aa59f75ee82a5cb"},
@@ -938,7 +937,7 @@ description = "psycopg2 - Python-PostgreSQL Database Adapter"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"postgresql-binary\""
+markers = "extra == \"postgresql\""
 files = [
     {file = "psycopg2-binary-2.9.11.tar.gz", hash = "sha256:b6aed9e096bf63f9e75edf2581aa9a7e7186d97ab5c177aa6c87797cd591236c"},
     {file = "psycopg2_binary-2.9.11-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d6fe6b47d0b42ce1c9f1fa3e35bb365011ca22e39db37074458f27921dca40f2"},
@@ -1608,11 +1607,10 @@ markers = {dev = "python_version < \"3.13\""}
 
 [extras]
 mysql = ["pymysql"]
-postgresql = ["psycopg2"]
-postgresql-binary = ["psycopg2-binary"]
+postgresql = ["psycopg2-binary"]
 visualization = ["matplotlib", "numpy", "pydot"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.9.0,!=3.9.7,<4.0"
-content-hash = "c1c76eab93332ff9f923d960406aaa31eda50487bf77a4104eed45470b001faa"
+content-hash = "49eca8a5e645ddec86760276070a483dff88b66b21739d19525fa8f37355c3b2"
