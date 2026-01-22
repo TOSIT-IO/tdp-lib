@@ -52,6 +52,13 @@ pip install "tdp-lib[visualization]@https://github.com/TOSIT-IO/tdp-lib/tarball/
 tdp init
 ```
 
+### Supported databases
+
+`tdp-lib` uses [SQLite](https://sqlite.org/) by default. Other backends are supported:
+
+- [PostgreSQL](https://www.postgresql.org/) - install with `pip install tdp-lib[postgresql]`
+- [MySQL](https://www.mysql.com)/[MariaDB](https://mariadb.org/) - install with `pip install tdp-lib[mysql]`
+
 ## CLI Usage
 
 > [!NOTE]
@@ -71,7 +78,7 @@ Contributions are welcome! Here are some guidelines specific to this project:
     # Install Poetry
     curl -sSL https://install.python-poetry.org | python3 -
     # Install the dependencies
-    poetry install -E postgresql-binary -E mysql
+    poetry install --all-extras
     ```
 
 - Commit messages must adhere to the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) standard.
