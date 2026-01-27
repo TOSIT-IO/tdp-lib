@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from collections import OrderedDict
 from collections.abc import Callable, Iterator
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from typing import TYPE_CHECKING, Optional
 
@@ -127,13 +127,13 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
                 return operation_rec, partial(self._process_operation_fn, operation_rec)
         # StopIteration is a "normal" exception raised when the iteration has stopped
         except StopIteration as e:
-            self.deployment.end_time = datetime.utcnow()
+            self.deployment.end_time = datetime.now(timezone.utc)
             if not self.deployment.state == DeploymentStateEnum.FAILURE:
                 self.deployment.state = DeploymentStateEnum.SUCCESS
             raise e
         # An unforeseen error has occured, stop the deployment and set as failure
         except Exception as e:
-            self.deployment.end_time = datetime.utcnow()
+            self.deployment.end_time = datetime.now(timezone.utc)
             self.deployment.state = DeploymentStateEnum.FAILURE
             raise e
 
@@ -151,7 +151,7 @@ class DeploymentIterator(Iterator[tuple[OperationModel, Optional[ProcessOperatio
 
         # Set deployment status to failure if the operation failed
         if operation_rec.state != OperationStateEnum.SUCCESS:
-            self.deployment.end_time = datetime.utcnow()
+            self.deployment.end_time = datetime.now(timezone.utc)
             self.deployment.state = DeploymentStateEnum.FAILURE
             # Return early as status is not updated
             return

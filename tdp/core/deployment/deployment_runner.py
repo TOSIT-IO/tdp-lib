@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from tdp.core.deployment.deployment_iterator import DeploymentIterator
@@ -50,7 +50,7 @@ class DeploymentRunner:
         Args:
             operation_rec: Operation record to run, modified in place with the result.
         """
-        operation_rec.start_time = datetime.utcnow()
+        operation_rec.start_time = datetime.now(timezone.utc)
 
         operation: Operation = self._collections.operations[operation_rec.operation]
 
@@ -62,7 +62,7 @@ class DeploymentRunner:
                 logger.error(logs)
                 operation_rec.state = OperationStateEnum.FAILURE
                 operation_rec.logs = logs.encode("utf-8")
-                operation_rec.end_time = datetime.utcnow()
+                operation_rec.end_time = datetime.now(timezone.utc)
                 return
 
         # Execute the operation
@@ -72,7 +72,7 @@ class DeploymentRunner:
             host=operation_rec.host,
             extra_vars=operation_rec.extra_vars,
         )
-        operation_rec.end_time = datetime.utcnow()
+        operation_rec.end_time = datetime.now(timezone.utc)
 
         # ? This case shouldn't happen as the executor should return a valid state
         if state not in OperationStateEnum:

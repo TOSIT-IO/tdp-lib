@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy.engine import Engine
@@ -25,8 +25,8 @@ def test_create_deployment(db_engine: Engine):
             "hosts": ["host1", "host2"],
             "restart": False,
         },
-        start_time=datetime.utcnow(),
-        end_time=datetime.utcnow() + timedelta(0, 1),
+        start_time=datetime.now(timezone.utc),
+        end_time=datetime.now(timezone.utc) + timedelta(0, 1),
         state="SUCCESS",
         deployment_type="Dag",
     )
@@ -42,8 +42,8 @@ def test_create_deployment(db_engine: Engine):
         deployment_id=deployment.id,
         operation="start_target1",
         host="host1",
-        start_time=datetime.utcnow(),
-        end_time=datetime.utcnow() + timedelta(0, 1),
+        start_time=datetime.now(timezone.utc),
+        end_time=datetime.now(timezone.utc) + timedelta(0, 1),
         state="Success",
         logs=b"operation log",
     )
