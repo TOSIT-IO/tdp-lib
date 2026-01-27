@@ -8,7 +8,6 @@ from collections.abc import Iterable
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal, NamedTuple, Optional
 
-from exceptiongroup import ExceptionGroup
 from sqlalchemy import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from tabulate import tabulate
