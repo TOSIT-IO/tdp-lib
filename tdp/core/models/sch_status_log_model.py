@@ -1,7 +1,7 @@
 # Copyright 2022 TOSIT.IO
 # SPDX-License-Identifier: Apache-2.0
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from sqlalchemy import ForeignKey, String
@@ -27,7 +27,7 @@ class SCHStatusLogModel(BaseModel):
         doc="Unique id of the cluster status log.", primary_key=True
     )
     event_time: Mapped[datetime] = mapped_column(
-        default=datetime.utcnow,
+        default=datetime.now(timezone.utc),
         doc="Timestamp of the component version log.",
     )
     service: Mapped[str] = mapped_column(

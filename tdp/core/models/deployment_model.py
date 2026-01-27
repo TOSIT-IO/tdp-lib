@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Literal, NamedTuple, Optional
 
 from sqlalchemy import JSON
@@ -544,7 +544,7 @@ class DeploymentModel(BaseModel):
         self.state = DeploymentStateEnum.RUNNING
         for operation in self.operations:
             operation.state = OperationStateEnum.PENDING
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
 
     def fix_running(self):
         # Only RUNNING deployment can be fixed
