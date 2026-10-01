@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Optional
 from tdp.core.constants import (
     DEFAULT_VALIDATION_MESSAGE,
     VALIDATION_MESSAGE_FILE,
+    YML_EXTENSION,
 )
 from tdp.core.exceptions import (
     ServiceVariablesNotInitializedError,
@@ -26,6 +27,7 @@ from tdp.core.variables.planner import ServiceUpdatePlanner
 from tdp.core.variables.scanner import ServiceDirectoryScanner
 from tdp.core.variables.schema.exceptions import SchemaValidationError
 from tdp.core.variables.service_variables import ServiceVariables
+from tdp.core.variables.variables import Variables
 
 if TYPE_CHECKING:
     from tdp.core.collections.collections import Collections
@@ -54,6 +56,22 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         return self._service_variables_dict.__iter__()
 
     @classmethod
+    def validate_input_files(
+        cls,
+        collections: Collections,
+        override_folders: Optional[Iterable[PathLike]] = None,
+    ) -> None:
+        """Parse every variables input file without modifying the destination."""
+        sources = list(collections.default_vars_dirs.values()) + [
+            Path(path) for path in override_folders or []
+        ]
+        for source_path in sources:
+            for service_path in ServiceDirectoryScanner.scan(source_path).values():
+                for input_file in service_path.glob("*" + YML_EXTENSION):
+                    with Variables(input_file).open("r"):
+                        pass
+
+    @classmethod
     def initialize_cluster_variables(
         cls,
         collections: Collections,
@@ -73,6 +91,7 @@ class ClusterVariables(Mapping[str, ServiceVariables]):
         if not os.access(tdp_vars, os.W_OK):
             raise PermissionError(f"{tdp_vars} is not writable.")
         override_folders = override_folders or []
+        cls.validate_input_files(collections, override_folders)
 
         current = cls.get_cluster_variables(collections, tdp_vars)
         new_variables: dict[str, ServiceVariables] = {}
